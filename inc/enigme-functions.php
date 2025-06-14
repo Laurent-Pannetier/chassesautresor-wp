@@ -619,9 +619,8 @@
             $enigme_id = (int) $_POST['enigme_id'];
             $reponse = sanitize_textarea_field($_POST['reponse_manuelle']);
 
-            enregistrer_tentative_reponse_manuelle($user_id, $enigme_id, $reponse);
-
-            envoyer_mail_reponse_manuelle($user_id, $enigme_id, $reponse);
+            $uid = enregistrer_tentative_reponse_manuelle($user_id, $enigme_id, $reponse);
+            envoyer_mail_reponse_manuelle($user_id, $enigme_id, $reponse, $uid);
 
             add_action('template_redirect', function () {
                 wp_redirect(add_query_arg('reponse_envoyee', '1'));
@@ -725,11 +724,10 @@
         $message .= '<p><a href="' . esc_url($url_enigme) . '" target="_blank" style="font-size:0.9em;">🔗 Voir l’énigme en ligne</a></p>';
         $message .= '</div>';
 
-        $headers   = [
+        $headers = [
             'Content-Type: text/html; charset=UTF-8',
-            'From: ' . $user->display_name . ' <' . $user->user_email . '>',
-            'Reply-To: ' . $user->user_email,
-            'Cc: lpannetier74@gmail.com',
+            'From: Chassesautresor <' . get_option('admin_email') . '>',
+            'Reply-To: ' . $user->display_name . ' <' . $user->user_email . '>',
         ];
 
         wp_mail($email_organisateur, $subject, $message, $headers);
