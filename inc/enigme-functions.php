@@ -675,7 +675,12 @@ function envoyer_mail_reponse_manuelle($user_id, $enigme_id, $reponse) {
     $titre_enigme = get_the_title($enigme_id);
     $user         = get_userdata($user_id);
 
-    $subject = '[Réponse Énigme] ' . $titre_enigme;
+    $subject_raw = '[Réponse Énigme] ' . $titre_enigme;
+    if (function_exists('wp_encode_mime_header')) {
+        $subject = wp_encode_mime_header($subject_raw);
+    } else {
+        $subject = mb_encode_mimeheader($subject_raw, 'UTF-8');
+    }
 
     $valider_url   = esc_url(add_query_arg([
         'user_id'   => $user_id,
