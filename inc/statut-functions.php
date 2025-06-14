@@ -127,7 +127,11 @@ function enigme_pre_requis_remplis(int $enigme_id, int $user_id): bool {
 
         if ($enigme_id_requise) {
             $statut = get_user_meta($user_id, "statut_enigme_{$enigme_id_requise}", true);
-            if ($statut !== 'terminée') {
+            // Les statuts d'énigme sont stockés sans accent ("terminee")
+            // dans les autres parties du code. Utiliser la même valeur ici
+            // pour éviter un échec de vérification systématique des
+            // prérequis lorsque l'utilisateur a pourtant terminé l'énigme.
+            if ($statut !== 'terminee') {
                 return false; // ❌ Prérequis non rempli
             }
         }
