@@ -165,19 +165,19 @@ Dossier inc/
   ├── admin-functions.php
   ├── chasse-functions.php
   ├── edition-functions.php
-  ├── enigma-functions.php
+  ├── enigme-functions.php
   ├── gamify-functions.php
   ├── layout-functions.php
   ├── organisateur-functions.php
   ├── relations-functions.php
   ├── shortcodes-init.php
-  ├── stat-functions.php
+  ├── stat-functions-old.php
   ├── statut-functions.php
   ├── user-functions.php
   ├── handlers/
-  │   ├── liens.php
+  │   ├── voir-fichier.php
   └── utils/
-      ├── voir-fichier.php
+      ├── liens.php
 
 
 structure des templates possibles pour les énigmes
