@@ -737,3 +737,44 @@
 
         wp_mail($email_organisateur, $subject, $message, $headers);
     }
+
+
+
+// ==================================================
+// 🧱 MIGRATIONS — TABLES STATUTS & ENGAGEMENTS
+// ==================================================
+
+/**
+ * Crée les tables personnalisées :
+ * - wp_enigme_statuts_utilisateur : statut actif d'un joueur par énigme
+ * - wp_enigme_engagements : log du premier accès à une énigme
+ */
+function creer_tables_statuts_et_engagements() {
+    global $wpdb;
+    require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+
+    $charset_collate = $wpdb->get_charset_collate();
+
+    $statuts_table = $wpdb->prefix . 'enigme_statuts_utilisateur';
+    $sql_statuts = "CREATE TABLE $statuts_table (
+        user_id BIGINT UNSIGNED NOT NULL,
+        enigme_id BIGINT UNSIGNED NOT NULL,
+        statut ENUM('non_commencee', 'engagee', 'en_cours', 'resolue', 'abandonnee', 'bloquee') NOT NULL DEFAULT 'non_commencee',
+        date_mise_a_jour DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (user_id, enigme_id)
+    ) $charset_collate;";
+
+    $engagements_table = $wpdb->prefix . 'enigme_engagements';
+    $sql_engagements = "CREATE TABLE $engagements_table (
+        id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        user_id BIGINT UNSIGNED NOT NULL,
+        enigme_id BIGINT UNSIGNED NOT NULL,
+        date_engagement DATETIME DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_enigme_user (enigme_id, user_id)
+    ) $charset_collate;";
+
+    dbDelta($sql_statuts);
+    dbDelta($sql_engagements);
+}
+
+// 📌 À exécuter une seule fois manuellement : creer_tables_statuts_et_engagements();
