@@ -590,14 +590,18 @@ function utilisateur_peut_repondre_manuelle($user_id, $enigme_id) {
     // ⚠️ MODE TEST — conditions de validation désactivées temporairement
     /* if (get_field('enigme_mode_validation', $enigme_id) !== 'manuel') return false;
 
-    $etat = get_field('enigme_cache_etat_systeme', $enigme_id);
-    if ($etat !== 'accessible') return false;
+        $tentative_uid = enregistrer_tentative_reponse_manuelle($user_id, $enigme_id, $reponse);
+        envoyer_mail_reponse_manuelle($user_id, $enigme_id, $reponse, $tentative_uid);
 
-    $statut = get_user_meta($user_id, 'enigme_statut_utilisateur_' . $enigme_id, true);
-    if (in_array($statut, ['resolue', 'abandonnee', 'terminee'], true)) return false;
+ * @param int $enigme_id
+ * @param string $reponse
+ * @return string Identifiant unique de la tentative
+ */
 
-    $cout = (int) get_field('enigme_tentative_cout_points', $enigme_id);
-    $points = (int) get_user_meta($user_id, 'total_points_utilisateur', true);
+    return $uid;
+ * @param string $tentative_uid Identifiant unique de la tentative
+function envoyer_mail_reponse_manuelle($user_id, $enigme_id, $reponse, $tentative_uid) {
+    $message .= '<p style="font-size:small; color:gray;">ID de la demande : ' . esc_html($tentative_uid) . '</p>';
     if ($cout > 0 && $points < $cout) return false; */
 
     return true;
