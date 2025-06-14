@@ -662,13 +662,17 @@ function envoyer_mail_reponse_manuelle($user_id, $enigme_id, $reponse) {
 
     $subject = '[Réponse Énigme] ' . $titre_enigme;
 
+    $nonce = wp_create_nonce('reponse_manuelle_' . $user_id . '_' . $enigme_id);
+
     $valider_url   = esc_url(add_query_arg([
         'user_id'   => $user_id,
-        'enigme_id' => $enigme_id
+        'enigme_id' => $enigme_id,
+        '_wpnonce'  => $nonce,
     ], home_url('/valider-reponse')));
     $invalider_url = esc_url(add_query_arg([
         'user_id'   => $user_id,
-        'enigme_id' => $enigme_id
+        'enigme_id' => $enigme_id,
+        '_wpnonce'  => $nonce,
     ], home_url('/invalider-reponse')));
 
     $date = date_i18n('j F Y à H:i', current_time('timestamp'));
@@ -693,3 +697,43 @@ function envoyer_mail_reponse_manuelle($user_id, $enigme_id, $reponse) {
     wp_mail($email_organisateur, $subject, $message, $headers);
 
 }
+
+// ==================================================
+// 🔗 ENDPOINTS VALIDATION RÉPONSE MANUELLE
+// ==================================================
+
+// Déclare les endpoints /valider-reponse et /invalider-reponse
+add_action('init', function () {
+    add_rewrite_rule('^valider-reponse/?$', 'index.php?valider_reponse=1', 'top');
+    add_rewrite_rule('^invalider-reponse/?$', 'index.php?invalider_reponse=1', 'top');
+
+    add_filter('query_vars', function ($vars) {
+        $vars[] = 'valider_reponse';
+        $vars[] = 'invalider_reponse';
+        return $vars;
+    });
+});
+
+/**
+ * Traite la validation ou l'invalidation d'une réponse manuelle.
+ * Vérifie le nonce présent dans l'URL avant toute action.
+ */
+add_action('template_redirect', function () {
+    $valider   = get_query_var('valider_reponse') === '1';
+    $invalider = get_query_var('invalider_reponse') === '1';
+
+    if (!$valider && !$invalider) {
+        return;
+    }
+
+    $user_id   = isset($_GET['user_id']) ? (int) $_GET['user_id'] : 0;
+    $enigme_id = isset($_GET['enigme_id']) ? (int) $_GET['enigme_id'] : 0;
+    $nonce     = $_GET['_wpnonce'] ?? '';
+
+    if (!$user_id || !$enigme_id || !wp_verify_nonce($nonce, 'reponse_manuelle_' . $user_id . '_' . $enigme_id)) {
+        status_header(403);
+        exit('Lien de validation invalide.');
+    }
+
+    // TODO: Traitement de la réponse (validation ou refus)
+});
