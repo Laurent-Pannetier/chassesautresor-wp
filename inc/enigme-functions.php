@@ -677,8 +677,8 @@
             $chasse_id = (int) $chasse;
         }
 
-        $organisateur_id  = $chasse_id ? get_organisateur_from_chasse($chasse_id) : null;
-        $email_organisateur = $organisateur_id ? get_field('email_organisateur', $organisateur_id) : '';
+        $organisateur_id     = $chasse_id ? get_organisateur_from_chasse($chasse_id) : null;
+        $email_organisateur  = $organisateur_id ? get_field('email_organisateur', $organisateur_id) : '';
 
         if (!$email_organisateur) {
             $email_organisateur = get_option('admin_email');
