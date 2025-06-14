@@ -588,21 +588,11 @@ add_shortcode('formulaire_reponse_manuelle', function($atts) {
  */
 function utilisateur_peut_repondre_manuelle($user_id, $enigme_id) {
     // ⚠️ MODE TEST — conditions de validation désactivées temporairement
-    /* if (get_field('enigme_mode_validation', $enigme_id) !== 'manuel') return false;
-
-        $tentative_uid = enregistrer_tentative_reponse_manuelle($user_id, $enigme_id, $reponse);
-        envoyer_mail_reponse_manuelle($user_id, $enigme_id, $reponse, $tentative_uid);
-
- * @param int $enigme_id
- * @param string $reponse
- * @return string Identifiant unique de la tentative
- */
-
-    return $uid;
- * @param string $tentative_uid Identifiant unique de la tentative
-function envoyer_mail_reponse_manuelle($user_id, $enigme_id, $reponse, $tentative_uid) {
-    $message .= '<p style="font-size:small; color:gray;">ID de la demande : ' . esc_html($tentative_uid) . '</p>';
-    if ($cout > 0 && $points < $cout) return false; */
+    /*
+    if (get_field('enigme_mode_validation', $enigme_id) !== 'manuel') {
+        return false;
+    }
+    */
 
     return true;
 }
