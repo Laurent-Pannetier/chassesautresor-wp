@@ -135,9 +135,9 @@ Dossier assets
   │   ├── enigmes-style.css
   │   ├── gamification.css
   │   ├── general.css
-  │   └── layout.css
-  │   └── mon-compte.css
-  │   └── organisateur.css
+  │   ├── layout.css
+  │   ├── mon-compte.css
+  │   └── organisateurs.css
   ├── js
   │   ├── accordeon.js
   │   ├── autocomplete-utilisateurs.js
