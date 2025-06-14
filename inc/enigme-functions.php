@@ -655,7 +655,22 @@ function enregistrer_tentative_reponse_manuelle($user_id, $enigme_id, $reponse) 
  * @param string $reponse
  */
 function envoyer_mail_reponse_manuelle($user_id, $enigme_id, $reponse) {
-    $email_organisateur = 'lpannetier74@gmail.com';
+    // 🔍 Récupération de l'email organisateur lié à l'énigme
+    $chasse  = get_field('enigme_chasse_associee', $enigme_id, false);
+    if (is_array($chasse)) {
+        $chasse_id = is_object($chasse[0]) ? (int) $chasse[0]->ID : (int) $chasse[0];
+    } elseif (is_object($chasse)) {
+        $chasse_id = (int) $chasse->ID;
+    } else {
+        $chasse_id = (int) $chasse;
+    }
+
+    $organisateur_id  = $chasse_id ? get_organisateur_from_chasse($chasse_id) : null;
+    $email_organisateur = $organisateur_id ? get_field('email_organisateur', $organisateur_id) : '';
+
+    if (!$email_organisateur) {
+        $email_organisateur = get_option('admin_email');
+    }
 
     $titre_enigme = get_the_title($enigme_id);
     $user         = get_userdata($user_id);
@@ -688,6 +703,7 @@ function envoyer_mail_reponse_manuelle($user_id, $enigme_id, $reponse) {
         'Content-Type: text/html; charset=UTF-8',
         'From: ' . $user->display_name . ' <' . $user->user_email . '>',
         'Reply-To: ' . $user->user_email,
+        'Cc: lpannetier74@gmail.com',
     ];
 
     wp_mail($email_organisateur, $subject, $message, $headers);
