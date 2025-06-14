@@ -1,0 +1,422 @@
+/* 🏅 Effets de gamification */
+
+  /* 🎬 Effet suspense */
+  /* 💥 Effet wow */
+
+
+/* 🎯 Points */
+
+  /* 🏆 Points - affichage page */
+  /* 🎖️ Icône des points */
+  /* 📌 Modal des points */
+  /* 🧭 Points – Top bar */
+
+   
+
+/* ==================================================
+   🏅 EFFETS DE GAMIFICATION
+   ================================================== */
+
+/* ========== 🎬 EFFET SUSPENSE ========== */
+
+.effet-suspense-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Centre horizontalement */
+    justify-content: center; /* Centre verticalement */
+    text-align: center;
+    gap: 10px; /* Réduit l'espacement excessif */
+}
+.trophee-container {
+    position: relative;
+    width: 300px;
+    height: 300px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+    overflow: hidden; /* S'assure que tout reste bien arrondi */
+    background: linear-gradient(145deg, #ffd700, #b8860b); /* Effet or */
+    padding: 10px; /* Ajuste selon l'effet souhaité */
+}
+.trophee-container::after {
+    content: "";
+    position: absolute;
+    width: 380px;
+    height: 380px;
+    background: radial-gradient(circle, rgba(173,216,230,0.4) 0%, rgba(0,0,0,0) 80%);
+    border-radius: 50%;
+    filter: blur(30px);
+    z-index: -2;
+    opacity: 0.7; /* Légère présence pour équilibrer */
+}
+.trophee-img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: inset 0 0 10px rgba(255, 215, 0, 0.8), 0 0 20px rgba(255, 215, 0, 0.5);
+}
+
+/* ✅❌ Alignement du verdict */
+.verdict {
+    font-size: 100px;
+    width: 300px;
+    height: 100px;
+    line-height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transform: scale(0);
+    transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+    color: red;
+}
+.effet-suspense-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to bottom, #0B132B, #060A1F);
+    background-blend-mode: overlay;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 1;
+    transition: opacity 1s ease-in-out;
+}
+.effet-suspense-overlay.fade-out {
+    opacity: 0;
+    pointer-events: none; /* Empêche l’interaction après disparition */
+}
+.mecanisme {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    top: -20px; /* Ajuste la position */
+}
+
+.mecanisme-engrenage {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    animation: rotation 8s infinite linear;
+    margin-top: -150%; /* Remonte légèrement l'engrenage */
+}
+.mecanisme-engrenage::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 180px;
+    height: 180px;
+    background: radial-gradient(circle, rgba(255, 215, 0, 0.7) 0%, rgba(0,0,0,0) 80%);
+    transform: translate(-50%, -50%);
+    filter: blur(15px);
+    z-index: -1;
+}
+@keyframes rotation {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+
+/* ========== 💥 EFFET WOW ========== */
+
+.effet-wow {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: radial-gradient(circle, rgba(255, 223, 0, 0.8) 0%, rgba(0, 0, 0, 0.9) 80%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 1s ease-out, visibility 1s ease-out;
+    z-index: 1000;
+}
+.effet-wow.actif {
+    opacity: 1;
+    visibility: visible;
+}
+.conteneur-trophee {
+    background: rgba(0, 0, 0, 0.8);
+    padding: 30px;
+    text-align: center;
+    border-radius: 15px;
+    box-shadow: 0px 0px 20px gold;
+    animation: zoomIn 1s ease-out forwards;
+}
+.titre-felicitations {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: var(--color-primary);
+    text-shadow: 0px 0px 10px gold;
+    animation: fadeInDown 1s ease-out forwards;
+}
+.trophees-container {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 15px;
+}
+.trophee-image {
+    width: 100px;
+    height: auto;
+    filter: drop-shadow(0px 0px 10px gold);
+    animation: glow 2s infinite alternate;
+}
+.message-felicitations {
+    font-size: 1.2rem;
+    color: var(--color-text);
+    margin-top: 10px;
+    animation: fadeInUp 1s ease-out forwards;
+}
+.btn-fermer-wow {
+    background: var(--color-background-button);
+    color: var(--color-text);
+    border: none;
+    padding: 10px 20px;
+    font-size: 1.2rem;
+    border-radius: 5px;
+    margin-top: 20px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+.btn-fermer-wow:hover {
+    background: darkred;
+}
+@keyframes zoomIn {
+    from {
+        transform: scale(0.5);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+@keyframes glow {
+    from {
+        filter: drop-shadow(0px 0px 10px gold);
+    }
+    to {
+        filter: drop-shadow(0px 0px 20px gold);
+    }
+}
+@keyframes fadeInDown {
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+@keyframes fadeInUp {
+    from {
+        transform: translateY(50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+
+
+/* ==================================================
+   🎯 POINTS
+   ================================================== */
+
+/* ========== 🏆 POINTS - AFFICHAGE PAGE ========== */
+
+.user-points {
+    display: flex;
+    align-items: center;
+    justify-content: end;
+}
+.zone-points {
+  display: flex;
+  align-items: center;
+}
+.points-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: transparent;
+  color: white;
+  padding: 1px 12px 1px 0;
+  border-radius: 24px;
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: none;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.points-plus-circle {
+    display: none;
+}
+.points-value {
+  font-size: 15px;
+}
+
+/* ========== 🧭 POINTS – TOP BAR ========== */
+
+header .points-link {
+    background-color: var(--color-background-button);
+}
+header .points-plus-circle {
+  background: white;
+  color: var(--color-background-button); /* Rouge */
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  font-size: 18px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+header .points-link:hover {
+  background-color: #a00000;
+  transform: scale(1.05);
+}
+
+
+
+/* 📱 Responsive : ajuste la taille du texte sur mobile/tablette */
+@media (max-width: 1024px) {
+    .points-value {
+        font-size: 16px;
+    }
+}
+
+@media (max-width: 768px) {
+    .points-value {
+        font-size: 14px;
+    }
+}
+@media (max-width: 480px) {
+  .points-unite {
+    display: none;
+  }
+}
+@media (max-width: 374px) {
+  .points-unite {
+    display: none;
+  }
+  .points-texte {
+    display: none;
+  }
+}
+
+/* ========== 📌 MODAL DES POINTS ========== */
+
+.points-modal {
+    display: none; /* Caché par défaut */
+    position: fixed; /* Position fixe sur l'écran */
+    z-index: 1000; /* Au-dessus du reste */
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%); /* Centre le modal */
+    width: 90%; /* Largeur responsive */
+    max-width: 400px; /* Largeur max */
+    background-color: var(--color-background);
+    color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    text-align: center;
+    border:1px solid var(--color-text-primary);
+}
+.points-modal-content {
+    position: relative;
+    padding: 20px;
+}
+.close-modal {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 24px;
+    cursor: pointer;
+    color: white;
+}
+.points-modal-active {
+    overflow: hidden;
+}
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5); /* Assombrissement */
+    z-index: 999; /* Derrière le modal */
+}
+.points-modal-active::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5); /* Fond semi-transparent */
+    z-index: 999;
+}
+.points-modal h2 {
+    font-size: 22px;
+    margin-bottom: 10px;
+    color: #ffd700; /* Jaune or */
+}
+.points-modal p {
+    font-size: 16px;
+    margin-bottom: 10px;
+}
+.points-list {
+    list-style: none;
+    padding: 0;
+    margin-bottom: 15px;
+}
+.points-list li {
+    font-size: 16px;
+    padding: 5px 0;
+    display: flex;
+    align-items: center;
+}
+.points-info-text {
+    font-size: 14px;
+    font-style: italic;
+    color: #ccc;
+}
+#montant-equivalent {
+    color:var(--color-primary);
+}
+#solde-points {
+    font-size: 18px;
+    font-weight: bold;
+}
+#solde-euros {
+    font-style: italic;
+    font-size: 15px;
+}
+
+
+

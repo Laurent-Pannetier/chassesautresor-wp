@@ -1,0 +1,759 @@
+/* ==========================================================
+📌 Styles Généraux - Conteneur & Typographie
+========================================================== */
+.dashboard-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    font-family: var(--font-main);
+    background: var(--color-background);
+    color: var(--color-text-primary);
+}
+/* ==========================================================
+📌 Styles Généraux - Conteneur & Typographie
+========================================================== */
+.dashboard-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0;
+    font-family: var(--font-main);
+    background: var(--color-background);
+    color: var(--color-text-primary);
+}
+
+
+/* ==========================================================
+📌 Profil Utilisateur
+========================================================== */
+.dashboard-profile-wrapper {
+    display: flex;
+    justify-content: space-between; /* ✅ Écarte les éléments */
+    align-items: center; /* ✅ Centre verticalement */
+    width: 100%; /* ✅ Prend toute la largeur du parent */
+    background: rgba(255, 215, 0, 0.1);
+    padding: 15px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 215, 0, 0.4);
+}
+.dashboard-profile {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.dashboard-profile img {
+    border-radius: 50%;
+    border: 2px solid var(--color-primary);
+}
+
+.profile-info h2 {
+    margin: 0;
+    font-size: 20px;
+    color: var(--color-primary);
+    opacity: 0.8;
+}
+
+.profile-info p {
+    margin: 0;
+    font-size: 14px;
+    opacity: 0.6;
+}
+/* 📌 Conteneur de l'avatar */
+.profile-avatar-container {
+    position: relative;
+    display: inline-block;
+    text-align: center;
+}
+
+/* ✅ Image du profil */
+.profile-avatar img {
+    border-radius: 50%;
+    transition: opacity 0.3s ease-in-out;
+}
+
+/* ✅ Bouton de téléversement */
+.upload-avatar-btn {
+    display: inline-block;
+    color: var(--texte-secondary);
+    border-radius: 5px;
+    cursor: pointer;
+    transition: 0.3s ease-in-out;
+}
+
+.upload-avatar-btn:hover {
+    background: var(--color-secondary);
+}
+
+/* 📌 Messages cachés par défaut */
+.message-size-file-avatar,
+.message-format-file-avatar {
+    display: none;
+    color: red;
+    font-weight: bold;
+    text-align: center;
+}
+
+/* 📌 Affichage dynamique */
+.message-avatar-visible {
+    display: block !important;
+}
+
+
+/* ✅ Mobile : Les éléments s'empilent */
+@media (max-width: 768px) {
+    .dashboard-profile-wrapper {
+        flex-direction: column; /* ✅ Empile les éléments */
+        justify-content: center; /* ✅ Centre les éléments verticalement */
+        text-align: center; /* ✅ Centrage du texte */
+    }
+
+    .dashboard-profile,
+    .dashboard-container .user-points {
+        width: 100%; /* ✅ Les deux blocs prennent toute la largeur */
+        margin-bottom: 10px; /* ✅ Espacement entre les blocs */
+        justify-content: space-evenly;
+    }
+    .dashboard-container .points-container {
+        margin-top:0;
+    }
+}
+
+/* ==========================================================
+📌 Menu de Navigation Principal (Desktop & Mobile)
+========================================================== */
+.dashboard-nav {
+    background: rgba(205, 127, 50, 0.2);
+    padding: 12px;
+    border-radius: 10px;
+    margin: 20px 0;
+}
+
+.dashboard-nav ul {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.dashboard-nav ul li {
+    position: relative;
+    margin: 0 15px;
+}
+.dashboard-nav ul li.active a,  .dashboard-nav ul li a:hover {
+    color: var(--color-primary);
+}
+
+.dashboard-nav ul li a {
+    text-decoration: none;
+    color: var(--color-text-primary);
+    font-weight: bold;
+    transition: var(--transition-fast);
+    padding: 10px 15px;
+}
+
+/* 📌 Déconnexion alignée à droite */
+.dashboard-nav ul .logout {
+    margin-left: auto;
+}
+
+/* ✅ Texte en desktop, icônes en mobile */
+@media (min-width: 769px) {
+    .dashboard-nav ul li a span {
+        display: inline;
+    }
+    .dashboard-nav ul li a i {
+        display: none;
+    }
+}
+
+@media (max-width: 768px) {
+    .dashboard-nav ul li {
+        margin:0;
+    }
+    .dashboard-nav ul li a span {
+        display: none;
+    }
+    .dashboard-nav ul li a i {
+        display: inline-block;
+        font-size: 22px;
+    }
+}
+
+/* ==========================================================
+📌 Menu Déroulant WooCommerce
+========================================================== */
+.menu-deroulant {
+    position: relative;
+}
+
+/* ✅ Positionnement propre du sous-menu */
+.menu-deroulant .submenu {
+    display: none;
+    position: absolute;
+    top: 35px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(11, 19, 43, 1);
+    border-radius: 8px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+    padding: 10px 0;
+    min-width: 180px;
+    text-align: center;
+    z-index: 201;
+    border:1px solid var(--color-text-secondary); ;
+}
+
+/* ✅ Apparition propre au clic */
+.menu-deroulant:hover  .submenu,  .menu-deroulant  .submenu.active{
+    display: block;
+}
+
+/* ✅ Alignement correct de l'icône et de la flèche */
+.menu-deroulant a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+
+/* ✅ Ajustement de la flèche */
+.dropdown-indicator {
+    font-size: 10px;
+    margin-left: 3px;
+    vertical-align: middle;
+}
+
+@media (max-width: 768px) {
+    .menu-deroulant .submenu {
+        left: -50px;
+    }
+    .dashboard-nav ul li a i {
+        display: inline-block;
+        font-size: 22px;
+    }
+}
+
+
+/* ==========================================================
+📌 Contenu Principal
+========================================================== */
+.dashboard-content {
+    background: rgba(255, 215, 0, 0.05);
+    padding: 20px;
+    border-radius: 10px;
+    border: 1px solid rgba(225, 169, 95, 0.3);
+    margin-bottom: 20px;
+}
+
+/* CARTES pour Organisateur en Création */
+/***** 📌 Conteneur de l'inscription 📌 *****/
+.inscription-container {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 30px;
+    border-radius: 10px;
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.inscription-container h2 {
+    font-size: 1.8rem;
+    color: var(--color-titre-enigme);
+    margin-bottom: 10px;
+}
+
+.inscription-texte {
+    font-size: 1rem;
+    color: var(--color-text-primary);
+    margin-bottom: 20px;
+}
+/***** 🟡 CONTENEUR PRINCIPAL 🟡 *****/
+
+/***** 📌 Conteneur principal 📌 *****/
+.crea-orga-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+    padding: 20px 0;
+}
+
+/***** 📌 Organisation des lignes 📌 *****/
+.crea-orga-row {
+    display: flex;
+    justify-content: center;
+    gap: 50px;
+    width: 100%;
+}
+
+/***** 📌 Validation seule sur la ligne 📌 *****/
+.crea-orga-row.validation {
+    justify-content: center;
+}
+
+/***** 📌 Taille des cartes 📌 *****/
+.crea-orga-section {
+    width: 30%; /* 🔹 Les cartes prennent 30% de largeur */
+}
+
+/***** 🔹 TITRES AU-DESSUS DES CARTES 🔹 *****/
+.crea-orga-header {
+    font-weight: bold;
+    font-size: 1.4rem;
+    margin-bottom: 15px; /* 🔹 Uniformiser l'espace sous l'entête */
+    text-align: center;
+    height: 40px; /* 🔹 Fixe la hauteur pour éviter les décalages */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-shadow: 1px 1px 5px rgba(255, 215, 0, 0.6); /* Lueur dorée légère */
+}
+
+/***** 🎴 Uniformisation des cartes 🎴 *****/
+.crea-orga-card {
+    width: 100%;
+    background: var(--color-background);
+    color: var(--color-text-primary);
+    text-align: center;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.3);
+    transition: 0.3s;
+    position: relative;
+    height: 300px; /* 🔹 Toutes les cartes ont la même hauteur */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+.crea-orga-footer {
+    border: 1px solid var(--color-text-secondary);
+    color: var(--color-text-secondary);
+    position: relative;
+    padding:17px 14px 10px 30px;
+    border-radius: 7px;
+    background-color: rgba(0, 0, 0, 0.7);
+    margin: 22px 15px 27px;
+    text-align: left;
+    font-size: 0.85em;
+}
+.crea-orga-footer i {
+    position: absolute;
+    top:7px;
+    left:7px;
+    color: var(--color-primary);
+}
+.crea-orga-footer i.fa-info-circle:hover {
+    transform: scale(1.2);
+}
+
+/***** 📌 Liens sur les titres et images 📌 *****/
+.crea-orga-card a {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
+.crea-orga-card a:hover h3 {
+    text-decoration: underline;
+}
+
+/***** 🏆 TITRE DANS LA CARTE 🏆 *****/
+.crea-orga-card h3 {
+    color: var(--color-titre-enigme);
+    font-size: 1.6rem;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+}
+
+.liste-enigmes-associees {
+    max-height: 120px; /* Ajuste cette valeur selon la hauteur souhaitée */
+    overflow-y: auto; /* Ajoute un scroll si nécessaire */
+    padding: 5px;
+    list-style: none;
+    text-align: center;
+}
+
+/* ✅ Titres des énigmes */
+.liste-enigmes-associees li {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.2rem;
+    font-weight: bold;
+    text-align: center;
+    color: var(--color-titre-enigme);
+    margin-bottom: 8px;
+}
+
+
+/***** 📌 Correction de la taille des images 📌 *****/
+.crea-orga-card img {
+    width: 100%; /* 🔹 S'assurer que l'image occupe toute la largeur du conteneur */
+    max-width: 180px; /* 🔹 Uniformiser la taille max pour éviter les différences */
+    height: 180px; /* 🔹 Fixer la hauteur pour éviter les variations */
+    object-fit: cover; /* 🔹 S’assurer que l’image est bien cadrée */
+    border-radius: 5px; /* 🔹 Garder un aspect homogène */
+}
+
+/***** 📌 Correction de l'espacement des cartes 📌 *****/
+.crea-orga-card-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+/***** 🔹 Conteneur du bouton Validation 🔹 *****/
+.validation-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    text-align: center;
+}
+
+/***** 🔲 Bouton Validation (Actif/Inactif) 🔲 *****/
+
+
+/***** 🚫 Bouton désactivé (Visuel renforcé) 🚫 *****/
+.crea-orga-row.validation .bouton-secondaire.no-click {
+    background: #555; /* 🔹 Fond plus foncé */
+    opacity: 0.7;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/***** 🔒 Icône cadenas pour le bouton verrouillé 🔒 *****/
+.crea-orga-row.validation .bouton-secondaire.no-click i {
+    color: #bbb; /* Icône plus clair pour bien marquer le verrouillage */
+}
+
+/***** ❓ Message d'explication sous le bouton ❓ *****/
+.validation-message {
+    font-size: 0.9rem;
+    color: #bbb;
+    font-style: italic;
+}
+
+/***** ⚠️ ÉTATS VISUELS ⚠️ *****/
+.crea-orga-card.etat-existant {
+    border: 2px solid var(--color-primary);
+    box-shadow: 0px 4px 12px rgba(255, 215, 0, 0.5);
+}
+
+.crea-orga-card.etat-a-creer {
+    border: 2px dashed var(--color-gris-3);
+    filter: grayscale(100%);
+}
+
+.crea-orga-card.etat-verrouille {
+    position: relative;
+    filter: grayscale(100%);
+}
+
+/***** ⚠️ Carte Validation (Verrouillée) ⚠️ *****/
+.etat-verrouille .overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    text-align: center;
+    gap: 10px;
+}
+
+.etat-verrouille .overlay i {
+    font-size: 3rem;
+    opacity: 0.8;
+}
+
+.certification-container {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    background: rgba(255, 215, 0, 0.1); /* Légère mise en avant */
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    margin-bottom: 15px;
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-primary);
+}
+.certification-container input:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+.certification-container input[type="checkbox"] {
+    transform: scale(1.2);
+    margin-top: 4px;
+}
+
+.certification-container label {
+    cursor: pointer;
+}
+
+.envoyer-demande:disabled {
+    background: var(--color-gris-3);
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+
+
+/***** 📱 RESPONSIVE 📱 *****/
+@media (max-width: 1024px) {
+    .crea-orga-section {
+        width: 30%; /* 🔹 Sur tablette, même comportement */
+    }
+
+    .crea-orga-section.validation {
+        width: 30%;
+    }
+}
+
+@media (max-width: 768px) {
+    .crea-orga-container {
+        flex-direction: column;
+    }
+
+    .crea-orga-row {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .crea-orga-section {
+        width: 100%; /* 🔹 En mobile, une carte par ligne */
+    }
+}
+
+/* ==========================================================
+📌 Grille des Tuiles
+========================================================== */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* Desktop : 3 colonnes */
+    gap: 25px;
+    margin-top: 20px;
+}
+.dashboard-card {
+    background: rgba(139, 0, 0, 0.13);
+    color: var(--color-text-primary);
+    padding: 20px;
+    border-radius: 10px;
+    text-decoration: none;
+    transition: var(--transition-fast);
+    border: 1px solid rgba(139, 0, 0, 0.5);
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    min-height: 250px; /* Ajuste la hauteur minimale selon ton design */
+    height: 100%; /* Assure que toutes les cartes ont la même hauteur */
+    position: relative;
+}
+
+.dashboard-card:hover {
+    background: rgba(225, 169, 95, 0.3);
+}
+.dashboard-card-header {
+    position: relative;
+    text-align: center;
+}
+
+.dashboard-card-header i {
+    position: absolute;
+    font-size: 18px; /* Taille ajustée pour être discrète */
+    left: 0px;
+    top: 4px;
+    width: 28px; /* Diamètre du cercle */
+    height: 28px;
+    line-height: 28px;
+    text-align: center;
+    background-color: var(--color-primary); /* Couleur du cercle */
+    color: var(--color-background); /* Couleur de l'icône */
+    border-radius: 50%; /* Rend le fond circulaire */
+    box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.3); /* Ombre légère */
+}
+.dashboard-card .icon {
+    font-size: 24px;
+    display: block;
+    margin-bottom: 10px;
+    opacity: 0.8;
+}
+/* listes */
+.dashboard-card ul li {
+    list-style: none;
+    text-align: left;
+}
+/* tables */
+.dashboard-card table {
+    width: 100%;
+    border-collapse: collapse;
+    border : 0 transparent;
+}
+
+.dashboard-card table tr,  .stats-table tr td{
+    border: 0 solid transparent;
+}
+
+.dashboard-card table td {
+    text-align: left;
+    padding: 8px;
+    font-weight: bold;
+}
+/* images */
+.image-container {
+    position: relative; /* Permet de positionner l'overlay */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    overflow: hidden;
+    height: 220px; /* Fixer une hauteur pour éviter l’expansion */
+}
+
+.dashboard-logo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Ajuste l’image pour occuper tout l’espace sans déformation */
+}
+
+/* 🔥 Overlay du nombre de chasses */
+.nb-chasses-overlay {
+    position: absolute;
+    bottom: 10px; /* Place le texte en bas de l'image */
+    left: 50%;
+    transform: translateX(-50%); /* Centre horizontalement */
+    background: rgba(11, 19, 43, 0.8); /* 🎭 Fond semi-transparent (color-background) */
+    color: var(--color-primary); /* 🟡 Jaune or */
+    padding: 6px 12px;
+    border-radius: 5px;
+    font-size: 14px;
+    font-weight: bold;
+    text-align: center;
+}
+
+/* Tuile Paiment Points (organisateurs) */
+.dashboard-card.points-card {
+    text-align: center;
+}
+.dashboard-card.points-card p {
+    margin-bottom: 15px;
+}
+.dashboard-card.points-card p.vos-points {
+    border-bottom: 1px solid var(--color-primary);
+    padding-bottom: 10px;
+}
+.dashboard-card.points-card label {
+    font-size: 18px;
+}
+.dashboard-card input {
+    border: 1px solid var(--color-gris-3);
+    background-color: rgba(255, 255, 255, 0.1);
+    color:var(--color-secondary);
+    border-radius: 5px;
+    width: 80%;
+    margin-top:10px;
+}
+
+/* tuile Taux de Conversion admin */
+/* 📌 Overlay pour bloquer la tuile par défaut */
+.overlay-taux {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5); /* Assombrissement */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+}
+.message-bloque {
+    background: rgba(255, 0, 0, 0.8); /* Fond rouge semi-transparent */
+    color: #fff;
+    font-size: 14px;
+    padding: 8px 12px;
+    border-radius: 5px;
+    box-shadow: 0px 0px 8px rgba(255, 0, 0, 0.5);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    max-width: 80%;
+}
+/* 📌 Bouton "Modifier" centré */
+.overlay-taux button {
+    background: var(--color-secondary);
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-primary);
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.overlay-taux button:hover {
+    background: var(--color-primary);
+    color: #000;
+    transform: scale(1.05);
+}
+/* tuile gestion des points */
+/* 📌 Ligne d'entrée utilisateur + action */
+.gestion-points-ligne {
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+#type-modification {
+    width: 40px;
+}
+#suggestions-list li{
+    color: var(--color-text-secondary);;
+}
+/* 📌 Largeur adaptée aux éléments */
+.gestion-points-ligne input,
+.gestion-points-ligne select {
+    flex: 1;
+    padding: 5px;
+}
+
+/* 📌 Bouton d'envoi compact */
+.gestion-points-ligne button {
+    padding: 6px 10px;
+    font-size: 16px;
+}
+
+
+/* Tablette : 2 colonnes */
+@media (max-width: 1024px) {
+    .dashboard-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+
+/* FIN TUILES EN DESKTOP */
+
+/* Mobile : 1 colonne */
+@media (max-width: 768px) {
+    .dashboard-grid {
+        grid-template-columns: repeat(1, 1fr);
+    }
+    .image-container {
+        height: 260px;
+    }
+}
+
+/* ==========================================================
+📌 Page adresse Woocommerce
+========================================================== */
+
+.woocommerce header, .woocommerce thead, .woocommerce h2 {
+    background-color: transparent !important;
+}
+.woocommerce h2 {
+    font-size: 1.6rem;
+}

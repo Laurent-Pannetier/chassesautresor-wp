@@ -1,0 +1,748 @@
+
+/* 📋 Blocs */
+
+  /* ✨ Bloc élgégant */
+  
+
+/* 🎛️ Boutons */
+
+  /* 🔘 Bouton global */
+  /* 🚀 Bouton CTA */
+  /* 🎯 Bouton secondaire */
+  /* ➕ Bouton d’ajout */
+  /* 📖 Bouton "Lire plus" */
+  /* 🔙 Bouton retour aux chasses */
+
+
+/* 🏷️ Étiquettes */
+
+  /* 🏷️ Étiquette étape */
+  /* 🏷️ Étiquettes Métas */
+
+
+/* 🏷️ Badges */
+
+  /* 🟢 Badge rond */
+  /* 🏷️ Badges de statut */
+  /* 🎁 Badge récompense */
+
+
+/* ✨ ICÔNES SVG  */
+
+
+/* 🏷Séparateurs */
+
+  /* 🧭 Séparateur avec icône */
+  /* 🧭 Séparateur 1 */
+  /* 🧭 Séparateur 2 */
+
+
+/* 📝 Formulaires */
+
+  /* 📩 Formulaire de contact organisateur */
+ 
+
+/* 🧩 Composants */
+
+  /* 📊 Barre de progression */
+  /* ✨ Icônes universelles */
+  /* 🧩 Compte à rebours */
+  /* 📡 Encodage morse visuel */
+  /* 🧩 Accordéon générique */
+  /* 🔘 Effet pulsation */
+  /* 🚫 No-click */
+  /* ✅ Message succès */
+  /* 🖼️ Icones SVG */
+
+
+/* ==================================================
+   📋 BLOCS
+   ================================================== */
+/* ==========  ✨ Bloc élgégant ====== */
+
+.bloc-elegant p {
+    margin:0.8rem 0;
+}
+.bloc-elegant ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.bloc-elegant li {
+  position: relative;
+  padding-left: 1.5rem;
+  margin-bottom: 0.6rem;
+}
+
+.bloc-elegant li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.4rem;
+  width: 0.6rem;
+  height: 0.6rem;
+  background-color: var(--color-primary, #FFD700); /* variable ou fallback */
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--color-background, #0B132B);
+}
+
+
+/* ==================================================
+   🎛️ BOUTONS
+   ================================================== */
+
+/* ========== 🔘 BOUTON GLOBAL ========== */
+
+button,
+.btn-lire-plus,
+.bouton-retour {
+  background-color: transparent;
+  font-family: var(--font-main);
+  font-size: 16px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: none;
+  text-decoration: none;
+  transition: background-color var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+
+/* ========== 🚀 BOUTON CTA ========== */
+
+.bouton-cta {
+    display: inline-block;
+    padding: 10px 15px;
+    background-color: var(--color-background-button);
+    color: var(--color-text-primary);
+    border-radius: 5px;
+    text-decoration: none;
+    font-weight: bold;
+    margin-top: 10px;
+    transition: var(--transition-medium);
+    text-align: center;
+     width: fit-content;
+}
+.bouton-cta:hover {
+    background-color: var(--color-secondary);
+}
+@media (max-width: 768px) {
+    .bouton-cta {
+        padding: 8px 13px;
+    }
+}
+@media (max-width: 480px) {
+    .bouton-cta {
+        padding: 6px 10px;
+    }
+}
+
+/* ========== 🎯 BOUTON SECONDAIRE ========== */
+
+.bouton-secondaire {
+    background: var(--color-secondary); /* Orange doré */
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-primary);
+    transition: background 0.3s ease, transform 0.2s ease;
+    padding: 10px 15px;
+    border-radius: 3px;
+    margin:6px 0;
+    display: inline-block;
+    text-align: center;
+}
+
+.bouton-secondaire:hover {
+    background: var(--color-primary);
+    color: #000;
+    transform: scale(1.05);
+}
+.bouton-secondaire.no-click {
+    background: var(--color-gris-3);
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 5px;
+    font-size: 1rem;
+    cursor: pointer;
+    text-align: center;
+    width: fit-content;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.bouton-secondaire:disabled {
+    background: var(--color-gris-3);
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+
+/* ========== ➕ BOUTON D’AJOUT ========== */
+
+.ajout-link {
+    display: flex !important;
+    align-items: center; /* Centre verticalement l'icône et le texte */
+    justify-content: center; /* Centre horizontalement */
+    gap: 8px; /* Espacement entre l'icône et le texte */
+    padding: 8px 12px;
+    text-decoration: none;
+    font-size: 1rem;
+    font-weight: bold;
+    color: var(--color-primary);
+    background: var(--color-background);
+    border: 2px solid var(--color-primary);
+    border-radius: 8px;
+    transition: all 0.3s ease-in-out;
+}
+
+.ajout-link i {
+    font-size: 1.2rem;
+    display: flex; /* Évite les désalignements de FontAwesome */
+    align-items: center;
+}
+
+.ajout-link span {
+    display: flex; /* Force le texte à bien s'aligner */
+    align-items: center;
+}
+
+.ajout-link:hover {
+    background: var(--color-primary);
+    color: var(--color-background);
+    transform: scale(1.05);
+}
+
+
+/* ========== 📖 BOUTON "LIRE PLUS" ========== */
+
+.btn-lire-plus {
+  background-color: #880000;
+  color: #F5F5DC;
+  margin-top: 10px;
+}
+
+.btn-lire-plus:hover {
+  background-color: #A9A9A9;
+  color: #0B132B;
+}
+
+@media (max-width: 768px) {
+  .btn-lire-plus {
+    width: 100%;
+  }
+}
+
+
+/* ========== 🔙 BOUTON RETOUR AUX CHASSES ========== */
+
+.retour-aux-chasses {
+  text-align: center;
+  margin: 40px 0 20px;
+}
+
+.bouton-retour {
+  background-color: #880000;
+  color: #F5F5DC;
+  padding: 12px 24px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.bouton-retour:hover {
+  background-color: #A9A9A9;
+  color: #0B132B;
+  transform: translateY(-3px);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+}
+
+.bouton-retour:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+@media (max-width: 480px) {
+  .bouton-retour {
+    width: 100%;
+    font-size: 14px;
+    padding: 10px;
+  }
+}
+
+
+
+/* ==================================================
+   🏷️ ÉTIQUETTES
+   ================================================== */
+
+/* ========== 🏷️ ÉTIQUETTE ÉTAPE ========== */
+
+.etiquette-etape {
+  display: inline-block;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  background-color: rgba(255, 255, 255, 0.05);
+  color: var(--color-accent); /* ou var(--color-secondary) */
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+  letter-spacing: 0.05em;
+  font-style: normal;
+}
+
+
+/* ========== 🏷️ ÉTIQUETTES Métas ========== */
+.bloc-metas-inline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  margin: 0.4rem 0;
+  font-size: 0.95rem;
+  opacity: 0.9;
+}
+.meta-etiquette {
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+  background: rgba(255,255,255,0.05);
+  padding: 0.3em 0.8em;
+  border-radius: 1.2em;
+  white-space: nowrap;
+}
+.meta-etiquette svg {
+  margin-bottom: -5px;
+}
+.meta-etiquette span {
+  font-weight: 600;
+}
+.meta-etiquette strong {
+  font-weight: 600;
+}
+@media (max-width: 480px) {
+    .bloc-metas-inline {
+        gap:0.8rem;
+    }
+    .meta-etiquette {
+        font-size:85%;
+    }
+}
+
+
+
+
+/* ==================================================
+   🏷️ BADGES
+   ================================================== */
+
+/* ========== 🟢 BADGE ROND ========== */
+
+.badge-rond {
+    margin: 0px 0px 0px 0px;
+    padding: 2px 0;
+    background-color: var(--color-primary); /* Jaune or */
+    transition: background 0.5s;
+    border-radius: 200px 200px 200px 200px;
+    font-size : 12px;
+}
+
+
+/* ========== 🏷️ BADGES DE STATUT ========== */
+
+.badge-statut {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  padding: 4px 8px;
+  font-size: 0.75rem;
+  font-weight: bold;
+  border-radius: 999px;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  line-height: 1;
+  z-index: 1;
+}
+
+/* Couleurs par statut (alignées sur le nuancier) */
+.badge-statut.statut-en_cours {
+  background-color: var(--color-editor-success);
+}
+
+.badge-statut.statut-payante {
+  background-color: var(--color-primary);
+  color: var(--color-text-fond-clair);
+}
+
+.badge-statut.statut-a_venir {
+  background-color: var(--color-editor-placeholder);
+}
+
+.badge-statut.statut-termine {
+  background-color: var(--color-text-secondary);
+}
+
+.badge-statut.statut-revision {
+  background-color: var(--color-editor-error);
+}
+.statut-banner {
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 0.85rem;
+  font-weight: bold;
+  text-align: center;
+  color: #fff;
+  background-color: var(--color-editor-error);
+  border-radius: 4px 4px 0 0;
+  margin-bottom: 0.5rem;
+}
+
+
+
+
+/* ========== 🎁 BADGE RÉCOMPENSE ========== */
+
+.badge-recompense {
+  margin-left: 1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.4rem;
+  background-color: rgba(255, 255, 255, 0.05);
+  color: var(--color-text-primary);
+}
+
+.badge-recompense.avec-recompense {
+  color: var(--color-primary);
+}
+
+.badge-recompense.sans-recompense {
+  color: var(--color-gris-3);
+}
+
+
+
+/* ========== ✨ ICÔNES SVG ========= */
+.svg-icone {
+    width: 32px;
+}
+.svg-xsmall svg {
+  width: 20px;
+  vertical-align: -4px;
+  color: var(--color-gris-3);
+}
+
+
+/* ==================================================
+   🧭 SÉPARATEURS 
+   ================================================== */
+
+/* ========== 🧭 SÉPARATEUR AVEC ICÔNE ========== */
+
+.separateur-avec-icone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin: 3rem 0;
+  opacity: 0.6;
+}
+.separateur-avec-icone .icone-svg {
+  width: 32px;
+  height: 32px;
+  background-image: url('data:image/svg+xml;utf8,<svg fill="FFD700" ...>');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+.trait-gauche,
+.trait-droite {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--color-primary));
+}
+
+.trait-droite {
+  background: linear-gradient(to left, transparent, var(--color-primary));
+}
+
+.icone-svg img {
+  width: 32px;
+  height: 32px;
+  display: block;
+  filter: brightness(1.2);
+}
+
+/* ========== 🧭 SÉPARATEUR 1 ========== */
+.separateur-1 {
+  border: none;
+  border-top: 1px dashed var(--color-accent);
+  margin: 2rem auto;
+  max-width: 600px;
+  opacity: 0.4;
+}
+
+
+/* ========== 🧭 SÉPARATEUR 2 ========== */
+.separateur-2 {
+  height: 2px;
+  width: 40px;
+  background-color: var(--color-accent);
+  margin: 0.5rem 0 1.5rem;
+}
+
+
+/* ========== 🧭 SÉPARATEUR 3 ========== */
+.separateur-3 {
+  height: 1px;
+  width: 100%;
+  background-color: var(--color-text-primary);
+  opacity: 0.25;
+  margin:0.5em 0 0;
+}
+
+/* ========== 📱 RESPONSIVE ========== */
+@media (max-width: 480px) {
+    .separateur-2 {
+        margin: 0 auto;
+    }
+}
+
+
+
+/* ==================================================
+   📝 FORMULAIRES
+   ================================================== */
+
+/* ========== 📩 FORMULAIRE DE CONTACT ORGANISATEUR ========== */
+
+.formulaire-contact-wrapper {
+  margin:2rem auto;
+  max-width: 600px;
+}
+.formulaire-contact-wrapper h1 {
+    margin-bottom: 0.8rem;
+}
+body.single-organisateur .formulaire-contact-wrapper .wpforms-field-label {
+    color: var(--color-text-primary);
+}
+@media (max-width: 480px) {
+  .formulaire-contact-wrapper {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+#wpforms-8792-field_6-container {
+    display:none !important;
+}
+
+.champ-attention {
+  border: 2px dashed #D93025 !important;
+  animation: pulse-attention 1.2s ease-in-out infinite;
+  background-color: #fff5f5;
+  border-radius: 8px;
+}
+
+@keyframes pulse-attention {
+  0%   { background-color: #fff5f5; }
+  50%  { background-color: #ffecec; }
+  100% { background-color: #fff5f5; }
+}
+
+
+
+
+
+/* ==================================================
+   🎛️ COMPOSANTS
+   ================================================== */
+
+
+/* ========== 📊 BARRE DE PROGRESSION ========== */
+
+.progression-container {
+  background-color: #A9A9A9;
+  border-radius: 10px;
+  height: 8px;
+  overflow: hidden;
+  margin-top: 5px;
+}
+
+.progression-bar {
+  background-color: #228B22;
+  height: 100%;
+  border-radius: 10px;
+  transition: width 0.4s ease;
+}
+
+/* ========== 🧩 COMPTE À REBOURS ========== */
+
+/* Compte à rebours + message */
+.message-deblocage, .countdown-container {
+    background-color: rgba(0, 0, 0, 0.6);
+    padding: 8px 16px;
+    border-radius: 12px;
+    margin-top: 8px;
+    margin-bottom: 15px;
+}
+
+/* 📝 Message sous le cadenas */
+.message-deblocage {
+    background: rgba(0, 0, 0, 0.6);
+    color: #F5F5DC;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-size: 1rem;
+    max-width: 90%;
+}
+/* ⏳ Bloc du compte à rebours */
+.countdown-container {
+    background: rgba(0, 0, 0, 0.7);
+    color: #FFD700;
+    font-weight: bold;
+    font-size: 1.2rem;
+    padding: 10px 20px;
+    margin-top: 15px;
+    border-radius: 8px;
+    text-align: center;
+}
+
+@media (max-width: 768px) {
+    .countdown-container { font-size: 1rem; }
+}
+
+
+/* ========== 📡 ENCODAGE MORSE VISUEL ========== */
+
+.ligne-morse {
+  position: relative;
+  height: 2px;
+  background-color: var(--color-editor-border);
+  opacity: 0.2;
+  overflow: hidden;
+}
+
+.morse-wrapper {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 0.4rem;
+  padding: 0 0.6rem; /* ✅ un peu plus de marge latérale */
+  height: 2px;
+  align-items: center;
+  background-color: var(--color-editor-background);
+  z-index: 1;
+  box-shadow: 0 0 0 1px var(--color-editor-background); /* ✅ masque 1px de plus autour */
+  white-space: nowrap;
+  overflow: hidden;
+  max-width: 90%;
+}
+
+
+.morse-wrapper .point,
+.morse-wrapper .tiret {
+  display: inline-block;
+  height: 2px;
+  background-color: var(--color-editor-heading);
+}
+
+.morse-wrapper .point {
+  width: 6px;
+}
+
+.morse-wrapper .tiret {
+  width: 16px;
+}
+
+
+/* ========== 🧩 ACCORDÉON GÉNÉRIQUE – OUVERTURE / FERMETURE DYNAMIQUE ========== */
+
+/* Comportement glissant de l’accordéon */
+.accordeon-contenu {
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height 0.4s ease;
+}
+
+/* Ouverture basée sur aria-expanded */
+.accordeon-toggle[aria-expanded="true"] + .accordeon-contenu {
+  max-height: 1000px; /* valeur arbitrairement grande */
+}
+
+/* Bouton déclencheur */
+.accordeon-toggle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  background: none;
+  border: none;
+  font-size: 1rem;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  color: var(--color-editor-heading);
+  transition: color 0.2s ease;
+}
+
+/* Hover/focus pour accessibilité */
+.accordeon-toggle:hover,
+.accordeon-toggle:focus {
+  color: var(--color-editor-accent);
+}
+
+/* Animation de l’icône chevron */
+.accordeon-toggle i.fa-chevron-down {
+  transition: transform 0.3s ease;
+}
+
+.accordeon-toggle[aria-expanded="false"] i.fa-chevron-down {
+  transform: rotate(0deg);
+}
+
+.accordeon-toggle[aria-expanded="true"] i.fa-chevron-down {
+  transform: rotate(180deg);
+}
+
+
+/* ========== 🔘 EFFET PULSATION ========== */
+
+/* EFFET PULSATION */
+@keyframes pulsePromo {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.1); opacity: 0.9; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.pulsation {
+    animation: pulsePromo 1.5s infinite ease-in-out;
+}
+
+
+/* ========== 🚫 NO-CLICK ========== */
+
+.no-click {
+    pointer-events: none;
+}
+
+
+/* ========== ✅ MESSAGE SUCCÈS ========== */
+
+.message-succes {
+    text-align: center;
+    font-weight: bold;
+    color: green;
+    font-size: 16px;
+    margin-top: 15px;
+}
+
+/* ========== 🖼️ ICONES SVG ========== */
+.icone-aces-casino, .icone-compass-rose {
+  color: var(--color-text-primary);
+  width: 60px;
+  height: 60px;
+  display: inline-block;
+}
+

@@ -1,0 +1,777 @@
+/* 👤 Header organisateur */
+
+  /* 🧱 Structure du header */
+  /* 📐 Classes générales header */
+  /* 🔠 Typographie spécifique au header */
+  /* 📐 Colonne logo & colonne texte */
+  /* 🖼 Logo cliquable */
+  /* 🧭 Menu de navigation */
+  /* 🧭 Modal bienvenue */
+  
+
+  /* 📱 Responsive – Tablettes (≤ 768px) */
+  /* 📱 Responsive – Tablettes (600px à 768px) */
+  /* 📱 Bascule en colonne (≤ 600px) */
+  /* 📱 Responsive – Mobile (≤ 480px) */
+
+/* 🧾 Présentation organisateur */
+
+  /* 🌐 Liens publics organisateur */
+  /* 🧾 Description organisateur */
+  /* 📱 Responsive */
+
+/* 🧭 Devenir organisateur */
+
+  /* 🎯 Axes d’engagement */
+  /* 🧩 Blocs étapes de fonctionnement */
+  /* 📱 Responsive */
+
+
+
+
+/* ==================================================
+   👤 HEADER ORGANISATEUR
+   ================================================== */
+
+/* ========== 🧱 STRUCTURE DU HEADER ========== */
+
+.header-organisateur {
+    border-radius: 0;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    box-sizing: border-box;
+    position: relative;
+    padding: 0.6rem 0 0;
+    background-color: rgba(255, 255, 255, 0.015);
+
+}
+.bouton-edition-attention {
+  animation: bouton-pulse 1.2s ease-in-out infinite;
+  background: var(--color-text-primary, #fff4d4) !important;
+
+}
+.bouton-edition-attention i{
+     color:var(--color-text-fond-clair, #fff4d4) ;
+}
+
+@keyframes bouton-pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+.cta-chasse {
+  background: var(--color-text-primary, #fff4d4);
+  border-left: 4px solid var(--color-secondary);
+  padding: 1.2rem;
+  margin: 2rem auto;
+  max-width: 700px;
+  text-align: center;
+  border-radius: 6px;
+  font-size: 1rem;
+  color: var(--color-text-fond-clair);
+}
+
+
+/* ========== 🔠 TYPOGRAPHIE SPÉCIFIQUE AU HEADER ========== */
+
+/* Titre principal */
+.header-organisateur__nom {
+  font-size: 1.6rem;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+  margin: 0;
+}
+.header-organisateur__nom.titre-sans-slogan {
+  font-size: 2.2rem;
+}
+
+/* Slogan */
+body .header-organisateur__slogan {
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.2rem;
+  font-weight: 300;
+  font-style: italic;
+  line-height: 1.3;
+  opacity: 0.95;
+  margin: 0.2rem 0;
+  max-width: 60ch;
+}
+
+
+/* ========== 📐 COLONNE LOGO & COLONNE TEXTE ========== */
+
+.conteneur-organisateur {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+.conteneur-organisateur .colonne-logo {
+  flex: 0 0 auto;
+  width: 100px;
+  max-width: 100px;
+}
+.conteneur-organisateur .colonne-texte {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.4rem;
+  min-width: 0;
+}
+.conteneur-organisateur .champ-titre .champ-input-wrapper {
+    margin-top:1rem;
+}
+
+/* ========== 🖼 LOGO CLIQUABLE ========== */
+
+
+.header-organisateur__logo img {
+    width: 100px;
+}
+
+
+/* ========== 🧭 MENU DE NAVIGATION ========== */
+
+.header-organisateur__menu-bar {
+  background-color: rgba(255, 255, 255, 0.03);
+  padding: 0.4rem 1.5rem;
+  margin-top: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+
+}
+.header-organisateur__bas {
+  display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 2rem;
+    width: 100%;
+}
+.header-organisateur__menu {
+    margin-top: 0; /* ou laisse vide si inutilisé ailleurs */
+}
+.header-organisateur__menu ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.header-organisateur__menu a {
+    color: var(--color-text-primary);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.header-organisateur__menu .active a {
+    border-bottom: 2px solid var(--color-primary);
+}
+
+.header-organisateur__quitter {
+    margin-left: auto;
+}
+/* 🎯 MENU SOUS LE TITRE */
+.header-organisateur__menu--sous-titre {
+    margin-top: 0;
+}
+
+.header-organisateur__menu--sous-titre ul {
+    justify-content: center;
+    gap: 2.5rem;
+}
+
+/* 🔁 Animation de soulignement fluide au hover */
+.header-organisateur__menu--sous-titre a {
+    font-size: 1rem;
+    font-weight: 500;
+    position: relative;
+    padding-bottom: 0.2rem;
+    transition: color 0.2s ease;
+}
+
+.header-organisateur__menu--sous-titre a::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0%;
+  height: 2px;
+  background-color: var(--color-primary);
+  transition: width 0.3s ease;
+}
+
+.header-organisateur__menu--sous-titre a:hover::after {
+  width: 100%;
+}
+
+.header-organisateur__menu--sous-titre .active a::after {
+  width: 100%;
+}
+
+/* ========== 🧭 MODAL BIENVENUE ========== */
+
+.modal-bienvenue {
+  position: fixed;
+  z-index: 9999;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.65);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal-contenu {
+  position: relative;
+  background: #fff;
+  color: var(--color-text-fond-clair);
+  padding: 2.5rem 2rem;
+  border-radius: 12px;
+  max-width: 600px;
+  width: 90%;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  font-size: 1rem;
+  line-height: 1.6;
+}
+.modal-contenu h1 {
+  text-align: center;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--color-accent, #ffc400);
+  margin-bottom: 0.5rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.modal-contenu h2 {
+  text-align: center;
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--color-text-fond-clair);
+  margin-bottom: 1.2rem;
+}
+.modal-contenu p {
+  margin: 1rem 0;
+}
+
+.modal-contenu strong {
+  font-weight: 600;
+}
+
+.modal-contenu svg,
+.modal-contenu button.header-bouton-edition {
+  vertical-align: middle;
+  margin-right: 0.4em;
+  margin-top: -0.15em;
+}
+
+.modal-close-top {
+  position: absolute;
+  top: 0.8rem;
+  right: 0.8rem;
+  font-size: 1.2rem;
+  background: none;
+  border: none;
+  color: var(--color-text-fond-clair);
+  cursor: pointer;
+  width: 2rem;
+  height: 2rem;
+  line-height: 2rem;
+  text-align: center;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.modal-close-top:hover {
+  color: #fff;
+  background: var(--color-accent, #ffc400);
+  border-color: var(--color-accent, #ffc400);
+}
+
+.boutons-modal {
+  margin-top: 2rem;
+  text-align: center;
+}
+
+.boutons-modal button {
+  padding: 0.6rem 1.4rem;
+  font-size: 1rem;
+  border-radius: 6px;
+  border: 1px solid var(--color-text-fond-clair);
+  background: none;
+  color: var(--color-text-fond-clair);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.boutons-modal button:hover {
+  background-color: var(--color-accent, #ffc400);
+  border-color: var(--color-accent, #ffc400);
+  color: #fff;
+}
+.modal-contenu button.header-bouton-edition {
+    color: #ffffff;
+    background-color: var(--color-background, #ffc400);;
+    border-color: var(--color-background, #ffc400);;
+}
+.modal-tips {
+  margin-top: 2rem;
+  padding-top: 1.2rem;
+  border-top: 1px dashed var(--color-text-fond-clair);
+  font-size: 0.95rem;
+  opacity: 0.67;
+}
+.modal-tips p {
+  margin-bottom: 1rem;
+}
+
+@media screen and (max-width: 480px) {
+  .modal-contenu {
+    padding: 1.5rem;
+    font-size: 0.95rem;
+  }
+
+  .modal-contenu h1 {
+    font-size: 1.2rem;
+  }
+
+  .modal-contenu h2 {
+    font-size: 1.1rem;
+  }
+}
+    
+
+
+/* ========== 📱 RESPONSIVE – TABLETTES (≤ 768PX) ========== */
+
+@media (max-width: 768px) {
+    .conteneur-organisateur {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+    .champ-organisateur .champ-affichage {
+        position: relative;
+    }
+     /* 🔹 Boutons ✏️ */
+    .champ-affichage-titre .champ-modifier, .champ-affichage-slogan .champ-modifier {
+        margin-left: -0.3rem;
+        /* position: absolute;*/
+        right: -8px;
+        top: 0
+    }
+    /* 🔹 Titre sans Slogan */
+    .header-organisateur__nom.titre-sans-slogan {
+        margin-bottom: 0.7rem;
+    }
+    .colonne-logo .champ-modifier{
+        position: relative;
+    }
+    .champ-organisateur .champ-modifier {
+        font-size: 0.85rem;
+    }
+    .colonne-logo {
+        max-width: none;
+        margin: 0 auto;
+    }
+    .header-organisateur__menu ul {
+        justify-content: center;
+    }
+
+  .colonne-texte {
+    align-items: center;
+    text-align: center;
+    margin: 0 auto;
+  }
+    .header-organisateur__nom {
+        font-size: 1.2rem;
+    }
+
+  .header-organisateur__slogan {
+    font-size: 1rem;
+    margin-bottom: 0.6rem;
+  }
+}
+
+
+/* ========== 📱 RESPONSIVE – TABLETTES (600PX À 768PX) ========== */
+
+@media (min-width: 600px) and (max-width: 768px) {
+    .conteneur-organisateur {
+        flex-direction: row;
+        align-items: center;
+        gap: 1.5rem;
+    }
+    .colonne-logo {
+        width: auto;
+        max-width: 120px;
+        flex-shrink: 0;
+        margin: 0;
+    }
+
+  .colonne-texte {
+    flex: 1;
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .header-organisateur__nom {
+    font-size: 1.5rem;
+  }
+
+  .header-organisateur__slogan {
+    font-size: 1rem;
+  }
+
+  .header-organisateur__liens {
+    justify-content: flex-start;
+  }
+}
+
+
+/* ========== 📱 BASCULE EN COLONNE (≤ 600PX) ========== */
+
+@media (max-width: 600px) {
+    .conteneur-organisateur {
+        gap:1rem;
+    }
+    .champ-organisateur .champ-affichage {
+        justify-content: center;
+        text-align: center;
+        position: relative;
+    }
+}
+
+
+/* ========== 📱 RESPONSIVE – MOBILE (≤ 480PX) ========== */
+
+@media (max-width: 480px) {
+  .conteneur-organisateur {
+    gap: 0.2rem;
+  }
+  /* 🔹 Logo centré & redimensionné */
+  .colonne-logo {
+    width: 100%;
+    max-width: 120px;
+    margin: 0 auto;
+  }
+
+  .header-organisateur__logo {
+    text-align: center;
+    margin-bottom: 1rem;
+  }
+
+  .header-organisateur__logo .icone-modif {
+    top: 0.5rem;
+    right: 0.5rem;
+  }
+
+  /* 🔹 Titre sans Slogan */
+  .conteneur-organisateur .champ-titre .champ-edition {
+        padding-right: 0;
+    }
+  .header-organisateur__nom.titre-sans-slogan {
+    font-size: 1.1rem;
+    line-height: 1.3;
+    margin-bottom: 0.7rem;
+  }
+
+  .header-organisateur__slogan {
+    font-size: 0.95rem;
+    margin-bottom: 0.8rem;
+  }
+
+  .colonne-texte {
+    align-items: center;
+    margin: 0 auto;
+    text-align: center;
+  }
+
+  .header-organisateur__liens {
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 0.8rem;
+  }
+
+  .header-organisateur__liens a {
+    font-size: 0.9rem;
+  }
+    .header-organisateur__logo img {
+        box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+        border-radius: 0.5rem;
+        width: 70px;
+    }
+  /* 🔹 Champs de saisie */
+  .champ-edition,
+  .champ-organisateur .champ-edition {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .champ-organisateur .champ-input {
+    background-color: rgba(255, 255, 255, 0.04);
+  }
+
+  /* 🔹 Menu navigation */
+  .header-organisateur__menu {
+    margin-top: 0;
+  }
+
+  .header-organisateur__menu ul {
+    gap: 1rem;
+  }
+
+  .header-organisateur__menu a {
+    font-size: 0.9rem;
+  }
+
+  /* 🔹 Panneau latéral */
+  .ligne-lien-formulaire label {
+    padding-left: 0.2rem;
+  }
+
+  .panneau-lateral__actions {
+    text-align: center;
+  }
+}
+
+
+
+/* ==================================================
+   🧾 PRÉSENTATION ORGANISATEUR
+   ================================================== */
+
+/* ========== 🌐 LIENS PUBLICS ORGANISATEUR ========== */
+#presentation .champ-liens {
+    margin-bottom: 2rem;
+}
+body:not(.edition-active) #presentation .champ-liens.champ-vide {
+  display: none;
+}
+.bloc-liens-publics {
+  margin-bottom: 1rem;
+  justify-content: center;margin: 0;
+}
+
+.liste-liens-publics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.item-lien-public {
+  display: flex;
+}
+
+.lien-public {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  padding: 0.3em 0.8em;
+  border-radius: 1.5em;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font-size: 0.95rem;
+  text-decoration: none;
+  transition: background 0.2s ease;
+}
+
+.lien-public:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.lien-public i {
+  font-size: 1.1em;
+}
+.lien-public .texte-lien {
+    white-space: nowrap;
+}
+
+
+/* ========== 🧾 DESCRIPTION ORGANISATEUR ========== */
+
+section#presentation {
+    margin-top:1rem;
+}
+section#presentation.masque {
+    margin: 0;
+    padding: 0;
+}
+section#presentation.masque .champ-organisateur {
+    display: none;
+    margin:0;
+    padding: 0;
+}
+section#presentation h2 {
+    display: inline-block;
+    margin:0;
+}
+section#presentation .titre-presentation {
+  font-size: 1.8rem;
+  margin-bottom: 1.5rem;
+  position: relative;
+}
+
+
+/* ========== 📱 RESPONSIVE ========== */
+@media (max-width: 480px) {
+    .lien-public .texte-lien {
+        display: none;
+    }
+    section#presentation .titre-presentation {
+        justify-content: center;
+    }
+}
+
+
+
+/* ==================================================
+   🧭 DEVENIR ORGANISATEUR
+   ================================================== */
+
+/* ========== 🎯 AXES D’ENGAGEMENT ========== */
+.bloc-axes-engagt .wp-block-column{
+  padding: 2rem;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  transition: box-shadow 0.3s ease;
+  text-align: center;
+}
+.bloc-axes-engagt .wp-block-column:hover {
+   background-color: rgba(255, 255, 255, 0.02);
+  box-shadow: 0 0 8px rgba(255,255,255,0.05);
+  transition: all 0.3s ease;
+}
+
+
+.bloc-intro-fonctionnement {
+  margin: 3rem auto;
+  max-width: 800px;
+  text-align: center;
+  font-size: 1.1rem;
+  color: var(--color-text-primary);
+  opacity: 0.85;
+}
+
+
+/* ========== 🧩 BLOCS ÉTAPES FONCTIONNEMENT ========== */
+
+.bloc-etape {
+  position: relative;
+  background-color: rgba(255, 255, 255, 0.015);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 2rem;
+  margin-bottom: 3rem;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.bloc-etape::before {
+    content: '';
+    position: absolute;
+     top: -40px;
+  right: -20px;
+  width: 120px;
+  height: 120px;
+  opacity: 0.12; /* plus discret encore */
+    background-image: url(/wp-content/uploads/2025/compas-rose.svg);
+    background-size: contain;
+    background-repeat: no-repeat;
+    z-index: -10;
+}
+.bloc-etape ul.wp-block-list {
+    padding-left: 1rem;
+    margin-top: 0;
+}
+.bloc-bonus {
+  margin-top: 2.5rem;
+  padding-top: 3rem;
+  border-top: 1px dashed rgba(255, 255, 255, 0.08);
+  font-size: 0.95rem;
+  color: var(--color-text-primary);
+}
+.bloc-bonus h3 {
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+  color: var(--color-primary);
+}
+.bloc-bonus li {
+  margin-bottom: 0.75rem;
+}
+.bloc-bonus.has-icon-casino {
+  position: relative;
+}
+
+.bloc-bonus.has-icon-casino::before {
+  content: '';
+  position: absolute;
+  top: 10px;
+  right: -10px;
+  width: 60px;
+  height: 60px;
+  background: url('/wp-content/uploads/2025/aces-cartes.svg') no-repeat center;
+  background-size: contain;
+  opacity: 0.12;
+  pointer-events: none;
+  z-index: 0;
+}
+
+
+/* ========== 📱 RESPONSIVE ========== */
+
+@media (max-width: 768px) {
+    .separateur-avec-icone {
+        margin: 2.1rem 0;
+    }
+    .bloc-intro-fonctionnement {
+        font-size: 1rem;
+    }
+    .bloc-bonus {
+        margin-top: 1.7rem;
+        padding-top:2rem;
+    }
+    .bloc-bonus.has-icon-casino::before {
+        width: 50px;
+        height: 50px;
+    }
+}
+@media (max-width: 480px) {
+    .separateur-avec-icone {
+        margin: 1.5rem 0;
+    }
+    .bloc-intro-fonctionnement {
+        font-size: 0.95rem;
+    }
+    .bloc-bonus {
+        margin-top: 1rem;
+        padding-top: 1.2rem;
+    }
+    .bloc-bonus.has-icon-casino::before {
+        width: 40px;
+        height: 40px;
+    }
+}

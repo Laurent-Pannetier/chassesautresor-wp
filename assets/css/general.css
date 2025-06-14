@@ -1,0 +1,278 @@
+/* 🔤 Typographie */
+
+  /* 🔤 Police de caractères */
+  /* 🔠 H1 – Titre principal */
+  /* 🔡 H2 – Sous-titre de section */
+  /* 🔤 H3 – Intertitre / blocs */
+  /* 🎨 éléments HTML natifs */
+  /* 🎨 éléments HTML personnalisés */
+  /* 📱 Responsive */
+
+
+/* 🎨 Variables */
+
+  /* 🧱 Couleurs globales */
+  /* ✏️ Couleurs édition */
+  /* 🎞️ Transitions Globales */
+  
+
+/* 📸 MEDIAS */
+
+  /* 🔤 POLICE */
+
+
+/* ==================================================
+   🔤 TYPOGRAPHIE
+   ================================================== */
+/* ========== 🔤 POLICE DE CARACTÈRES ========== */
+
+:root {
+    --font-main: 'Poppins', sans-serif; /* Police principale */
+}
+   
+/* ========== 🔠 H1 – TITRE PRINCIPAL ========== */
+
+.page header.entry-header .entry-title, h1 {
+  font-family: 'Cinzel', serif;
+  font-weight: 700;
+  line-height: 1.3;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-primary);
+  font-size: 42px;
+}
+h1.h1-diff {/* variation couleur bronze, plus petite, centrée */
+  font-size: 36px;
+  text-align: center;
+  letter-spacing: 1px;
+  color: var(--color-accent);
+}
+@media (max-width: 1024px) {
+  h1, .entry-content h1 {
+    font-size: 36px;
+  }
+  h1.h1-diff {
+      font-size:30px;
+  }
+}
+@media (max-width: 768px) {
+  h1, .entry-content h1 {
+    font-size: 30px;
+  }
+  h1.h1-diff {
+      font-size:24px;
+  }
+}
+
+
+
+/* ========== 🔡 H2 – SOUS-TITRE DE SECTION ========== */
+
+h2, .entry-content h2 {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+  color: var(--color-titre-enigme); /* or vieilli */
+  line-height: 1.4;
+  margin-top: 2.5rem;
+  margin-bottom: 1rem;
+  font-size: 32px;
+}
+
+@media (max-width: 1024px) {
+  h2, .entry-content h2 {
+    font-size: 28px;
+  }
+}
+
+@media (max-width: 768px) {
+  h2, .entry-content h2 {
+    font-size: 24px;
+  }
+}
+
+
+/* ========== 🔤 H3 – INTERTITRE / BLOCS ========== */
+
+h3, .entry-content h3 {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 500;
+  color: var(--color-accent); /* bronze */
+  line-height: 1.4;
+  font-size: 24px;
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+}
+
+@media (max-width: 1024px) {
+  .page header.entry-header .entry-title {
+    font-size: 36px;
+  }
+  h3, .entry-content h3 {
+    font-size: 22px;
+  }
+}
+
+@media (max-width: 768px) {
+  .page header.entry-header .entry-title {
+    font-size: 30px;
+  }
+  h3, .entry-content h3 {
+    font-size: 20px;
+  }
+}
+
+
+/* ========== 🎨 ÉLÉMENTS HTML NATIFS ========== */
+
+body {
+  font-family: 'Poppins', sans-serif;
+  color: var(--color-text-primary);
+  background-color: var(--color-background); /* Bleu nuit (fond global) */
+}
+p {
+    margin-bottom: 0;
+}
+label {
+    color: var(--color-text-primary);
+}
+.ast-plain-container.ast-no-sidebar #primary {
+    margin-top: 0;
+}
+ul {
+    list-style: none;
+    margin: 0 0 1.5em 0;
+}
+ul li {
+    margin-bottom: 0.3rem;
+}
+figcaption, .figcaption {
+  font-size: 0.85rem;
+  opacity: 0.7;
+  margin-top: 0.5rem;
+  text-align: center;
+  font-style: italic;
+}
+a:hover {
+    color: unset;
+    opacity:0.98;
+}
+
+
+/* ========== 🎨 ÉLÉMENTS HTML PERSONNALISES ========== */
+
+.text-align-center {
+    text-align: center;
+}
+.txt-sous-titre {
+    font-size: 0.95rem;
+    opacity: 0.75;
+}
+.txt-small {
+    font-size: 89%;
+}
+.info-meta {
+
+  opacity: 0.8;
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  margin-bottom: 1rem;
+}
+body .w-150 {
+    width:150px;
+}
+body .w-175 {
+    width:175px;
+}
+span.champ-obligatoire {
+    color: var(--color-secondary);
+}
+
+/* ========== 📱 RESPONSIVE ========== */
+
+@media (max-width: 768px) {
+    address, blockquote, body, dd, dl, dt, fieldset, figure, h1, h2, h3, h4, h5, h6, hr, html, iframe, legend, li, ol, p, pre, textarea, ul  {
+        font-size:96%;
+    }
+}
+@media (max-width: 480px) {
+    address, blockquote, body, dd, dl, dt, fieldset, figure, h1, h2, h3, h4, h5, h6, hr, html, iframe, legend, li, ol, p, pre, textarea, ul {
+        font-size:93%;
+    }
+}
+
+
+
+/* ==================================================
+   🎨 VARIABLES
+   ================================================== */
+
+/* ========== 🧱 COULEURS GLOBALES ========== */
+
+:root {
+  --color-primary:            #FFD700;   /* 🟡 Couleur principale : jaune or */
+  --color-secondary:          #E1A95F;   /* 🟠 Couleur secondaire : lien */
+  --color-accent:             #CD7F32;   /* 🟤 Accent : bronze */
+
+  --color-text-primary:       #F5F5DC;   /* 📜 Texte principal : beige clair */
+  --color-text-secondary:     #555555;   /* 🎨 Texte secondaire : gris foncé */
+  --color-titre-enigme:       #E5C07B;   /* 🏆 Titre des énigmes : or vieilli */
+
+  --color-background:         #0B132B;   /* 🎭 Fond général */
+  --color-background-button:  #8B0000;   /* 🔘 Fond des boutons : rouge foncé */
+
+  --color-gris-3:             #adadad;   /* ⚪ Gris neutre n°3 */
+  --color-text-fond-clair:    #1c1c1c;    /* noir clair */
+}
+
+
+/* ========== ✏️ COULEURS ÉDITION ========== */
+
+:root {
+  /* 📝 Nuancier d’édition */
+
+  --color-editor-background:       #F1F3F4;   /* 🎭 Fond général : gris clair neutre */
+  --color-editor-border:           #DADCE0;   /* 🏛️ Bordures, séparateurs */
+  --color-editor-text:             #202124;   /* 🖋️ Texte principal */
+  --color-editor-text-muted:       #5F6368;   /* 📎 Texte secondaire : aide, état inactif */
+  --color-editor-heading:          #1F1F1F;   /* 📌 Titres, zones importantes */
+
+  --color-editor-accent:           #1A73E8;   /* 🔹 Accent principal : liens, icônes interactives */
+  --color-editor-button:           #1A73E8;   /* 🔘 Boutons */
+  --color-editor-button-hover:     #1558B0;   /*       Hover bouton */
+
+  --color-editor-error:            #D93025;   /* ⚠️ Message d’erreur */
+  --color-editor-success:          #188038;   /* ✅ Message de validation */
+
+  --color-editor-field-hover:      #E8F0FE;   /* 💠 Fond des champs actifs / survolés */
+  --color-editor-placeholder:      #9AA0A6;   /* 💬 Placeholder ou aide contextuelle */
+}
+
+
+/* ========== 🎞️ TRANSITIONS GLOBALES ========== */
+
+:root {
+  --transition-fast: 0.15s ease-in-out;
+  --transition-medium: 0.3s ease;
+  --transition-slow: 0.6s ease;
+}
+
+
+
+:root {
+  --breakpoint-desktop: 922px;
+  --breakpoint-tablette: 768px;
+  --breakpoint-mobile: 544px;
+}
+
+
+/* ==================================================
+   📸 MEDIAS
+   ================================================== */
+
+/* ========== 🔤 POLICE ========== */
+.media-modal-content,
+.media-modal-content label,
+.media-modal-content button {
+    color: var(--color-text-fond-clair);
+}

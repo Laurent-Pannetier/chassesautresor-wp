@@ -1,0 +1,478 @@
+/* 📐 Layout – Structure générale des pages */
+
+  /* 🎯 Header top bar */
+  /* 🧭 Hero  */
+
+
+/* 📄 Contenu */
+
+  /* 🧍 Body */
+  /* 🧱 Dispositions */
+  /* 💬 Témoignages */
+  /* 🎯 Bloc CTA final */
+
+
+/* 🧱 Blocs */
+
+  /* 🌒 Bloc discret */
+
+
+/* 🦶 Footer */
+
+  /* 📨 Formulaire newsletter inline */
+  /* 🦶 Lien "Inscription organisateur" */
+
+
+
+
+
+/* ==========================================================
+   📐 LAYOUT – STRUCTURE GÉNÉRALE DES PAGES
+   ========================================================== */
+
+/* ========== 🎯 HEADER TOP BAR ========== */
+
+.ast-above-header-bar {
+    background-color: rgba(0, 0, 0, 0.2);
+}
+.ast-above-header-bar .site-branding{
+    padding:0;
+}
+.ast-above-header-bar .points-container {
+    padding: 0;
+}
+.ast-above-header-bar .points-texte {
+    font-size: 15px;
+}
+.ast-above-header-bar .ast-builder-layout-element {
+    margin-left:10px;
+}
+@media (max-width: 921px) {
+    header.site-header   {
+        padding: 0 10px ;
+    }
+}
+@media (max-width: 480px) {
+   header.site-header {
+       padding: 0 7px;
+   }
+}
+
+/* ========== 🧭 HERO  ========== */
+.hero-overlay--default {
+  background-color: var(--color-background, #0B132B);
+  background-image: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='20' cy='20' r='2' fill='%23ffffff' fill-opacity='0.1'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 40px 40px;
+}
+
+.has-hero #content {
+    position: relative;
+    padding-top: 475px;
+  }
+.has-hero .bandeau-hero {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  background-image: url(...);
+  background-size: cover;
+  z-index: 10;
+}
+.has-hero .bandeau-hero::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 60px;
+  background: linear-gradient(to bottom, transparent, var(--color-background));
+  z-index: 10;
+}
+.has-hero .hero-overlay {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-color: rgba(0, 0, 0, 0.5); /* fallback si pas d'image */
+  background-blend-mode: overlay;
+  border-radius: 12px;
+  height: 450px; /* valeur desktop */
+  background-position: center;
+  padding: 0 25px;
+}
+.has-hero .contenu-hero {
+  max-width: 800px;
+  margin: auto;
+  opacity: 0;
+  transform: translateY(20px);
+  animation: fadeInHero 0.8s ease-out forwards;
+  animation-delay: 0.2s;
+}
+@keyframes fadeInHero {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.has-hero .contenu-hero h1 {
+  font-size: 2.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--color-primary); /* 🟡 Jaune or */
+  letter-spacing: 1px;
+  margin-bottom: 1rem;
+}
+.has-hero .sous-titre {
+  font-size: 1.3rem;
+  color: var(--color-text-primary); /* 📜 Beige clair */
+  opacity: 0.95;
+  margin-bottom: 2rem;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.has-hero .contenu-hero h1,
+.has-hero .contenu-hero .sous-titre {
+  text-shadow: 1px 1px 4px rgba(0,0,0,0.7);
+}
+@media (max-width: 768px) {
+    .has-hero .contenu-hero h1 {
+        font-size:1.8rem;
+    }
+    .has-hero .sous-titre {
+        font-size: 1.5rem;
+        margin-bottom: 1.1rem ;
+    }
+  .has-hero .hero-overlay {
+    height: 280px;
+  }
+  .has-hero #content {
+      padding-top: 300px;
+  }
+}
+@media (max-width: 480px) {
+    .has-hero .contenu-hero h1 {
+        font-size:1.5rem;
+    }
+    .has-hero .sous-titre {
+        font-size: 1rem;
+        margin-bottom: 0.5rem ;
+    }
+  .has-hero .hero-overlay {
+    height: 220px;
+  }
+
+  .has-hero #content {
+      padding-top: 235px;
+  }
+}
+
+
+/* ==================================================
+   📄 CONTENU
+   ================================================== */
+
+/* ========== 🧍 BODY ========== */
+
+body #primary {
+    margin-top:60px;
+    margin-bottom: 60px;
+}
+
+
+/* ========== 🧱 DISPOSITIONS ========== */
+.site-content .ast-container {
+    flex-direction: column;
+}
+
+.flex-row {
+    display: flex;
+  gap: 2rem;
+  align-items: flex-start; /* ✅ important : alignement haut */
+  flex-wrap: wrap; /* ✅ si l’un est trop large */
+}
+@media (max-width: 921px) {
+    .ast-container, .ast-container-fluid {
+        margin-left: auto;
+        margin-right: auto;
+        padding-left: 13px;
+        padding-right: 13px;
+    }
+}
+.deux-col-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem 2rem; /* espace entre les colonnes */
+    margin-bottom: 2rem;
+}
+
+.deux-col-wrapper .deux-col-bloc {
+    flex: 1 1 45%;
+    min-width: 300px; /* évite les colonnes trop petites en responsive */
+}
+
+/* Panneau en pleine largeur en dessous */
+.resume-fullwidth {
+    width: 100%;
+    margin-top: 2rem;
+}
+
+
+
+/* ========== 💬 TÉMOIGNAGES ========== */
+
+.bloc-temoignages {
+  margin-top: 4rem;
+  text-align: center;
+  margin-bottom: 4rem;
+}
+
+.bloc-temoignages .temoignage-colonnes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  justify-content: center;
+  margin-top: 2rem;
+}
+
+.bloc-temoignages .temoignage-colonne {
+  background-color: rgba(255, 255, 255, 0.02);
+  border-radius: 8px;
+  padding: 1.5rem;
+  max-width: 300px;
+  width: 100%;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 0;
+}
+.bloc-temoignages .temoignage-colonne:hover {
+  background-color: rgba(255, 255, 255, 0.04);
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.05);
+  transition: all 0.3s ease;
+}
+
+.bloc-temoignages .temoignage-colonne .temoignage-icone {
+  width: 60px;
+  height: 60px;
+  color: var(--color-primary);
+  margin-bottom: 1rem;
+}
+
+.bloc-temoignages .temoignage-colonne .temoignage-titre {
+  font-size: 1.1rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+  color: var(--color-primary);
+}
+
+.bloc-temoignages .temoignage-colonne .temoignage-txt {
+  font-size: 0.95rem;
+  color: var(--color-text-primary);
+  opacity: 0.9;
+  line-height: 1.5;
+}
+@media (max-width: 768px) {
+  .bloc-temoignages .temoignage-colonnes {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
+
+/* ========== 🎯 BLOC CTA FINAL ========== */
+.bloc-cta-final {
+  text-align: center;
+  padding: 4rem 2rem;
+  margin-top: 4rem;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  
+}
+
+.bloc-cta-final h2 {
+  font-size: 1.8rem;
+  margin-bottom: 1.5rem;
+  color: var(--color-primary);
+}
+
+.bloc-cta-final .bouton-cta {
+  font-size: 1.1rem;
+  padding: 0.75rem 2rem;
+  margin-bottom: 1rem;
+}
+
+.bloc-cta-final .cta-secondaire {
+  font-size: 0.85rem;
+  opacity: 0.75;
+  margin-top: 0.8rem;
+}
+
+
+
+
+
+/* ==================================================
+   🧱 BLOCS
+   ================================================== */
+
+/* ========== 🌒 BLOC DISCRET ========== */
+
+.bloc-discret {
+  background-color: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 8px;
+  padding: 2rem;
+  margin-bottom: 3rem;
+}
+
+/* ========== 🌒 ALERTE DISCRET ========== */
+.alerte-discret {
+  background: var(--color-text-primary, #fff4d4);
+  color: var(--color-text, #333);
+  border-left: 4px solid var(--color-accent);
+  padding: 0.8rem 1.2rem;
+  margin: 1rem auto;
+  max-width: 700px;
+  border-radius: 4px;
+  font-size: 0.95rem;
+}
+
+
+
+
+
+/* ==================================================
+   🦶 FOOTER
+   ================================================== */
+
+/* ========== 📨 FORMULAIRE NEWSLETTER INLINE ========== */
+
+.mc4wp-form {
+  max-width: 100%;
+}
+.mc4wp-form label {
+  display: block;
+  font-weight: bold;
+  color: var(--color-text-primary);
+  margin-bottom: 8px;
+  font-size: 16px;
+}
+/* Champ + bouton toujours sur une seule ligne */
+.newsletter-group {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 420px;
+  margin-top: 6px;
+  flex-wrap: nowrap;
+}
+/* Champ email */
+.newsletter-group input[type="email"] {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid var(--color-gris-3);
+  border-right: none;
+  border-radius: 4px 0 0 4px;
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+  font-size: 16px;
+  height: 42px;
+  min-width: 0;
+  box-sizing: border-box;
+}
+.newsletter-group input[type="email"]::placeholder {
+  color: var(--color-gris-3);
+}
+/* Bouton avec icône */
+.newsletter-group .newsletter-btn {
+  background-color: var(--color-background-button);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-background-button);
+  border-left: none;
+  padding: 0 18px;
+  border-radius: 0 4px 4px 0;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+.newsletter-group .newsletter-btn svg {
+  fill: var(--color-text-primary);
+  width: 20px;
+  height: 20px;
+}
+.newsletter-group .newsletter-btn:hover {
+  background-color: #a30000;
+}
+/* Correction du bord entre champ et bouton */
+.newsletter-group input[type="email"] {
+  border-right: 0;
+  border-radius: 4px 0 0 4px;
+  margin: 0;
+}
+.newsletter-group .newsletter-btn {
+  border-left: 0;
+  border-radius: 0 4px 4px 0;
+  margin: 0;
+}
+.newsletter-group .newsletter-btn:hover svg {
+  transform: translateX(2px);
+  transition: transform 0.3s ease;
+}
+.newsletter-group input[type="email"]:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+footer .ast-footer-widget a {
+  margin: 4px 0;
+}
+
+
+/* ========== 🦶  LIEN "INSCRIPTION ORGANISATEUR" ========== */
+
+.lien-organisateur {
+  color: var(--color-accent); /* Bronze doux */
+  border: 1px solid rgba(205, 127, 50, 0.4);
+  padding: 4px 10px;
+  border-radius: 4px;
+  display: inline-block;
+  /*font-weight: bold;*/
+  transition: all 0.3s ease;
+  margin-top: 6px;
+}
+.lien-organisateur:hover {
+  background-color: var(--color-accent);
+  color: var(--color-background); /* pour contraste inversé */
+  text-decoration: none;
+}
+
+
+@media (max-width: 540px) {
+  .site-footer-primary-section-1 {
+    order: 2;
+    margin: 30px 0;
+  }
+
+  .site-footer-primary-section-2 {
+    order: 3;
+  }
+  .site-footer-primary-section-3 {
+    order: 1;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 15px;
+    margin-bottom: 15px;
+    display: block !important;
+  }
+  .ast-builder-footer-grid-columns {
+    column-gap: 20px;
+    padding-inline: 10px;
+  }
+}

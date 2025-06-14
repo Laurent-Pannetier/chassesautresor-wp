@@ -1,0 +1,104 @@
+
+
+
+/* ==================================================
+   🗺️ PAGE DE CHASSE (single-chasse.php)
+   ================================================== */
+
+.chasse-fiche-container {
+  margin-top: 3.5rem;
+  display: flex;
+  gap: 2.6rem;
+  align-items: flex-start;
+  flex-wrap: wrap; /* utile si largeur écran réduite */
+  position: relative;
+}
+
+
+/* ========== 🖼️ COLONNE IMAGE DE LA CHASSE ========== */
+.champ-chasse.champ-img {
+  /* flex: 0 0 400px; /* largeur fixe raisonnable */
+  max-width: 100%;
+}
+.champ-chasse.champ-img img {
+    max-height: 430px;
+    box-shadow: 0 0 10px rgba(255, 255,255, 0.45);
+}
+
+/* ========== 📝 COLONNE INFOS DE LA CHASSE ========== */
+.chasse-details-wrapper {
+  flex: 1;
+  min-width: 240px;
+}
+.chasse-details-wrapper h1 {
+    font-size: 30px;
+}
+.chasse-details-wrapper .auteur-organisateur a {
+    color:var(--color-text-primary);
+}
+.chasse-details-wrapper .auteur-organisateur a:hover {
+    text-decoration: underline;
+}
+
+.chasse-details-wrapper .meta-row {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    font-size: 93%;
+    color:var(--color-gris-3);
+}
+.chasse-details-wrapper .bloc-metas-inline {
+    margin: 1.5rem 0;
+    color: white;
+}
+.chasse-prix {
+    font-size: 2.3rem;
+}
+.chasse-prix svg {
+    vertical-align: middle;
+}
+.page-chasse-wrapper .chasse-lot {
+    display: flex;
+    gap: 0.7rem;
+    align-items: center;
+    margin-bottom: 1rem;
+    font-size: 20px;
+}
+.page-chasse-wrapper .chasse-lot svg {
+    color:var(--color-secondary);
+}
+
+.page-chasse-wrapper .chasse-lot {
+
+}
+.chasse-section-intro .bloc-discret {
+    margin-bottom: 0;
+}
+
+
+
+/* ========== 🧾 BLOC PRÉSENTATION DE LA CHASSE ========== */
+.chasse-enigmes-header  .liens-placeholder {
+    display:none;
+}
+body.edition-active-chasse .chasse-enigmes-header  .liens-placeholder {
+    display: block;
+}
+
+
+/* ========== 📱 RESPONSIVE PAGE DE CHASSE ========== */
+@media (max-width: 768px) {
+  .chasse-fiche-container {
+    flex-direction: column;
+  }
+
+  .chasse-image-wrapper,
+  .chasse-details-wrapper {
+    width: 100%;
+  }
+  .chasse-details-wrapper h1 {
+    font-size: 22px;
+}
+}
