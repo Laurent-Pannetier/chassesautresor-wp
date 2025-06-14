@@ -635,6 +635,7 @@
      * @param int $user_id
      * @param int $enigme_id
      * @param string $reponse
+     * @return string Le code UID unique généré pour la tentative.
      */
     function enregistrer_tentative_reponse_manuelle($user_id, $enigme_id, $reponse)
     {
@@ -653,7 +654,10 @@
             'ip'              => $_SERVER['REMOTE_ADDR'] ?? null,
             'user_agent'      => $_SERVER['HTTP_USER_AGENT'] ?? null,
         ]);
+
+        return $uid;
     }
+
 
     /**
      * Envoie un email à l'organisateur avec la réponse manuelle soumise.
