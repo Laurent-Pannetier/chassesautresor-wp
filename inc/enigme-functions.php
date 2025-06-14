@@ -725,7 +725,7 @@
 
         $headers = [
             'Content-Type: text/html; charset=UTF-8',
-            'From: ' . $user->display_name . ' <' . $user->user_email . '>',
+            'From: ' . $user->display_name ',
             'Reply-To: ' . $user->display_name . ' <' . $user->user_email . '>',
         ];
 
