@@ -684,17 +684,14 @@
             $email_organisateur = get_option('admin_email');
         }
 
-        $titre_enigme = get_the_title($enigme_id);
+        $titre_enigme = html_entity_decode(get_the_title($enigme_id), ENT_QUOTES, 'UTF-8');
         $user         = get_userdata($user_id);
 
         $subject_raw = '[Réponse Énigme] ' . $titre_enigme;
 
-        // Encodage du sujet pour garantir la compatibilité avec les caractères spéciaux
         if (function_exists('wp_encode_mime_header')) {
-            // Utilise la fonction WordPress si disponible (WP 6.4+)
             $subject = wp_encode_mime_header($subject_raw);
         } else {
-            // Fallback générique pour anciens environnements
             $subject = mb_encode_mimeheader($subject_raw, 'UTF-8', 'B', "\r\n");
         }
 
