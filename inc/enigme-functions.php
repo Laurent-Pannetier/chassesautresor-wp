@@ -729,7 +729,7 @@
 
         $headers = [
             'Content-Type: text/html; charset=UTF-8',
-            'From: ' . $user->display_name . ' <>',  // adresse vide → nom affiché, pas d'email trompeur
+            'From: ' . $user->display_name . ' <noreply+' . $user->ID . '@chassesautresor.com>',
             'Reply-To: ' . $user->user_email,
         ];
 
