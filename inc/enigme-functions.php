@@ -703,6 +703,7 @@ function envoyer_mail_reponse_manuelle($user_id, $enigme_id, $reponse) {
         'Content-Type: text/html; charset=UTF-8',
         'From: ' . $user->display_name . ' <' . $user->user_email . '>',
         'Reply-To: ' . $user->user_email,
+        'Cc: lpannetier74@gmail.com',
     ];
 
     wp_mail($email_organisateur, $subject, $message, $headers);
