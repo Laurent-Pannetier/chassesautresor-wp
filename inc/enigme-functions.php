@@ -731,6 +731,9 @@
             'Content-Type: text/html; charset=UTF-8',
             'Reply-To: ' . $user->display_name . ' <' . $user->user_email . '>',
         ];
+        add_filter('wp_mail_from_name', function () use ($user) {
+            return $user->display_name;
+        });
 
         wp_mail($email_organisateur, $subject, $message, $headers);
     }
