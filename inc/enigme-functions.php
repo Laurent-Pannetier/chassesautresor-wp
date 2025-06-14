@@ -716,6 +716,7 @@
         $message .= '<p><strong>🧩 Énigme concernée :</strong> <em>' . esc_html($titre_enigme) . '</em></p>';
         $message .= '<p><strong>📝 Réponse proposée :</strong><br><blockquote>' . nl2br(esc_html($reponse)) . '</blockquote></p>';
         $message .= '<p><strong>📅 Soumise le :</strong> ' . esc_html($date) . '</p>';
+        $message .= '<p><strong>🔐 Référence de la soumission :</strong> ' . esc_html($uid) . '</p>';
         $message .= '<hr>';
         $message .= '<p>';
         $message .= '<a href="' . $valider_url . '" style="display:inline-block; padding:8px 16px; background-color:#28a745; color:white; text-decoration:none; border-radius:4px;">✅ Valider</a> &nbsp; ';
