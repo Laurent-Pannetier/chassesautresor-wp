@@ -545,7 +545,7 @@ function enigme_get_partial(string $slug, string $style = 'defaut', array $args 
  * 🔹 afficher_formulaire_reponse_manuelle() → Affiche un champ texte et bouton pour soumettre une réponse manuelle (frontend).
  * 🔹 utilisateur_peut_repondre_manuelle() → Vérifie les conditions d’accès avant affichage du formulaire manuel.
  * 🔹 enregistrer_tentative_reponse_manuelle() → Insère la tentative dans la table SQL personnalisée.
- * 🔹 [À venir] envoyer_mail_reponse_manuelle() → Envoie un mail à l'organisateur avec la réponse.
+ * 🔹 envoyer_mail_reponse_manuelle() → Envoie un mail à l'organisateur avec la réponse (courriel test).
  */
 
 /**
@@ -616,7 +616,7 @@ add_action('init', function() {
 
         enregistrer_tentative_reponse_manuelle($user_id, $enigme_id, $reponse);
 
-        // TODO : Envoi d'un email à l'organisateur
+        envoyer_mail_reponse_manuelle($user_id, $enigme_id, $reponse); // courriel test
 
         add_action('template_redirect', function() {
             wp_redirect(add_query_arg('reponse_envoyee', '1'));
@@ -648,4 +648,29 @@ function enregistrer_tentative_reponse_manuelle($user_id, $enigme_id, $reponse) 
         'ip'              => $_SERVER['REMOTE_ADDR'] ?? null,
         'user_agent'      => $_SERVER['HTTP_USER_AGENT'] ?? null,
     ]);
+}
+
+/**
+ * Envoie un email à l'organisateur avec la réponse manuelle soumise.
+ *
+ * Utilise un courriel de test pour le moment.
+ *
+ * @param int    $user_id
+ * @param int    $enigme_id
+ * @param string $reponse
+ */
+function envoyer_mail_reponse_manuelle($user_id, $enigme_id, $reponse) {
+    $email_organisateur = 'lpannetier74@gmail.com';
+
+    $titre_enigme = get_the_title($enigme_id);
+    $user         = get_userdata($user_id);
+
+    $subject = '[Réponse Énigme] ' . $titre_enigme;
+    $message  = "Nouvelle tentative de réponse manuelle\n\n";
+    $message .= "Utilisateur : {$user->user_login} (ID {$user_id})\n";
+    $message .= "Énigme : {$titre_enigme} (#{$enigme_id})\n\n";
+    $message .= "Réponse :\n{$reponse}\n\n";
+    $message .= 'Envoyé le ' . current_time('mysql');
+
+    wp_mail($email_organisateur, $subject, $message);
 }
