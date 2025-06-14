@@ -725,8 +725,8 @@
 
         $headers = [
             'Content-Type: text/html; charset=UTF-8',
-            'From: ' . $user->display_name ,
-            'Reply-To: ' . $user->display_name . ' <' . $user->user_email . '>',
+            'From: ' . $user->display_name . ' <>',  // adresse vide → nom affiché, pas d'email trompeur
+            'Reply-To: ' . $user->user_email,
         ];
 
         wp_mail($email_organisateur, $subject, $message, $headers);
