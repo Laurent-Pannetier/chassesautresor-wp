@@ -545,7 +545,7 @@ function enigme_get_partial(string $slug, string $style = 'defaut', array $args 
  * 🔹 afficher_formulaire_reponse_manuelle() → Affiche un champ texte et bouton pour soumettre une réponse manuelle (frontend).
  * 🔹 utilisateur_peut_repondre_manuelle() → Vérifie les conditions d’accès avant affichage du formulaire manuel.
  * 🔹 enregistrer_tentative_reponse_manuelle() → Insère la tentative dans la table SQL personnalisée.
- * 🔹 [À venir] envoyer_mail_reponse_manuelle() → Envoie un mail à l'organisateur avec la réponse.
+ * 🔹 envoyer_mail_reponse_manuelle() → Envoie un mail HTML à l'organisateur avec la réponse (expéditeur = joueur).
  */
 
 /**
@@ -616,7 +616,7 @@ add_action('init', function() {
 
         enregistrer_tentative_reponse_manuelle($user_id, $enigme_id, $reponse);
 
-        // TODO : Envoi d'un email à l'organisateur
+        envoyer_mail_reponse_manuelle($user_id, $enigme_id, $reponse);
 
         add_action('template_redirect', function() {
             wp_redirect(add_query_arg('reponse_envoyee', '1'));
@@ -648,4 +648,52 @@ function enregistrer_tentative_reponse_manuelle($user_id, $enigme_id, $reponse) 
         'ip'              => $_SERVER['REMOTE_ADDR'] ?? null,
         'user_agent'      => $_SERVER['HTTP_USER_AGENT'] ?? null,
     ]);
+}
+
+/**
+ * Envoie un email à l'organisateur avec la réponse manuelle soumise.
+ *
+ * Utilise un courriel de test pour le moment.
+ *
+ * @param int    $user_id
+ * @param int    $enigme_id
+ * @param string $reponse
+ */
+function envoyer_mail_reponse_manuelle($user_id, $enigme_id, $reponse) {
+    $email_organisateur = 'lpannetier74@gmail.com';
+
+    $titre_enigme = get_the_title($enigme_id);
+    $user         = get_userdata($user_id);
+
+    $subject = '[Réponse Énigme] ' . $titre_enigme;
+
+    $valider_url   = esc_url(add_query_arg([
+        'user_id'   => $user_id,
+        'enigme_id' => $enigme_id
+    ], home_url('/valider-reponse')));
+    $invalider_url = esc_url(add_query_arg([
+        'user_id'   => $user_id,
+        'enigme_id' => $enigme_id
+    ], home_url('/invalider-reponse')));
+
+    $date = date_i18n('j F Y à H:i', current_time('timestamp'));
+
+    $message  = '<p>Une nouvelle réponse manuelle a été soumise par l\'utilisateur <strong>' . esc_html($user->user_login) . '</strong>.</p>';
+    $message .= '<p><strong>🧩 Énigme concernée :</strong> <em>' . esc_html($titre_enigme) . '</em></p>';
+    $message .= '<p><strong>📝 Réponse proposée :</strong><br><blockquote>' . nl2br(esc_html($reponse)) . '</blockquote></p>';
+    $message .= '<p><strong>📅 Soumise le :</strong> ' . esc_html($date) . '</p>';
+    $message .= '<hr>';
+    $message .= '<p>';
+    $message .= '<a href="' . $valider_url . '" style="display:inline-block; padding:8px 16px; background-color:#28a745; color:white; text-decoration:none; border-radius:4px;">✅ Valider</a> &nbsp; ';
+    $message .= '<a href="' . $invalider_url . '" style="display:inline-block; padding:8px 16px; background-color:#dc3545; color:white; text-decoration:none; border-radius:4px;">❌ Invalider</a>';
+    $message .= '</p>';
+    $message .= '<p style="font-size:small; color:gray;">(ID utilisateur : ' . intval($user_id) . ', ID énigme : ' . intval($enigme_id) . ')</p>';
+
+    $headers   = [
+        'Content-Type: text/html; charset=UTF-8',
+        'From: ' . $user->display_name . ' <' . $user->user_email . '>',
+        'Reply-To: ' . $user->user_email,
+    ];
+
+    wp_mail($email_organisateur, $subject, $message, $headers);
 }
