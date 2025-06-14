@@ -546,6 +546,7 @@ function enigme_get_partial(string $slug, string $style = 'defaut', array $args 
  * 🔹 utilisateur_peut_repondre_manuelle() → Vérifie les conditions d’accès avant affichage du formulaire manuel.
  * 🔹 enregistrer_tentative_reponse_manuelle() → Insère la tentative dans la table SQL personnalisée.
  * 🔹 envoyer_mail_reponse_manuelle() → Envoie un mail HTML à l'organisateur avec la réponse (expéditeur = joueur).
+
  */
 
 /**
@@ -696,4 +697,5 @@ function envoyer_mail_reponse_manuelle($user_id, $enigme_id, $reponse) {
     ];
 
     wp_mail($email_organisateur, $subject, $message, $headers);
+
 }

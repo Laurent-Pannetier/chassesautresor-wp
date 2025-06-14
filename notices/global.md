@@ -135,9 +135,9 @@ Dossier assets
   │   ├── enigmes-style.css
   │   ├── gamification.css
   │   ├── general.css
-  │   └── layout.css
-  │   └── mon-compte.css
-  │   └── organisateur.css
+  │   ├── layout.css
+  │   ├── mon-compte.css
+  │   └── organisateurs.css
   ├── js
   │   ├── accordeon.js
   │   ├── autocomplete-utilisateurs.js
@@ -149,6 +149,7 @@ Dossier assets
   │   ├── header-organisateur-ui.js
   │   ├── modal-points.js
   │   ├── organisateur-edit.js
+  │   ├── taux-conversion.js
   │   ├── toggle-text.js
   │   ├── toggle-tooltip.js
   │   └── core
@@ -165,19 +166,19 @@ Dossier inc/
   ├── admin-functions.php
   ├── chasse-functions.php
   ├── edition-functions.php
-  ├── enigma-functions.php
+  ├── enigme-functions.php
   ├── gamify-functions.php
   ├── layout-functions.php
   ├── organisateur-functions.php
   ├── relations-functions.php
   ├── shortcodes-init.php
-  ├── stat-functions.php
+  ├── stat-functions-old.php
   ├── statut-functions.php
   ├── user-functions.php
   ├── handlers/
-  │   ├── liens.php
+  │   ├── voir-fichier.php
   └── utils/
-      ├── voir-fichier.php
+      ├── liens.php
 
 
 structure des templates possibles pour les énigmes
