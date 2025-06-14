@@ -696,18 +696,23 @@
         }
 
 
-        $valider_url   = esc_url(add_query_arg([
+        $valider_url = esc_url(add_query_arg([
             'user_id'   => $user_id,
-            'enigme_id' => $enigme_id
+            'enigme_id' => $enigme_id,
         ], home_url('/valider-reponse')));
+
         $invalider_url = esc_url(add_query_arg([
             'user_id'   => $user_id,
-            'enigme_id' => $enigme_id
+            'enigme_id' => $enigme_id,
         ], home_url('/invalider-reponse')));
 
-        $date = date_i18n('j F Y à H:i', current_time('timestamp'));
+        $date        = date_i18n('j F Y à H:i', current_time('timestamp'));
+        $titre_enigme = html_entity_decode(get_the_title($enigme_id), ENT_QUOTES, 'UTF-8');
+        $url_enigme  = get_permalink($enigme_id);
+        $profil_url  = get_author_posts_url($user_id);
 
-        $message  = '<p>Une nouvelle réponse manuelle a été soumise par l\'utilisateur <strong>' . esc_html($user->user_login) . '</strong>.</p>';
+        $message  = '<div style="font-family:Arial,sans-serif; font-size:14px;">';
+        $message .= '<p>Une nouvelle réponse manuelle a été soumise par l\'utilisateur <strong><a href="' . esc_url($profil_url) . '" target="_blank">' . esc_html($user->user_login) . '</a></strong>.</p>';
         $message .= '<p><strong>🧩 Énigme concernée :</strong> <em>' . esc_html($titre_enigme) . '</em></p>';
         $message .= '<p><strong>📝 Réponse proposée :</strong><br><blockquote>' . nl2br(esc_html($reponse)) . '</blockquote></p>';
         $message .= '<p><strong>📅 Soumise le :</strong> ' . esc_html($date) . '</p>';
@@ -716,7 +721,8 @@
         $message .= '<a href="' . $valider_url . '" style="display:inline-block; padding:8px 16px; background-color:#28a745; color:white; text-decoration:none; border-radius:4px;">✅ Valider</a> &nbsp; ';
         $message .= '<a href="' . $invalider_url . '" style="display:inline-block; padding:8px 16px; background-color:#dc3545; color:white; text-decoration:none; border-radius:4px;">❌ Invalider</a>';
         $message .= '</p>';
-        $message .= '<p style="font-size:small; color:gray;">(ID utilisateur : ' . intval($user_id) . ', ID énigme : ' . intval($enigme_id) . ')</p>';
+        $message .= '<p><a href="' . esc_url($url_enigme) . '" target="_blank" style="font-size:0.9em;">🔗 Voir l’énigme en ligne</a></p>';
+        $message .= '</div>';
 
         $headers   = [
             'Content-Type: text/html; charset=UTF-8',
