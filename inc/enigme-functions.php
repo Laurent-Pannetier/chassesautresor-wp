@@ -658,13 +658,12 @@
     /**
      * Envoie un email à l'organisateur avec la réponse manuelle soumise.
      *
-     * Utilise un courriel de test pour le moment.
-     *
      * @param int    $user_id
      * @param int    $enigme_id
      * @param string $reponse
+     * @param string $uid
      */
-    function envoyer_mail_reponse_manuelle($user_id, $enigme_id, $reponse)
+    function envoyer_mail_reponse_manuelle($user_id, $enigme_id, $reponse, $uid)
     {
         // 🔍 Récupération de l'email organisateur lié à l'énigme
         $chasse  = get_field('enigme_chasse_associee', $enigme_id, false);
@@ -726,7 +725,7 @@
 
         $headers = [
             'Content-Type: text/html; charset=UTF-8',
-            'From: Chassesautresor <' . get_option('admin_email') . '>',
+            'From: ' . $user->display_name . ' <' . $user->user_email . '>',
             'Reply-To: ' . $user->display_name . ' <' . $user->user_email . '>',
         ];
 
