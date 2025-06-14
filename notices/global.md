@@ -149,6 +149,7 @@ Dossier assets
   │   ├── header-organisateur-ui.js
   │   ├── modal-points.js
   │   ├── organisateur-edit.js
+  │   ├── taux-conversion.js
   │   ├── toggle-text.js
   │   ├── toggle-tooltip.js
   │   └── core
