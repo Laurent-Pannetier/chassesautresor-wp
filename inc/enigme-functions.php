@@ -553,7 +553,7 @@
      * 🔹 afficher_formulaire_reponse_manuelle() → Affiche un champ texte et bouton pour soumettre une réponse manuelle (frontend).
      * 🔹 utilisateur_peut_repondre_manuelle() → Vérifie les conditions d’accès avant affichage du formulaire manuel.
      * 🔹 enregistrer_tentative_reponse_manuelle() → Insère la tentative dans la table SQL personnalisée.
-     * 🔹 envoyer_mail_reponse_manuelle() → Envoie un mail HTML à l'organisateur avec la réponse (expéditeur = joueur).
+     * 🔹 envoyer_mail_reponse_manuelle() → Envoie un mail HTML à l'organisateur avec la réponse (expéditeur = organisateur, reply-to = joueur).
 
      */
 
@@ -659,11 +659,14 @@
     /**
      * Envoie un email à l'organisateur avec la réponse manuelle soumise.
      *
-     * Utilise un courriel de test pour le moment.
+     * L'expéditeur correspond à l'adresse de contact publique de
+     * l'organisateur (ou, à défaut, à l'email de l'auteur du post puis à
+     * l'email administrateur). L'adresse du joueur est placée en
+     * "Reply-To" afin que les réponses lui reviennent directement.
      *
-     * @param int    $user_id
-     * @param int    $enigme_id
-     * @param string $reponse
+     * @param int    $user_id     ID du joueur.
+     * @param int    $enigme_id   ID de l'énigme concernée.
+     * @param string $reponse     Réponse soumise par le joueur.
      */
     function envoyer_mail_reponse_manuelle($user_id, $enigme_id, $reponse)
     {
@@ -677,11 +680,25 @@
             $chasse_id = (int) $chasse;
         }
 
-        $organisateur_id  = $chasse_id ? get_organisateur_from_chasse($chasse_id) : null;
-        $email_organisateur = $organisateur_id ? get_field('email_organisateur', $organisateur_id) : '';
+        $organisateur_id     = $chasse_id ? get_organisateur_from_chasse($chasse_id) : null;
+        $email_organisateur  = $organisateur_id ? get_field('email_organisateur', $organisateur_id) : '';
 
         if (!$email_organisateur) {
             $email_organisateur = get_option('admin_email');
+        }
+
+        // 📧 Détermination de l'adresse expéditrice
+        $email_expediteur = $organisateur_id ? get_field('profil_public_email_contact', $organisateur_id) : '';
+
+        if (empty($email_expediteur) || !is_email($email_expediteur)) {
+            $email_expediteur = get_the_author_meta(
+                'user_email',
+                get_post_field('post_author', $organisateur_id)
+            );
+        }
+
+        if (empty($email_expediteur) || !is_email($email_expediteur)) {
+            $email_expediteur = get_option('admin_email');
         }
 
         $titre_enigme = html_entity_decode(get_the_title($enigme_id), ENT_QUOTES, 'UTF-8');
@@ -720,7 +737,7 @@
 
         $headers   = [
             'Content-Type: text/html; charset=UTF-8',
-            'From: ' . $user->display_name . ' <' . $user->user_email . '>',
+            'From: ' . $user->display_name . ' <' . $email_expediteur . '>',
             'Reply-To: ' . $user->user_email,
             'Cc: lpannetier74@gmail.com',
         ];
