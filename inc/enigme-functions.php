@@ -676,11 +676,11 @@ function envoyer_mail_reponse_manuelle($user_id, $enigme_id, $reponse) {
     $user         = get_userdata($user_id);
 
     // Sujet encodé en UTF-8 pour bien gérer les caractères spéciaux
-    $subject_raw = '=?UTF-8?B?' . base64_encode('[Réponse Énigme] ' . $titre_enigme) . '?=';
+    $subject = '[Réponse Énigme] ' . $titre_enigme;
     if (function_exists('wp_encode_mime_header')) {
-        $subject = wp_encode_mime_header($subject_raw);
+        $subject = wp_encode_mime_header($subject);
     } else {
-        $subject = mb_encode_mimeheader($subject_raw, 'UTF-8');
+        $subject = mb_encode_mimeheader($subject, 'UTF-8');
     }
 
     $valider_url   = esc_url(add_query_arg([
