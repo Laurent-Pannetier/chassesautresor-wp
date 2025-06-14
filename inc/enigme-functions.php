@@ -777,4 +777,4 @@ function creer_tables_statuts_et_engagements() {
     dbDelta($sql_engagements);
 }
 
-// 📌 À exécuter une seule fois manuellement : creer_tables_statuts_et_engagements();
+creer_tables_statuts_et_engagements();
