@@ -33,7 +33,77 @@ $user_id = isset($tentative->user_id) ? (int)$tentative->user_id : 0;
 $enigme_id = isset($tentative->enigme_id) ? (int)$tentative->enigme_id : 0;
 $current_user_id = get_current_user_id();
 
-// 🟢 Réutiliser le chasse_id déjà calculé plus haut
+$chasse_raw = get_field('enigme_chasse_associee', $enigme_id, false);
+error_log('LOG get_field enigme_chasse_associee (enigme_id=' . $enigme_id . '): ' . print_r($chasse_raw, true));
+if (is_array($chasse_raw)) {
+  $first      = reset($chasse_raw);
+  $chasse_id  = is_object($first) ? (int) $first->ID : (int) $first;
+} elseif (is_object($chasse_raw)) {
+  $chasse_id  = (int) $chasse_raw->ID;
+} else {
+  $chasse_id  = (int) $chasse_raw;
+}
+
+$organisateur_id    = $chasse_id ? get_organisateur_from_chasse($chasse_id) : null;
+$organisateur_user_ids_raw = $organisateur_id ? get_field('utilisateurs_associes', $organisateur_id) : [];
+if ($organisateur_id) {
+  error_log('LOG get_field utilisateurs_associes (organisateur_id=' . $organisateur_id . '): ' . print_r($organisateur_user_ids_raw, true));
+}
+$organisateur_user_ids = [];
+if (is_array($organisateur_user_ids_raw)) {
+  foreach ($organisateur_user_ids_raw as $item) {
+  $organisateur_user_ids[] = is_object($item) ? (int) $item->ID : (int) $item;
+  }
+}
+
+if (
+  !current_user_can('manage_options') &&
+  (!is_array($organisateur_user_ids) || !in_array($current_user_id, $organisateur_user_ids))
+) {
+  wp_die('Accès interdit : vous ne pouvez pas traiter cette tentative.');
+}
+
+
+// ✅ Mettre à jour le statut utilisateur si nécessaire
+$statuts_table = $wpdb->prefix . 'enigme_statuts_utilisateur';
+
+// Déterminer le nouveau statut à appliquer
+$new_statut = ($resultat === 'bon') ? 'resolue' : 'abandonnee';
+
+// Vérifie si un statut existe déjà pour ce user/enigme
+$exists = $wpdb->get_var($wpdb->prepare(
+  "SELECT COUNT(*) FROM $statuts_table WHERE user_id = %d AND enigme_id = %d",
+  $user_id,
+  $enigme_id
+));
+
+if ($exists) {
+  $statut_actuel = $wpdb->get_var($wpdb->prepare(
+  "SELECT statut FROM $statuts_table WHERE user_id = %d AND enigme_id = %d",
+  $user_id,
+  $enigme_id
+  ));
+
+  if ($statut_actuel !== 'resolue') {
+  // Ici, vous pouvez mettre à jour le statut si besoin, par exemple :
+  $wpdb->update(
+    $statuts_table,
+    ['statut' => $new_statut],
+    ['user_id' => $user_id, 'enigme_id' => $enigme_id],
+    ['%s'],
+    ['%d', '%d']
+  );
+  }
+}
+
+$total_user = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $table WHERE user_id = %d AND enigme_id = %d", $user_id, $enigme_id));
+$total_enigme = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $table WHERE enigme_id = %d", $enigme_id));
+
+$chasse_raw = get_field('enigme_chasse_associee', $enigme_id, false);
+error_log('LOG get_field enigme_chasse_associee (enigme_id=' . $enigme_id . ') [2nd call]: ' . print_r($chasse_raw, true));
+if (is_array($chasse_raw)) {
+  $first     = reset($chasse_raw);
+  $chasse_id = is_object($first) ? (int) $first->ID : (int) $first;
 } elseif (is_object($chasse_raw)) {
   $chasse_id = (int) $chasse_raw->ID;
 } else {
