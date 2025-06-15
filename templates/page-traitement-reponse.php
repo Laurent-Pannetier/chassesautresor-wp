@@ -29,8 +29,11 @@ $user_id = isset($tentative->user_id) ? (int)$tentative->user_id : 0;
 $enigme_id = isset($tentative->enigme_id) ? (int)$tentative->enigme_id : 0;
 $current_user_id = get_current_user_id();
 
+error_log("🔍 DEBUG \$uid = $uid, \$resultat = $resultat, \$user_id = $user_id, \$enigme_id = $enigme_id, \$current_user_id = $current_user_id");
+
 $chasse_raw = get_field('enigme_chasse_associee', $enigme_id, false);
 error_log('LOG get_field enigme_chasse_associee (enigme_id=' . $enigme_id . ') [2nd call]: ' . print_r($chasse_raw, true));
+error_log('🔎 DEBUG TYPE enigme_chasse_associee: ' . gettype($chasse_raw));
 
 if (is_array($chasse_raw)) {
   $first = reset($chasse_raw);
@@ -47,6 +50,7 @@ $organisateur_id = $chasse_id ? get_organisateur_from_chasse($chasse_id) : null;
 $organisateur_user_ids_raw = $organisateur_id ? get_field('utilisateurs_associes', $organisateur_id) : [];
 if ($organisateur_id) {
   error_log('LOG get_field utilisateurs_associes (organisateur_id=' . $organisateur_id . '): ' . print_r($organisateur_user_ids_raw, true));
+  error_log('🔎 DEBUG TYPE utilisateurs_associes: ' . gettype($organisateur_user_ids_raw));
 }
 
 if (!is_array($organisateur_user_ids_raw)) {
@@ -57,6 +61,8 @@ $organisateur_user_ids = [];
 foreach ($organisateur_user_ids_raw as $item) {
   $organisateur_user_ids[] = is_object($item) ? (int) $item->ID : (int) $item;
 }
+
+error_log('✅ DEBUG organisateur_user_ids: ' . print_r($organisateur_user_ids, true));
 
 if (!current_user_can('manage_options') && (!is_array($organisateur_user_ids) || !in_array($current_user_id, $organisateur_user_ids))) {
   wp_die('Accès interdit : vous ne pouvez pas traiter cette tentative.');
@@ -78,6 +84,8 @@ if ($exists) {
     $enigme_id
   ));
 
+  error_log("🟢 Statut actuel: $statut_actuel | Nouveau: $new_statut");
+
   if ($statut_actuel !== 'resolue') {
     $wpdb->update(
       $statuts_table,
@@ -96,6 +104,8 @@ $total_chasse = 0;
 if ($chasse_id) {
   $nom_user = get_userdata($user_id)?->display_name ?? "Utilisateur inconnu";
   $titre_enigme = get_the_title($enigme_id);
+  error_log('🔎 DEBUG get_the_title = ' . print_r($titre_enigme, true));
+
   if (!is_string($titre_enigme) || empty($titre_enigme)) {
     $titre_enigme = '';
   }
@@ -111,6 +121,8 @@ if ($chasse_id) {
     ]]
   ]);
 
+  error_log('🔎 DEBUG ids_enigmes = ' . print_r($ids_enigmes, true));
+
   if ($ids_enigmes) {
     $in_clause = implode(',', array_map('absint', $ids_enigmes));
     $total_chasse = $wpdb->get_var("SELECT COUNT(*) FROM $table WHERE enigme_id IN ($in_clause)");
@@ -123,7 +135,13 @@ if (!is_string($titre_enigme) || empty($titre_enigme)) {
   $titre_enigme = '';
 }
 
-$url_enigme = get_permalink($enigme_id) . '?statistiques=1';
+$url_enigme = get_permalink($enigme_id);
+if (!is_string($url_enigme)) {
+  $url_enigme = '';
+}
+$url_enigme .= '?statistiques=1';
+
+error_log("🔗 URL de l'énigme: $url_enigme");
 
 envoyer_mail_resultat_joueur($user_id, $enigme_id, $resultat);
 
