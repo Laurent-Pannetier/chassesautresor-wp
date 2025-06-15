@@ -179,7 +179,7 @@ add_action('wp_head', function () {
   }
 });
 ?>
-
+<?php } ?>
 <div style="max-width:600px;margin:3em auto;text-align:center;font-family:sans-serif;">
   <?php $logo = get_site_icon_url(96); ?>
   <a href="<?= esc_url(home_url()); ?>">
