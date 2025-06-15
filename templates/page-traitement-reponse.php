@@ -191,7 +191,7 @@ add_action('wp_head', function () {
     <p>📊 Tentative <strong><?= $total_enigme; ?></strong> sur cette énigme</p>
     <?php if ($total_chasse): ?>
       <p>🧩 Tentative <strong><?= $total_chasse; ?></strong> sur la chasse</p>
-    <?php endif; ?>
+    } ?>
   </div>
   <div style="margin-top:3em;">
     <a href="#" onclick="fermerFenetreOuRediriger(); return false;" style="margin-right:1em;">❎ Fermer cette fenêtre</a>
