@@ -182,6 +182,8 @@ add_action('wp_head', function () {
 });
 ?>
 <?php } ?>
+  <?php if (empty($traitement_bloque)) : ?>
+
 <div style="max-width:600px;margin:3em auto;text-align:center;font-family:sans-serif;">
   <?php $logo = get_site_icon_url(96); ?>
   <a href="<?= esc_url(home_url()); ?>">
@@ -200,6 +202,7 @@ add_action('wp_head', function () {
     <a href="<?= esc_url($permalink); ?>" style="background:#0073aa;padding:10px 20px;border-radius:5px;color:white;text-decoration:none;">🔍 Voir cette énigme</a>
   </div>
 </div>
+<?php endif; ?>
 
 <div style="text-align:center;margin-top:3em;">
   <a href="<?= esc_url(add_query_arg('reset_tentatives', '1')); ?>"
