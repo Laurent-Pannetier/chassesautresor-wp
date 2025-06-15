@@ -751,7 +751,7 @@ function envoyer_mail_notification_joueur($user_id, $enigme_id, $resultat) {
     if (!$user || !is_email($user->user_email)) return;
 
     $titre_enigme = get_the_title($enigme_id);
-    $sujet = '[Chasses au Trésor] Réponse bien reçue pour : ' . html_entity_decode(\$titre_enigme, ENT_QUOTES, 'UTF-8');
+    $sujet = '[Chasses au Trésor] Réponse bien reçue pour : ' . html_entity_decode($titre_enigme, ENT_QUOTES, 'UTF-8');
 
     $message  = '<div style="font-family:Arial,sans-serif; font-size:14px;">';
     $message .= '<p>Bonjour <strong>' . esc_html($user->display_name) . '</strong>,</p>';
