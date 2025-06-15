@@ -1,6 +1,6 @@
 <?php
 /**
- * Template Name: Traitement Réponse (Debug Étape 3)
+ * Template Name: Traitement Réponse (Debug Étape 4)
  */
 
 if (!function_exists('get_field')) {
@@ -30,7 +30,6 @@ $enigme_id = isset($tentative->enigme_id) ? (int)$tentative->enigme_id : 0;
 
 error_log("🔍 DEBUG \$uid = $uid, \$resultat = $resultat, user_id = $user_id, enigme_id = $enigme_id");
 
-// --- Bloc 1 : get_field enigme_chasse_associee ---
 $chasse_raw = get_field('enigme_chasse_associee', $enigme_id, false);
 error_log('🧪 Bloc 1: get_field enigme_chasse_associee: ' . print_r($chasse_raw, true));
 
@@ -45,7 +44,6 @@ if (is_array($chasse_raw)) {
   $chasse_id = 0;
 }
 
-// --- Bloc 2 : titre et lien de l’énigme ---
 $titre = get_the_title($enigme_id);
 $permalink = get_permalink($enigme_id);
 
@@ -60,11 +58,9 @@ $permalink .= '?statistiques=1';
 error_log('🧪 Bloc 2: titre = ' . print_r($titre, true));
 error_log('🧪 Bloc 2: permalink = ' . print_r($permalink, true));
 
-// --- Bloc 3 : nom utilisateur ---
 $nom_user = get_userdata($user_id)?->display_name ?? "Utilisateur inconnu";
 error_log('🧪 Bloc 3: nom_user = ' . print_r($nom_user, true));
 
-// --- Bloc 4 : get_field utilisateurs_associes + sécurité ---
 $organisateur_id = $chasse_id ? get_organisateur_from_chasse($chasse_id) : null;
 $organisateur_user_ids_raw = $organisateur_id ? get_field('utilisateurs_associes', $organisateur_id) : [];
 error_log('🧪 Bloc 4: utilisateurs_associes brut: ' . print_r($organisateur_user_ids_raw, true));
@@ -87,10 +83,33 @@ if (!$acces_autorise) {
   wp_die('Accès interdit à cette tentative.');
 }
 
+// --- Bloc 5 : Statut utilisateur ---
+$statuts_table = $wpdb->prefix . 'enigme_statuts_utilisateur';
+$new_statut = ($resultat === 'bon') ? 'resolue' : 'abandonnee';
+
+$statut_actuel = $wpdb->get_var($wpdb->prepare(
+  "SELECT statut FROM $statuts_table WHERE user_id = %d AND enigme_id = %d",
+  $user_id,
+  $enigme_id
+));
+
+error_log("🧪 Bloc 5: statut actuel = $statut_actuel | nouveau = $new_statut");
+
+if ($statut_actuel && $statut_actuel !== 'resolue') {
+  $wpdb->update(
+    $statuts_table,
+    ['statut' => $new_statut],
+    ['user_id' => $user_id, 'enigme_id' => $enigme_id],
+    ['%s'],
+    ['%d', '%d']
+  );
+  error_log("🧪 Bloc 5: statut mis à jour vers $new_statut");
+}
+
 ?>
 
 <div style="max-width:600px;margin:3em auto;text-align:center;font-family:sans-serif;">
-  <p>🧪 Debug Étape 3 terminé.</p>
+  <p>🧪 Debug Étape 4 terminé.</p>
   <p>Utilisateur : <strong><?= esc_html($nom_user); ?></strong></p>
   <p>Énigme : <strong><?= esc_html($titre); ?></strong></p>
   <p><a href="<?= esc_url($permalink); ?>">🔍 Voir cette énigme</a></p>
