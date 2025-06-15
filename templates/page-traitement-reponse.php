@@ -4,6 +4,16 @@
  * Template Name: Traitement Réponse (Confirmation + Statistiques)
  */
 
+// Inclure les fonctions WordPress si besoin (utile pour l'exécution hors du contexte WP)
+if (!function_exists('get_field')) {
+    require_once(ABSPATH . 'wp-load.php');
+}
+
+// Activer le rapport d'erreurs pour le debug
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 defined('ABSPATH') || exit;
 
 $uid = sanitize_text_field($_GET['uid'] ?? '');
@@ -17,19 +27,25 @@ global $wpdb;
 $table = $wpdb->prefix . 'enigme_tentatives';
 
 $tentative = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table WHERE tentative_uid = %s", $uid));
-if (!$tentative) {
-  wp_die('Tentative introuvable.');
-}
-
-// ✅ Définir les variables immédiatement
-$user_id = (int) $tentative->user_id;
-$enigme_id = (int) $tentative->enigme_id;
-
-// 🔐 Sécurité : vérifier que l'utilisateur connecté est bien organisateur associé
-$current_user_id = get_current_user_id();
 $chasse_raw       = get_field('enigme_chasse_associee', $enigme_id, false);
+// Log pour debug
+error_log('DEBUG $chasse_raw: ' . print_r($chasse_raw, true));
 if (is_array($chasse_raw)) {
   $first      = reset($chasse_raw);
+  error_log('DEBUG $first: ' . print_r($first, true));
+  $chasse_id  = is_object($first) ? (int) $first->ID : (int) $first;
+} elseif (is_object($chasse_raw)) {
+  $chasse_id  = (int) $chasse_raw->ID;
+} else {
+$organisateur_user_ids_raw = $organisateur_id ? get_field('utilisateurs_associes', $organisateur_id) : [];
+error_log('DEBUG $organisateur_user_ids_raw: ' . print_r($organisateur_user_ids_raw, true));
+$organisateur_user_ids = [];
+if (is_array($organisateur_user_ids_raw)) {
+  foreach ($organisateur_user_ids_raw as $item) {
+    $organisateur_user_ids[] = is_object($item) ? (int) $item->ID : (int) $item;
+  }
+}
+error_log('DEBUG $organisateur_user_ids: ' . print_r($organisateur_user_ids, true));
   $chasse_id  = is_object($first) ? (int) $first->ID : (int) $first;
 } elseif (is_object($chasse_raw)) {
   $chasse_id  = (int) $chasse_raw->ID;
@@ -74,16 +90,19 @@ if ($exists) {
   ));
 
   if ($statut_actuel !== 'resolue') {
-    $wpdb->update(
-      $statuts_table,
-      ['statut' => $new_statut],
-      ['user_id' => $user_id, 'enigme_id' => $enigme_id]
-    );
-  }
+$chasse_raw = get_field('enigme_chasse_associee', $enigme_id, false);
+error_log('DEBUG $chasse_raw (2): ' . print_r($chasse_raw, true));
+if (is_array($chasse_raw)) {
+  $first     = reset($chasse_raw);
+  error_log('DEBUG $first (2): ' . print_r($first, true));
+  $chasse_id = is_object($first) ? (int) $first->ID : (int) $first;
+} elseif (is_object($chasse_raw)) {
+  $chasse_id = (int) $chasse_raw->ID;
 } else {
-  $wpdb->insert(
-    $statuts_table,
-    ['user_id' => $user_id, 'enigme_id' => $enigme_id, 'statut' => $new_statut]
+  $chasse_id = (int) $chasse_raw;
+}
+error_log('DEBUG $chasse_id (2): ' . print_r($chasse_id, true));
+$total_chasse = 0;
   );
 }
 
@@ -102,11 +121,13 @@ if (is_array($chasse_raw)) {
 $total_chasse = 0;
 
 if ($chasse_id) {
-  $ids_enigmes = get_posts([
-    'post_type' => 'enigme',
-    'fields' => 'ids',
-    'posts_per_page' => -1,
-    'meta_query' => [
+$nom_user = get_userdata($user_id)?->display_name ?? "Utilisateur inconnu";
+error_log('DEBUG $nom_user: ' . print_r($nom_user, true));
+$titre_enigme = get_the_title($enigme_id) ?? '';
+if (!is_string($titre_enigme)) {
+  $titre_enigme = '';
+}
+error_log('DEBUG $titre_enigme: ' . print_r($titre_enigme, true));
       [
         'key' => 'enigme_chasse_associee',
         'value' => $chasse_id,
