@@ -130,9 +130,10 @@ if ($statut_actuel) {
   $traitement_bloque = true;
 }
 
+<?php
+if (empty($traitement_bloque)) {
+  $wpdb->update(
 
-<?php if (empty($traitement_bloque)) : ?>
-$wpdb->update(
   $statuts_table,
   ['statut' => $new_statut],
   ['user_id' => $user_id, 'enigme_id' => $enigme_id],
