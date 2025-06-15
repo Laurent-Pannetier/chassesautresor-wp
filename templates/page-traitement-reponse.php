@@ -82,15 +82,28 @@ $statut_actuel = $wpdb->get_var($wpdb->prepare(
   $enigme_id
 ));
 
-if ($statut_actuel && $statut_actuel !== 'resolue') {
-  $wpdb->update(
-    $statuts_table,
-    ['statut' => $new_statut],
-    ['user_id' => $user_id, 'enigme_id' => $enigme_id],
-    ['%s'],
-    ['%d', '%d']
-  );
+// Bypass si déjà traité
+if ($statut_actuel) {
+  ?>
+  <div style="max-width:600px;margin:3em auto;text-align:center;font-family:sans-serif;">
+    <p>ℹ️ La tentative a déjà été traitée.</p>
+    <p>Résultat actuel : <strong><?= esc_html($statut_actuel); ?></strong></p>
+    <div style="margin-top:2em;">
+      <a href="<?= esc_url($permalink); ?>" style="background:#0073aa;padding:10px 20px;border-radius:5px;color:white;text-decoration:none;">🔍 Voir cette énigme</a>
+    </div>
+  </div>
+  <?php
+  exit;
 }
+
+// Mise à jour du statut
+$wpdb->update(
+  $statuts_table,
+  ['statut' => $new_statut],
+  ['user_id' => $user_id, 'enigme_id' => $enigme_id],
+  ['%s'],
+  ['%d', '%d']
+);
 
 $total_user = $wpdb->get_var($wpdb->prepare(
   "SELECT COUNT(*) FROM $table WHERE user_id = %d AND enigme_id = %d",
