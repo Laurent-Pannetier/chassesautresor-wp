@@ -16,6 +16,8 @@ global $wpdb;
 $table = $wpdb->prefix . 'enigme_tentatives';
 
 $tentative = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table WHERE tentative_uid = %s", $uid));
+$user_id = (int) $tentative->user_id;
+$enigme_id = (int) $tentative->enigme_id;
 if (!$tentative) {
     wp_die('Tentative introuvable.');
 }
@@ -64,9 +66,6 @@ if ($exists) {
         ['user_id' => $user_id, 'enigme_id' => $enigme_id, 'statut' => $new_statut]
     );
 }
-
-$user_id = (int) $tentative->user_id;
-$enigme_id = (int) $tentative->enigme_id;
 
 $total_user = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $table WHERE user_id = %d AND enigme_id = %d", $user_id, $enigme_id));
 $total_enigme = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $table WHERE enigme_id = %d", $enigme_id));
