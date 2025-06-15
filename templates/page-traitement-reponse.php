@@ -130,7 +130,9 @@ if ($statut_actuel) {
   $traitement_bloque = true;
 }
 
-
+$total_user = 0;
+$total_enigme = 0;
+$total_chasse = 0;
 if (empty($traitement_bloque)) {
   $wpdb->update(
 
