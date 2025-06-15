@@ -59,6 +59,64 @@ add_action('wp_head', function () {
     </div>
 </div>
 <?php else : ?>
+
+      $traitement_bloque = true;
+}
+
+$total_user = 0;
+$total_enigme = 0;
+$total_chasse = 0;
+if (empty($traitement_bloque)) {
+  $wpdb->update(
+
+  $statuts_table,
+  ['statut' => $new_statut],
+  ['user_id' => $user_id, 'enigme_id' => $enigme_id],
+  ['%s'],
+  ['%d', '%d']
+);
+
+$total_user = $wpdb->get_var($wpdb->prepare(
+  "SELECT COUNT(*) FROM $table WHERE user_id = %d AND enigme_id = %d",
+  $user_id,
+  $enigme_id
+));
+$total_enigme = $wpdb->get_var($wpdb->prepare(
+  "SELECT COUNT(*) FROM $table WHERE enigme_id = %d",
+  $enigme_id
+));
+
+$total_chasse = 0;
+if ($chasse_id) {
+  $ids_enigmes = get_posts([
+    'post_type' => 'enigme',
+    'fields' => 'ids',
+    'posts_per_page' => -1,
+    'meta_query' => [[
+      'key' => 'enigme_chasse_associee',
+      'value' => $chasse_id,
+      'compare' => '=',
+    ]]
+  ]);
+
+  if ($ids_enigmes) {
+    $in_clause = implode(',', array_map('absint', $ids_enigmes));
+    $total_chasse = $wpdb->get_var("SELECT COUNT(*) FROM $table WHERE enigme_id IN ($in_clause)");
+  }
+}
+
+envoyer_mail_resultat_joueur($user_id, $enigme_id, $resultat);
+
+// Assure l'affichage du favicon (si thème ne le fait pas déjà)
+add_action('wp_head', function () {
+  if (!has_site_icon()) {
+    echo '<link rel="shortcut icon" href="' . esc_url(get_site_icon_url(32)) . '" type="image/x-icon">';
+  }
+});
+?>
+<?php } ?>
+  <?php if (empty($traitement_bloque)) : ?>
+
 <div style="max-width:600px;margin:3em auto;text-align:center;font-family:sans-serif;">
     <?php $logo = get_site_icon_url(96); ?>
     <a href="<?= esc_url(home_url()); ?>">
