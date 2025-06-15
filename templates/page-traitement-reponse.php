@@ -16,15 +16,18 @@ global $wpdb;
 $table = $wpdb->prefix . 'enigme_tentatives';
 
 $tentative = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table WHERE tentative_uid = %s", $uid));
-$user_id = (int) $tentative->user_id;
-$enigme_id = (int) $tentative->enigme_id;
 if (!$tentative) {
     wp_die('Tentative introuvable.');
 }
 
+// ✅ Définir les variables immédiatement
+$user_id = (int) $tentative->user_id;
+$enigme_id = (int) $tentative->enigme_id;
+
 // 🔐 Sécurité : vérifier que l'utilisateur connecté est bien organisateur associé
 $current_user_id = get_current_user_id();
-$chasse_id = get_field('enigme_chasse_associee', $enigme_id, false);
+$chasse_raw = get_field('enigme_chasse_associee', $enigme_id, false);
+$chasse_id = is_array($chasse_raw) ? ($chasse_raw[0] ?? null) : $chasse_raw;
 $organisateur_id = get_organisateur_from_chasse($chasse_id);
 $organisateur_user_ids = get_field('utilisateurs_associes', $organisateur_id);
 
@@ -34,6 +37,7 @@ if (
 ) {
     wp_die('Accès interdit : vous ne pouvez pas traiter cette tentative.');
 }
+
 
 // ✅ Mettre à jour le statut utilisateur si nécessaire
 $statuts_table = $wpdb->prefix . 'enigme_statuts_utilisateur';
