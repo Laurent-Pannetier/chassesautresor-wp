@@ -32,6 +32,8 @@ add_filter('theme_page_templates', function ($templates) {
         'templates/page-creer-profil.php'          => 'Créer mon profil',
         'templates/page-devenir-organisateur.php'  => 'Devenir organisateur',
         'templates/page-traitement-reponse.php'    => 'Traitement de réponse',
+        'templates/page-valider-reponse.php'       => 'Valider la réponse',
+        'templates/page-invalider-reponse.php'     => 'Invalider la réponse',
     ]);
 });
 
