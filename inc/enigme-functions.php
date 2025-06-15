@@ -752,6 +752,8 @@
         if (!$user || !is_email($user->user_email)) return;
 
         $titre_enigme = get_the_title($enigme_id);
+        if (!is_string($titre_enigme)) $titre_enigme = '';
+
         $resultat_txt = $resultat === 'bon' ? 'validée ✅' : 'refusée ❌';
         $sujet = '[Chasses au Trésor] Votre réponse a été ' . $resultat_txt;
 
@@ -764,21 +766,38 @@
         $message .= '<p style="margin-top:2em;">L’équipe chassesautresor.com</p>';
         $message .= '</div>';
 
-    $headers = [
-        'Content-Type: text/html; charset=UTF-8'
-    ];
-    $chasse_id = get_field('enigme_chasse_associee', $enigme_id, false);
-$organisateur_id = get_organisateur_from_chasse($chasse_id);
-$email_organisateur = get_field('email_organisateur', $organisateur_id);
+        $headers = [
+            'Content-Type: text/html; charset=UTF-8'
+        ];
 
-if (!is_email($email_organisateur)) {
-    $email_organisateur = get_option('admin_email');
-}
+        // Sécurisation du champ ACF enigme_chasse_associee
+        $chasse_raw = get_field('enigme_chasse_associee', $enigme_id, false);
+        if (is_array($chasse_raw)) {
+            $first = reset($chasse_raw);
+            $chasse_id = is_object($first) ? (int) $first->ID : (int) $first;
+        } elseif (is_object($chasse_raw)) {
+            $chasse_id = (int) $chasse_raw->ID;
+        } elseif (is_numeric($chasse_raw)) {
+            $chasse_id = (int) $chasse_raw;
+        } else {
+            $chasse_id = 0;
+        }
 
-$headers[] = 'Reply-To: ' . $email_organisateur;
+        $organisateur_id = get_organisateur_from_chasse($chasse_id);
+        $email_organisateur = get_field('email_organisateur', $organisateur_id);
 
-wp_mail($user->user_email, $sujet, $message, $headers);
-}
+        if (is_array($email_organisateur)) {
+            $email_organisateur = reset($email_organisateur);
+        }
+
+        if (!is_string($email_organisateur) || !is_email($email_organisateur)) {
+            $email_organisateur = get_option('admin_email');
+        }
+
+        $headers[] = 'Reply-To: ' . $email_organisateur;
+
+        wp_mail($user->user_email, $sujet, $message, $headers);
+    }
 
     /**
      * Envoie un accusé de réception au joueur juste après sa soumission.
@@ -805,10 +824,10 @@ wp_mail($user->user_email, $sujet, $message, $headers);
         $message .= '<p style="margin-top:2em;">Merci pour votre participation,<br>L’équipe chassesautresor.com</p>';
         $message .= '</div>';
 
-    // Reply-to = organisateur
-    $chasse_id = get_field('enigme_chasse_associee', $enigme_id, false);
-    $organisateur_id = get_organisateur_from_chasse($chasse_id);
-    $email_organisateur = get_field('email_organisateur', $organisateur_id);
+        // Reply-to = organisateur
+        $chasse_id = get_field('enigme_chasse_associee', $enigme_id, false);
+        $organisateur_id = get_organisateur_from_chasse($chasse_id);
+        $email_organisateur = get_field('email_organisateur', $organisateur_id);
 
         if (!is_email($email_organisateur)) {
             $email_organisateur = get_option('admin_email');
