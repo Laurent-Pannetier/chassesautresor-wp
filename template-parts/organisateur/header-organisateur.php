@@ -11,6 +11,7 @@ $logo_url = $logo ? $logo[0] : esc_url(wp_get_attachment_image_src(3927, 'medium
 $slogan = get_field('profil_public_description_courte', $organisateur_id);
 $titre_organisateur = get_post_field('post_title', $organisateur_id);
 
+if (!is_numeric($organisateur_id)) return;
 $liens_actifs = organisateur_get_liens_actifs($organisateur_id);
 $types_disponibles = organisateur_get_liste_liens_publics(); // à garder si nécessaire
 

@@ -97,6 +97,9 @@ if ($chasse_id) {
 $nom_user = get_userdata($user_id)?->display_name ?? "Utilisateur inconnu";
 $titre_enigme = get_the_title($enigme_id);
 $url_enigme = get_permalink($enigme_id) . '?statistiques=1';
+
+envoyer_mail_notification_joueur($user_id, $enigme_id, $resultat);
+
 ?>
 
 <div style="max-width:600px;margin:3em auto;text-align:center;font-family:sans-serif;">

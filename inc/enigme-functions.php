@@ -546,16 +546,17 @@
     }
 
 
-    // ==================================================
-    // 📬 GESTION DES RÉPONSES MANUELLES AUX ÉNIGMES
-    // ==================================================
-    /**
-     * 🔹 afficher_formulaire_reponse_manuelle() → Affiche un champ texte et bouton pour soumettre une réponse manuelle (frontend).
-     * 🔹 utilisateur_peut_repondre_manuelle() → Vérifie les conditions d’accès avant affichage du formulaire manuel.
-     * 🔹 enregistrer_tentative_reponse_manuelle() → Insère la tentative dans la table SQL personnalisée.
-     * 🔹 envoyer_mail_reponse_manuelle() → Envoie un mail HTML à l'organisateur avec la réponse (expéditeur = joueur).
 
-     */
+                    // 📬 GESTION DES RÉPONSES MANUELLES AUX ÉNIGMES
+                    // ==================================================
+                    /**
+                     * 🔹 afficher_formulaire_reponse_manuelle() → Affiche un champ texte et bouton pour soumettre une réponse manuelle (frontend).
+                     * 🔹 utilisateur_peut_repondre_manuelle() → Vérifie les conditions d’accès avant affichage du formulaire manuel.
+                     * 🔹 enregistrer_tentative_reponse_manuelle() → Insère la tentative dans la table SQL personnalisée.
+                     * 🔹 envoyer_mail_reponse_manuelle() → Envoie un mail HTML à l'organisateur avec la réponse (expéditeur = joueur).
+                     * 🔹 envoyer_mail_notification_joueur() → Envoie un mail de notification au joueur concernant le résultat de sa réponse.
+                     * 🔹 envoyer_mail_accuse_reception_joueur() → Envoie un accusé de réception au joueur juste après sa soumission.
+                     */
 
     /**
      * Affiche le formulaire de réponse manuelle pour une énigme.
@@ -621,6 +622,7 @@
 
             $uid = enregistrer_tentative_reponse_manuelle($user_id, $enigme_id, $reponse);
             envoyer_mail_reponse_manuelle($user_id, $enigme_id, $reponse, $uid);
+            envoyer_mail_accuse_reception_joueur($user_id, $enigme_id);
 
             add_action('template_redirect', function () {
                 wp_redirect(add_query_arg('reponse_envoyee', '1'));
@@ -734,3 +736,87 @@
 
         wp_mail($email_organisateur, $subject, $message, $headers);
     }
+
+/**
+ * Envoie un email de notification au joueur concernant le résultat de sa réponse à une énigme.
+ *
+ * @param int    $user_id    L'identifiant de l'utilisateur à notifier.
+ * @param int    $enigme_id  L'identifiant de l'énigme concernée.
+ * @param string $resultat   Le résultat de la réponse ('bon' pour validée, autre pour refusée).
+ *
+ * @return void
+ */
+function envoyer_mail_notification_joueur($user_id, $enigme_id, $resultat) {
+    $user = get_userdata($user_id);
+    if (!$user || !is_email($user->user_email)) return;
+
+    $titre_enigme = get_the_title($enigme_id);
+    $sujet = '[Chasses au Trésor] Réponse bien reçue pour : ' . html_entity_decode(\$titre_enigme, ENT_QUOTES, 'UTF-8');
+
+    $message  = '<div style="font-family:Arial,sans-serif; font-size:14px;">';
+    $message .= '<p>Bonjour <strong>' . esc_html($user->display_name) . '</strong>,</p>';
+    $message .= '<p>Nous avons bien reçu votre réponse à l’énigme « <strong>' . esc_html($titre_enigme) . '</strong> ».</p>';
+    $message .= '<p>Elle sera examinée prochainement par l’organisateur.</p>';
+    $message .= '<p>Vous recevrez une notification lorsqu’une décision sera prise.</p>';
+    $message .= '<hr>';
+    $message .= '<p>🔗 <a href="https://chassesautresor.com/mon-compte" target="_blank">Consultez vos réponses ici</a></p>';
+    $message .= '<p style="margin-top:2em;">Merci pour votre participation,<br>L’équipe chassesautresor.com</p>';
+    $message .= '</div>';
+
+    $headers = [
+        'Content-Type: text/html; charset=UTF-8'
+    ];
+    $chasse_id = get_field('enigme_chasse_associee', $enigme_id, false);
+$organisateur_id = get_organisateur_from_chasse($chasse_id);
+$email_organisateur = get_field('email_organisateur', $organisateur_id);
+
+if (!is_email($email_organisateur)) {
+    $email_organisateur = get_option('admin_email');
+}
+
+$headers[] = 'Reply-To: ' . $email_organisateur;
+
+wp_mail($user->user_email, $sujet, $message, $headers);
+}
+
+/**
+ * Envoie un accusé de réception au joueur juste après sa soumission.
+ *
+ * @param int $user_id
+ * @param int $enigme_id
+ * @return void
+ */
+function envoyer_mail_accuse_reception_joueur($user_id, $enigme_id)
+{
+    $user = get_userdata($user_id);
+    if (!$user || !is_email($user->user_email)) return;
+
+    $titre_enigme = get_the_title($enigme_id);
+    $sujet = '[Chasses au Trésor] Réponse bien reçue pour : ' . html_entity_decode($titre_enigme, ENT_QUOTES, 'UTF-8');
+
+    $message  = '<div style="font-family:Arial,sans-serif; font-size:14px;">';
+    $message .= '<p>Bonjour <strong>' . esc_html($user->display_name) . '</strong>,</p>';
+    $message .= '<p>Nous avons bien reçu votre réponse à l’énigme « <strong>' . esc_html($titre_enigme) . '</strong> ».</p>';
+    $message .= '<p>Elle sera examinée prochainement par l’organisateur.</p>';
+    $message .= '<p>Vous recevrez une notification lorsqu’une décision sera prise.</p>';
+    $message .= '<hr>';
+    $message .= '<p>🔗 <a href="https://chassesautresor.com/mon-compte" target="_blank">Consultez vos réponses ici</a></p>';
+    $message .= '<p style="margin-top:2em;">Merci pour votre participation,<br>L’équipe chassesautresor.com</p>';
+    $message .= '</div>';
+
+    // Reply-to = organisateur
+    $chasse_id = get_field('enigme_chasse_associee', $enigme_id, false);
+    $organisateur_id = get_organisateur_from_chasse($chasse_id);
+    $email_organisateur = get_field('email_organisateur', $organisateur_id);
+
+    if (!is_email($email_organisateur)) {
+        $email_organisateur = get_option('admin_email');
+    }
+
+    $headers = [
+        'Content-Type: text/html; charset=UTF-8',
+        'Reply-To: ' . $email_organisateur
+    ];
+
+    wp_mail($user->user_email, $sujet, $message, $headers);
+}
