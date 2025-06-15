@@ -1,16 +1,7 @@
 <?php
-
 /**
  * Template Name: Traitement Réponse (Finalisation Sécurisée)
  */
-
-if (!function_exists('get_field')) {
-  require_once(ABSPATH . 'wp-load.php');
-}
-
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
 
 defined('ABSPATH') || exit;
 
