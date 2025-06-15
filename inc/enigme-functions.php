@@ -766,15 +766,24 @@ function envoyer_mail_notification_joueur($user_id, $enigme_id, $resultat) {
     $headers = [
         'Content-Type: text/html; charset=UTF-8'
     ];
-    $chasse_id = get_field('enigme_chasse_associee', $enigme_id, false);
-$organisateur_id = get_organisateur_from_chasse($chasse_id);
-$email_organisateur = get_field('email_organisateur', $organisateur_id);
+    $chasse_raw = get_field('enigme_chasse_associee', $enigme_id, false);
+    if (is_array($chasse_raw)) {
+        $first     = reset($chasse_raw);
+        $chasse_id = is_object($first) ? (int) $first->ID : (int) $first;
+    } elseif (is_object($chasse_raw)) {
+        $chasse_id = (int) $chasse_raw->ID;
+    } else {
+        $chasse_id = (int) $chasse_raw;
+    }
 
-if (!is_email($email_organisateur)) {
-    $email_organisateur = get_option('admin_email');
-}
+    $organisateur_id    = $chasse_id ? get_organisateur_from_chasse($chasse_id) : null;
+    $email_organisateur = $organisateur_id ? get_field('email_organisateur', $organisateur_id) : '';
 
-$headers[] = 'Reply-To: ' . $email_organisateur;
+    if (!is_email($email_organisateur)) {
+        $email_organisateur = get_option('admin_email');
+    }
+
+    $headers[] = 'Reply-To: ' . $email_organisateur;
 
 wp_mail($user->user_email, $sujet, $message, $headers);
 }
@@ -805,9 +814,18 @@ function envoyer_mail_accuse_reception_joueur($user_id, $enigme_id)
     $message .= '</div>';
 
     // Reply-to = organisateur
-    $chasse_id = get_field('enigme_chasse_associee', $enigme_id, false);
-    $organisateur_id = get_organisateur_from_chasse($chasse_id);
-    $email_organisateur = get_field('email_organisateur', $organisateur_id);
+    $chasse_raw = get_field('enigme_chasse_associee', $enigme_id, false);
+    if (is_array($chasse_raw)) {
+        $first     = reset($chasse_raw);
+        $chasse_id = is_object($first) ? (int) $first->ID : (int) $first;
+    } elseif (is_object($chasse_raw)) {
+        $chasse_id = (int) $chasse_raw->ID;
+    } else {
+        $chasse_id = (int) $chasse_raw;
+    }
+
+    $organisateur_id    = $chasse_id ? get_organisateur_from_chasse($chasse_id) : null;
+    $email_organisateur = $organisateur_id ? get_field('email_organisateur', $organisateur_id) : '';
 
     if (!is_email($email_organisateur)) {
         $email_organisateur = get_option('admin_email');
