@@ -91,12 +91,18 @@ $statut_actuel = $wpdb->get_var($wpdb->prepare(
   $enigme_id
 ));
 
+// Bypass si déjà traité
 if ($statut_actuel) {
   ?>
   <div style="max-width:600px;margin:3em auto;text-align:center;font-family:sans-serif;">
+    <?php $logo = get_site_icon_url(96); ?>
+    <a href="<?= esc_url(home_url()); ?>">
+      <img src="<?= esc_url($logo); ?>" alt="Logo" style="width:48px;height:48px;margin-bottom:1em;">
+    </a>
     <p>ℹ️ La tentative a déjà été traitée.</p>
     <p>Résultat actuel : <strong><?= esc_html($statut_actuel); ?></strong></p>
     <div style="margin-top:2em;">
+      <a href="#" onclick="window.close();" style="margin-right:1em;">❎ Fermer cette fenêtre</a>
       <a href="<?= esc_url($permalink); ?>" style="background:#0073aa;padding:10px 20px;border-radius:5px;color:white;text-decoration:none;">🔍 Voir cette énigme</a>
     </div>
   </div>
@@ -112,23 +118,6 @@ $wpdb->update(
   ['%s'],
   ['%d', '%d']
 );
-
-// Journalisation dans une table log (si elle existe)
-$log_table = $wpdb->prefix . 'enigme_validations_log';
-if ($wpdb->get_var("SHOW TABLES LIKE '$log_table'") === $log_table) {
-  $wpdb->insert(
-    $log_table,
-    [
-      'tentative_uid' => $uid,
-      'enigme_id'     => $enigme_id,
-      'user_id'       => $user_id,
-      'valide_par'    => $current_user_id,
-      'resultat'      => $resultat,
-      'date_validation' => current_time('mysql'),
-    ],
-    ['%s', '%d', '%d', '%d', '%s', '%s']
-  );
-}
 
 $total_user = $wpdb->get_var($wpdb->prepare(
   "SELECT COUNT(*) FROM $table WHERE user_id = %d AND enigme_id = %d",
@@ -164,6 +153,10 @@ envoyer_mail_resultat_joueur($user_id, $enigme_id, $resultat);
 ?>
 
 <div style="max-width:600px;margin:3em auto;text-align:center;font-family:sans-serif;">
+  <?php $logo = get_site_icon_url(96); ?>
+  <a href="<?= esc_url(home_url()); ?>">
+    <img src="<?= esc_url($logo); ?>" alt="Logo" style="width:48px;height:48px;margin-bottom:1em;">
+  </a>
   <p>✅ La réponse a bien été <strong><?= $resultat === 'bon' ? 'validée' : 'refusée'; ?></strong>.</p>
   <div style="margin-top:2em;font-size:1em;">
     <p>📌 Tentative <strong><?= $total_user; ?></strong> de <strong><?= esc_html($nom_user); ?></strong></p>
