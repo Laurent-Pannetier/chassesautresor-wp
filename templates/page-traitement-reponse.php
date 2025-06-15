@@ -111,13 +111,20 @@ if (is_array($chasse_raw)) {
 $total_chasse = 0;
 
 if ($chasse_id) {
-$nom_user = get_userdata($user_id)?->display_name ?? "Utilisateur inconnu";
-error_log('DEBUG $nom_user: ' . print_r($nom_user, true));
-$titre_enigme = get_the_title($enigme_id) ?? '';
-if (!is_string($titre_enigme)) {
-  $titre_enigme = '';
-}
-error_log('DEBUG $titre_enigme: ' . print_r($titre_enigme, true));
+  $nom_user = get_userdata($user_id)?->display_name ?? "Utilisateur inconnu";
+  error_log('DEBUG $nom_user: ' . print_r($nom_user, true));
+  $titre_enigme = get_the_title($enigme_id) ?? '';
+  if (!is_string($titre_enigme)) {
+    $titre_enigme = '';
+  }
+  error_log('DEBUG $titre_enigme: ' . print_r($titre_enigme, true));
+
+  // Récupérer les IDs des énigmes associées à la chasse
+  $ids_enigmes = get_posts([
+    'post_type' => 'enigme',
+    'fields' => 'ids',
+    'posts_per_page' => -1,
+    'meta_query' => [
       [
         'key' => 'enigme_chasse_associee',
         'value' => $chasse_id,
