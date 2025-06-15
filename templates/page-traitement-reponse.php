@@ -1,6 +1,6 @@
 <?php
 /**
- * Template Name: Traitement Réponse (Debug Étape 5)
+ * Template Name: Traitement Réponse (Finalisation Étape 6)
  */
 
 if (!function_exists('get_field')) {
@@ -105,7 +105,6 @@ if ($statut_actuel && $statut_actuel !== 'resolue') {
   error_log("🧪 Bloc 5: statut mis à jour vers $new_statut");
 }
 
-// --- Bloc 6 : Statistiques ---
 $total_user = $wpdb->get_var($wpdb->prepare(
   "SELECT COUNT(*) FROM $table WHERE user_id = %d AND enigme_id = %d",
   $user_id, $enigme_id
@@ -138,18 +137,23 @@ if ($chasse_id) {
 
 error_log("🧪 Bloc 6: total_user = $total_user | total_enigme = $total_enigme | total_chasse = $total_chasse");
 
+// --- Bloc 7 : Envoi de mail ---
+envoyer_mail_resultat_joueur($user_id, $enigme_id, $resultat);
+error_log("📧 Bloc 7: mail envoyé à l'utilisateur #$user_id pour l'énigme #$enigme_id, résultat = $resultat");
+
 ?>
 
 <div style="max-width:600px;margin:3em auto;text-align:center;font-family:sans-serif;">
-  <p>🧪 Debug Étape 5 terminé.</p>
-  <p>Utilisateur : <strong><?= esc_html($nom_user); ?></strong></p>
-  <p>Énigme : <strong><?= esc_html($titre); ?></strong></p>
-  <p><a href="<?= esc_url($permalink); ?>">🔍 Voir cette énigme</a></p>
+  <p>✅ La réponse a bien été <strong><?= $resultat === 'bon' ? 'validée' : 'refusée'; ?></strong>.</p>
   <div style="margin-top:2em;font-size:1em;">
     <p>📌 Tentative <strong><?= $total_user; ?></strong> de <strong><?= esc_html($nom_user); ?></strong></p>
     <p>📊 Tentative <strong><?= $total_enigme; ?></strong> sur cette énigme</p>
     <?php if ($total_chasse): ?>
       <p>🧩 Tentative <strong><?= $total_chasse; ?></strong> sur la chasse</p>
     <?php endif; ?>
+  </div>
+  <div style="margin-top:3em;">
+    <a href="#" onclick="window.close();" style="margin-right:1em;">❎ Fermer cette fenêtre</a>
+    <a href="<?= esc_url($permalink); ?>" style="background:#0073aa;padding:10px 20px;border-radius:5px;color:white;text-decoration:none;">🔍 Voir cette énigme</a>
   </div>
 </div>
