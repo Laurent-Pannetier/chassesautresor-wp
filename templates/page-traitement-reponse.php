@@ -130,7 +130,7 @@ if ($statut_actuel) {
   $traitement_bloque = true;
 }
 
-<?php
+
 if (empty($traitement_bloque)) {
   $wpdb->update(
 
