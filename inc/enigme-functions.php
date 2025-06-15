@@ -792,11 +792,11 @@ function envoyer_mail_accuse_reception_joueur($user_id, $enigme_id)
     if (!$user || !is_email($user->user_email)) return;
 
     $titre_enigme = get_the_title($enigme_id);
-    $sujet = '[Chasses au Trésor] Réponse bien reçue pour : ' . html_entity_decode($titre_enigme, ENT_QUOTES, 'UTF-8');
+    $sujet = '[Chasses au Trésor] Tentative de réponse bien reçue pour : ' . html_entity_decode($titre_enigme, ENT_QUOTES, 'UTF-8');
 
     $message  = '<div style="font-family:Arial,sans-serif; font-size:14px;">';
     $message .= '<p>Bonjour <strong>' . esc_html($user->display_name) . '</strong>,</p>';
-    $message .= '<p>Nous avons bien reçu votre réponse à l’énigme « <strong>' . esc_html($titre_enigme) . '</strong> ».</p>';
+    $message .= '<p>Nous avons bien reçu votre tentative de réponse à l’énigme « <strong>' . esc_html($titre_enigme) . '</strong> ».</p>';
     $message .= '<p>Elle sera examinée prochainement par l’organisateur.</p>';
     $message .= '<p>Vous recevrez une notification lorsqu’une décision sera prise.</p>';
     $message .= '<hr>';
