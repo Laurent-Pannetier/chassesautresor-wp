@@ -106,7 +106,7 @@ envoyer_mail_notification_joueur($user_id, $enigme_id, $resultat);
 ?>
 
 <div style="max-width:600px;margin:3em auto;text-align:center;font-family:sans-serif;">
-  <img src="<?= esc_url(get_site_icon_url(96)); ?>" alt="Logo" style="margin-bottom:1em; width:48px; height:48px;">
+  
   <p style="font-size:1.3em;">
     <?= $resultat === 'bon' ? '✅' : '❌'; ?> La réponse a bien été <strong><?= $resultat === 'bon' ? 'validée' : 'refusée'; ?></strong>.
   </p>
