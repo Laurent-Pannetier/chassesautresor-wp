@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Template Name: Traitement Réponse (Finalisation Sécurisée)
  */
@@ -91,7 +92,7 @@ $statut_actuel = $wpdb->get_var($wpdb->prepare(
 ));
 
 if ($statut_actuel) {
-  ?>
+?>
   <div style="max-width:600px;margin:3em auto;text-align:center;font-family:sans-serif;">
     <?php $logo = get_site_icon_url(96); ?>
     <a href="<?= esc_url(home_url()); ?>">
@@ -107,14 +108,14 @@ if ($statut_actuel) {
   <script>
     function fermerFenetreOuRediriger() {
       window.close();
-      setTimeout(function () {
+      setTimeout(function() {
         if (!window.closed) {
           window.location.href = '/';
         }
       }, 500);
     }
   </script>
-  <?php
+<?php
   exit;
 }
 
@@ -128,7 +129,8 @@ $wpdb->update(
 
 $total_user = $wpdb->get_var($wpdb->prepare(
   "SELECT COUNT(*) FROM $table WHERE user_id = %d AND enigme_id = %d",
-  $user_id, $enigme_id
+  $user_id,
+  $enigme_id
 ));
 $total_enigme = $wpdb->get_var($wpdb->prepare(
   "SELECT COUNT(*) FROM $table WHERE enigme_id = %d",
@@ -156,6 +158,12 @@ if ($chasse_id) {
 
 envoyer_mail_resultat_joueur($user_id, $enigme_id, $resultat);
 
+// Assure l'affichage du favicon (si thème ne le fait pas déjà)
+add_action('wp_head', function () {
+  if (!has_site_icon()) {
+    echo '<link rel="shortcut icon" href="' . esc_url(get_site_icon_url(32)) . '" type="image/x-icon">';
+  }
+});
 ?>
 
 <div style="max-width:600px;margin:3em auto;text-align:center;font-family:sans-serif;">
@@ -180,7 +188,7 @@ envoyer_mail_resultat_joueur($user_id, $enigme_id, $resultat);
 <script>
   function fermerFenetreOuRediriger() {
     window.close();
-    setTimeout(function () {
+    setTimeout(function() {
       if (!window.closed) {
         window.location.href = '/';
       }
