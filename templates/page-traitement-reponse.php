@@ -28,10 +28,7 @@ $tentative = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table WHERE tentative
 $user_id = isset($tentative->user_id) ? (int)$tentative->user_id : 0;
 $enigme_id = isset($tentative->enigme_id) ? (int)$tentative->enigme_id : 0;
 
-error_log("🔍 DEBUG \$uid = $uid, \$resultat = $resultat, user_id = $user_id, enigme_id = $enigme_id");
-
 $chasse_raw = get_field('enigme_chasse_associee', $enigme_id, false);
-error_log('🧪 Bloc 1: get_field enigme_chasse_associee: ' . print_r($chasse_raw, true));
 
 if (is_array($chasse_raw)) {
   $first = reset($chasse_raw);
@@ -55,15 +52,10 @@ if (!is_string($permalink)) {
 }
 $permalink .= '?statistiques=1';
 
-error_log('🧪 Bloc 2: titre = ' . print_r($titre, true));
-error_log('🧪 Bloc 2: permalink = ' . print_r($permalink, true));
-
 $nom_user = get_userdata($user_id)?->display_name ?? "Utilisateur inconnu";
-error_log('🧪 Bloc 3: nom_user = ' . print_r($nom_user, true));
 
 $organisateur_id = $chasse_id ? get_organisateur_from_chasse($chasse_id) : null;
 $organisateur_user_ids_raw = $organisateur_id ? get_field('utilisateurs_associes', $organisateur_id) : [];
-error_log('🧪 Bloc 4: utilisateurs_associes brut: ' . print_r($organisateur_user_ids_raw, true));
 
 if (!is_array($organisateur_user_ids_raw)) {
   $organisateur_user_ids_raw = [$organisateur_user_ids_raw];
@@ -75,8 +67,6 @@ foreach ($organisateur_user_ids_raw as $item) {
 }
 
 $current_user_id = get_current_user_id();
-error_log('🧪 Bloc 4: current_user_id = ' . $current_user_id);
-error_log('🧪 Bloc 4: organisateur_user_ids = ' . print_r($organisateur_user_ids, true));
 
 $acces_autorise = current_user_can('manage_options') || in_array($current_user_id, $organisateur_user_ids, true);
 if (!$acces_autorise) {
@@ -92,8 +82,6 @@ $statut_actuel = $wpdb->get_var($wpdb->prepare(
   $enigme_id
 ));
 
-error_log("🧪 Bloc 5: statut actuel = $statut_actuel | nouveau = $new_statut");
-
 if ($statut_actuel && $statut_actuel !== 'resolue') {
   $wpdb->update(
     $statuts_table,
@@ -102,7 +90,6 @@ if ($statut_actuel && $statut_actuel !== 'resolue') {
     ['%s'],
     ['%d', '%d']
   );
-  error_log("🧪 Bloc 5: statut mis à jour vers $new_statut");
 }
 
 $total_user = $wpdb->get_var($wpdb->prepare(
@@ -127,19 +114,14 @@ if ($chasse_id) {
     ]]
   ]);
 
-  error_log('🧪 Bloc 6: ids_enigmes pour la chasse: ' . print_r($ids_enigmes, true));
-
   if ($ids_enigmes) {
     $in_clause = implode(',', array_map('absint', $ids_enigmes));
     $total_chasse = $wpdb->get_var("SELECT COUNT(*) FROM $table WHERE enigme_id IN ($in_clause)");
   }
 }
 
-error_log("🧪 Bloc 6: total_user = $total_user | total_enigme = $total_enigme | total_chasse = $total_chasse");
-
 // --- Bloc 7 : Envoi de mail ---
 envoyer_mail_resultat_joueur($user_id, $enigme_id, $resultat);
-error_log("📧 Bloc 7: mail envoyé à l'utilisateur #$user_id pour l'énigme #$enigme_id, résultat = $resultat");
 
 ?>
 
