@@ -1,6 +1,6 @@
 <?php
 /**
- * Template Name: Traitement Réponse (Debug Étape 4)
+ * Template Name: Traitement Réponse (Debug Étape 5)
  */
 
 if (!function_exists('get_field')) {
@@ -83,7 +83,6 @@ if (!$acces_autorise) {
   wp_die('Accès interdit à cette tentative.');
 }
 
-// --- Bloc 5 : Statut utilisateur ---
 $statuts_table = $wpdb->prefix . 'enigme_statuts_utilisateur';
 $new_statut = ($resultat === 'bon') ? 'resolue' : 'abandonnee';
 
@@ -106,11 +105,51 @@ if ($statut_actuel && $statut_actuel !== 'resolue') {
   error_log("🧪 Bloc 5: statut mis à jour vers $new_statut");
 }
 
+// --- Bloc 6 : Statistiques ---
+$total_user = $wpdb->get_var($wpdb->prepare(
+  "SELECT COUNT(*) FROM $table WHERE user_id = %d AND enigme_id = %d",
+  $user_id, $enigme_id
+));
+$total_enigme = $wpdb->get_var($wpdb->prepare(
+  "SELECT COUNT(*) FROM $table WHERE enigme_id = %d",
+  $enigme_id
+));
+
+$total_chasse = 0;
+if ($chasse_id) {
+  $ids_enigmes = get_posts([
+    'post_type' => 'enigme',
+    'fields' => 'ids',
+    'posts_per_page' => -1,
+    'meta_query' => [[
+      'key' => 'enigme_chasse_associee',
+      'value' => $chasse_id,
+      'compare' => '=',
+    ]]
+  ]);
+
+  error_log('🧪 Bloc 6: ids_enigmes pour la chasse: ' . print_r($ids_enigmes, true));
+
+  if ($ids_enigmes) {
+    $in_clause = implode(',', array_map('absint', $ids_enigmes));
+    $total_chasse = $wpdb->get_var("SELECT COUNT(*) FROM $table WHERE enigme_id IN ($in_clause)");
+  }
+}
+
+error_log("🧪 Bloc 6: total_user = $total_user | total_enigme = $total_enigme | total_chasse = $total_chasse");
+
 ?>
 
 <div style="max-width:600px;margin:3em auto;text-align:center;font-family:sans-serif;">
-  <p>🧪 Debug Étape 4 terminé.</p>
+  <p>🧪 Debug Étape 5 terminé.</p>
   <p>Utilisateur : <strong><?= esc_html($nom_user); ?></strong></p>
   <p>Énigme : <strong><?= esc_html($titre); ?></strong></p>
   <p><a href="<?= esc_url($permalink); ?>">🔍 Voir cette énigme</a></p>
+  <div style="margin-top:2em;font-size:1em;">
+    <p>📌 Tentative <strong><?= $total_user; ?></strong> de <strong><?= esc_html($nom_user); ?></strong></p>
+    <p>📊 Tentative <strong><?= $total_enigme; ?></strong> sur cette énigme</p>
+    <?php if ($total_chasse): ?>
+      <p>🧩 Tentative <strong><?= $total_chasse; ?></strong> sur la chasse</p>
+    <?php endif; ?>
+  </div>
 </div>
