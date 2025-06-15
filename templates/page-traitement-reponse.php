@@ -32,7 +32,6 @@ if (!$tentative) {
 $user_id = isset($tentative->user_id) ? (int)$tentative->user_id : 0;
 $enigme_id = isset($tentative->enigme_id) ? (int)$tentative->enigme_id : 0;
 
-// Vérification UID cohérent avec tentative
 if ($tentative->tentative_uid !== $uid || !$user_id || !$enigme_id) {
   wp_die('Tentative invalide (cohérence UID).');
 }
@@ -91,7 +90,6 @@ $statut_actuel = $wpdb->get_var($wpdb->prepare(
   $enigme_id
 ));
 
-// Bypass si déjà traité
 if ($statut_actuel) {
   ?>
   <div style="max-width:600px;margin:3em auto;text-align:center;font-family:sans-serif;">
@@ -102,15 +100,24 @@ if ($statut_actuel) {
     <p>ℹ️ La tentative a déjà été traitée.</p>
     <p>Résultat actuel : <strong><?= esc_html($statut_actuel); ?></strong></p>
     <div style="margin-top:2em;">
-      <a href="#" onclick="window.close();" style="margin-right:1em;">❎ Fermer cette fenêtre</a>
+      <a href="#" onclick="fermerFenetreOuRediriger(); return false;" style="margin-right:1em;">❎ Fermer cette fenêtre</a>
       <a href="<?= esc_url($permalink); ?>" style="background:#0073aa;padding:10px 20px;border-radius:5px;color:white;text-decoration:none;">🔍 Voir cette énigme</a>
     </div>
   </div>
+  <script>
+    function fermerFenetreOuRediriger() {
+      window.close();
+      setTimeout(function () {
+        if (!window.closed) {
+          window.location.href = '/';
+        }
+      }, 500);
+    }
+  </script>
   <?php
   exit;
 }
 
-// Mise à jour du statut
 $wpdb->update(
   $statuts_table,
   ['statut' => $new_statut],
@@ -147,7 +154,6 @@ if ($chasse_id) {
   }
 }
 
-// --- Bloc 7 : Envoi de mail ---
 envoyer_mail_resultat_joueur($user_id, $enigme_id, $resultat);
 
 ?>
@@ -166,7 +172,18 @@ envoyer_mail_resultat_joueur($user_id, $enigme_id, $resultat);
     <?php endif; ?>
   </div>
   <div style="margin-top:3em;">
-    <a href="#" onclick="window.close();" style="margin-right:1em;">❎ Fermer cette fenêtre</a>
+    <a href="#" onclick="fermerFenetreOuRediriger(); return false;" style="margin-right:1em;">❎ Fermer cette fenêtre</a>
     <a href="<?= esc_url($permalink); ?>" style="background:#0073aa;padding:10px 20px;border-radius:5px;color:white;text-decoration:none;">🔍 Voir cette énigme</a>
   </div>
 </div>
+
+<script>
+  function fermerFenetreOuRediriger() {
+    window.close();
+    setTimeout(function () {
+      if (!window.closed) {
+        window.location.href = '/';
+      }
+    }, 500);
+  }
+</script>
