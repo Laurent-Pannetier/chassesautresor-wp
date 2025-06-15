@@ -85,20 +85,15 @@ if ($exists) {
   ));
 
   if ($statut_actuel !== 'resolue') {
-$chasse_raw = get_field('enigme_chasse_associee', $enigme_id, false);
-error_log('DEBUG $chasse_raw (2): ' . print_r($chasse_raw, true));
-if (is_array($chasse_raw)) {
-  $first     = reset($chasse_raw);
-  error_log('DEBUG $first (2): ' . print_r($first, true));
-  $chasse_id = is_object($first) ? (int) $first->ID : (int) $first;
-} elseif (is_object($chasse_raw)) {
-  $chasse_id = (int) $chasse_raw->ID;
-} else {
-  $chasse_id = (int) $chasse_raw;
-}
-error_log('DEBUG $chasse_id (2): ' . print_r($chasse_id, true));
-$total_chasse = 0;
-  );
+    // Ici, vous pouvez mettre à jour le statut si besoin, par exemple :
+    $wpdb->update(
+      $statuts_table,
+      ['statut' => $new_statut],
+      ['user_id' => $user_id, 'enigme_id' => $enigme_id],
+      ['%s'],
+      ['%d', '%d']
+    );
+  }
 }
 
 $total_user = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $table WHERE user_id = %d AND enigme_id = %d", $user_id, $enigme_id));
