@@ -198,8 +198,6 @@ add_action('wp_head', function () {
     <a href="<?= esc_url($permalink); ?>" style="background:#0073aa;padding:10px 20px;border-radius:5px;color:white;text-decoration:none;">🔍 Voir cette énigme</a>
   </div>
 </div>
-}
-
 
 <div style="text-align:center;margin-top:3em;">
   <a href="<?= esc_url(add_query_arg('reset_tentatives', '1')); ?>"
