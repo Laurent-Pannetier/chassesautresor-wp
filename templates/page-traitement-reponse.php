@@ -36,7 +36,13 @@ if (is_array($chasse_raw)) {
     $chasse_id  = (int) $chasse_raw;
 }
 $organisateur_id    = $chasse_id ? get_organisateur_from_chasse($chasse_id) : null;
-$organisateur_user_ids = $organisateur_id ? get_field('utilisateurs_associes', $organisateur_id) : [];
+$organisateur_user_ids_raw = $organisateur_id ? get_field('utilisateurs_associes', $organisateur_id) : [];
+$organisateur_user_ids = [];
+if (is_array($organisateur_user_ids_raw)) {
+    foreach ($organisateur_user_ids_raw as $item) {
+        $organisateur_user_ids[] = is_object($item) ? (int) $item->ID : (int) $item;
+    }
+}
 
 if (
     !current_user_can('manage_options') &&
@@ -113,7 +119,7 @@ if ($chasse_id) {
 }
 
 $nom_user = get_userdata($user_id)?->display_name ?? "Utilisateur inconnu";
-$titre_enigme = get_the_title($enigme_id);
+$titre_enigme = get_the_title(\$enigme_id) ?? '';
 $url_enigme = get_permalink($enigme_id) . '?statistiques=1';
 
 envoyer_mail_resultat_joueur($user_id, $enigme_id, $resultat);
