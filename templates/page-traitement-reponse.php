@@ -115,19 +115,9 @@ if ($statut_actuel) {
       <a href="#" onclick="fermerFenetreOuRediriger(); return false;" style="margin-right:1em;">❎ Fermer cette fenêtre</a>
       <a href="<?= esc_url($permalink); ?>" style="background:#0073aa;padding:10px 20px;border-radius:5px;color:white;text-decoration:none;">🔍 Voir cette énigme</a>
     </div>
-  </div>
-  <script>
-    function fermerFenetreOuRediriger() {
-      window.close();
-      setTimeout(function() {
-        if (!window.closed) {
-          window.location.href = '/';
-        }
-      }, 500);
-    }
-  </script>
+    </div>
 <?php
-  $traitement_bloque = true;
+      $traitement_bloque = true;
 }
 
 $total_user = 0;
