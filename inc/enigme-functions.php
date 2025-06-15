@@ -697,15 +697,12 @@
             $subject = mb_encode_mimeheader($subject_raw, 'UTF-8', 'B', "\r\n");
         }
 
-
         $valider_url = esc_url(add_query_arg([
-            'user_id'   => $user_id,
-            'enigme_id' => $enigme_id,
+            'uid' => $uid,
         ], home_url('/valider-reponse')));
 
         $invalider_url = esc_url(add_query_arg([
-            'user_id'   => $user_id,
-            'enigme_id' => $enigme_id,
+            'uid' => $uid,
         ], home_url('/invalider-reponse')));
 
         $date        = date_i18n('j F Y à H:i', current_time('timestamp'));
@@ -737,5 +734,3 @@
 
         wp_mail($email_organisateur, $subject, $message, $headers);
     }
-
-

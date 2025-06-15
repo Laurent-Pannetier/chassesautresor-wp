@@ -2,9 +2,41 @@
 defined( 'ABSPATH' ) || exit;
 
 //
+// 🧩 TEMPLATES DE PAGE PERSONNALISÉS
 // 📦 MISE EN PAGE
 // 🧩 HEADERS
 //
+
+
+
+
+
+// ==================================================
+// 🧩 TEMPLATES DE PAGE PERSONNALISÉS
+// ==================================================
+/**
+ *🔹 add_filter('theme_page_templates', ... ) → Ajouter des modèles de page personnalisés au thème WordPress.
+ */
+
+/**
+ * Ce filtre étend la liste des templates de page disponibles avec :
+ * - Créer mon profil
+ * - Devenir organisateur
+ * - Traitement de réponse
+ *
+ * @param array $templates Liste des templates de page existants.
+ * @return array Liste mise à jour des templates de page.
+ */
+add_filter('theme_page_templates', function ($templates) {
+    return array_merge($templates, [
+        'templates/page-creer-profil.php'          => 'Créer mon profil',
+        'templates/page-devenir-organisateur.php'  => 'Devenir organisateur',
+        'templates/page-traitement-reponse.php'    => 'Traitement de réponse',
+    ]);
+});
+
+
+
 
 // ==================================================
 // 📦 MISE EN PAGE
