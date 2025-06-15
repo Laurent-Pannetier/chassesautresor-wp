@@ -27,7 +27,13 @@ global $wpdb;
 $table = $wpdb->prefix . 'enigme_tentatives';
 
 $tentative = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table WHERE tentative_uid = %s", $uid));
-$chasse_raw       = get_field('enigme_chasse_associee', $enigme_id, false);
+
+// Récupérer les IDs nécessaires depuis la tentative
+$user_id = isset($tentative->user_id) ? (int)$tentative->user_id : 0;
+$enigme_id = isset($tentative->enigme_id) ? (int)$tentative->enigme_id : 0;
+$current_user_id = get_current_user_id();
+
+$chasse_raw = get_field('enigme_chasse_associee', $enigme_id, false);
 // Log pour debug
 error_log('DEBUG $chasse_raw: ' . print_r($chasse_raw, true));
 if (is_array($chasse_raw)) {
@@ -37,21 +43,9 @@ if (is_array($chasse_raw)) {
 } elseif (is_object($chasse_raw)) {
   $chasse_id  = (int) $chasse_raw->ID;
 } else {
-$organisateur_user_ids_raw = $organisateur_id ? get_field('utilisateurs_associes', $organisateur_id) : [];
-error_log('DEBUG $organisateur_user_ids_raw: ' . print_r($organisateur_user_ids_raw, true));
-$organisateur_user_ids = [];
-if (is_array($organisateur_user_ids_raw)) {
-  foreach ($organisateur_user_ids_raw as $item) {
-    $organisateur_user_ids[] = is_object($item) ? (int) $item->ID : (int) $item;
-  }
-}
-error_log('DEBUG $organisateur_user_ids: ' . print_r($organisateur_user_ids, true));
-  $chasse_id  = is_object($first) ? (int) $first->ID : (int) $first;
-} elseif (is_object($chasse_raw)) {
-  $chasse_id  = (int) $chasse_raw->ID;
-} else {
   $chasse_id  = (int) $chasse_raw;
 }
+
 $organisateur_id    = $chasse_id ? get_organisateur_from_chasse($chasse_id) : null;
 $organisateur_user_ids_raw = $organisateur_id ? get_field('utilisateurs_associes', $organisateur_id) : [];
 $organisateur_user_ids = [];
@@ -60,6 +54,7 @@ if (is_array($organisateur_user_ids_raw)) {
     $organisateur_user_ids[] = is_object($item) ? (int) $item->ID : (int) $item;
   }
 }
+error_log('DEBUG $organisateur_user_ids: ' . print_r($organisateur_user_ids, true));
 
 if (
   !current_user_can('manage_options') &&
