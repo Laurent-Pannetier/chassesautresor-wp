@@ -26,10 +26,17 @@ $enigme_id = (int) $tentative->enigme_id;
 
 // 🔐 Sécurité : vérifier que l'utilisateur connecté est bien organisateur associé
 $current_user_id = get_current_user_id();
-$chasse_raw = get_field('enigme_chasse_associee', $enigme_id, false);
-$chasse_id = is_array($chasse_raw) ? ($chasse_raw[0] ?? null) : $chasse_raw;
-$organisateur_id = get_organisateur_from_chasse($chasse_id);
-$organisateur_user_ids = get_field('utilisateurs_associes', $organisateur_id);
+$chasse_raw       = get_field('enigme_chasse_associee', $enigme_id, false);
+if (is_array($chasse_raw)) {
+    $first      = reset($chasse_raw);
+    $chasse_id  = is_object($first) ? (int) $first->ID : (int) $first;
+} elseif (is_object($chasse_raw)) {
+    $chasse_id  = (int) $chasse_raw->ID;
+} else {
+    $chasse_id  = (int) $chasse_raw;
+}
+$organisateur_id    = $chasse_id ? get_organisateur_from_chasse($chasse_id) : null;
+$organisateur_user_ids = $organisateur_id ? get_field('utilisateurs_associes', $organisateur_id) : [];
 
 if (
     !current_user_can('manage_options') &&
@@ -74,7 +81,15 @@ if ($exists) {
 $total_user = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $table WHERE user_id = %d AND enigme_id = %d", $user_id, $enigme_id));
 $total_enigme = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $table WHERE enigme_id = %d", $enigme_id));
 
-$chasse_id = get_field('enigme_chasse_associee', $enigme_id, false);
+$chasse_raw = get_field('enigme_chasse_associee', $enigme_id, false);
+if (is_array($chasse_raw)) {
+    $first     = reset($chasse_raw);
+    $chasse_id = is_object($first) ? (int) $first->ID : (int) $first;
+} elseif (is_object($chasse_raw)) {
+    $chasse_id = (int) $chasse_raw->ID;
+} else {
+    $chasse_id = (int) $chasse_raw;
+}
 $total_chasse = 0;
 
 if ($chasse_id) {
