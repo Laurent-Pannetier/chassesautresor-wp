@@ -33,17 +33,6 @@ $user_id = isset($tentative->user_id) ? (int)$tentative->user_id : 0;
 $enigme_id = isset($tentative->enigme_id) ? (int)$tentative->enigme_id : 0;
 $current_user_id = get_current_user_id();
 
-$chasse_raw = get_field('enigme_chasse_associee', $enigme_id, false);
-error_log('LOG get_field enigme_chasse_associee (enigme_id=' . $enigme_id . '): ' . print_r($chasse_raw, true));
-if (is_array($chasse_raw)) {
-  $first      = reset($chasse_raw);
-  $chasse_id  = is_object($first) ? (int) $first->ID : (int) $first;
-} elseif (is_object($chasse_raw)) {
-  $chasse_id  = (int) $chasse_raw->ID;
-} else {
-  $chasse_id  = (int) $chasse_raw;
-}
-
 $organisateur_id    = $chasse_id ? get_organisateur_from_chasse($chasse_id) : null;
 $organisateur_user_ids_raw = $organisateur_id ? get_field('utilisateurs_associes', $organisateur_id) : [];
 if ($organisateur_id) {
