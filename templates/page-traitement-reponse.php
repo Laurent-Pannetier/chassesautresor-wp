@@ -185,6 +185,31 @@ add_action('wp_head', function () {
   </div>
 </div>
 
+
+
+
+<?php
+//rénitialisation des tentatives
+if (current_user_can('manage_options') && isset($_GET['reset_tentatives']) && $_GET['reset_tentatives'] === '1') {
+  global $wpdb;
+  $reset_table = $wpdb->prefix . 'enigme_statuts_utilisateur';
+  $reset_rows = $wpdb->delete($reset_table, ['enigme_id' => $enigme_id], ['%d']);
+  echo '<div style="text-align:center; background:#ffecec; color:#900; padding:1em; margin:2em auto; max-width:600px; border:1px solid #f00;">
+    🧹 Réinitialisation : ' . esc_html($reset_rows) . ' ligne(s) supprimée(s) dans la table des statuts utilisateur.<br>
+    <a href="' . esc_url(remove_query_arg('reset_tentatives')) . '" style="display:inline-block;margin-top:1em;">🔄 Revenir</a>
+  </div>';
+}
+?>
+
+<?php if (current_user_can('manage_options')) : ?>
+  <div style="text-align:center;margin-top:3em;">
+    <a href="<?= esc_url(add_query_arg('reset_tentatives', '1')); ?>"
+       onclick="return confirm('Confirmer la réinitialisation des statuts pour cette énigme ?');"
+       style="background:#900;color:#fff;padding:10px 20px;border-radius:5px;text-decoration:none;">
+      🧹 Réinitialiser les statuts pour cette énigme
+    </a>
+  </div>
+<?php endif; ?>
 <script>
   function fermerFenetreOuRediriger() {
     window.close();
@@ -194,4 +219,6 @@ add_action('wp_head', function () {
       }
     }, 500);
   }
+// fin de la réinitialisation des tentatives
+
 </script>
