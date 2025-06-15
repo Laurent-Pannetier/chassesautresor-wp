@@ -32,6 +32,17 @@ if (!$tentative) {
 
 $user_id = isset($tentative->user_id) ? (int)$tentative->user_id : 0;
 $enigme_id = isset($tentative->enigme_id) ? (int)$tentative->enigme_id : 0;
+// Réinitialisation des tentatives (déplacée ici pour accès à $enigme_id)
+if (is_user_logged_in() && isset($_GET['reset_tentatives'])) {
+  global $wpdb;
+  $reset_table = $wpdb->prefix . 'enigme_statuts_utilisateur';
+  $reset_rows = $wpdb->delete($reset_table, ['enigme_id' => $enigme_id], ['%d']);
+  echo '<div style="text-align:center; background:#ffecec; color:#900; padding:1em; margin:2em auto; max-width:600px; border:1px solid #f00;">
+    🧹 Réinitialisation : ' . esc_html($reset_rows) . ' ligne(s) supprimée(s) dans la table des statuts utilisateur.<br>
+    <a href="' . esc_url(remove_query_arg('reset_tentatives')) . '" style="display:inline-block;margin-top:1em;">🔄 Revenir</a>
+  </div>';
+}
+
 
 if ($tentative->tentative_uid !== $uid || !$user_id || !$enigme_id) {
   wp_die('Tentative invalide (cohérence UID).');
@@ -185,21 +196,6 @@ add_action('wp_head', function () {
   </div>
 </div>
 
-
-
-
-<?php
-// Réinitialisation des tentatives : tout utilisateur connecté peut réinitialiser
-if (is_user_logged_in() && isset($_GET['reset_tentatives'])) {
-  global $wpdb;
-  $reset_table = $wpdb->prefix . 'enigme_statuts_utilisateur';
-  $reset_rows = $wpdb->delete($reset_table, ['enigme_id' => $enigme_id], ['%d']);
-  echo '<div style="text-align:center; background:#ffecec; color:#900; padding:1em; margin:2em auto; max-width:600px; border:1px solid #f00;">
-    🧹 Réinitialisation : ' . esc_html($reset_rows) . ' ligne(s) supprimée(s) dans la table des statuts utilisateur.<br>
-    <a href="' . esc_url(remove_query_arg('reset_tentatives')) . '" style="display:inline-block;margin-top:1em;">🔄 Revenir</a>
-  </div>';
-}
-?>
 
 <div style="text-align:center;margin-top:3em;">
   <a href="<?= esc_url(add_query_arg('reset_tentatives', '1')); ?>"
