@@ -1,6 +1,6 @@
 <?php
 /**
- * Template Name: Traitement Réponse (Debug Étape 2)
+ * Template Name: Traitement Réponse (Debug Étape 3)
  */
 
 if (!function_exists('get_field')) {
@@ -45,7 +45,7 @@ if (is_array($chasse_raw)) {
   $chasse_id = 0;
 }
 
-// --- Bloc 2 : get_the_title et get_permalink ---
+// --- Bloc 2 : titre et lien de l’énigme ---
 $titre = get_the_title($enigme_id);
 $permalink = get_permalink($enigme_id);
 
@@ -60,14 +60,37 @@ $permalink .= '?statistiques=1';
 error_log('🧪 Bloc 2: titre = ' . print_r($titre, true));
 error_log('🧪 Bloc 2: permalink = ' . print_r($permalink, true));
 
-// --- Bloc 3 : affichage utilisateur / enigme ---
+// --- Bloc 3 : nom utilisateur ---
 $nom_user = get_userdata($user_id)?->display_name ?? "Utilisateur inconnu";
 error_log('🧪 Bloc 3: nom_user = ' . print_r($nom_user, true));
+
+// --- Bloc 4 : get_field utilisateurs_associes + sécurité ---
+$organisateur_id = $chasse_id ? get_organisateur_from_chasse($chasse_id) : null;
+$organisateur_user_ids_raw = $organisateur_id ? get_field('utilisateurs_associes', $organisateur_id) : [];
+error_log('🧪 Bloc 4: utilisateurs_associes brut: ' . print_r($organisateur_user_ids_raw, true));
+
+if (!is_array($organisateur_user_ids_raw)) {
+  $organisateur_user_ids_raw = [$organisateur_user_ids_raw];
+}
+
+$organisateur_user_ids = [];
+foreach ($organisateur_user_ids_raw as $item) {
+  $organisateur_user_ids[] = is_object($item) ? (int) $item->ID : (int) $item;
+}
+
+$current_user_id = get_current_user_id();
+error_log('🧪 Bloc 4: current_user_id = ' . $current_user_id);
+error_log('🧪 Bloc 4: organisateur_user_ids = ' . print_r($organisateur_user_ids, true));
+
+$acces_autorise = current_user_can('manage_options') || in_array($current_user_id, $organisateur_user_ids, true);
+if (!$acces_autorise) {
+  wp_die('Accès interdit à cette tentative.');
+}
 
 ?>
 
 <div style="max-width:600px;margin:3em auto;text-align:center;font-family:sans-serif;">
-  <p>🧪 Debug Étape 2 terminé.</p>
+  <p>🧪 Debug Étape 3 terminé.</p>
   <p>Utilisateur : <strong><?= esc_html($nom_user); ?></strong></p>
   <p>Énigme : <strong><?= esc_html($titre); ?></strong></p>
   <p><a href="<?= esc_url($permalink); ?>">🔍 Voir cette énigme</a></p>
