@@ -1,6 +1,6 @@
 <?php
 /**
- * Template Name: Traitement Réponse (Finalisation Étape 6)
+ * Template Name: Traitement Réponse (Finalisation Sécurisée)
  */
 
 if (!function_exists('get_field')) {
@@ -25,8 +25,17 @@ $table = $wpdb->prefix . 'enigme_tentatives';
 
 $tentative = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table WHERE tentative_uid = %s", $uid));
 
+if (!$tentative) {
+  wp_die('Tentative introuvable.');
+}
+
 $user_id = isset($tentative->user_id) ? (int)$tentative->user_id : 0;
 $enigme_id = isset($tentative->enigme_id) ? (int)$tentative->enigme_id : 0;
+
+// Vérification UID cohérent avec tentative
+if ($tentative->tentative_uid !== $uid || !$user_id || !$enigme_id) {
+  wp_die('Tentative invalide (cohérence UID).');
+}
 
 $chasse_raw = get_field('enigme_chasse_associee', $enigme_id, false);
 
@@ -82,7 +91,6 @@ $statut_actuel = $wpdb->get_var($wpdb->prepare(
   $enigme_id
 ));
 
-// Bypass si déjà traité
 if ($statut_actuel) {
   ?>
   <div style="max-width:600px;margin:3em auto;text-align:center;font-family:sans-serif;">
@@ -104,6 +112,23 @@ $wpdb->update(
   ['%s'],
   ['%d', '%d']
 );
+
+// Journalisation dans une table log (si elle existe)
+$log_table = $wpdb->prefix . 'enigme_validations_log';
+if ($wpdb->get_var("SHOW TABLES LIKE '$log_table'") === $log_table) {
+  $wpdb->insert(
+    $log_table,
+    [
+      'tentative_uid' => $uid,
+      'enigme_id'     => $enigme_id,
+      'user_id'       => $user_id,
+      'valide_par'    => $current_user_id,
+      'resultat'      => $resultat,
+      'date_validation' => current_time('mysql'),
+    ],
+    ['%s', '%d', '%d', '%d', '%s', '%s']
+  );
+}
 
 $total_user = $wpdb->get_var($wpdb->prepare(
   "SELECT COUNT(*) FROM $table WHERE user_id = %d AND enigme_id = %d",
