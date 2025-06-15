@@ -189,8 +189,8 @@ add_action('wp_head', function () {
 
 
 <?php
-//rénitialisation des tentatives
-if (current_user_can('manage_options') && isset($_GET['reset_tentatives']) && $_GET['reset_tentatives'] === '1') {
+// Réinitialisation des tentatives : tout utilisateur connecté peut réinitialiser
+if (is_user_logged_in() && isset($_GET['reset_tentatives']) && $_GET['reset_tentatives'] === '1') {
   global $wpdb;
   $reset_table = $wpdb->prefix . 'enigme_statuts_utilisateur';
   $reset_rows = $wpdb->delete($reset_table, ['enigme_id' => $enigme_id], ['%d']);
@@ -201,7 +201,7 @@ if (current_user_can('manage_options') && isset($_GET['reset_tentatives']) && $_
 }
 ?>
 
-<?php if (current_user_can('manage_options')) : ?>
+<?php if (is_user_logged_in()) : ?>
   <div style="text-align:center;margin-top:3em;">
     <a href="<?= esc_url(add_query_arg('reset_tentatives', '1')); ?>"
        onclick="return confirm('Confirmer la réinitialisation des statuts pour cette énigme ?');"
