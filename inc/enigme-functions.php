@@ -556,6 +556,9 @@
      * 🔹 envoyer_mail_reponse_manuelle() → Envoie un mail HTML à l'organisateur avec la réponse (expéditeur = joueur).
      * 🔹 envoyer_mail_resultat_joueur() → Envoie un mail HTML au joueur après validation ou refus de sa réponse.
      * 🔹 envoyer_mail_accuse_reception_joueur() → Envoie un accusé de réception au joueur juste après sa soumission.
+     * 🔹 enigme_recuperer_tentative_par_uid() → Récupère une tentative via son UID et vérifie sa cohérence.
+     * 🔹 enigme_utilisateur_autorise_tentative() → Vérifie si l’utilisateur courant peut traiter la tentative.
+     * 🔹 enigme_mettre_a_jour_tentative() → Met à jour la tentative et retourne les statistiques calculées.
      */
 
     /**
@@ -806,8 +809,8 @@
      * @param int $enigme_id
      * @return void
      */
-    function envoyer_mail_accuse_reception_joueur($user_id, $enigme_id)
-    {
+function envoyer_mail_accuse_reception_joueur($user_id, $enigme_id)
+{
         $user = get_userdata($user_id);
         if (!$user || !is_email($user->user_email)) return;
 
@@ -839,4 +842,124 @@
         ];
 
         wp_mail($user->user_email, $sujet, $message, $headers);
+    }
+
+    /**
+     * Récupère une tentative via son UID en vérifiant sa cohérence.
+     *
+     * @param string $uid UID de la tentative.
+     * @return object|null Objet représentant la tentative ou null si invalide.
+     */
+    function enigme_recuperer_tentative_par_uid(string $uid): ?object
+    {
+        global $wpdb;
+
+        $table = $wpdb->prefix . 'enigme_tentatives';
+        $tentative = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table WHERE tentative_uid = %s", $uid));
+        if (!$tentative) return null;
+
+        $user_id   = isset($tentative->user_id) ? (int) $tentative->user_id : 0;
+        $enigme_id = isset($tentative->enigme_id) ? (int) $tentative->enigme_id : 0;
+
+        if ($tentative->tentative_uid !== $uid || !$user_id || !$enigme_id) {
+            return null;
+        }
+
+        return $tentative;
+    }
+
+    /**
+     * Vérifie si l'utilisateur connecté est autorisé à traiter la tentative.
+     *
+     * @param object $tentative Tentative récupérée depuis la base.
+     * @return bool True si autorisé, false sinon.
+     */
+    function enigme_utilisateur_autorise_tentative(object $tentative): bool
+    {
+        $current_user = get_current_user_id();
+        if (current_user_can('manage_options')) return true;
+
+        $chasse_id = recuperer_id_chasse_associee((int) $tentative->enigme_id);
+        if (!$chasse_id) return false;
+
+        return utilisateur_est_organisateur_associe_a_chasse($current_user, $chasse_id);
+    }
+
+    /**
+     * Met à jour la tentative et calcule les statistiques associées.
+     * Envoie également le mail de résultat au joueur.
+     *
+     * @param object $tentative Tentative à traiter.
+     * @param string $resultat  'bon' ou 'faux'.
+     * @return array Données calculées [traitement_bloque,total_user,total_enigme,total_chasse,nom_user,permalink,statut_actuel].
+     */
+    function enigme_mettre_a_jour_tentative(object $tentative, string $resultat): array
+    {
+        global $wpdb;
+
+        $table         = $wpdb->prefix . 'enigme_tentatives';
+        $statuts_table = $wpdb->prefix . 'enigme_statuts_utilisateur';
+
+        $uid       = $tentative->tentative_uid;
+        $user_id   = (int) $tentative->user_id;
+        $enigme_id = (int) $tentative->enigme_id;
+
+        // Mise à jour du résultat dans la table des tentatives
+        $wpdb->update($table, ['resultat' => $resultat], ['tentative_uid' => $uid]);
+
+        $new_statut   = ($resultat === 'bon') ? 'resolue' : 'abandonnee';
+        $statut_actuel = $wpdb->get_var($wpdb->prepare("SELECT statut FROM $statuts_table WHERE user_id = %d AND enigme_id = %d", $user_id, $enigme_id));
+
+        $traitement_bloque = false;
+        if ($statut_actuel) {
+            $traitement_bloque = true;
+        } else {
+            $wpdb->update(
+                $statuts_table,
+                ['statut' => $new_statut],
+                ['user_id' => $user_id, 'enigme_id' => $enigme_id],
+                ['%s'],
+                ['%d', '%d']
+            );
+        }
+
+        $total_user   = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $table WHERE user_id = %d AND enigme_id = %d", $user_id, $enigme_id));
+        $total_enigme = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $table WHERE enigme_id = %d", $enigme_id));
+
+        $total_chasse = 0;
+        $chasse_id    = recuperer_id_chasse_associee($enigme_id);
+        if ($chasse_id) {
+            $ids_enigmes = get_posts([
+                'post_type'      => 'enigme',
+                'fields'         => 'ids',
+                'posts_per_page' => -1,
+                'meta_query'     => [[
+                    'key'   => 'enigme_chasse_associee',
+                    'value' => $chasse_id,
+                    'compare' => '=',
+                ]]
+            ]);
+
+            if ($ids_enigmes) {
+                $in_clause   = implode(',', array_map('absint', $ids_enigmes));
+                $total_chasse = (int) $wpdb->get_var("SELECT COUNT(*) FROM $table WHERE enigme_id IN ($in_clause)");
+            }
+        }
+
+        $nom_user  = get_userdata($user_id)?->display_name ?? 'Utilisateur inconnu';
+        $permalink = get_permalink($enigme_id);
+        if (!is_string($permalink)) $permalink = '';
+        $permalink .= '?statistiques=1';
+
+        envoyer_mail_resultat_joueur($user_id, $enigme_id, $resultat);
+
+        return [
+            'traitement_bloque' => $traitement_bloque,
+            'total_user'        => $total_user,
+            'total_enigme'      => $total_enigme,
+            'total_chasse'      => $total_chasse,
+            'nom_user'          => $nom_user,
+            'permalink'         => $permalink,
+            'statut_actuel'     => $statut_actuel,
+        ];
     }
