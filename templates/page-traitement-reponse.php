@@ -12,7 +12,7 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-defined('ABSPATH') || exit;
+defined('ABSPATH') || $traitement_bloque = true;
 
 $uid = sanitize_text_field($_GET['uid'] ?? '');
 $resultat = sanitize_text_field($_GET['resultat'] ?? '');
@@ -115,17 +115,15 @@ if ($statut_actuel) {
       <a href="#" onclick="fermerFenetreOuRediriger(); return false;" style="margin-right:1em;">❎ Fermer cette fenêtre</a>
       <a href="<?= esc_url($permalink); ?>" style="background:#0073aa;padding:10px 20px;border-radius:5px;color:white;text-decoration:none;">🔍 Voir cette énigme</a>
     </div>
-  </div>
-  <script>
-    function fermerFenetreOuRediriger() {
-      window.close();
-      setTimeout(function() {
-        if (!window.closed) {
-          window.location.href = '/';
-        }
-      }, 500);
+  </div><script>function fermerFenetreOuRediriger() {
+  window.close();
+  setTimeout(function() {
+    if (!window.closed) {
+      window.location.href = '/';
     }
-  </script>
+  }, 500);
+}</script>
+<?php } ?>
 <?php
   exit;
 }
@@ -167,7 +165,8 @@ if ($chasse_id) {
   }
 }
 
-envoyer_mail_resultat_joueur($user_id, $enigme_id, $resultat);
+<?php if (empty($traitement_bloque)) {
+  envoyer_mail_resultat_joueur($user_id, $enigme_id, $resultat);
 
 // Assure l'affichage du favicon (si thème ne le fait pas déjà)
 add_action('wp_head', function () {
