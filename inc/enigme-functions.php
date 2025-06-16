@@ -550,7 +550,7 @@
     // ==================================================
     // ✅ TRAITEMENT REPONSES A UNE ENIGME
     // ==================================================
-        /* 
+    /* 
         * 🔹 afficher_formulaire_reponse_manuelle() → Affiche un champ texte et bouton pour soumettre une réponse manuelle (frontend).
         * 🔹 utilisateur_peut_repondre_manuelle() → Vérifie les conditions d’accès avant affichage du formulaire manuel.
         * 🔹 envoyer_mail_reponse_manuelle() → Envoie un mail HTML à l'organisateur avec la réponse (expéditeur = joueur).
@@ -956,6 +956,8 @@
         $table = $wpdb->prefix . 'enigme_tentatives';
 
         $tentative = get_tentative_by_uid($uid);
+        $statut_initial = $tentative->resultat ?? 'invalide';
+
         if (!$tentative) {
             return ['erreur' => 'Tentative introuvable.'];
         }
@@ -963,11 +965,11 @@
         if ($tentative->resultat !== 'attente') {
             return [
                 'etat_tentative' => get_etat_tentative($uid),
+                'statut_initial' => $statut_initial,
                 'tentative' => $tentative,
                 'resultat' => $tentative->resultat,
                 'permalink' => get_permalink($tentative->enigme_id),
                 'nom_user' => get_userdata($tentative->user_id)?->display_name ?? 'Utilisateur inconnu',
-                'statut_initial' => null,
                 'statut_final' => $tentative->resultat,
                 'statistiques' => [
                     'total_user' => 0,
@@ -993,9 +995,9 @@
         // Statistiques minimalistes (optionnelles)
         return [
             'etat_tentative' => get_etat_tentative($uid),
+            'statut_initial' => $statut_initial,
             'tentative' => get_tentative_by_uid($uid),
             'resultat' => $resultat,
-            'statut_initial' => null,
             'statut_final' => $resultat,
             'nom_user' => get_userdata($tentative->user_id)?->display_name ?? 'Utilisateur inconnu',
             'permalink' => get_permalink($tentative->enigme_id),
