@@ -988,6 +988,8 @@
            // Correction : NE PAS bloquer le traitement si c'est la première validation
            // On bloque seulement si la tentative a déjà été traitée AVANT cette requête
            if (!empty($tentative->resultat) && $tentative->resultat !== 'attente') {
+            error_log("[DEBUG] statut resultat de tentative $uid : " . $tentative->resultat);
+
               // Si la valeur du champ resultat est déjà 'bon' ou 'faux', alors déjà traité
               return [
                  'traitement_bloque' => true,
