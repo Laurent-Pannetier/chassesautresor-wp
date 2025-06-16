@@ -3,11 +3,7 @@
  * Template Name: Traitement Réponse (Finalisation Sécurisée)
  */
 
-$enigme_functions_path = get_stylesheet_directory() . '/inc/enigme-functions.php';
-if (!file_exists($enigme_functions_path)) {
-    wp_die("Le fichier de fonctions d'énigme est manquant : {$enigme_functions_path}");
-}
-require_once $enigme_functions_path;
+require_once get_stylesheet_directory() . '/inc/enigme-functions.php';
 
 $uid = sanitize_text_field($_GET['uid'] ?? '');
 $resultat_param = sanitize_text_field($_GET['resultat'] ?? '');
@@ -15,56 +11,39 @@ $resultat_param = sanitize_text_field($_GET['resultat'] ?? '');
 if (!$uid || !in_array($resultat_param, ['bon', 'faux'], true)) {
     wp_die('Paramètres manquants ou invalides.');
 }
-error_log("Traitement réponse : UID reçu = {$uid}, résultat param = {$resultat_param}");
 
-// Vérification si la tentative a déjà été traitée ou non
-$tentative_existante = get_tentative_by_uid($uid); // suppose que cette fonction existe dans enigme-functions.php
+// Détection état initial
+$etat = get_etat_tentative($uid);
 
-if ($tentative_existante) {
-    error_log("Tentative déjà existante détectée pour UID {$uid} : résultat = {$tentative_existante->resultat}");
-
-    if ($tentative_existante->resultat && $tentative_existante->resultat !== 'attente') {
-        error_log("La tentative UID {$uid} a déjà été traitée. Aucun nouveau traitement ne sera effectué.");
-    } else {
-        error_log("La tentative UID {$uid} existe mais n'est pas encore traitée. Traitement en cours.");
-    }
-
+if ($etat === 'attente') {
+    $traitement = traiter_tentative_manuelle($uid, $resultat_param);
+    $etat = get_etat_tentative($uid); // relire après traitement
 } else {
-    error_log("Aucune tentative existante trouvée pour UID {$uid}. Nouvelle tentative, traitement en cours.");
+    $tentative = get_tentative_by_uid($uid);
+    if (!$tentative) wp_die("Tentative introuvable.");
+
+    $traitement = [
+        'etat_tentative' => $etat,
+        'tentative' => $tentative,
+        'resultat' => $tentative->resultat ?? '',
+        'statut_initial' => null,
+        'statut_final' => $tentative->resultat ?? '',
+        'nom_user' => get_userdata($tentative->user_id)?->display_name ?? 'Utilisateur inconnu',
+        'permalink' => get_permalink($tentative->enigme_id ?? 0) . '?statistiques=1',
+        'statistiques' => [
+            'total_user' => 0,
+            'total_enigme' => 0,
+            'total_chasse' => 0,
+        ],
+    ];
 }
-// 🧩 Traitement de la tentative (renvoie ses données et l’état du traitement)
-$traitement = traiter_tentative_manuelle($uid, $resultat_param);
-
-if (!empty($traitement['erreur'])) {
-    wp_die($traitement['erreur']);
-}
-
-if (!empty($traitement['reset_message'])) {
-    echo $traitement['reset_message'];
-    return;
-}
-
-// ✅ Variables à passer au template
-$tentative = $traitement['tentative'];
-$statut_final = $traitement['statut_final'] ?? null;
-$statut_initial = $traitement['statut_initial'] ?? null;
-$permalink = $traitement['permalink'] ?? '';
-$statistiques = $traitement['statistiques'] ?? [];
-$nom_user = $traitement['nom_user'] ?? 'Utilisateur inconnu';
-$traitement_bloque = $traitement['traitement_bloque'] ?? false;
-$traitement_effectue = $traitement['traitement_effectue'] ?? false;
-
-
-// ⚠️ Correction cruciale ici : on utilise le résultat réel, pas celui de l’URL
-$resultat = $tentative->resultat ?? '';
 
 get_template_part('template-parts/traitement/tentative-feedback', null, [
-    'statut_initial'    => $statut_initial,
-    'statut_final'      => $statut_final,
-    'resultat'          => $resultat,
-    'traitement_bloque' => $traitement_bloque,
-    'permalink'         => $permalink,
-    'statistiques'      => $statistiques,
-    'nom_user'          => $nom_user,
-    'traitement_effectue' => $traitement_effectue,
+    'etat_tentative'    => $etat,
+    'resultat'          => $traitement['resultat'] ?? '',
+    'statut_initial'    => $traitement['statut_initial'] ?? '',
+    'statut_final'      => $traitement['statut_final'] ?? '',
+    'nom_user'          => $traitement['nom_user'] ?? '',
+    'permalink'         => $traitement['permalink'] ?? '',
+    'statistiques'      => $traitement['statistiques'] ?? [],
 ]);
