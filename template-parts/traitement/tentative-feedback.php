@@ -23,7 +23,7 @@ $resultat = $args['resultat'] ?? '';
 
   <?php if ($traitement_bloque): ?>
     <p>ℹ️ La tentative a déjà été traitée.</p>
-    <p>Résultat actuel : <strong><?= esc_html($statut_initial); ?></strong></p>
+    <p>Résultat actuel : <strong><?= esc_html($resultat === 'bon' ? 'validée' : 'refusée'); ?></strong></p>
   <?php else: ?>
     <p>✅ La réponse a bien été <strong><?= $resultat === 'bon' ? 'validée' : 'refusée'; ?></strong>.</p>
     <div style="margin-top:2em;font-size:1em;">
@@ -38,6 +38,17 @@ $resultat = $args['resultat'] ?? '';
   <div style="margin-top:3em;">
     <a href="#" onclick="fermerFenetreOuRediriger(); return false;" style="margin-right:1em;">❎ Fermer cette fenêtre</a>
     <a href="<?= esc_url($permalink); ?>" style="background:#0073aa;padding:10px 20px;border-radius:5px;color:white;text-decoration:none;">🔍 Voir cette énigme</a>
+  </div>
+
+  <div style="text-align:center;margin-top:3em;">
+    <a href="<?= esc_url(add_query_arg('reset_tentatives', '1')); ?>"
+       onclick="return confirm('Confirmer la réinitialisation des statuts pour cette énigme ?');"
+       style="background:#900;color:#fff;padding:10px 20px;border-radius:5px;text-decoration:none;margin-right:1em;">
+      🧹 Réinitialiser les statuts</a>
+    <a href="<?= esc_url(add_query_arg('reset_tentatives_totales', '1')); ?>"
+       onclick="return confirm('Confirmer la suppression de toutes les tentatives pour cette énigme ?');"
+       style="background:#555;color:#fff;padding:10px 20px;border-radius:5px;text-decoration:none;">
+      🚫 Supprimer toutes les tentatives</a>
   </div>
 </div>
 
