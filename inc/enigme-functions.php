@@ -551,16 +551,18 @@
     // ✅ TRAITEMENT REPONSES A UNE ENIGME
     // ==================================================
     /**
+     /**
      * 🔹 afficher_formulaire_reponse_manuelle() → Affiche un champ texte et bouton pour soumettre une réponse manuelle (frontend).
      * 🔹 utilisateur_peut_repondre_manuelle() → Vérifie les conditions d’accès avant affichage du formulaire manuel.
      * 🔹 envoyer_mail_reponse_manuelle() → Envoie un mail HTML à l'organisateur avec la réponse (expéditeur = joueur).
      * 🔹 envoyer_mail_resultat_joueur() → Envoie un mail HTML au joueur après validation ou refus de sa réponse.
      * 🔹 envoyer_mail_accuse_reception_joueur() → Envoie un accusé de réception au joueur juste après sa soumission.
-     * 🔹 tentative_est_deja_traitee() → Empêche le retraitement d'une même tentative (UID unique).
+     * 🔹 tentative_est_deja_traitee() → Vérifie si une tentative a déjà un résultat non vide.
      * 🔹 mettre_a_jour_statut_utilisateur() → Enregistre ou met à jour un statut, seulement si le nouveau est plus avancé.
      * 🔹 inserer_tentative() → Fonction générique pour insérer une tentative (manuelle ou automatique).
      * 🔹 traiter_tentative_manuelle() → Applique une validation ou un refus sur une tentative existante.
      */
+
     /**
      * Affiche le formulaire de réponse manuelle pour une énigme.
      *
@@ -942,60 +944,41 @@
         global $wpdb;
         $table = $wpdb->prefix . 'enigme_tentatives';
 
-        error_log("[DEBUG] traiter_tentative_manuelle: Début traitement pour UID=$uid, resultat=$resultat");
-
         $tentative = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table WHERE tentative_uid = %s", $uid));
-        if (!$tentative) {
-            error_log("[DEBUG] traiter_tentative_manuelle: Tentative introuvable pour UID=$uid");
-            return ['erreur' => 'Tentative introuvable.'];
-        }
+        if (!$tentative) return ['erreur' => 'Tentative introuvable.'];
 
         $user_id = (int) $tentative->user_id;
         $enigme_id = (int) $tentative->enigme_id;
+        if (!$user_id || !$enigme_id || $tentative->tentative_uid !== $uid) return ['erreur' => 'Tentative invalide.'];
 
-        error_log("[DEBUG] traiter_tentative_manuelle: Tentative trouvée. user_id=$user_id, enigme_id=$enigme_id, tentative_uid={$tentative->tentative_uid}, resultat_actuel={$tentative->resultat}");
+        if (!function_exists('recuperer_id_chasse_associee')) {
+            require_once get_template_directory() . '/inc/relations-functions.php';
+        }
+        $chasse_id = recuperer_id_chasse_associee($enigme_id);
+        $organisateur_id = $chasse_id ? get_organisateur_from_chasse($chasse_id) : null;
+        $organisateur_user_ids = (array) get_field('utilisateurs_associes', $organisateur_id);
+        $current_user_id = get_current_user_id();
 
-        if (!$user_id || !$enigme_id || $tentative->tentative_uid !== $uid) {
-            error_log("[DEBUG] traiter_tentative_manuelle: Tentative invalide (cohérence UID)");
-            return ['erreur' => 'Tentative invalide (cohérence UID).'];
+        if (!current_user_can('manage_options') && !in_array($current_user_id, array_map('intval', $organisateur_user_ids), true)) {
+            return ['erreur' => 'Accès interdit à cette tentative.'];
         }
 
         // Réinitialisation des statuts
         if (is_user_logged_in() && isset($_GET['reset_tentatives'])) {
             $reset_rows = $wpdb->delete($wpdb->prefix . 'enigme_statuts_utilisateur', ['enigme_id' => $enigme_id], ['%d']);
-            error_log("[DEBUG] traiter_tentative_manuelle: Réinitialisation des statuts utilisateur pour enigme_id=$enigme_id, lignes supprimées=$reset_rows");
             return ['reset_message' => '<div style="text-align:center; background:#ffecec; color:#900; padding:1em; margin:2em auto; max-width:600px; border:1px solid #f00;">
-            🧹 Réinitialisation : ' . esc_html($reset_rows) . ' ligne(s) supprimée(s) dans la table des statuts utilisateur.<br>
-            <a href="' . esc_url(remove_query_arg('reset_tentatives')) . '" style="display:inline-block;margin-top:1em;">🔄 Revenir</a>
-          </div>'];
+        🧹 Réinitialisation : ' . esc_html($reset_rows) . ' ligne(s) supprimée(s) dans la table des statuts utilisateur.<br>
+        <a href="' . esc_url(remove_query_arg('reset_tentatives')) . '" style="display:inline-block;margin-top:1em;">🔄 Revenir</a>
+      </div>'];
         }
 
-        // Suppression totale des tentatives
         if (is_user_logged_in() && isset($_GET['reset_tentatives_totales'])) {
             $deleted = $wpdb->delete($table, ['enigme_id' => $enigme_id], ['%d']);
             $wpdb->delete($wpdb->prefix . 'enigme_statuts_utilisateur', ['enigme_id' => $enigme_id], ['%d']);
-            error_log("[DEBUG] traiter_tentative_manuelle: Suppression totale des tentatives pour enigme_id=$enigme_id, lignes supprimées=$deleted");
             return ['reset_message' => '<div style="text-align:center; background:#fef8e7; color:#444; padding:1em; margin:2em auto; max-width:600px; border:1px solid #ccc;">
-            🚫 Suppression : ' . esc_html($deleted) . ' tentative(s) supprimée(s) dans la table.<br>
-            <a href="' . esc_url(remove_query_arg('reset_tentatives_totales')) . '" style="display:inline-block;margin-top:1em;">🔄 Revenir</a>
-          </div>'];
-        }
-
-        // Vérification d’autorisation
-        if (!function_exists('recuperer_id_chasse_associee')) {
-            require_once get_template_directory() . '/inc/relations-functions.php';
-        }
-        $chasse_id = recuperer_id_chasse_associee($enigme_id);
-
-        $organisateur_id = $chasse_id ? get_organisateur_from_chasse($chasse_id) : null;
-        $organisateur_user_ids = (array) get_field('utilisateurs_associes', $organisateur_id);
-        $current_user_id = get_current_user_id();
-
-        $acces_autorise = current_user_can('manage_options') || in_array($current_user_id, array_map('intval', $organisateur_user_ids), true);
-        error_log("[DEBUG] traiter_tentative_manuelle: current_user_id=$current_user_id, acces_autorise=" . ($acces_autorise ? 'oui' : 'non'));
-        if (!$acces_autorise) {
-            error_log("[DEBUG] traiter_tentative_manuelle: Accès interdit à cette tentative.");
-            return ['erreur' => 'Accès interdit à cette tentative.'];
+        🚫 Suppression : ' . esc_html($deleted) . ' tentative(s) supprimée(s) dans la table.<br>
+        <a href="' . esc_url(remove_query_arg('reset_tentatives_totales')) . '" style="display:inline-block;margin-top:1em;">🔄 Revenir</a>
+      </div>'];
         }
 
         $statuts_table = $wpdb->prefix . 'enigme_statuts_utilisateur';
@@ -1005,34 +988,21 @@
             $enigme_id
         ));
 
-        error_log("[DEBUG] traiter_tentative_manuelle: Statut initial dans enigme_statuts_utilisateur: " . var_export($statut_initial, true));
-
-        // Correction : NE PAS bloquer le traitement si c'est la première validation
-        // On bloque seulement si la tentative a déjà été traitée AVANT cette requête
-        $traitement_bloque = !empty($tentative->resultat) && $tentative->resultat !== 'attente';
-
-        error_log("[DEBUG] traiter_tentative_manuelle: Calcul traitement_bloque: tentative->resultat=" . var_export($tentative->resultat, true) . " => traitement_bloque=" . ($traitement_bloque ? 'oui' : 'non'));
-
-        if ($traitement_bloque) {
-            error_log("[DEBUG] traiter_tentative_manuelle: La tentative a déjà été traitée (resultat={$tentative->resultat})");
+        if (!tentative_est_deja_traitee($uid)) {
+            $wpdb->update(
+                $table,
+                ['resultat' => $resultat],
+                ['tentative_uid' => $uid],
+                ['%s'],
+                ['%s']
+            );
+            $nouveau_statut = ($resultat === 'bon') ? 'resolue' : 'abandonnee';
+            mettre_a_jour_statut_utilisateur($user_id, $enigme_id, $nouveau_statut);
+            envoyer_mail_resultat_joueur($user_id, $enigme_id, $resultat);
         }
 
-        $nouveau_statut = ($resultat === 'bon') ? 'resolue' : 'abandonnee';
-        $maj_statut = mettre_a_jour_statut_utilisateur($user_id, $enigme_id, $nouveau_statut);
-        error_log("[DEBUG] traiter_tentative_manuelle: Appel mettre_a_jour_statut_utilisateur(user_id=$user_id, enigme_id=$enigme_id, nouveau_statut=$nouveau_statut) => retour=" . var_export($maj_statut, true));
-
-        $wpdb->update(
-            $table,
-            ['resultat' => $resultat],
-            ['tentative_uid' => $uid],
-            ['%s'],
-            ['%s']
-        );
-        error_log("[DEBUG] traiter_tentative_manuelle: Update de la tentative (tentative_uid=$uid) avec resultat=$resultat");
-
         $tentative = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table WHERE tentative_uid = %s", $uid));
-        $traitement_bloque = !empty($tentative->resultat) && $tentative->resultat !== 'attente';
-
+        $traitement_bloque = tentative_est_deja_traitee($uid);
 
         $total_user = $wpdb->get_var($wpdb->prepare(
             "SELECT COUNT(*) FROM $table WHERE user_id = %d AND enigme_id = %d",
@@ -1062,16 +1032,10 @@
             }
         }
 
-        error_log("[DEBUG] traiter_tentative_manuelle: Stats: total_user=$total_user, total_enigme=$total_enigme, total_chasse=$total_chasse");
-
-        envoyer_mail_resultat_joueur($user_id, $enigme_id, $resultat);
-
-        $est_premier_traitement = ($tentative->resultat === $resultat);
-
         return [
             'tentative' => $tentative,
             'statut_initial' => $statut_initial,
-            'statut_final' => $nouveau_statut,
+            'statut_final' => $resultat,
             'permalink' => get_permalink($enigme_id) . '?statistiques=1',
             'nom_user' => get_userdata($user_id)?->display_name ?? 'Utilisateur inconnu',
             'statistiques' => [
@@ -1079,6 +1043,6 @@
                 'total_enigme' => $total_enigme,
                 'total_chasse' => $total_chasse,
             ],
-            'traitement_bloque' => !$est_premier_traitement,
+            'traitement_bloque' => $traitement_bloque,
         ];
     }
