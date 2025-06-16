@@ -52,6 +52,8 @@ $permalink = $traitement['permalink'] ?? '';
 $statistiques = $traitement['statistiques'] ?? [];
 $nom_user = $traitement['nom_user'] ?? 'Utilisateur inconnu';
 $traitement_bloque = $traitement['traitement_bloque'] ?? false;
+$traitement_effectue = $traitement['traitement_effectue'] ?? false;
+
 
 // ⚠️ Correction cruciale ici : on utilise le résultat réel, pas celui de l’URL
 $resultat = $tentative->resultat ?? '';
@@ -64,4 +66,5 @@ get_template_part('template-parts/traitement/tentative-feedback', null, [
     'permalink'         => $permalink,
     'statistiques'      => $statistiques,
     'nom_user'          => $nom_user,
+    'traitement_effectue' => $traitement_effectue,
 ]);

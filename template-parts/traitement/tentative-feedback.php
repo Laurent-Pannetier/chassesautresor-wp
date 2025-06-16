@@ -9,6 +9,7 @@
 
 
 $traitement_bloque = $args['traitement_bloque'] ?? false;
+$traitement_effectue = $args['traitement_effectue'] ?? false;
 $statut_initial = $args['statut_initial'] ?? '';
 $statut_final = $args['statut_final'] ?? '';
 $permalink = $args['permalink'] ?? '';
@@ -32,7 +33,7 @@ error_log('[TEMPLATE] resultat = ' . var_export($resultat, true));
     <img src="<?= esc_url($logo); ?>" alt="Logo" style="width:48px;height:48px;margin-bottom:1em;">
   </a>
 
-  <?php if ($traitement_bloque && $statut_final !== $resultat): ?>
+  <?php if ($traitement_bloque && $traitement_effectue): ?>
     <p>✅ La réponse a bien été <strong><?= $resultat === 'bon' ? 'validée' : 'refusée'; ?></strong>.</p>
   <?php elseif ($traitement_bloque): ?>
     <p>ℹ️ La tentative a déjà été traitée.</p>
