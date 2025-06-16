@@ -954,6 +954,8 @@
             return [
                 'traitement_bloque' => true,
                 'tentative' => $tentative,
+                'resultat' => $tentative->resultat,
+                'statut_final' => $tentative->resultat,
                 'statut_initial' => $wpdb->get_var($wpdb->prepare(
                     "SELECT statut FROM {$wpdb->prefix}enigme_statuts_utilisateur WHERE user_id = %d AND enigme_id = %d",
                     $user_id,
