@@ -814,6 +814,7 @@
         wp_mail($user->user_email, $sujet, $message, $headers);
     }
 
+/**
  * Vérifie si une tentative (UID) a déjà été traitée.
  *
  * @param string $uid Identifiant unique de la tentative.
