@@ -550,7 +550,7 @@
     // ==================================================
     // ✅ TRAITEMENT REPONSES A UNE ENIGME
     // ==================================================
-/* 
+        /* 
         * 🔹 afficher_formulaire_reponse_manuelle() → Affiche un champ texte et bouton pour soumettre une réponse manuelle (frontend).
         * 🔹 utilisateur_peut_repondre_manuelle() → Vérifie les conditions d’accès avant affichage du formulaire manuel.
         * 🔹 envoyer_mail_reponse_manuelle() → Envoie un mail HTML à l'organisateur avec la réponse (expéditeur = joueur).
@@ -563,7 +563,7 @@
         * 🔹 traiter_tentative_manuelle() → Applique une validation ou un refus sur une tentative existante.
         * 🔹 get_etat_tentative() → Retourne l'état logique d'une tentative selon son champ `resultat`.
         */
-*/
+
 
     /**
      * Affiche le formulaire de réponse manuelle pour une énigme.
