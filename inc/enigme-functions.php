@@ -1086,4 +1086,4 @@
 
         $tentative = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table WHERE tentative_uid = %s", $uid));
         error_log("[ENIGME] Tentative finale après traitement : " . json_encode($tentative));
-    }
+    
