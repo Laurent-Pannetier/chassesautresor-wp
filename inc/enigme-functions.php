@@ -831,20 +831,18 @@
     }
 
     /**
-     * Vérifie si une tentative (UID) a déjà été traitée.
+     * Vérifie si une tentative a déjà été traitée (résultat différent de 'attente').
      *
      * @param string $uid Identifiant unique de la tentative.
-     * @return bool Vrai si déjà traitée (resultat != attente), faux sinon.
+     * @return bool Vrai si déjà traitée, faux sinon.
      */
-    function tentative_est_deja_traitee($uid): bool
+    function tentative_est_deja_traitee(string $uid): bool
     {
         global $wpdb;
         $table = $wpdb->prefix . 'enigme_tentatives';
-        return (bool) $wpdb->get_var(
-            $wpdb->prepare("SELECT COUNT(*) FROM $table WHERE tentative_uid = %s AND resultat != 'attente'", $uid)
-        );
+        $resultat = $wpdb->get_var($wpdb->prepare("SELECT resultat FROM $table WHERE tentative_uid = %s", $uid));
+        return ($resultat !== null && $resultat !== '' && $resultat !== 'attente');
     }
-
     /**
      * Met à jour le statut d'un joueur sur une énigme, uniquement si le nouveau statut est meilleur.
      *
@@ -951,6 +949,26 @@
         $enigme_id = (int) $tentative->enigme_id;
         if (!$user_id || !$enigme_id || $tentative->tentative_uid !== $uid) return ['erreur' => 'Tentative invalide.'];
 
+        // 💥 TEST DIRECT ET IMMÉDIAT
+        if ($tentative->resultat !== 'attente') {
+            return [
+                'traitement_bloque' => true,
+                'tentative' => $tentative,
+                'statut_initial' => $wpdb->get_var($wpdb->prepare(
+                    "SELECT statut FROM {$wpdb->prefix}enigme_statuts_utilisateur WHERE user_id = %d AND enigme_id = %d",
+                    $user_id,
+                    $enigme_id
+                )),
+                'permalink' => get_permalink($enigme_id) . '?statistiques=1',
+                'nom_user' => get_userdata($user_id)?->display_name ?? 'Utilisateur inconnu',
+                'statistiques' => [
+                    'total_user' => 0,
+                    'total_enigme' => 0,
+                    'total_chasse' => 0,
+                ],
+            ];
+        }
+
         if (!function_exists('recuperer_id_chasse_associee')) {
             require_once get_template_directory() . '/inc/relations-functions.php';
         }
@@ -988,21 +1006,17 @@
             $enigme_id
         ));
 
-        if (!tentative_est_deja_traitee($uid)) {
-            $wpdb->update(
-                $table,
-                ['resultat' => $resultat],
-                ['tentative_uid' => $uid],
-                ['%s'],
-                ['%s']
-            );
-            $nouveau_statut = ($resultat === 'bon') ? 'resolue' : 'abandonnee';
-            mettre_a_jour_statut_utilisateur($user_id, $enigme_id, $nouveau_statut);
-            envoyer_mail_resultat_joueur($user_id, $enigme_id, $resultat);
-        }
+        $wpdb->update(
+            $table,
+            ['resultat' => $resultat],
+            ['tentative_uid' => $uid],
+            ['%s'],
+            ['%s']
+        );
 
-        $tentative = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table WHERE tentative_uid = %s", $uid));
-        $traitement_bloque = tentative_est_deja_traitee($uid);
+        $nouveau_statut = ($resultat === 'bon') ? 'resolue' : 'abandonnee';
+        mettre_a_jour_statut_utilisateur($user_id, $enigme_id, $nouveau_statut);
+        envoyer_mail_resultat_joueur($user_id, $enigme_id, $resultat);
 
         $total_user = $wpdb->get_var($wpdb->prepare(
             "SELECT COUNT(*) FROM $table WHERE user_id = %d AND enigme_id = %d",
@@ -1032,6 +1046,8 @@
             }
         }
 
+        $tentative = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table WHERE tentative_uid = %s", $uid));
+
         return [
             'tentative' => $tentative,
             'statut_initial' => $statut_initial,
@@ -1043,6 +1059,6 @@
                 'total_enigme' => $total_enigme,
                 'total_chasse' => $total_chasse,
             ],
-            'traitement_bloque' => $traitement_bloque,
+            'traitement_bloque' => false,
         ];
     }
