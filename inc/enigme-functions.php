@@ -550,19 +550,20 @@
     // ==================================================
     // ✅ TRAITEMENT REPONSES A UNE ENIGME
     // ==================================================
-    /**
-     /**
-     * 🔹 afficher_formulaire_reponse_manuelle() → Affiche un champ texte et bouton pour soumettre une réponse manuelle (frontend).
-     * 🔹 utilisateur_peut_repondre_manuelle() → Vérifie les conditions d’accès avant affichage du formulaire manuel.
-     * 🔹 envoyer_mail_reponse_manuelle() → Envoie un mail HTML à l'organisateur avec la réponse (expéditeur = joueur).
-     * 🔹 envoyer_mail_resultat_joueur() → Envoie un mail HTML au joueur après validation ou refus de sa réponse.
-     * 🔹 envoyer_mail_accuse_reception_joueur() → Envoie un accusé de réception au joueur juste après sa soumission.
-     * 🔹 tentative_est_deja_traitee() → Vérifie si une tentative a déjà un résultat non vide.
-     * 🔹 mettre_a_jour_statut_utilisateur() → Enregistre ou met à jour un statut, seulement si le nouveau est plus avancé.
-     * 🔹 inserer_tentative() → Fonction générique pour insérer une tentative (manuelle ou automatique).
-     * 🔹 get_tentative_by_uid() → Récupère une tentative par son identifiant UID.
-     * 🔹 traiter_tentative_manuelle() → Applique une validation ou un refus sur une tentative existante.
-     */
+/* 
+        * 🔹 afficher_formulaire_reponse_manuelle() → Affiche un champ texte et bouton pour soumettre une réponse manuelle (frontend).
+        * 🔹 utilisateur_peut_repondre_manuelle() → Vérifie les conditions d’accès avant affichage du formulaire manuel.
+        * 🔹 envoyer_mail_reponse_manuelle() → Envoie un mail HTML à l'organisateur avec la réponse (expéditeur = joueur).
+        * 🔹 envoyer_mail_resultat_joueur() → Envoie un mail HTML au joueur après validation ou refus de sa réponse.
+        * 🔹 envoyer_mail_accuse_reception_joueur() → Envoie un accusé de réception au joueur juste après sa soumission.
+        * 🔹 tentative_est_deja_traitee() → Vérifie si une tentative a déjà un résultat non vide.
+        * 🔹 mettre_a_jour_statut_utilisateur() → Enregistre ou met à jour un statut, seulement si le nouveau est plus avancé.
+        * 🔹 inserer_tentative() → Fonction générique pour insérer une tentative (manuelle ou automatique).
+        * 🔹 get_tentative_by_uid() → Récupère une tentative par son identifiant UID.
+        * 🔹 traiter_tentative_manuelle() → Applique une validation ou un refus sur une tentative existante.
+        * 🔹 get_etat_tentative() → Retourne l'état logique d'une tentative selon son champ `resultat`.
+        */
+*/
 
     /**
      * Affiche le formulaire de réponse manuelle pour une énigme.
@@ -1004,4 +1005,23 @@
                 'total_chasse' => 0,
             ],
         ];
+    }
+
+    /**
+     * Retourne l'état logique d'une tentative selon son champ `resultat`.
+     * @param string $uid
+     * @return string 'attente' | 'validee' | 'refusee' | 'invalide' | 'inexistante'
+     */
+    function get_etat_tentative(string $uid): string
+    {
+        global $wpdb;
+        $table = $wpdb->prefix . 'enigme_tentatives';
+        $resultat = $wpdb->get_var($wpdb->prepare("SELECT resultat FROM $table WHERE tentative_uid = %s", $uid));
+
+        if ($resultat === null) return 'inexistante';
+        if ($resultat === 'attente') return 'attente';
+        if ($resultat === 'bon') return 'validee';
+        if ($resultat === 'faux') return 'refusee';
+
+        return 'invalide';
     }
