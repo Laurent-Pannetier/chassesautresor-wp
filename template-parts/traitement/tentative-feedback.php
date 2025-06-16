@@ -28,7 +28,7 @@ $statistiques = $args['statistiques'] ?? [];
   if ($etat_tentative === 'validee') {
     echo '<p>✅ Cette tentative a déjà été <strong>validée</strong>.</p>';
   } elseif ($etat_tentative === 'refusee') {
-    echo '<p>❌ Tentative refusée.</p>';
+    echo '<p>❌ Proposition de réponse <strong>invalidée</strong>.</p>';
   } elseif ($etat_tentative === 'attente') {
     echo '<p>⏳ Votre tentative est en <strong>attente de traitement</strong>.</p>';
   } elseif ($etat_tentative === 'inexistante') {

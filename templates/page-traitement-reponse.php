@@ -12,16 +12,35 @@ if (!$uid || !in_array($resultat_param, ['bon', 'faux'], true)) {
     wp_die('Paramètres manquants ou invalides.');
 }
 
-// Détection état initial
+// Gestion des actions de réinitialisation (statuts ou tentatives)
+$tentative = get_tentative_by_uid($uid);
+if (!$tentative) wp_die("Tentative introuvable.");
+$enigme_id = (int) $tentative->enigme_id;
+
+if (isset($_GET['reset_tentatives'])) {
+    $reset = $wpdb->delete(
+        $wpdb->prefix . 'enigme_statuts_utilisateur',
+        ['enigme_id' => $enigme_id],
+        ['%d']
+    );
+    echo '<p style="text-align:center;">🧹 ' . $reset . ' statut(s) utilisateur supprimé(s).</p>';
+    return;
+}
+
+if (isset($_GET['reset_tentatives_totales'])) {
+    $reset1 = $wpdb->delete($wpdb->prefix . 'enigme_tentatives', ['enigme_id' => $enigme_id], ['%d']);
+    $reset2 = $wpdb->delete($wpdb->prefix . 'enigme_statuts_utilisateur', ['enigme_id' => $enigme_id], ['%d']);
+    echo '<p style="text-align:center;">🚫 ' . $reset1 . ' tentative(s) et ' . $reset2 . ' statut(s) supprimé(s).</p>';
+    return;
+}
+
+// Traitement normal
 $etat = get_etat_tentative($uid);
 
 if ($etat === 'attente') {
     $traitement = traiter_tentative_manuelle($uid, $resultat_param);
     $etat = get_etat_tentative($uid); // relire après traitement
 } else {
-    $tentative = get_tentative_by_uid($uid);
-    if (!$tentative) wp_die("Tentative introuvable.");
-
     $traitement = [
         'etat_tentative' => $etat,
         'tentative' => $tentative,
