@@ -6,6 +6,9 @@
  * - statut_initial, statut_final, resultat, traitement_bloque, permalink, statistiques, nom_user
  */
 
+error_log('[TEMPLATE] traitement_bloque = ' . var_export($traitement_bloque, true));
+
+
 $traitement_bloque = $args['traitement_bloque'] ?? false;
 $statut_initial = $args['statut_initial'] ?? '';
 $statut_final = $args['statut_final'] ?? '';
