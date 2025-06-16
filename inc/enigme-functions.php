@@ -937,8 +937,156 @@
      * @param string $resultat Résultat attendu ('bon' ou 'faux').
      * @return array Tableau de données ou erreur.
      */
-    function traiter_tentative_manuelle($uid, $resultat): array
-    {
+    // Ajout log : début traitement tentative
+    error_log("[ENIGME] Début traitement tentative UID=$uid, résultat demandé=$resultat");
+
+    // Log table utilisée
+    error_log("[ENIGME] Table utilisée pour les tentatives : $table");
+
+    $tentative = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table WHERE tentative_uid = %s", $uid));
+    if (!$tentative) {
+        error_log("[ENIGME] Tentative introuvable pour UID=$uid");
+        return ['erreur' => 'Tentative introuvable.'];
+    }
+
+    // Log détails de la tentative récupérée
+    error_log("[ENIGME] Tentative récupérée : " . json_encode($tentative));
+
+    $user_id = (int) $tentative->user_id;
+    $enigme_id = (int) $tentative->enigme_id;
+    if (!$user_id || !$enigme_id || $tentative->tentative_uid !== $uid) {
+        error_log("[ENIGME] Tentative invalide pour UID=$uid (user_id=$user_id, enigme_id=$enigme_id)");
+        return ['erreur' => 'Tentative invalide.'];
+    }
+
+    // Log utilisateur et énigme concernés
+    error_log("[ENIGME] Utilisateur concerné : $user_id, Énigme concernée : $enigme_id");
+
+    // 💥 TEST DIRECT ET IMMÉDIAT
+    if ($tentative->resultat && $tentative->resultat !== 'attente') {
+        error_log("[ENIGME] Tentative déjà traitée UID=$uid, résultat existant=" . $tentative->resultat);
+        return [
+            'traitement_bloque' => true,
+            'tentative' => $tentative,
+            'resultat' => $tentative->resultat,
+            'statut_final' => $tentative->resultat,
+            'statut_initial' => $wpdb->get_var($wpdb->prepare(
+                "SELECT statut FROM {$wpdb->prefix}enigme_statuts_utilisateur WHERE user_id = %d AND enigme_id = %d",
+                $user_id,
+                $enigme_id
+            )),
+            'permalink' => get_permalink($enigme_id) . '?statistiques=1',
+            'nom_user' => get_userdata($user_id)?->display_name ?? 'Utilisateur inconnu',
+            'statistiques' => [
+                'total_user' => 0,
+                'total_enigme' => 0,
+                'total_chasse' => 0,
+            ],
+        ];
+    } else {
+        error_log("[ENIGME] Tentative NON encore traitée UID=$uid, résultat actuel=" . ($tentative->resultat ?: 'vide'));
+    }
+
+    // Log récupération du module relations-functions.php si besoin
+    if (!function_exists('recuperer_id_chasse_associee')) {
+        error_log("[ENIGME] Chargement du fichier relations-functions.php");
+        require_once get_template_directory() . '/inc/relations-functions.php';
+    }
+
+    $chasse_id = recuperer_id_chasse_associee($enigme_id);
+    error_log("[ENIGME] Chasse associée à l'énigme $enigme_id : $chasse_id");
+
+    $organisateur_id = $chasse_id ? get_organisateur_from_chasse($chasse_id) : null;
+    error_log("[ENIGME] Organisateur associé à la chasse $chasse_id : $organisateur_id");
+
+    $organisateur_user_ids = (array) get_field('utilisateurs_associes', $organisateur_id);
+    error_log("[ENIGME] Utilisateurs associés à l'organisateur $organisateur_id : " . json_encode($organisateur_user_ids));
+
+    $current_user_id = get_current_user_id();
+    error_log("[ENIGME] Utilisateur courant : $current_user_id");
+
+    if (!current_user_can('manage_options') && !in_array($current_user_id, array_map('intval', $organisateur_user_ids), true)) {
+        error_log("[ENIGME] Accès interdit à la tentative UID=$uid pour l'utilisateur $current_user_id");
+        return ['erreur' => 'Accès interdit à cette tentative.'];
+    }
+
+    // Log reset tentatives
+    if (is_user_logged_in() && isset($_GET['reset_tentatives'])) {
+        $reset_rows = $wpdb->delete($wpdb->prefix . 'enigme_statuts_utilisateur', ['enigme_id' => $enigme_id], ['%d']);
+        error_log("[ENIGME] Réinitialisation des statuts utilisateur pour énigme $enigme_id : $reset_rows ligne(s) supprimée(s)");
+        return ['reset_message' => '<div style="text-align:center; background:#ffecec; color:#900; padding:1em; margin:2em auto; max-width:600px; border:1px solid #f00;">
+        🧹 Réinitialisation : ' . esc_html($reset_rows) . ' ligne(s) supprimée(s) dans la table des statuts utilisateur.<br>
+        <a href="' . esc_url(remove_query_arg('reset_tentatives')) . '" style="display:inline-block;margin-top:1em;">🔄 Revenir</a>
+      </div>'];
+    }
+
+    if (is_user_logged_in() && isset($_GET['reset_tentatives_totales'])) {
+        $deleted = $wpdb->delete($table, ['enigme_id' => $enigme_id], ['%d']);
+        $wpdb->delete($wpdb->prefix . 'enigme_statuts_utilisateur', ['enigme_id' => $enigme_id], ['%d']);
+        error_log("[ENIGME] Suppression totale des tentatives pour énigme $enigme_id : $deleted tentative(s) supprimée(s)");
+        return ['reset_message' => '<div style="text-align:center; background:#fef8e7; color:#444; padding:1em; margin:2em auto; max-width:600px; border:1px solid #ccc;">
+        🚫 Suppression : ' . esc_html($deleted) . ' tentative(s) supprimée(s) dans la table.<br>
+        <a href="' . esc_url(remove_query_arg('reset_tentatives_totales')) . '" style="display:inline-block;margin-top:1em;">🔄 Revenir</a>
+      </div>'];
+    }
+
+    $statuts_table = $wpdb->prefix . 'enigme_statuts_utilisateur';
+    $statut_initial = $wpdb->get_var($wpdb->prepare(
+        "SELECT statut FROM $statuts_table WHERE user_id = %d AND enigme_id = %d",
+        $user_id,
+        $enigme_id
+    ));
+    error_log("[ENIGME] Statut initial utilisateur $user_id sur énigme $enigme_id : " . ($statut_initial ?: 'aucun'));
+
+    $wpdb->update(
+        $table,
+        ['resultat' => $resultat],
+        ['tentative_uid' => $uid],
+        ['%s'],
+        ['%s']
+    );
+    error_log("[ENIGME] Mise à jour du résultat de la tentative UID=$uid à $resultat");
+
+    $nouveau_statut = ($resultat === 'bon') ? 'resolue' : 'abandonnee';
+    $maj_statut = mettre_a_jour_statut_utilisateur($user_id, $enigme_id, $nouveau_statut);
+    error_log("[ENIGME] Mise à jour statut utilisateur $user_id sur énigme $enigme_id vers $nouveau_statut : " . ($maj_statut ? 'OK' : 'NON EFFECTUÉ'));
+
+    envoyer_mail_resultat_joueur($user_id, $enigme_id, $resultat);
+    error_log("[ENIGME] Mail de résultat envoyé à l'utilisateur $user_id pour énigme $enigme_id");
+
+    $total_user = $wpdb->get_var($wpdb->prepare(
+        "SELECT COUNT(*) FROM $table WHERE user_id = %d AND enigme_id = %d",
+        $user_id,
+        $enigme_id
+    ));
+    $total_enigme = $wpdb->get_var($wpdb->prepare(
+        "SELECT COUNT(*) FROM $table WHERE enigme_id = %d",
+        $enigme_id
+    ));
+
+    $total_chasse = 0;
+    if ($chasse_id) {
+        $ids_enigmes = get_posts([
+            'post_type' => 'enigme',
+            'fields' => 'ids',
+            'posts_per_page' => -1,
+            'meta_query' => [[
+                'key' => 'enigme_chasse_associee',
+                'value' => $chasse_id,
+                'compare' => '=',
+            ]]
+        ]);
+        error_log("[ENIGME] Liste des énigmes de la chasse $chasse_id : " . json_encode($ids_enigmes));
+        if ($ids_enigmes) {
+            $in_clause = implode(',', array_map('absint', $ids_enigmes));
+            $total_chasse = $wpdb->get_var("SELECT COUNT(*) FROM $table WHERE enigme_id IN ($in_clause)");
+        }
+    }
+    error_log("[ENIGME] Statistiques : total_user=$total_user, total_enigme=$total_enigme, total_chasse=$total_chasse");
+
+    $tentative = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table WHERE tentative_uid = %s", $uid));
+    error_log("[ENIGME] Tentative finale après traitement : " . json_encode($tentative));
+
         global $wpdb;
         $table = $wpdb->prefix . 'enigme_tentatives';
 

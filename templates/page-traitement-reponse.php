@@ -15,7 +15,21 @@ $resultat_param = sanitize_text_field($_GET['resultat'] ?? '');
 if (!$uid || !in_array($resultat_param, ['bon', 'faux'], true)) {
     wp_die('Paramètres manquants ou invalides.');
 }
+error_log("Traitement réponse : UID reçu = {$uid}, résultat param = {$resultat_param}");
 
+// Vérification si la tentative a déjà été traitée ou non
+$tentative_existante = get_tentative_by_uid($uid); // suppose que cette fonction existe dans enigme-functions.php
+
+if ($tentative_existante) {
+  error_log("Tentative déjà existante détectée pour UID {$uid} : statut = {$tentative_existante->statut}, résultat = {$tentative_existante->resultat}");
+  if ($tentative_existante->statut === 'traitee') {
+    error_log("La tentative UID {$uid} a déjà été traitée. Aucun nouveau traitement ne sera effectué.");
+  } else {
+    error_log("La tentative UID {$uid} existe mais n'est pas encore traitée. Traitement en cours.");
+  }
+} else {
+  error_log("Aucune tentative existante trouvée pour UID {$uid}. Nouvelle tentative, traitement en cours.");
+}
 // 🧩 Traitement de la tentative (renvoie ses données et l’état du traitement)
 $traitement = traiter_tentative_manuelle($uid, $resultat_param);
 
