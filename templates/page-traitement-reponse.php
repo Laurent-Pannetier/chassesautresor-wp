@@ -4,7 +4,11 @@
  * Template Name: Traitement Réponse (Finalisation Sécurisée)
  */
 
-require_once get_template_directory() . '/inc/enigme-functions.php';
+$enigme_functions_path = get_stylesheet_directory() . '/inc/enigme-functions.php';
+if (!file_exists($enigme_functions_path)) {
+    wp_die("Le fichier de fonctions d'énigme est manquant : {$enigme_functions_path}");
+}
+require_once $enigme_functions_path;
 
 $uid = sanitize_text_field($_GET['uid'] ?? '');
 $resultat = sanitize_text_field($_GET['resultat'] ?? '');
