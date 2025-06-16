@@ -552,16 +552,16 @@
     // ==================================================
     /**
      /**
-    * 🔹 afficher_formulaire_reponse_manuelle() → Affiche un champ texte et bouton pour soumettre une réponse manuelle (frontend).
-    * 🔹 utilisateur_peut_repondre_manuelle() → Vérifie les conditions d’accès avant affichage du formulaire manuel.
-    * 🔹 envoyer_mail_reponse_manuelle() → Envoie un mail HTML à l'organisateur avec la réponse (expéditeur = joueur).
-    * 🔹 envoyer_mail_resultat_joueur() → Envoie un mail HTML au joueur après validation ou refus de sa réponse.
-    * 🔹 envoyer_mail_accuse_reception_joueur() → Envoie un accusé de réception au joueur juste après sa soumission.
-    * 🔹 tentative_est_deja_traitee() → Vérifie si une tentative a déjà un résultat non vide.
-    * 🔹 mettre_a_jour_statut_utilisateur() → Enregistre ou met à jour un statut, seulement si le nouveau est plus avancé.
-    * 🔹 inserer_tentative() → Fonction générique pour insérer une tentative (manuelle ou automatique).
-    * 🔹 get_tentative_by_uid() → Récupère une tentative par son identifiant UID.
-    * 🔹 traiter_tentative_manuelle() → Applique une validation ou un refus sur une tentative existante.
+     * 🔹 afficher_formulaire_reponse_manuelle() → Affiche un champ texte et bouton pour soumettre une réponse manuelle (frontend).
+     * 🔹 utilisateur_peut_repondre_manuelle() → Vérifie les conditions d’accès avant affichage du formulaire manuel.
+     * 🔹 envoyer_mail_reponse_manuelle() → Envoie un mail HTML à l'organisateur avec la réponse (expéditeur = joueur).
+     * 🔹 envoyer_mail_resultat_joueur() → Envoie un mail HTML au joueur après validation ou refus de sa réponse.
+     * 🔹 envoyer_mail_accuse_reception_joueur() → Envoie un accusé de réception au joueur juste après sa soumission.
+     * 🔹 tentative_est_deja_traitee() → Vérifie si une tentative a déjà un résultat non vide.
+     * 🔹 mettre_a_jour_statut_utilisateur() → Enregistre ou met à jour un statut, seulement si le nouveau est plus avancé.
+     * 🔹 inserer_tentative() → Fonction générique pour insérer une tentative (manuelle ou automatique).
+     * 🔹 get_tentative_by_uid() → Récupère une tentative par son identifiant UID.
+     * 🔹 traiter_tentative_manuelle() → Applique une validation ou un refus sur une tentative existante.
      */
 
     /**
@@ -956,6 +956,8 @@
     {
         global $wpdb;
         $table = $wpdb->prefix . 'enigme_tentatives';
+        $traitement_effectue = false;
+
 
         // Ajout log : début traitement tentative
         error_log("[ENIGME] Début traitement tentative UID=$uid, résultat demandé=$resultat");
@@ -984,9 +986,9 @@
 
         // 💥 TEST DIRECT ET IMMÉDIAT
         if ($tentative->resultat && $tentative->resultat !== 'attente') {
-            error_log("[ENIGME] Tentative déjà traitée UID=$uid, résultat existant=" . $tentative->resultat);
             return [
                 'traitement_bloque' => true,
+                'traitement_effectue' => false,
                 'tentative' => $tentative,
                 'resultat' => $tentative->resultat,
                 'statut_final' => $tentative->resultat,
@@ -1119,5 +1121,7 @@
                 'total_enigme' => $total_enigme,
                 'total_chasse' => $total_chasse,
             ],
+            'traitement_bloque' => true,
+            'traitement_effectue' => true,
         ];
     }
