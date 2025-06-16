@@ -950,7 +950,7 @@
         if (!$user_id || !$enigme_id || $tentative->tentative_uid !== $uid) return ['erreur' => 'Tentative invalide.'];
 
         // 💥 TEST DIRECT ET IMMÉDIAT
-        if ($tentative->resultat !== 'attente') {
+        if ($tentative->resultat && $tentative->resultat !== 'attente') {
             return [
                 'traitement_bloque' => true,
                 'tentative' => $tentative,
