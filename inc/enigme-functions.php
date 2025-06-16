@@ -625,7 +625,7 @@
 
             $uid = inserer_tentative($user_id, $enigme_id, $reponse);
             envoyer_mail_reponse_manuelle($user_id, $enigme_id, $reponse, $uid);
-            function envoyer_mail_accuse_reception_joueur($user_id, $enigme_id, $uid)
+            envoyer_mail_accuse_reception_joueur($user_id, $enigme_id, $uid);
 
             add_action('template_redirect', function () {
                 wp_redirect(add_query_arg('reponse_envoyee', '1'));
