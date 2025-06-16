@@ -1066,6 +1066,8 @@
 
         envoyer_mail_resultat_joueur($user_id, $enigme_id, $resultat);
 
+        $est_premier_traitement = ($tentative->resultat === $resultat);
+
         return [
             'tentative' => $tentative,
             'statut_initial' => $statut_initial,
@@ -1077,6 +1079,6 @@
                 'total_enigme' => $total_enigme,
                 'total_chasse' => $total_chasse,
             ],
-            'traitement_bloque' => $traitement_bloque,
+            'traitement_bloque' => !$est_premier_traitement,
         ];
     }
