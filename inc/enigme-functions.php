@@ -625,7 +625,7 @@
 
             $uid = inserer_tentative($user_id, $enigme_id, $reponse);
             envoyer_mail_reponse_manuelle($user_id, $enigme_id, $reponse, $uid);
-            envoyer_mail_accuse_reception_joueur($user_id, $enigme_id);
+            function envoyer_mail_accuse_reception_joueur($user_id, $enigme_id, $uid)
 
             add_action('template_redirect', function () {
                 wp_redirect(add_query_arg('reponse_envoyee', '1'));
@@ -696,6 +696,9 @@
         $message .= '<a href="' . $valider_url . '" style="display:inline-block; padding:8px 16px; background-color:#28a745; color:white; text-decoration:none; border-radius:4px;">✅ Valider</a> &nbsp; ';
         $message .= '<a href="' . $invalider_url . '" style="display:inline-block; padding:8px 16px; background-color:#dc3545; color:white; text-decoration:none; border-radius:4px;">❌ Invalider</a>';
         $message .= '</p>';
+        $message .= '<p><strong>✉️ Contacter ce joueur :</strong><br>';
+        $message .= '<a href="mailto:' . esc_attr($user->user_email) . '">' . esc_html($user->display_name) . ' (' . esc_html($user->user_email) . ')</a></p>';
+
         $message .= '<p><a href="' . esc_url($url_enigme) . '" target="_blank" style="font-size:0.9em;">🔗 Voir l’énigme en ligne</a></p>';
         $message .= '</div>';
 
@@ -779,7 +782,7 @@
      * @param int $enigme_id
      * @return void
      */
-    function envoyer_mail_accuse_reception_joueur($user_id, $enigme_id)
+    function envoyer_mail_accuse_reception_joueur($user_id, $enigme_id, $uid)
     {
         $user = get_userdata($user_id);
         if (!$user || !is_email($user->user_email)) return;
@@ -789,11 +792,12 @@
 
         $message  = '<div style="font-family:Arial,sans-serif; font-size:14px;">';
         $message .= '<p>Bonjour <strong>' . esc_html($user->display_name) . '</strong>,</p>';
-        $message .= '<p>Nous avons bien reçu votre tentative de réponse à l’énigme « <strong>' . esc_html($titre_enigme) . '</strong> ».</p>';
+        $message .= '<p>Nous avons bien reçu votre tentative de réponse à l’énigme « <strong>' . esc_html($titre_enigme) . '</strong> ».<br>';
+        $message .= 'Votre identifiant de tentative est : <code>' . esc_html($uid) . '</code>.</p>';
         $message .= '<p>Elle sera examinée prochainement par l’organisateur.</p>';
         $message .= '<p>Vous recevrez une notification lorsqu’une décision sera prise.</p>';
         $message .= '<hr>';
-        $message .= '<p>🔗 <a href="https://chassesautresor.com/mon-compte" target="_blank">Consultez vos réponses ici</a></p>';
+        $message .= '<p>🔗 <a href="https://chassesautresor.com/mon-compte" target="_blank">Accéder à votre compte</a></p>';
         $message .= '<p style="margin-top:2em;">Merci pour votre participation,<br>L’équipe chassesautresor.com</p>';
         $message .= '</div>';
 
