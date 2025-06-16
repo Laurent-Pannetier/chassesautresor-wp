@@ -985,7 +985,7 @@
             $enigme_id
         ));
 
-        if (tentative_est_deja_traitee($uid)) {
+        if ($tentative->resultat !== 'attente') {
             return [
                 'traitement_bloque' => true,
                 'statut_initial' => $statut_initial,
@@ -993,6 +993,7 @@
                 'permalink' => get_permalink($enigme_id) . '?statistiques=1'
             ];
         }
+
 
         $nouveau_statut = ($resultat === 'bon') ? 'resolue' : 'abandonnee';
         mettre_a_jour_statut_utilisateur($user_id, $enigme_id, $nouveau_statut);
