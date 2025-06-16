@@ -36,6 +36,12 @@ $statistiques = $traitement['statistiques'] ?? [];
 $nom_user = $traitement['nom_user'] ?? 'Utilisateur inconnu';
 $traitement_bloque = $traitement['traitement_bloque'] ?? false;
 
+// Affichage d'un message spécifique si la tentative a déjà été traitée
+if ($statut_initial === $statut_final && in_array($statut_final, ['resolue', 'invalidee'], true)) {
+    echo '<div class="tentative-deja-traitee">ℹ️ Cette tentative a déjà été traitée.<br>Résultat actuel : ' . esc_html($statut_final) . '</div>';
+    return;
+}
+
 get_template_part('template-parts/traitement/tentative-feedback', null, [
     'statut_initial' => $statut_initial,
     'statut_final'   => $statut_final,
