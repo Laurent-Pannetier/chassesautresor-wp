@@ -997,17 +997,8 @@
 
         // Correction : NE PAS bloquer le traitement si c'est la première validation
         // On bloque seulement si la tentative a déjà été traitée AVANT cette requête
-        if (!empty($tentative->resultat) && $tentative->resultat !== 'attente') {
-            error_log("[DEBUG] statut resultat de tentative $uid : " . $tentative->resultat);
+        $traitement_bloque = !empty($tentative->resultat) && $tentative->resultat !== 'attente';
 
-            // Si la valeur du champ resultat est déjà 'bon' ou 'faux', alors déjà traité
-            return [
-                'traitement_bloque' => true,
-                'statut_initial' => $statut_initial,
-                'tentative' => $tentative,
-                'permalink' => get_permalink($enigme_id) . '?statistiques=1'
-            ];
-        }
 
         $nouveau_statut = ($resultat === 'bon') ? 'resolue' : 'abandonnee';
         mettre_a_jour_statut_utilisateur($user_id, $enigme_id, $nouveau_statut);
@@ -1061,6 +1052,6 @@
                 'total_enigme' => $total_enigme,
                 'total_chasse' => $total_chasse,
             ],
-            'traitement_bloque' => false,
+            'traitement_bloque' => $traitement_bloque,
         ];
     }
