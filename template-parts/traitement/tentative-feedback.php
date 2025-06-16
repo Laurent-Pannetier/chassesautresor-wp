@@ -6,8 +6,6 @@
  * - statut_initial, statut_final, resultat, traitement_bloque, permalink, statistiques, nom_user
  */
 
-error_log('[TEMPLATE] traitement_bloque = ' . var_export($traitement_bloque, true));
-
 
 $traitement_bloque = $args['traitement_bloque'] ?? false;
 $statut_initial = $args['statut_initial'] ?? '';
@@ -16,6 +14,15 @@ $permalink = $args['permalink'] ?? '';
 $nom_user = $args['nom_user'] ?? 'Utilisateur';
 $statistiques = $args['statistiques'] ?? [];
 $resultat = $args['resultat'] ?? '';
+
+
+error_log('[TEMPLATE] traitement_bloque = ' . var_export($traitement_bloque, true));
+error_log('[TEMPLATE] statut_initial = ' . var_export($statut_initial, true));
+error_log('[TEMPLATE] statut_final = ' . var_export($statut_final, true));
+error_log('[TEMPLATE] permalink = ' . var_export($permalink, true));
+error_log('[TEMPLATE] nom_user = ' . var_export($nom_user, true));
+error_log('[TEMPLATE] statistiques = ' . var_export($statistiques, true));
+error_log('[TEMPLATE] resultat = ' . var_export($resultat, true));
 ?>
 
 <div style="max-width:600px;margin:3em auto;text-align:center;font-family:sans-serif;">
