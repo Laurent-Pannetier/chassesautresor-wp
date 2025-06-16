@@ -1030,6 +1030,10 @@
         );
         error_log("[DEBUG] traiter_tentative_manuelle: Update de la tentative (tentative_uid=$uid) avec resultat=$resultat");
 
+        $tentative = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table WHERE tentative_uid = %s", $uid));
+        $traitement_bloque = !empty($tentative->resultat) && $tentative->resultat !== 'attente';
+
+
         $total_user = $wpdb->get_var($wpdb->prepare(
             "SELECT COUNT(*) FROM $table WHERE user_id = %d AND enigme_id = %d",
             $user_id,
