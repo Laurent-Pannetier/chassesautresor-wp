@@ -1,30 +1,20 @@
 <?php
-
 /**
  * Template Part : tentative-feedback.php
  * Affiche le retour après traitement d'une tentative manuelle
  * Reçoit via get_template_part(..., ..., [ '...' => ... ]) :
- * - statut_initial, statut_final, resultat, traitement_bloque, permalink, statistiques, nom_user
+ * - etat_tentative : 'attente' | 'validee' | 'refusee' | 'invalide' | 'inexistante'
+ * - resultat, statut_initial, statut_final, nom_user, permalink, statistiques
  */
 
-
-$traitement_bloque = $args['traitement_bloque'] ?? false;
-$traitement_effectue = $args['traitement_effectue'] ?? false;
+$etat_tentative = $args['etat_tentative'] ?? 'invalide';
+$resultat = $args['resultat'] ?? '';
 $statut_initial = $args['statut_initial'] ?? '';
 $statut_final = $args['statut_final'] ?? '';
 $permalink = $args['permalink'] ?? '';
 $nom_user = $args['nom_user'] ?? 'Utilisateur';
 $statistiques = $args['statistiques'] ?? [];
-$resultat = $args['resultat'] ?? '';
 
-
-error_log('[TEMPLATE] traitement_bloque = ' . var_export($traitement_bloque, true));
-error_log('[TEMPLATE] statut_initial = ' . var_export($statut_initial, true));
-error_log('[TEMPLATE] statut_final = ' . var_export($statut_final, true));
-error_log('[TEMPLATE] permalink = ' . var_export($permalink, true));
-error_log('[TEMPLATE] nom_user = ' . var_export($nom_user, true));
-error_log('[TEMPLATE] statistiques = ' . var_export($statistiques, true));
-error_log('[TEMPLATE] resultat = ' . var_export($resultat, true));
 ?>
 
 <div style="max-width:600px;margin:3em auto;text-align:center;font-family:sans-serif;">
@@ -33,15 +23,36 @@ error_log('[TEMPLATE] resultat = ' . var_export($resultat, true));
     <img src="<?= esc_url($logo); ?>" alt="Logo" style="width:48px;height:48px;margin-bottom:1em;">
   </a>
 
-  <?php if ($traitement_bloque && $traitement_effectue): ?>
-    <p>✅ La réponse a bien été <strong><?= $resultat === 'bon' ? 'validée' : 'refusée'; ?></strong>.</p>
-  <?php elseif ($traitement_bloque): ?>
-    <p>ℹ️ La tentative a déjà été traitée.</p>
-    <p>Résultat actuel : <strong><?= esc_html($resultat === 'bon' ? 'validée' : 'refusée'); ?></strong></p>
-  <?php else: ?>
-    <p>✅ La réponse a bien été <strong><?= $resultat === 'bon' ? 'validée' : 'refusée'; ?></strong>.</p>
-  <?php endif; ?>
+  <?php
+  switch ($etat_tentative) {
+    case 'validee':
+      echo '<p>✅ Cette tentative a déjà été <strong>validée</strong>.</p>';
+      break;
+    case 'refusee':
+      echo '<p>❌ Cette tentative a déjà été <strong>refusée</strong>.</p>';
+      break;
+    case 'attente':
+      echo '<p>⏳ Votre tentative est en <strong>attente de traitement</strong>.</p>';
+      break;
+    case 'inexistante':
+      echo '<p>🚫 Tentative introuvable.</p>';
+      break;
+    case 'invalide':
+    default:
+      echo '<p>❓ État de la tentative inconnu ou invalide.</p>';
+      break;
+  }
+  ?>
 
+  <div style="margin-top:2em;font-size:1em;">
+    <?php if (!empty($statistiques)) : ?>
+      <p>📌 Tentative <strong><?= (int)($statistiques['total_user'] ?? 0); ?></strong> de <strong><?= esc_html($nom_user); ?></strong></p>
+      <p>📊 Tentative <strong><?= (int)($statistiques['total_enigme'] ?? 0); ?></strong> sur cette énigme</p>
+      <?php if (!empty($statistiques['total_chasse'])) : ?>
+        <p>🧩 Tentative <strong><?= (int)$statistiques['total_chasse']; ?></strong> sur la chasse</p>
+      <?php endif; ?>
+    <?php endif; ?>
+  </div>
 
   <div style="margin-top:3em;">
     <a href="#" onclick="fermerFenetreOuRediriger(); return false;" style="margin-right:1em;">❎ Fermer cette fenêtre</a>
@@ -63,7 +74,7 @@ error_log('[TEMPLATE] resultat = ' . var_export($resultat, true));
 <script>
   function fermerFenetreOuRediriger() {
     window.close();
-    setTimeout(function() {
+    setTimeout(function () {
       if (!window.closed) {
         window.location.href = '/';
       }
