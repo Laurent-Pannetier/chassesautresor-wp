@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Template Part : tentative-feedback.php
  * Affiche le retour après traitement d'une tentative manuelle
@@ -24,23 +25,16 @@ $statistiques = $args['statistiques'] ?? [];
   </a>
 
   <?php
-  switch ($etat_tentative) {
-    case 'validee':
-      echo '<p>✅ Cette tentative a déjà été <strong>validée</strong>.</p>';
-      break;
-    case 'refusee':
-      echo '<p>❌ Cette tentative a déjà été <strong>refusée</strong>.</p>';
-      break;
-    case 'attente':
-      echo '<p>⏳ Votre tentative est en <strong>attente de traitement</strong>.</p>';
-      break;
-    case 'inexistante':
-      echo '<p>🚫 Tentative introuvable.</p>';
-      break;
-    case 'invalide':
-    default:
-      echo '<p>❓ État de la tentative inconnu ou invalide.</p>';
-      break;
+  if ($etat_tentative === 'validee') {
+    echo '<p>✅ Cette tentative a déjà été <strong>validée</strong>.</p>';
+  } elseif ($etat_tentative === 'refusee') {
+    echo '<p>❌ Tentative refusée.</p>';
+  } elseif ($etat_tentative === 'attente') {
+    echo '<p>⏳ Votre tentative est en <strong>attente de traitement</strong>.</p>';
+  } elseif ($etat_tentative === 'inexistante') {
+    echo '<p>🚫 Tentative introuvable.</p>';
+  } else {
+    echo '<p>❓ État de la tentative inconnu ou invalide.</p>';
   }
   ?>
 
@@ -74,7 +68,7 @@ $statistiques = $args['statistiques'] ?? [];
 <script>
   function fermerFenetreOuRediriger() {
     window.close();
-    setTimeout(function () {
+    setTimeout(function() {
       if (!window.closed) {
         window.location.href = '/';
       }
