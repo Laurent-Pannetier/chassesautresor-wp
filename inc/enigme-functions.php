@@ -877,7 +877,7 @@
         $niveau_nouveau = $priorites[$nouveau_statut] ?? -1;
 
         if ($niveau_nouveau <= $niveau_actuel) {
-            return false; // Pas de régression ou statut identique
+            return false;
         }
 
         if ($statut_actuel !== null) {
@@ -972,9 +972,9 @@
 
         $wpdb->update(
             $table,
-            ['resultat' => $resultat],
+            ['resultat' => $resultat, 'traitee' => 1],
             ['tentative_uid' => $uid],
-            ['%s'],
+            ['%s', '%d'],
             ['%s']
         );
 
@@ -1007,6 +1007,7 @@
             'deja_traitee'   => ($etat !== 'attente'),
             'resultat'       => $resultat,
             'tentative'      => $tentative,
+            'traitee' => (int) $tentative->traitee === 1,
             'nom_user'       => get_userdata($tentative->user_id)?->display_name ?? 'Utilisateur inconnu',
             'permalink'      => get_permalink($tentative->enigme_id),
             'statistiques'   => [

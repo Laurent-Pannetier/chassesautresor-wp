@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Template Name: Traitement Réponse (Finalisation Sécurisée)
  */
@@ -10,7 +11,7 @@ $resultat_param = sanitize_text_field($_GET['resultat'] ?? '');
 
 // 🛑 Vérification de base
 if (!$uid || !in_array($resultat_param, ['bon', 'faux'], true)) {
-    wp_die('Paramètres manquants ou invalides.');
+  wp_die('Paramètres manquants ou invalides.');
 }
 
 // 🧩 Récupération de la tentative
@@ -26,30 +27,30 @@ $organisateur_user_ids = (array) get_field('utilisateurs_associes', $organisateu
 $current_user_id = get_current_user_id();
 
 if (
-    !current_user_can('manage_options') &&
-    !in_array($current_user_id, array_map('intval', $organisateur_user_ids), true)
+  !current_user_can('manage_options') &&
+  !in_array($current_user_id, array_map('intval', $organisateur_user_ids), true)
 ) {
-    wp_die('⛔ Accès refusé : vous n’êtes pas autorisé à traiter cette tentative.');
+  wp_die('⛔ Accès refusé : vous n’êtes pas autorisé à traiter cette tentative.');
 }
 
 // 🧹 Gestion réinitialisations (facultatif)
 global $wpdb;
 
 if (isset($_GET['reset_tentatives'])) {
-    $reset = $wpdb->delete(
-        $wpdb->prefix . 'enigme_statuts_utilisateur',
-        ['enigme_id' => $enigme_id],
-        ['%d']
-    );
-    echo '<p style="text-align:center;">🧹 ' . $reset . ' statut(s) utilisateur supprimé(s).</p>';
-    return;
+  $reset = $wpdb->delete(
+    $wpdb->prefix . 'enigme_statuts_utilisateur',
+    ['enigme_id' => $enigme_id],
+    ['%d']
+  );
+  echo '<p style="text-align:center;">🧹 ' . $reset . ' statut(s) utilisateur supprimé(s).</p>';
+  return;
 }
 
 if (isset($_GET['reset_tentatives_totales'])) {
-    $reset1 = $wpdb->delete($wpdb->prefix . 'enigme_tentatives', ['enigme_id' => $enigme_id], ['%d']);
-    $reset2 = $wpdb->delete($wpdb->prefix . 'enigme_statuts_utilisateur', ['enigme_id' => $enigme_id], ['%d']);
-    echo '<p style="text-align:center;">🚫 ' . $reset1 . ' tentative(s) et ' . $reset2 . ' statut(s) supprimé(s).</p>';
-    return;
+  $reset1 = $wpdb->delete($wpdb->prefix . 'enigme_tentatives', ['enigme_id' => $enigme_id], ['%d']);
+  $reset2 = $wpdb->delete($wpdb->prefix . 'enigme_statuts_utilisateur', ['enigme_id' => $enigme_id], ['%d']);
+  echo '<p style="text-align:center;">🚫 ' . $reset1 . ' tentative(s) et ' . $reset2 . ' statut(s) supprimé(s).</p>';
+  return;
 }
 
 $traitement_effectue = traiter_tentative_manuelle($uid, $resultat_param);
@@ -58,12 +59,14 @@ $infos['vient_d_etre_traitee'] = $traitement_effectue;
 
 
 get_template_part('template-parts/traitement/tentative-feedback', null, [
-    'etat_tentative'    => $infos['etat_tentative'] ?? 'invalide',
-    'resultat'          => $infos['resultat'] ?? '',
-    'statut_initial'    => $infos['statut_initial'] ?? '',
-    'statut_final'      => $infos['statut_final'] ?? '',
-    'nom_user'          => $infos['nom_user'] ?? '',
-    'permalink'         => $infos['permalink'] ?? '',
-    'statistiques'      => $infos['statistiques'] ?? [],
-    'deja_traitee'      => $infos['deja_traitee'] ?? false,
+  'etat_tentative'       => $infos['etat_tentative'] ?? 'invalide',
+  'resultat'             => $infos['resultat'] ?? '',
+  'statut_initial'       => $infos['statut_initial'] ?? '',
+  'statut_final'         => $infos['statut_final'] ?? '',
+  'nom_user'             => $infos['nom_user'] ?? '',
+  'permalink'            => $infos['permalink'] ?? '',
+  'statistiques'         => $infos['statistiques'] ?? [],
+  'deja_traitee'         => $infos['deja_traitee'] ?? false,
+  'traitee'              => $infos['traitee'] ?? false,
+  'vient_d_etre_traitee' => $infos['vient_d_etre_traitee'] ?? false,
 ]);
