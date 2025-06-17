@@ -1075,7 +1075,7 @@
         return 'invalide';
     }
 
-
+/**
  * @param int $enigme_id L’ID de l’énigme à tester.
  * @param int|null $user_id L’ID du joueur (par défaut : current_user).
  * @return bool True si engagement autorisé.
