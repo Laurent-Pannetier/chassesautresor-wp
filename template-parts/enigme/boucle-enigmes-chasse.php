@@ -5,6 +5,12 @@ $chasse_id = $args['chasse_id'] ?? null;
 if (!$chasse_id || get_post_type($chasse_id) !== 'chasse') return;
 
 $enigmes = recuperer_enigmes_associees($chasse_id); // fonction à part, ou get_posts
+echo '
+<pre style="color:white;background:#111;padding:1em;">';
+echo "Liste brute récupérée :\n";
+print_r($enigmes);
+echo "</pre>";
+
 if (empty($enigmes)) return;
 ?>
 
