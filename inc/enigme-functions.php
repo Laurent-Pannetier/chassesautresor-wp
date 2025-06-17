@@ -35,21 +35,24 @@
      * @param int $user_id   ID de l’utilisateur.
      * @return string Statut actuel (par défaut : 'non_souscrite').
      */
-    function enigme_get_statut_utilisateur($enigme_id, $user_id)
+    function enigme_get_statut_utilisateur(int $enigme_id, int $user_id): string
     {
         if (!$enigme_id || !$user_id) {
-            return 'non_souscrite';
+            return 'non_commencee';
         }
 
-        $meta_key = 'enigme_' . $enigme_id . '_statut';
-        $statut = get_user_meta($user_id, $meta_key, true);
+        global $wpdb;
+        $table = $wpdb->prefix . 'enigme_statuts_utilisateur';
 
-        if (empty($statut)) {
-            return 'non_souscrite';
-        }
+        $statut = $wpdb->get_var($wpdb->prepare(
+            "SELECT statut FROM $table WHERE user_id = %d AND enigme_id = %d",
+            $user_id,
+            $enigme_id
+        ));
 
-        return $statut;
+        return $statut ?: 'non_commencee';
     }
+
 
 
     // ==================================================
