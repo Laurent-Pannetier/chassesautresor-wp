@@ -68,5 +68,6 @@ get_template_part('template-parts/traitement/tentative-feedback', null, [
   'statistiques'         => $infos['statistiques'] ?? [],
   'deja_traitee'         => $infos['deja_traitee'] ?? false,
   'traitee'              => $infos['traitee'] ?? false,
-  'vient_d_etre_traitee' => $infos['vient_d_etre_traitee'] ?? false,
+  'vient_d_etre_traitee' => $infos['vient_d_etre_traitee'] ?? false, // 🟢 LE VOICI !
 ]);
+
