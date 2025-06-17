@@ -2,8 +2,6 @@
     defined('ABSPATH') || exit;
 
 
-    //
-    // 👤 STATUT UTILISATEUR – ÉNIGMES
     // 🎯 TENTATIVES – ÉNIGMES (pointage & limitations)
     // 🧩 CONTRÔLES ET RÉGLAGES AVANCÉS
     // 🖼️️ AFFICHAGE DES VISUELS D’ÉNIGMES
@@ -12,47 +10,7 @@
     //
 
 
-    // ==================================================
-    // 👤 STATUT UTILISATEUR – ÉNIGMES
-    // ==================================================
-    /**
-     * 🔹 enigme_get_statut_utilisateur() → Retourne le statut actuel de l’utilisateur pour une énigme.
-     */
-
-
-    /**
-     * Récupère le statut actuel de l’utilisateur pour une énigme.
-     *
-     * Statuts possibles :
-     * - non_souscrite : le joueur n'a jamais interagi avec l’énigme
-     * - en_cours      : le joueur a commencé l’énigme
-     * - resolue       : le joueur a trouvé la bonne réponse
-     * - terminee      : l’énigme a été finalisée dans un autre contexte
-     * - echouee       : le joueur a tenté et échoué
-     * - abandonnee    : le joueur a abandonné explicitement ou par expiration
-     *
-     * @param int $enigme_id ID de l’énigme.
-     * @param int $user_id   ID de l’utilisateur.
-     * @return string Statut actuel (par défaut : 'non_souscrite').
-     */
-    function enigme_get_statut_utilisateur(int $enigme_id, int $user_id): string
-    {
-        if (!$enigme_id || !$user_id) {
-            return 'non_commencee';
-        }
-
-        global $wpdb;
-        $table = $wpdb->prefix . 'enigme_statuts_utilisateur';
-
-        $statut = $wpdb->get_var($wpdb->prepare(
-            "SELECT statut FROM $table WHERE user_id = %d AND enigme_id = %d",
-            $user_id,
-            $enigme_id
-        ));
-
-        return $statut ?: 'non_commencee';
-    }
-
+    
 
 
     // ==================================================
@@ -513,7 +471,6 @@
     // 🔹 envoyer_mail_reponse_manuelle() → Envoie un mail HTML à l'organisateur avec la réponse (expéditeur = joueur).
     // 🔹 envoyer_mail_resultat_joueur() → Envoie un mail HTML au joueur après validation ou refus de sa réponse.
     // 🔹 envoyer_mail_accuse_reception_joueur() → Envoie un accusé de réception au joueur juste après sa soumission.
-    // 🔹 enigme_mettre_a_jour_statut_utilisateur() → Met à jour le statut d'un joueur (user_meta).
     // 🔹 inserer_tentative() → Insère une tentative dans la table personnalisée.
     // 🔹 get_tentative_by_uid() → Récupère une tentative par son identifiant UID.
     // 🔹 traiter_tentative_manuelle() → Effectue la validation/refus d'une tentative (une seule fois).
@@ -820,78 +777,6 @@
         remove_filter('wp_mail_from_name', '__return_false'); // si mis ailleurs
 
     }
-
-    /**
-     * Met à jour le statut d'un joueur pour une énigme dans la table personnalisée `wp_enigme_statuts_utilisateur`.
-     * La mise à jour ne s'effectue que si le nouveau statut est plus avancé que l'ancien.
-     *
-     * @param int $enigme_id ID de l'énigme.
-     * @param int $user_id   ID de l'utilisateur.
-     * @param string $nouveau_statut Nouveau statut ('non_commencee', 'en_cours', 'abandonnee', 'echouee', 'resolue', 'terminee').
-     * @return bool True si la mise à jour est faite, false sinon.
-     */
-    function enigme_mettre_a_jour_statut_utilisateur(int $enigme_id, int $user_id, string $nouveau_statut, bool $forcer = false): bool
-    {
-        if (!$enigme_id || !$user_id || !$nouveau_statut) {
-            return false;
-        }
-
-        global $wpdb;
-        $table = $wpdb->prefix . 'enigme_statuts_utilisateur';
-
-        $priorites = [
-            'non_commencee' => 0,
-            'soumis'        => 1,
-            'en_cours'      => 2,
-            'abandonnee'    => 3,
-            'echouee'       => 4,
-            'resolue'       => 5,
-            'terminee'      => 6,
-        ];
-
-        if (!isset($priorites[$nouveau_statut])) {
-            error_log("❌ Statut utilisateur invalide : $nouveau_statut");
-            return false;
-        }
-
-        $statut_actuel = $wpdb->get_var($wpdb->prepare(
-            "SELECT statut FROM $table WHERE user_id = %d AND enigme_id = %d",
-            $user_id,
-            $enigme_id
-        ));
-
-        // Protection : interdiction de rétrograder un joueur ayant déjà résolu l’énigme
-        if (in_array($statut_actuel, ['resolue', 'terminee'], true)) {
-            error_log("🔒 Statut non modifié : $statut_actuel → tentative de mise à jour vers $nouveau_statut bloquée (UID: $user_id / Enigme: $enigme_id)");
-            return false;
-        }
-
-        $niveau_actuel  = $priorites[$statut_actuel] ?? 0;
-        $niveau_nouveau = $priorites[$nouveau_statut];
-
-        if (!$forcer && $niveau_nouveau <= $niveau_actuel) {
-            return false;
-        }
-
-        $data = [
-            'statut'            => $nouveau_statut,
-            'date_mise_a_jour'  => current_time('mysql'),
-        ];
-
-        $where = [
-            'user_id'   => $user_id,
-            'enigme_id' => $enigme_id,
-        ];
-
-        if ($statut_actuel !== null) {
-            $wpdb->update($table, $data, $where, ['%s', '%s'], ['%d', '%d']);
-        } else {
-            $wpdb->insert($table, array_merge($where, $data), ['%d', '%d', '%s', '%s']);
-        }
-
-        return true;
-    }
-
 
 
     /**

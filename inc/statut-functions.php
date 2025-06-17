@@ -16,17 +16,126 @@ if (!defined('ABSPATH')) {
 // 🧩 GESTION DES STATUTS ET DE L’ACCESSIBILITÉ DES ÉNIGMES
 // ==================================================
 /**
-
- * 🔹 enigme_is_accessible                 → Déterminer si une énigme est accessible.
- * 🔹 enigme_pre_requis_remplis            → Vérifier les prérequis d’une énigme pour un utilisateur.
- * 🔹 enigme_verifier_verrouillage         → Détail du verrouillage éventuel d’une énigme.
+ * 
+ * 🔹 enigme_get_statut_utilisateur        → Retourne le statut actuel de l’utilisateur pour une énigme.
+ * 🔹 enigme_mettre_a_jour_statut_utilisateur() → Met à jour le statut d'un joueur dans la table personnalisée.
+ * 🔹 enigme_pre_requis_remplis            → Vérifie les prérequis d’une énigme pour un utilisateur.
+ * 🔹 enigme_verifier_verrouillage         → Détaille le verrouillage éventuel d’une énigme.
  * 🔹 traiter_statut_enigme                → Détermine le comportement global à adopter (formulaire, redirection…).
  * 🔹 enigme_est_visible_pour              → Vérifie si un utilisateur peut voir une énigme.
  * 🔹 mettre_a_jour_statuts_enigmes_de_la_chasse → Recalcule tous les statuts des énigmes liées à une chasse.
  * 🔹 enigme_mettre_a_jour_etat_systeme    → Calcule ou met à jour le champ `enigme_cache_etat_systeme`.
  * 🔹 enigme_mettre_a_jour_etat_systeme_automatiquement → Hook ACF (enregistrement admin ou front).
  * 🔹 forcer_recalcul_statut_enigme        → Recalcul AJAX côté front (édition directe).
+ * 🔹 enigme_get_etat_systeme              → Retourne l’état système de l’énigme (champ ACF cache).
+ * 🔹 utilisateur_peut_engager_enigme      → Vérifie si un joueur peut engager une énigme.
  */
+
+    /**
+     * Récupère le statut actuel de l’utilisateur pour une énigme.
+     *
+     * Statuts possibles :
+     * - non_souscrite : le joueur n'a jamais interagi avec l’énigme
+     * - en_cours      : le joueur a commencé l’énigme
+     * - resolue       : le joueur a trouvé la bonne réponse
+     * - terminee      : l’énigme a été finalisée dans un autre contexte
+     * - echouee       : le joueur a tenté et échoué
+     * - abandonnee    : le joueur a abandonné explicitement ou par expiration
+     *
+     * @param int $enigme_id ID de l’énigme.
+     * @param int $user_id   ID de l’utilisateur.
+     * @return string Statut actuel (par défaut : 'non_souscrite').
+     */
+    function enigme_get_statut_utilisateur(int $enigme_id, int $user_id): string
+    {
+        if (!$enigme_id || !$user_id) {
+            return 'non_commencee';
+        }
+
+        global $wpdb;
+        $table = $wpdb->prefix . 'enigme_statuts_utilisateur';
+
+        $statut = $wpdb->get_var($wpdb->prepare(
+            "SELECT statut FROM $table WHERE user_id = %d AND enigme_id = %d",
+            $user_id,
+            $enigme_id
+        ));
+
+        return $statut ?: 'non_commencee';
+    }
+
+
+/**
+     * Met à jour le statut d'un joueur pour une énigme dans la table personnalisée `wp_enigme_statuts_utilisateur`.
+     * La mise à jour ne s'effectue que si le nouveau statut est plus avancé que l'ancien.
+     *
+     * @param int $enigme_id ID de l'énigme.
+     * @param int $user_id   ID de l'utilisateur.
+     * @param string $nouveau_statut Nouveau statut ('non_commencee', 'en_cours', 'abandonnee', 'echouee', 'resolue', 'terminee').
+     * @return bool True si la mise à jour est faite, false sinon.
+     */
+    function enigme_mettre_a_jour_statut_utilisateur(int $enigme_id, int $user_id, string $nouveau_statut, bool $forcer = false): bool
+    {
+        if (!$enigme_id || !$user_id || !$nouveau_statut) {
+            return false;
+        }
+
+        global $wpdb;
+        $table = $wpdb->prefix . 'enigme_statuts_utilisateur';
+
+        $priorites = [
+            'non_commencee' => 0,
+            'soumis'        => 1,
+            'en_cours'      => 2,
+            'abandonnee'    => 3,
+            'echouee'       => 4,
+            'resolue'       => 5,
+            'terminee'      => 6,
+        ];
+
+        if (!isset($priorites[$nouveau_statut])) {
+            error_log("❌ Statut utilisateur invalide : $nouveau_statut");
+            return false;
+        }
+
+        $statut_actuel = $wpdb->get_var($wpdb->prepare(
+            "SELECT statut FROM $table WHERE user_id = %d AND enigme_id = %d",
+            $user_id,
+            $enigme_id
+        ));
+
+        // Protection : interdiction de rétrograder un joueur ayant déjà résolu l’énigme
+        if (in_array($statut_actuel, ['resolue', 'terminee'], true)) {
+            error_log("🔒 Statut non modifié : $statut_actuel → tentative de mise à jour vers $nouveau_statut bloquée (UID: $user_id / Enigme: $enigme_id)");
+            return false;
+        }
+
+        $niveau_actuel  = $priorites[$statut_actuel] ?? 0;
+        $niveau_nouveau = $priorites[$nouveau_statut];
+
+        if (!$forcer && $niveau_nouveau <= $niveau_actuel) {
+            return false;
+        }
+
+        $data = [
+            'statut'            => $nouveau_statut,
+            'date_mise_a_jour'  => current_time('mysql'),
+        ];
+
+        $where = [
+            'user_id'   => $user_id,
+            'enigme_id' => $enigme_id,
+        ];
+
+        if ($statut_actuel !== null) {
+            $wpdb->update($table, $data, $where, ['%s', '%s'], ['%d', '%d']);
+        } else {
+            $wpdb->insert($table, array_merge($where, $data), ['%d', '%d', '%s', '%s']);
+        }
+
+        return true;
+    }
+
 
 
 /**
@@ -60,8 +169,6 @@ function enigme_pre_requis_remplis(int $enigme_id, int $user_id): bool {
 
     return true; // ✅ Tous les prérequis sont remplis
 }
-
-
 
 /**
  * ✅ Vérifie si l’énigme est verrouillée et retourne le motif.
@@ -355,7 +462,6 @@ function enigme_mettre_a_jour_etat_systeme_automatiquement($post_id): void {
 }
 
 
-
 /**
  * 🔁 Recalcule le statut système d’une énigme via appel AJAX sécurisé.
  *
@@ -378,6 +484,37 @@ function forcer_recalcul_statut_enigme() {
     enigme_mettre_a_jour_etat_systeme($post_id);
     wp_send_json_success('statut_enigme_recalcule');
 }
+
+/**
+ * 🔍 Retourne l'état système de l'énigme (champ ACF cache).
+ *
+ * @param int $enigme_id ID de l’énigme
+ * @return string Valeur du champ (accessible, bloquee_date, etc.)
+ */
+function enigme_get_etat_systeme(int $enigme_id): string {
+    return get_field('enigme_cache_etat_systeme', $enigme_id) ?: 'invalide';
+}
+
+/**
+ * ✅ Vérifie si un joueur peut engager une énigme (accès + pas déjà engagé).
+ *
+ * @param int $enigme_id ID de l’énigme
+ * @param int|null $user_id ID du joueur (par défaut : utilisateur courant)
+ * @return bool True si engagement possible
+ */
+function utilisateur_peut_engager_enigme(int $enigme_id, ?int $user_id = null): bool {
+    $user_id = $user_id ?? get_current_user_id();
+
+    $etat_systeme = enigme_get_etat_systeme($enigme_id);
+    $statut = enigme_get_statut_utilisateur($enigme_id, $user_id);
+
+    $statuts_autorises = ['non_commencee', 'abandonnee', 'echouee'];
+
+    return $etat_systeme === 'accessible' && in_array($statut, $statuts_autorises, true);
+}
+
+
+
 
 
 
