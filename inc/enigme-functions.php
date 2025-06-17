@@ -954,6 +954,8 @@
      */
     function traiter_tentative_manuelle(string $uid, string $resultat): bool
     {
+        error_log("👣 Accès au traitement par IP : " . ($_SERVER['REMOTE_ADDR'] ?? 'inconnue'));
+
         global $wpdb;
         $table = $wpdb->prefix . 'enigme_tentatives';
 
