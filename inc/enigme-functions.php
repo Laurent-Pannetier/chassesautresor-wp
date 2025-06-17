@@ -560,10 +560,14 @@
     {
         // ⚠️ MODE TEST — conditions de validation désactivées temporairement
         /*
-    if (get_field('enigme_mode_validation', $enigme_id) !== 'manuel') {
-        return false;
-    }
-    */
+
+        $current_statut = enigme_get_statut_utilisateur($enigme_id, $user_id);
+
+        if (in_array($current_statut, ['soumis', 'resolue', 'terminee', 'echouee'], true)) {
+            return false;
+        }
+
+        */
 
         return true;
     }
@@ -592,6 +596,8 @@
             }
 
             $uid = inserer_tentative($user_id, $enigme_id, $reponse);
+            enigme_mettre_a_jour_statut_utilisateur($enigme_id, $user_id, 'soumis');
+
 
             envoyer_mail_reponse_manuelle($user_id, $enigme_id, $reponse, $uid);
             envoyer_mail_accuse_reception_joueur($user_id, $enigme_id, $uid);
@@ -814,20 +820,19 @@
 
         $priorites = [
             'non_commencee' => 0,
-            'en_cours'      => 1,
-            'abandonnee'    => 2,
-            'echouee'       => 3,
-            'resolue'       => 4,
-            'terminee'      => 5,
+            'soumis'        => 1,
+            'en_cours'      => 2,
+            'abandonnee'    => 3,
+            'echouee'       => 4,
+            'resolue'       => 5,
+            'terminee'      => 6,
         ];
 
-        // Vérifie que le nouveau statut est valide
-        if (!array_key_exists($nouveau_statut, $priorites)) {
+        if (!isset($priorites[$nouveau_statut])) {
             error_log("❌ Statut utilisateur invalide : $nouveau_statut");
             return false;
         }
 
-        // Récupère le statut actuel s'il existe
         $statut_actuel = $wpdb->get_var($wpdb->prepare(
             "SELECT statut FROM $table WHERE user_id = %d AND enigme_id = %d",
             $user_id,
@@ -837,18 +842,16 @@
         $niveau_actuel  = $priorites[$statut_actuel] ?? 0;
         $niveau_nouveau = $priorites[$nouveau_statut];
 
-        // Ne met à jour que si progression
         if ($niveau_nouveau <= $niveau_actuel) {
             return false;
         }
 
         if ($statut_actuel !== null) {
-            // Mise à jour
             $wpdb->update(
                 $table,
                 [
-                    'statut'          => $nouveau_statut,
-                    'date_mise_a_jour' => current_time('mysql'),
+                    'statut'            => $nouveau_statut,
+                    'date_mise_a_jour'  => current_time('mysql'),
                 ],
                 [
                     'user_id'   => $user_id,
@@ -858,13 +861,12 @@
                 ['%d', '%d']
             );
         } else {
-            // Insertion
             $wpdb->insert(
                 $table,
                 [
-                    'user_id'         => $user_id,
-                    'enigme_id'       => $enigme_id,
-                    'statut'          => $nouveau_statut,
+                    'user_id'          => $user_id,
+                    'enigme_id'        => $enigme_id,
+                    'statut'           => $nouveau_statut,
                     'date_mise_a_jour' => current_time('mysql'),
                 ],
                 ['%d', '%d', '%s', '%s']
