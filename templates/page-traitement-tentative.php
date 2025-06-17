@@ -1,19 +1,50 @@
 <?php
+
 /**
  * Template Name: Traitement Tentative (Confirmation explicite)
  */
 
 require_once get_stylesheet_directory() . '/inc/enigme-functions.php';
 
+global $wpdb;
+
+if (isset($_GET['reset_tentatives'])) {
+  $reset = $wpdb->delete(
+    $wpdb->prefix . 'enigme_tentatives',
+    ['enigme_id' => $enigme_id],
+    ['%d']
+  );
+  echo '<p style="text-align:center;">🧹 ' . $reset . ' tentative(s) supprimée(s).</p>';
+  return;
+}
+
+if (isset($_GET['reset_statuts'])) {
+  $reset = $wpdb->delete(
+    $wpdb->prefix . 'enigme_statuts_utilisateur',
+    ['enigme_id' => $enigme_id],
+    ['%d']
+  );
+  echo '<p style="text-align:center;">🗑️ ' . $reset . ' statut(s) utilisateur supprimé(s).</p>';
+  return;
+}
+
+if (isset($_GET['reset_all'])) {
+  $reset1 = $wpdb->delete($wpdb->prefix . 'enigme_tentatives', ['enigme_id' => $enigme_id], ['%d']);
+  $reset2 = $wpdb->delete($wpdb->prefix . 'enigme_statuts_utilisateur', ['enigme_id' => $enigme_id], ['%d']);
+  echo '<p style="text-align:center;">🔥 ' . $reset1 . ' tentative(s) & ' . $reset2 . ' statut(s) supprimés.</p>';
+  return;
+}
+
+
 $uid = sanitize_text_field($_GET['uid'] ?? '');
 
 if (!$uid) {
-    wp_die("Paramètre UID manquant.");
+  wp_die("Paramètre UID manquant.");
 }
 
 $tentative = get_tentative_by_uid($uid);
 if (!$tentative) {
-    wp_die("Tentative introuvable.");
+  wp_die("Tentative introuvable.");
 }
 
 $infos = recuperer_infos_tentative($uid);
@@ -27,24 +58,24 @@ $organisateur_user_ids = (array) get_field('utilisateurs_associes', $organisateu
 $current_user_id = get_current_user_id();
 
 if (
-    !current_user_can('manage_options') &&
-    !in_array($current_user_id, array_map('intval', $organisateur_user_ids), true)
+  !current_user_can('manage_options') &&
+  !in_array($current_user_id, array_map('intval', $organisateur_user_ids), true)
 ) {
-    wp_die("⛔ Accès refusé.");
+  wp_die("⛔ Accès refusé.");
 }
 
 // ✅ Traitement si POST (validation ou refus)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_traitement'], $_POST['uid'])) {
-    check_admin_referer('traiter_tentative_' . $uid);
-    $action = $_POST['action_traitement'];
-    $uid_post = sanitize_text_field($_POST['uid']);
+  check_admin_referer('traiter_tentative_' . $uid);
+  $action = $_POST['action_traitement'];
+  $uid_post = sanitize_text_field($_POST['uid']);
 
-    if ($uid_post === $uid && in_array($action, ['valider', 'invalider'], true)) {
-        $resultat = $action === 'valider' ? 'bon' : 'faux';
-        $effectue = traiter_tentative_manuelle($uid, $resultat);
-        wp_safe_redirect(add_query_arg('done', $effectue ? '1' : '0'));
-        exit;
-    }
+  if ($uid_post === $uid && in_array($action, ['valider', 'invalider'], true)) {
+    $resultat = $action === 'valider' ? 'bon' : 'faux';
+    $effectue = traiter_tentative_manuelle($uid, $resultat);
+    wp_safe_redirect(add_query_arg('done', $effectue ? '1' : '0'));
+    exit;
+  }
 }
 
 get_header();
@@ -79,6 +110,26 @@ get_header();
       </div>
     <?php endif; ?>
   </div>
+  <div class="traitement-actions" style="margin-top:3em;text-align:center;">
+    <a href="<?= esc_url(add_query_arg('reset_statuts', '1')); ?>"
+      onclick="return confirm('Supprimer tous les statuts utilisateurs pour cette énigme ?');"
+      class="btn btn-red">
+      🧹 Réinitialiser les statuts
+    </a>
+
+    <a href="<?= esc_url(add_query_arg('reset_tentatives', '1')); ?>"
+      onclick="return confirm('Supprimer toutes les tentatives pour cette énigme ?');"
+      class="btn btn-dark">
+      ❌ Supprimer les tentatives
+    </a>
+
+    <a href="<?= esc_url(add_query_arg('reset_all', '1')); ?>"
+      onclick="return confirm('Supprimer TOUT (statuts + tentatives) ?');"
+      class="btn btn-warning">
+      🔥 Tout supprimer
+    </a>
+  </div>
+
 </main>
 
 <?php get_footer(); ?>
