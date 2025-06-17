@@ -783,9 +783,10 @@
 
         $headers[] = 'Reply-To: ' . $email_organisateur;
 
-        add_filter('wp_mail_from_name', function () use ($organisateur_id) {
-            return get_the_title($organisateur_id) ?: 'Chasses au Trésor';
+        add_filter('wp_mail_from_name', function () {
+            return 'Chasses au Trésor';
         });
+
         wp_mail($user->user_email, $sujet, $message, $headers);
         remove_filter('wp_mail_from_name', '__return_false'); // si mis ailleurs
     }
@@ -864,6 +865,10 @@
         $statut_actuel = $wpdb->get_var(
             $wpdb->prepare("SELECT statut FROM $table WHERE user_id = %d AND enigme_id = %d", $user_id, $enigme_id)
         );
+
+        if (!$statut_actuel || !is_string($statut_actuel)) {
+            $statut_actuel = 'non_souscrite';
+        }
 
         $niveau_actuel = $priorites[$statut_actuel] ?? -1;
         $niveau_nouveau = $priorites[$nouveau_statut] ?? -1;

@@ -75,7 +75,7 @@ get_header();
       </form>
     <?php else: ?>
       <div class="bloc-deja-traitee">
-        Cette tentative a déjà été <strong><?= esc_html($etat === 'validee' ? 'validée' : 'refusée'); ?></strong>.
+        Cette tentative a été <strong><?= esc_html($etat === 'validee' ? 'validée' : 'refusée'); ?></strong>.
       </div>
     <?php endif; ?>
   </div>
