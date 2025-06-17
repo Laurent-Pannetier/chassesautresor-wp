@@ -884,7 +884,7 @@
             return false;
         }
 
-        if ($statut_actuel !== 'non_souscrite') {
+        if ($wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $table WHERE user_id = %d AND enigme_id = %d", $user_id, $enigme_id)) > 0) {
             $wpdb->update(
                 $table,
                 ['statut' => $nouveau_statut],
@@ -904,6 +904,7 @@
             );
             error_log("💾 INSERT statut utilisateur : $nouveau_statut (user $user_id / enigme $enigme_id)");
         }
+
         return true;
     }
 
