@@ -961,7 +961,7 @@
             return ['erreur' => 'Tentative introuvable.'];
         }
 
-        // 🛡 Vérification d'accès ici
+        // 🛡 Vérification d'accès
         $current_user_id = get_current_user_id();
         $chasse_id = recuperer_id_chasse_associee($tentative->enigme_id);
         $organisateur_id = get_organisateur_from_chasse($chasse_id);
@@ -976,8 +976,10 @@
 
         $statut_initial = $tentative->resultat ?? 'invalide';
 
+        // ❌ Tentative déjà traitée : ne pas retraiter
         if ($tentative->resultat !== 'attente') {
             return [
+                'deja_traitee'     => true,
                 'etat_tentative'   => get_etat_tentative($uid),
                 'statut_initial'   => $statut_initial,
                 'tentative'        => $tentative,
@@ -993,7 +995,7 @@
             ];
         }
 
-        // Traitement
+        // ✅ Traitement normal
         $wpdb->update(
             $table,
             ['resultat' => $resultat],
@@ -1006,22 +1008,23 @@
         mettre_a_jour_statut_utilisateur((int) $tentative->user_id, (int) $tentative->enigme_id, $nouveau_statut);
         envoyer_mail_resultat_joueur((int) $tentative->user_id, (int) $tentative->enigme_id, $resultat);
 
-        // Statistiques minimalistes (optionnelles)
         return [
-            'etat_tentative' => get_etat_tentative($uid),
-            'statut_initial' => $statut_initial,
-            'tentative' => get_tentative_by_uid($uid),
-            'resultat' => $resultat,
-            'statut_final' => $resultat,
-            'nom_user' => get_userdata($tentative->user_id)?->display_name ?? 'Utilisateur inconnu',
-            'permalink' => get_permalink($tentative->enigme_id),
-            'statistiques' => [
-                'total_user' => 0,
+            'deja_traitee'     => false,
+            'etat_tentative'   => get_etat_tentative($uid),
+            'statut_initial'   => $statut_initial,
+            'tentative'        => get_tentative_by_uid($uid),
+            'resultat'         => $resultat,
+            'statut_final'     => $resultat,
+            'nom_user'         => get_userdata($tentative->user_id)?->display_name ?? 'Utilisateur inconnu',
+            'permalink'        => get_permalink($tentative->enigme_id),
+            'statistiques'     => [
+                'total_user'   => 0,
                 'total_enigme' => 0,
                 'total_chasse' => 0,
             ],
         ];
     }
+
 
     /**
      * Retourne l'état logique d'une tentative selon son champ `resultat`.

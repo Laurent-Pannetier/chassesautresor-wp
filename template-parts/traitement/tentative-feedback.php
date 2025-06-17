@@ -19,6 +19,14 @@ $statistiques = $args['statistiques'] ?? [];
 ?>
 
 <div style="max-width:600px;margin:3em auto;text-align:center;font-family:sans-serif;">
+
+  <?php if (!empty($args['deja_traitee'])): ?>
+    <div style="background:#fff3cd; color:#856404; border:1px solid #ffeeba; padding:1em; border-radius:5px; margin-bottom:2em;">
+      ⚠️ Cette tentative a déjà été <strong>traitée</strong> (validée ou refusée).<br>
+      Vous ne pouvez plus la modifier.
+    </div>
+  <?php endif; ?>
+
   <?php $logo = get_site_icon_url(96); ?>
   <a href="<?= esc_url(home_url()); ?>">
     <img src="<?= esc_url($logo); ?>" alt="Logo" style="width:48px;height:48px;margin-bottom:1em;">

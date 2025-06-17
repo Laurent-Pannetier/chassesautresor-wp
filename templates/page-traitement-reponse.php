@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Template Name: Traitement Réponse (Finalisation Sécurisée)
  */
@@ -13,28 +12,21 @@ $tentative = get_tentative_by_uid($uid);
 if (!$tentative) wp_die('Tentative introuvable.');
 
 $enigme_id = (int) $tentative->enigme_id;
-$chasse_id = recuperer_id_chasse_associee($enigme_id); // 🔁 fonction déjà existante
-
-$organisateur_id = get_organisateur_from_chasse($chasse_id); // 🔁 fonction déjà existante
+$chasse_id = recuperer_id_chasse_associee($enigme_id);
+$organisateur_id = get_organisateur_from_chasse($chasse_id);
 $organisateur_user_ids = (array) get_field('utilisateurs_associes', $organisateur_id);
 $current_user_id = get_current_user_id();
 
 if (
-  !current_user_can('manage_options') && // bypass admin
+  !current_user_can('manage_options') &&
   !in_array($current_user_id, array_map('intval', $organisateur_user_ids), true)
 ) {
   wp_die('⛔ Accès refusé : vous n’êtes pas autorisé à traiter cette tentative.');
 }
 
-
 if (!$uid || !in_array($resultat_param, ['bon', 'faux'], true)) {
   wp_die('Paramètres manquants ou invalides.');
 }
-
-// Gestion des actions de réinitialisation (statuts ou tentatives)
-$tentative = get_tentative_by_uid($uid);
-if (!$tentative) wp_die("Tentative introuvable.");
-$enigme_id = (int) $tentative->enigme_id;
 
 if (isset($_GET['reset_tentatives'])) {
   $reset = $wpdb->delete(
@@ -53,9 +45,6 @@ if (isset($_GET['reset_tentatives_totales'])) {
   return;
 }
 
-// Traitement normal
-$etat = get_etat_tentative($uid);
-
 $traitement = traiter_tentative_manuelle($uid, $resultat_param);
 
 if (!empty($traitement['erreur'])) {
@@ -64,13 +53,13 @@ if (!empty($traitement['erreur'])) {
 
 $etat = $traitement['etat_tentative'] ?? 'invalide';
 
-
 get_template_part('template-parts/traitement/tentative-feedback', null, [
-  'etat_tentative'    => $etat,
-  'resultat'          => $traitement['resultat'] ?? '',
-  'statut_initial'    => $traitement['statut_initial'] ?? '',
-  'statut_final'      => $traitement['statut_final'] ?? '',
-  'nom_user'          => $traitement['nom_user'] ?? '',
-  'permalink'         => $traitement['permalink'] ?? '',
-  'statistiques'      => $traitement['statistiques'] ?? [],
+  'etat_tentative'       => $etat,
+  'resultat'             => $traitement['resultat'] ?? '',
+  'statut_initial'       => $traitement['statut_initial'] ?? '',
+  'statut_final'         => $traitement['statut_final'] ?? '',
+  'nom_user'             => $traitement['nom_user'] ?? '',
+  'permalink'            => $traitement['permalink'] ?? '',
+  'statistiques'         => $traitement['statistiques'] ?? [],
+  'deja_traitee'         => $traitement['deja_traitee'] ?? false,
 ]);
