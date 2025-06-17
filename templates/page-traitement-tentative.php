@@ -52,8 +52,6 @@ get_header();
 
 <main class="page-traitement-tentative">
   <div class="container">
-    <h1>Traitement de tentative de réponse</h1>
-
     <section class="bloc-infos">
       <h2>
         Tentative de <strong><?= esc_html($infos['nom_user'] ?? 'Inconnu'); ?></strong>
