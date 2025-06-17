@@ -550,19 +550,17 @@
     // ==================================================
     // ✅ TRAITEMENT REPONSES A UNE ENIGME
     // ==================================================
-    /* 
-        * 🔹 afficher_formulaire_reponse_manuelle() → Affiche un champ texte et bouton pour soumettre une réponse manuelle (frontend).
-        * 🔹 utilisateur_peut_repondre_manuelle() → Vérifie les conditions d’accès avant affichage du formulaire manuel.
-        * 🔹 envoyer_mail_reponse_manuelle() → Envoie un mail HTML à l'organisateur avec la réponse (expéditeur = joueur).
-        * 🔹 envoyer_mail_resultat_joueur() → Envoie un mail HTML au joueur après validation ou refus de sa réponse.
-        * 🔹 envoyer_mail_accuse_reception_joueur() → Envoie un accusé de réception au joueur juste après sa soumission.
-        * 🔹 tentative_est_deja_traitee() → Vérifie si une tentative a déjà un résultat non vide.
-        * 🔹 mettre_a_jour_statut_utilisateur() → Enregistre ou met à jour un statut, seulement si le nouveau est plus avancé.
-        * 🔹 inserer_tentative() → Fonction générique pour insérer une tentative (manuelle ou automatique).
-        * 🔹 get_tentative_by_uid() → Récupère une tentative par son identifiant UID.
-        * 🔹 traiter_tentative_manuelle() → Applique une validation ou un refus sur une tentative existante.
-        * 🔹 get_etat_tentative() → Retourne l'état logique d'une tentative selon son champ `resultat`.
-        */
+    // 🔹 afficher_formulaire_reponse_manuelle() → Affiche le formulaire de réponse manuelle (frontend).
+    // 🔹 utilisateur_peut_repondre_manuelle() → Vérifie si l'utilisateur peut répondre à une énigme manuelle.
+    // 🔹 soumettre_reponse_manuelle() → Traite la soumission d'une réponse manuelle (frontend).
+    // 🔹 envoyer_mail_reponse_manuelle() → Envoie un mail HTML à l'organisateur avec la réponse (expéditeur = joueur).
+    // 🔹 envoyer_mail_resultat_joueur() → Envoie un mail HTML au joueur après validation ou refus de sa réponse.
+    // 🔹 envoyer_mail_accuse_reception_joueur() → Envoie un accusé de réception au joueur juste après sa soumission.
+    // 🔹 mettre_a_jour_statut_utilisateur() → Met à jour le statut d'un joueur sur une énigme (si progression).
+    // 🔹 inserer_tentative() → Insère une tentative dans la table personnalisée.
+    // 🔹 get_tentative_by_uid() → Récupère une tentative par son identifiant UID.
+    // 🔹 traiter_tentative_manuelle() → Applique une validation ou un refus sur une tentative existante.
+    // 🔹 get_etat_tentative() → Retourne l'état logique d'une tentative selon son champ `resultat`.
 
 
     /**
@@ -615,28 +613,44 @@
         return true;
     }
     /**
-     * Traite la soumission du formulaire de réponse manuelle (en POST).
+     * Intercepte et traite la soumission d'une réponse manuelle à une énigme (frontend).
+     *
+     * Conditions :
+     * - utilisateur connecté
+     * - champ réponse + nonce + enigme_id présents
+     * - nonce valide
      */
-    add_action('init', function () {
+    function soumettre_reponse_manuelle()
+    {
         if (
             isset($_POST['reponse_manuelle_nonce'], $_POST['reponse_manuelle'], $_POST['enigme_id']) &&
             wp_verify_nonce($_POST['reponse_manuelle_nonce'], 'reponse_manuelle_nonce') &&
             is_user_logged_in()
         ) {
-            $user_id = get_current_user_id();
+            $user_id   = get_current_user_id();
             $enigme_id = (int) $_POST['enigme_id'];
-            $reponse = sanitize_textarea_field($_POST['reponse_manuelle']);
+            $reponse   = sanitize_textarea_field($_POST['reponse_manuelle']);
+
+            // Insère la tentative et envoie les notifications
+            if (!utilisateur_peut_repondre_manuelle($user_id, $enigme_id)) {
+                return; // rejet silencieux
+            }
 
             $uid = inserer_tentative($user_id, $enigme_id, $reponse);
+
             envoyer_mail_reponse_manuelle($user_id, $enigme_id, $reponse, $uid);
             envoyer_mail_accuse_reception_joueur($user_id, $enigme_id, $uid);
 
+            // Redirige proprement vers la même page avec un paramètre
             add_action('template_redirect', function () {
                 wp_redirect(add_query_arg('reponse_envoyee', '1'));
                 exit;
             });
         }
-    });
+    }
+    add_action('init', 'soumettre_reponse_manuelle');
+
+
 
     /**
      * Envoie un email à l'organisateur avec la réponse manuelle soumise.
@@ -833,19 +847,6 @@
     }
 
     /**
-     * Vérifie si une tentative a déjà été traitée (résultat différent de 'attente').
-     *
-     * @param string $uid Identifiant unique de la tentative.
-     * @return bool Vrai si déjà traitée, faux sinon.
-     */
-    function tentative_est_deja_traitee(string $uid): bool
-    {
-        global $wpdb;
-        $table = $wpdb->prefix . 'enigme_tentatives';
-        $resultat = $wpdb->get_var($wpdb->prepare("SELECT resultat FROM $table WHERE tentative_uid = %s", $uid));
-        return ($resultat !== null && $resultat !== '' && $resultat !== 'attente');
-    }
-    /**
      * Met à jour le statut d'un joueur sur une énigme, uniquement si le nouveau statut est meilleur.
      *
      * @param int $user_id ID de l'utilisateur.
@@ -956,23 +957,36 @@
         $table = $wpdb->prefix . 'enigme_tentatives';
 
         $tentative = get_tentative_by_uid($uid);
-        $statut_initial = $tentative->resultat ?? 'invalide';
-
         if (!$tentative) {
             return ['erreur' => 'Tentative introuvable.'];
         }
 
+        // 🛡 Vérification d'accès ici
+        $current_user_id = get_current_user_id();
+        $chasse_id = recuperer_id_chasse_associee($tentative->enigme_id);
+        $organisateur_id = get_organisateur_from_chasse($chasse_id);
+        $organisateur_user_ids = (array) get_field('utilisateurs_associes', $organisateur_id);
+
+        if (
+            !current_user_can('manage_options') &&
+            !in_array($current_user_id, array_map('intval', $organisateur_user_ids), true)
+        ) {
+            return ['erreur' => 'Accès interdit à cette tentative.'];
+        }
+
+        $statut_initial = $tentative->resultat ?? 'invalide';
+
         if ($tentative->resultat !== 'attente') {
             return [
-                'etat_tentative' => get_etat_tentative($uid),
-                'statut_initial' => $statut_initial,
-                'tentative' => $tentative,
-                'resultat' => $tentative->resultat,
-                'permalink' => get_permalink($tentative->enigme_id),
-                'nom_user' => get_userdata($tentative->user_id)?->display_name ?? 'Utilisateur inconnu',
-                'statut_final' => $tentative->resultat,
-                'statistiques' => [
-                    'total_user' => 0,
+                'etat_tentative'   => get_etat_tentative($uid),
+                'statut_initial'   => $statut_initial,
+                'tentative'        => $tentative,
+                'resultat'         => $tentative->resultat,
+                'permalink'        => get_permalink($tentative->enigme_id),
+                'nom_user'         => get_userdata($tentative->user_id)?->display_name ?? 'Utilisateur inconnu',
+                'statut_final'     => $tentative->resultat,
+                'statistiques'     => [
+                    'total_user'   => 0,
                     'total_enigme' => 0,
                     'total_chasse' => 0,
                 ],
