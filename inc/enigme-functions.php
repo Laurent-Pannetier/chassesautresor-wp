@@ -953,8 +953,10 @@
      */
     function traiter_tentative_manuelle(string $uid, string $resultat): array
     {
+        error_log("👉 traiter_tentative_manuelle() appelée : UID=$uid, resultat demandé=$resultat");
         global $wpdb;
         $table = $wpdb->prefix . 'enigme_tentatives';
+        
 
         $tentative = get_tentative_by_uid($uid);
         if (!$tentative) {
@@ -995,6 +997,9 @@
             ];
         }
 
+        error_log("⛔ Déjà traitée : en base = {$tentative->resultat}, on NE TRAITE PAS");
+
+
         // ✅ Traitement normal
         $wpdb->update(
             $table,
@@ -1007,6 +1012,8 @@
         $nouveau_statut = $resultat === 'bon' ? 'resolue' : 'abandonnee';
         mettre_a_jour_statut_utilisateur((int) $tentative->user_id, (int) $tentative->enigme_id, $nouveau_statut);
         envoyer_mail_resultat_joueur((int) $tentative->user_id, (int) $tentative->enigme_id, $resultat);
+
+        error_log("✅ Traitement effectué : nouveau resultat = $resultat");
 
         return [
             'deja_traitee'     => false,
