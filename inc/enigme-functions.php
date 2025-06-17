@@ -1007,7 +1007,8 @@
             'deja_traitee'   => ($etat !== 'attente'),
             'resultat'       => $resultat,
             'tentative'      => $tentative,
-            'traitee' => (int) $tentative->traitee === 1,
+            'traitee'       => (int) $tentative->traitee === 1,
+            'vient_d_etre_traitee' => ((int) $tentative->traitee === 1 && $tentative->resultat === $resultat),
             'nom_user'       => get_userdata($tentative->user_id)?->display_name ?? 'Utilisateur inconnu',
             'permalink'      => get_permalink($tentative->enigme_id),
             'statistiques'   => [

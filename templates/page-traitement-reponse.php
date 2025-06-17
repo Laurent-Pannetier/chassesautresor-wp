@@ -56,6 +56,10 @@ if (isset($_GET['reset_tentatives_totales'])) {
 $traitement_effectue = traiter_tentative_manuelle($uid, $resultat_param);
 $infos = recuperer_infos_tentative($uid);
 $infos['vient_d_etre_traitee'] = $traitement_effectue;
+error_log("🧪 traitement_effectue = " . ($traitement_effectue ? 'true' : 'false'));
+error_log("🧪 resultat enregistré = " . ($infos['resultat'] ?? 'null'));
+error_log("🧪 etat_tentative = " . ($infos['etat_tentative'] ?? 'null'));
+error_log("🧪 vient_d_etre_traitee = " . ($infos['vient_d_etre_traitee'] ?? 'null'));
 
 
 get_template_part('template-parts/traitement/tentative-feedback', null, [

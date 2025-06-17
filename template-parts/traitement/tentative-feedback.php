@@ -31,6 +31,10 @@ $deja_traitee     = $args['deja_traitee'] ?? false;
   $vient_d_etre_traitee = $args['vient_d_etre_traitee'] ?? false;
   if ($deja_traitee && !$vient_d_etre_traitee):
   ?>
+    <?php
+    error_log("🧪 TEMPLATE : deja_traitee = " . ($deja_traitee ? 'true' : 'false') . ", vient_d_etre_traitee = " . ($vient_d_etre_traitee ? 'true' : 'false'));
+    ?>
+
 
     <div style="background:#fff3cd;color:#856404;border:1px solid #ffeeba;padding:1em;border-radius:5px;margin-bottom:2em;">
       ⚠️ Cette tentative a déjà été <strong>traitée</strong> (validée ou refusée).<br>
