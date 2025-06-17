@@ -2,144 +2,43 @@
     defined('ABSPATH') || exit;
 
 
-    // 🎯 TENTATIVES – ÉNIGMES (pointage & limitations)
-    // 🧩 CONTRÔLES ET RÉGLAGES AVANCÉS
-    // 🖼️️ AFFICHAGE DES VISUELS D’ÉNIGMES
-    // 🧩 AFFICHAGE DES ÉNIGMES – TEMPLATE UNIQUE & VARIANTS
-    // 📬 GESTION DES RÉPONSES MANUELLES AUX ÉNIGMES
+    // 🔧 CONTRÔLES ET RÉGLAGES AVANCÉS – ÉNIGMES
+    //    • enigme_get_liste_prerequis_possibles()
+    //    • get_cta_enigme()
     //
+    // 🖼️ AFFICHAGE DES VISUELS D’ÉNIGMES
+    //    • afficher_visuels_enigme()
+    //
+    // 🎨 AFFICHAGE STYLISÉ DES ÉNIGMES
+    //    • afficher_enigme_stylisee()
+    //    • enigme_get_partial()
+    //
+    // 📬 GESTION DES RÉPONSES MANUELLES (FRONTEND)
+    //    • afficher_formulaire_reponse_manuelle()
+    //    • utilisateur_peut_repondre_manuelle()
+    //    • soumettre_reponse_manuelle()
+    //
+    // ✉️ ENVOI D'EMAILS (RÉPONSES MANUELLES)
+    //    • envoyer_mail_reponse_manuelle()
+    //    • envoyer_mail_resultat_joueur()
+    //    • envoyer_mail_accuse_reception_joueur()
+    //
+    // 📊 GESTION DES TENTATIVES UTILISATEUR
+    //    • inserer_tentative()
+    //    • get_tentative_by_uid()
+    //    • traiter_tentative_manuelle()
+    //    • recuperer_infos_tentative()
+    //    • get_etat_tentative()
 
-
-    
-
-
-    // ==================================================
-    // 🎯 TENTATIVES – ÉNIGMES (pointage & limitations)
-    // ==================================================
-    /**
-     * 🔹 enigme_get_tentatives_restantes() → Retourne le nombre de tentatives restantes pour un utilisateur sur une énigme.
-     */
-
-    /**
-     * Retourne le nombre de tentatives restantes pour un utilisateur sur une énigme, pour aujourd’hui.
-     * Tient compte de la limite quotidienne définie dans `enigme_tentative_max`.
-     *
-     * @param int $enigme_id
-     * @param int $user_id
-     * @return int|null Null si illimité, sinon nombre de tentatives restantes
-     */
-    function enigme_get_tentatives_restantes($enigme_id, $user_id)
-    {
-        if (!$enigme_id || !$user_id) return null;
-
-        $limite = get_field('enigme_tentative_max', $enigme_id);
-        if (!$limite || $limite <= 0) {
-            return null; // Tentatives illimitées
-        }
-
-        // Clé formatée pour la date du jour
-        $date = current_time('Ymd'); // Ex: 20250430
-        $meta_key = "enigme_{$enigme_id}_tentatives_{$date}";
-
-        $deja_fait = (int) get_user_meta($user_id, $meta_key, true);
-        return max(0, $limite - $deja_fait);
-    }
-
-
-    /**
-     * Enregistre une tentative pour un utilisateur donné sur une énigme,
-     * en incrémentant le compteur du jour.
-     *
-     * @param int $enigme_id
-     * @param int $user_id
-     * @return bool True si la tentative a été enregistrée, false sinon
-     */
-    function enigme_enregistrer_tentative($enigme_id, $user_id)
-    {
-        if (!$enigme_id || !$user_id) return false;
-
-        $date = current_time('Ymd');
-        $meta_key = "enigme_{$enigme_id}_tentatives_{$date}";
-
-        $compteur = (int) get_user_meta($user_id, $meta_key, true);
-        $compteur++;
-
-        update_user_meta($user_id, $meta_key, $compteur);
-
-        // 🔍 Log (désactivable plus tard)
-        $titre = get_the_title($enigme_id);
-        error_log("[Enigme] Tentative enregistrée pour #$user_id sur énigme #$enigme_id ($titre) → $compteur tentative(s)");
-
-        return true;
-    }
-
-
-    /**
-     * Vérifie si l’utilisateur a dépassé le nombre de tentatives autorisées aujourd’hui pour une énigme.
-     *
-     * @param int $enigme_id
-     * @param int $user_id
-     * @return bool True si le nombre de tentatives est dépassé, false sinon
-     */
-    function enigme_tentatives_depassees($enigme_id, $user_id)
-    {
-        if (!$enigme_id || !$user_id) return false;
-
-        $limite = get_field('enigme_tentative_max', $enigme_id);
-        if (!$limite || $limite <= 0) {
-            return false; // Illimité = jamais dépassé
-        }
-
-        $date = current_time('Ymd');
-        $meta_key = "enigme_{$enigme_id}_tentatives_{$date}";
-
-        $compteur = (int) get_user_meta($user_id, $meta_key, true);
-        return $compteur >= $limite;
-    }
-
-
-    /**
-     * Réinitialise les tentatives d’un utilisateur pour une énigme donnée.
-     *
-     * @param int $enigme_id
-     * @param int $user_id
-     * @param bool $toutes True pour supprimer toutes les tentatives (par défaut : seulement aujourd’hui)
-     * @return int Nombre de lignes supprimées
-     */
-    function enigme_reinitialiser_tentatives($enigme_id, $user_id, $toutes = false)
-    {
-        if (!$enigme_id || !$user_id) return 0;
-
-        global $wpdb;
-        $prefix = "enigme_{$enigme_id}_tentatives_";
-
-        if ($toutes) {
-            // Supprime toutes les tentatives (toutes dates)
-            $like = $wpdb->esc_like($prefix) . '%';
-            return (int) $wpdb->query(
-                $wpdb->prepare(
-                    "DELETE FROM {$wpdb->usermeta} WHERE user_id = %d AND meta_key LIKE %s",
-                    $user_id,
-                    $like
-                )
-            );
-        } else {
-            // Supprime uniquement la tentative du jour
-            $date = current_time('Ymd');
-            $meta_key = $prefix . $date;
-            return delete_user_meta($user_id, $meta_key) ? 1 : 0;
-        }
-    }
 
 
     // ==================================================
-    // 🧩 CONTRÔLES ET RÉGLAGES AVANCÉS – ÉNIGMES
+    // 🔧 CONTRÔLES ET RÉGLAGES AVANCÉS – ÉNIGMES
     // ==================================================
     /**
      * 🔹 enigme_get_liste_prerequis_possibles() → Retourne les autres énigmes de la même chasse pouvant être définies comme prérequis.
      * 🔹 get_cta_enigme() → Retourne les informations d'affichage du bouton CTA en fonction du statut et du contexte de l'énigme.
      */
-
 
     /**
      * 🔍 Retourne la liste des énigmes pouvant être sélectionnées comme prérequis.
@@ -283,7 +182,6 @@
     }
 
 
-
     // ==================================================
     // 🖼️ AFFICHAGE DES VISUELS D’ÉNIGMES
     // ==================================================
@@ -391,7 +289,7 @@
 
 
     // ==================================================
-    // 🧩 AFFICHAGE DES ÉNIGMES – TEMPLATE UNIQUE & VARIANTS
+    // 🎨 AFFICHAGE STYLISÉ DES ÉNIGMES
     // ==================================================
     /**
      * 🔹 afficher_enigme_stylisee() → Affiche l’énigme avec son style d’affichage (structure unique + blocs surchargeables).
@@ -462,20 +360,13 @@
 
 
     // ==================================================
-    // ✅ TRAITEMENT REPONSES A UNE ENIGME
+    // 📬 GESTION DES RÉPONSES MANUELLES (FRONTEND)
     // ==================================================
 
     // 🔹 afficher_formulaire_reponse_manuelle() → Affiche le formulaire de réponse manuelle (frontend).
     // 🔹 utilisateur_peut_repondre_manuelle() → Vérifie si l'utilisateur peut répondre à une énigme manuelle.
     // 🔹 soumettre_reponse_manuelle() → Traite la soumission d'une réponse manuelle (frontend).
-    // 🔹 envoyer_mail_reponse_manuelle() → Envoie un mail HTML à l'organisateur avec la réponse (expéditeur = joueur).
-    // 🔹 envoyer_mail_resultat_joueur() → Envoie un mail HTML au joueur après validation ou refus de sa réponse.
-    // 🔹 envoyer_mail_accuse_reception_joueur() → Envoie un accusé de réception au joueur juste après sa soumission.
-    // 🔹 inserer_tentative() → Insère une tentative dans la table personnalisée.
-    // 🔹 get_tentative_by_uid() → Récupère une tentative par son identifiant UID.
-    // 🔹 traiter_tentative_manuelle() → Effectue la validation/refus d'une tentative (une seule fois).
-    // 🔹 recuperer_infos_tentative() → Renvoie toutes les données pour l'affichage d'une tentative.
-    // 🔹 get_etat_tentative() → Retourne l'état logique d'une tentative selon son champ `resultat`.
+
 
 
     /**
@@ -588,6 +479,15 @@
     }
     add_action('init', 'soumettre_reponse_manuelle');
 
+
+
+    // ==================================================
+    // ✉️ ENVOI D'EMAILS (RÉPONSES MANUELLES)
+    // ==================================================
+
+    // 🔹 envoyer_mail_reponse_manuelle() → Envoie un mail HTML à l'organisateur avec la réponse (expéditeur = joueur).
+    // 🔹 envoyer_mail_resultat_joueur() → Envoie un mail HTML au joueur après validation ou refus de sa réponse.
+    // 🔹 envoyer_mail_accuse_reception_joueur() → Envoie un accusé de réception au joueur juste après sa soumission.
 
     /**
      * Envoie un email à l'organisateur avec la réponse manuelle soumise.
@@ -777,6 +677,15 @@
     }
 
 
+    // ==================================================
+    // 📊 GESTION DES TENTATIVES UTILISATEUR
+    // ==================================================
+    // 🔹 inserer_tentative() → Insère une tentative dans la table personnalisée.
+    // 🔹 get_tentative_by_uid() → Récupère une tentative par son identifiant UID.
+    // 🔹 traiter_tentative_manuelle() → Effectue la validation/refus d'une tentative (une seule fois).
+    // 🔹 recuperer_infos_tentative() → Renvoie toutes les données pour l'affichage d'une tentative.
+    // 🔹 get_etat_tentative() → Retourne l'état logique d'une tentative selon son champ `resultat`.
+
     /**
      * Fonction générique pour insérer une tentative dans la table personnalisée.
      *
@@ -935,7 +844,6 @@
             ],
         ];
     }
-
 
 
     /**
