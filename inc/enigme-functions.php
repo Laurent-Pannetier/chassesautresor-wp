@@ -840,6 +840,12 @@
             $enigme_id
         ));
 
+        // Protection : interdiction de rétrograder un joueur ayant déjà résolu l’énigme
+        if (in_array($statut_actuel, ['resolue', 'terminee'], true)) {
+            error_log("🔒 Statut non modifié : $statut_actuel → tentative de mise à jour vers $nouveau_statut bloquée (UID: $user_id / Enigme: $enigme_id)");
+            return false;
+        }
+
         $niveau_actuel  = $priorites[$statut_actuel] ?? 0;
         $niveau_nouveau = $priorites[$nouveau_statut];
 
