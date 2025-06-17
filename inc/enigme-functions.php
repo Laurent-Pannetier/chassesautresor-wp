@@ -559,7 +559,8 @@
     // 🔹 mettre_a_jour_statut_utilisateur() → Met à jour le statut d'un joueur sur une énigme (si progression).
     // 🔹 inserer_tentative() → Insère une tentative dans la table personnalisée.
     // 🔹 get_tentative_by_uid() → Récupère une tentative par son identifiant UID.
-    // 🔹 traiter_tentative_manuelle() → Applique une validation ou un refus sur une tentative existante.
+    // 🔹 traiter_tentative_manuelle() → Effectue la validation/refus d'une tentative (une seule fois).
+    // 🔹 recuperer_infos_tentative() → Renvoie toutes les données pour l'affichage d'une tentative.
     // 🔹 get_etat_tentative() → Retourne l'état logique d'une tentative selon son champ `resultat`.
 
 
@@ -945,73 +946,30 @@
 
 
     /**
-     * Traite une tentative manuelle et applique la validation ou le refus.
+     * Traite une tentative manuelle : effectue l'action (validation/refus) une seule fois.
      *
-     * @param string $uid
-     * @param string $resultat
-     * @return array
+     * @param string $uid Identifiant unique de la tentative.
+     * @param string $resultat 'bon' ou 'faux'.
+     * @return bool true si traitement effectué, false si déjà traité ou interdit.
      */
-    function traiter_tentative_manuelle(string $uid, string $resultat): array
+    function traiter_tentative_manuelle(string $uid, string $resultat): bool
     {
         global $wpdb;
         $table = $wpdb->prefix . 'enigme_tentatives';
 
-        static $deja_traitee_internally = [];
-
-        if (isset($deja_traitee_internally[$uid])) {
-            error_log("🔁 tentative UID=$uid déjà traitée dans ce cycle PHP");
-            return $deja_traitee_internally[$uid];
-        }
-
-        error_log("👉 traiter_tentative_manuelle() appelée : UID=$uid, resultat demandé=$resultat");
-
         $tentative = get_tentative_by_uid($uid);
-        if (!$tentative) {
-            error_log("❌ Tentative introuvable pour UID=$uid");
-            return ['erreur' => 'Tentative introuvable.'];
-        }
+        if (!$tentative) return false;
+        if ($tentative->resultat !== 'attente') return false;
 
-        $statut_initial = $tentative->resultat ?? 'invalide';
-        error_log("🔎 Tentative récupérée : resultat=$statut_initial");
-
-        // 🛡 Vérification d'accès
         $current_user_id = get_current_user_id();
-        $chasse_id = recuperer_id_chasse_associee($tentative->enigme_id);
+        $chasse_id = recuperer_id_chasse_associee((int) $tentative->enigme_id);
         $organisateur_id = get_organisateur_from_chasse($chasse_id);
         $organisateur_user_ids = (array) get_field('utilisateurs_associes', $organisateur_id);
 
-        if (
-            !current_user_can('manage_options') &&
-            !in_array($current_user_id, array_map('intval', $organisateur_user_ids), true)
-        ) {
-            error_log("⛔ Accès interdit à la tentative UID=$uid pour user $current_user_id");
-            return ['erreur' => 'Accès interdit à cette tentative.'];
+        if (!current_user_can('manage_options') && !in_array($current_user_id, array_map('intval', $organisateur_user_ids), true)) {
+            return false;
         }
 
-        if ($statut_initial !== 'attente') {
-            error_log("⛔ Déjà traitée → aucune mise à jour effectuée pour UID=$uid");
-            $retour = [
-                'deja_traitee'     => true,
-                'etat_tentative'   => $statut_initial === 'bon' ? 'validee' : 'refusee',
-                'statut_initial'   => $statut_initial,
-                'tentative'        => $tentative,
-                'resultat'         => $tentative->resultat,
-                'permalink'        => get_permalink($tentative->enigme_id),
-                'nom_user'         => get_userdata($tentative->user_id)?->display_name ?? 'Utilisateur inconnu',
-                'statut_final'     => $tentative->resultat,
-                'statistiques'     => [
-                    'total_user'   => 0,
-                    'total_enigme' => 0,
-                    'total_chasse' => 0,
-                ],
-            ];
-            $deja_traitee_internally[$uid] = $retour;
-            return $retour;
-        }
-
-        error_log("🛠 Mise à jour tentative UID=$uid avec resultat=$resultat");
-
-        // Traitement
         $wpdb->update(
             $table,
             ['resultat' => $resultat],
@@ -1020,38 +978,48 @@
             ['%s']
         );
 
-        error_log("✅ Traitement effectué : résultat mis à jour en base → $resultat");
-
         $nouveau_statut = $resultat === 'bon' ? 'resolue' : 'abandonnee';
-        $maj = mettre_a_jour_statut_utilisateur((int) $tentative->user_id, (int) $tentative->enigme_id, $nouveau_statut);
-        error_log("🔄 Mise à jour statut utilisateur ($nouveau_statut) → " . ($maj ? 'OK' : 'NON EFFECTUÉ'));
-
+        mettre_a_jour_statut_utilisateur((int) $tentative->user_id, (int) $tentative->enigme_id, $nouveau_statut);
         envoyer_mail_resultat_joueur((int) $tentative->user_id, (int) $tentative->enigme_id, $resultat);
-        error_log("📧 Mail de résultat envoyé pour UID=$uid");
 
-        $retour = [
-            'deja_traitee'     => false,
-            'etat_tentative'   => $resultat === 'bon' ? 'validee' : 'refusee',
-            'statut_initial'   => $statut_initial,
-            'tentative'        => get_tentative_by_uid($uid),
-            'resultat'         => $resultat,
-            'statut_final'     => $resultat,
-            'nom_user'         => get_userdata($tentative->user_id)?->display_name ?? 'Utilisateur inconnu',
-            'permalink'        => get_permalink($tentative->enigme_id),
-            'statistiques'     => [
+        return true;
+    }
+
+    /**
+     * Renvoie toutes les données d'affichage pour une tentative (état, utilisateur, statut, etc.)
+     *
+     * @param string $uid Identifiant unique de la tentative.
+     * @return array
+     */
+    function recuperer_infos_tentative(string $uid): array
+    {
+        $tentative = get_tentative_by_uid($uid);
+        if (!$tentative) return ['etat_tentative' => 'inexistante'];
+
+        $etat = get_etat_tentative($uid);
+        $resultat = $tentative->resultat;
+        $statut_initial = $resultat ?? 'invalide';
+
+        return [
+            'etat_tentative' => $etat,
+            'statut_initial' => $statut_initial,
+            'statut_final'   => $resultat,
+            'deja_traitee'   => ($etat !== 'attente'),
+            'resultat'       => $resultat,
+            'tentative'      => $tentative,
+            'nom_user'       => get_userdata($tentative->user_id)?->display_name ?? 'Utilisateur inconnu',
+            'permalink'      => get_permalink($tentative->enigme_id),
+            'statistiques'   => [
                 'total_user'   => 0,
                 'total_enigme' => 0,
                 'total_chasse' => 0,
             ],
         ];
-
-        $deja_traitee_internally[$uid] = $retour;
-        return $retour;
     }
-
 
     /**
      * Retourne l'état logique d'une tentative selon son champ `resultat`.
+     *
      * @param string $uid
      * @return string 'attente' | 'validee' | 'refusee' | 'invalide' | 'inexistante'
      */

@@ -2,25 +2,32 @@
 /**
  * Template Part : tentative-feedback.php
  * Affiche le retour après traitement d'une tentative manuelle
+ *
  * Reçoit via get_template_part(..., ..., [ '...' => ... ]) :
- * - etat_tentative : 'attente' | 'validee' | 'refusee' | 'invalide' | 'inexistante'
- * - resultat, statut_initial, statut_final, nom_user, permalink, statistiques, deja_traitee
+ * - etat_tentative    : 'attente' | 'validee' | 'refusee' | 'invalide' | 'inexistante'
+ * - resultat          : 'bon' | 'faux' | ''
+ * - statut_initial    : état initial brut (ex: 'attente')
+ * - statut_final      : 'bon' | 'faux' | ''
+ * - nom_user          : Nom du joueur
+ * - permalink         : Lien vers l'énigme concernée
+ * - statistiques      : array (total_user, total_enigme, total_chasse)
+ * - deja_traitee      : bool
  */
 
-$etat_tentative = $args['etat_tentative'] ?? 'invalide';
-$resultat = $args['resultat'] ?? '';
-$statut_initial = $args['statut_initial'] ?? '';
-$statut_final = $args['statut_final'] ?? '';
-$permalink = $args['permalink'] ?? '';
-$nom_user = $args['nom_user'] ?? 'Utilisateur';
-$statistiques = $args['statistiques'] ?? [];
-$deja_traitee = $args['deja_traitee'] ?? false;
+$etat_tentative   = $args['etat_tentative'] ?? 'invalide';
+$resultat         = $args['resultat'] ?? '';
+$statut_initial   = $args['statut_initial'] ?? '';
+$statut_final     = $args['statut_final'] ?? '';
+$nom_user         = $args['nom_user'] ?? 'Utilisateur';
+$permalink        = $args['permalink'] ?? '';
+$statistiques     = $args['statistiques'] ?? [];
+$deja_traitee     = $args['deja_traitee'] ?? false;
 ?>
 
 <div style="max-width:600px;margin:3em auto;text-align:center;font-family:sans-serif;">
 
   <?php if ($deja_traitee && $statut_initial !== 'attente'): ?>
-    <div style="background:#fff3cd; color:#856404; border:1px solid #ffeeba; padding:1em; border-radius:5px; margin-bottom:2em;">
+    <div style="background:#fff3cd;color:#856404;border:1px solid #ffeeba;padding:1em;border-radius:5px;margin-bottom:2em;">
       ⚠️ Cette tentative a déjà été <strong>traitée</strong> (validée ou refusée).<br>
       Vous ne pouvez plus la modifier.
     </div>
@@ -32,17 +39,25 @@ $deja_traitee = $args['deja_traitee'] ?? false;
   </a>
 
   <?php
-  if ($etat_tentative === 'validee') {
-    echo '<p>✅ Statut de la proposition : <strong>validée</strong>.</p>';
-  } elseif ($etat_tentative === 'refusee') {
-    echo '<p>❌ Statut de la proposition : <strong>invalidée</strong>.</p>';
-  } elseif ($etat_tentative === 'attente') {
-    echo '<p>⏳ Votre tentative est en <strong>attente de traitement</strong>.</p>';
-  } elseif ($etat_tentative === 'inexistante') {
-    echo '<p>🚫 Tentative introuvable.</p>';
-  } else {
-    echo '<p>❓ État de la tentative inconnu ou invalide.</p>';
-  }
+    echo '<p>';
+    switch ($etat_tentative) {
+      case 'validee':
+        echo '✅ Statut de la proposition : <strong>validée</strong>.';
+        break;
+      case 'refusee':
+        echo '❌ Statut de la proposition : <strong>invalidée</strong>.';
+        break;
+      case 'attente':
+        echo '⏳ Votre tentative est en <strong>attente de traitement</strong>.';
+        break;
+      case 'inexistante':
+        echo '🚫 Tentative introuvable.';
+        break;
+      default:
+        echo '❓ État de la tentative inconnu ou invalide.';
+        break;
+    }
+    echo '</p>';
   ?>
 
   <div style="margin-top:2em;font-size:1em;">
@@ -62,20 +77,20 @@ $deja_traitee = $args['deja_traitee'] ?? false;
 
   <div style="text-align:center;margin-top:3em;">
     <a href="<?= esc_url(add_query_arg('reset_tentatives', '1')); ?>"
-      onclick="return confirm('Confirmer la réinitialisation des statuts pour cette énigme ?');"
-      style="background:#900;color:#fff;padding:10px 20px;border-radius:5px;text-decoration:none;margin-right:1em;">
-      🧹 Réinitialiser les statuts</a>
+       onclick="return confirm('Confirmer la réinitialisation des statuts pour cette énigme ?');"
+       style="background:#900;color:#fff;padding:10px 20px;border-radius:5px;text-decoration:none;margin-right:1em;">
+       🧹 Réinitialiser les statuts</a>
     <a href="<?= esc_url(add_query_arg('reset_tentatives_totales', '1')); ?>"
-      onclick="return confirm('Confirmer la suppression de toutes les tentatives pour cette énigme ?');"
-      style="background:#555;color:#fff;padding:10px 20px;border-radius:5px;text-decoration:none;">
-      🚫 Supprimer toutes les tentatives</a>
+       onclick="return confirm('Confirmer la suppression de toutes les tentatives pour cette énigme ?');"
+       style="background:#555;color:#fff;padding:10px 20px;border-radius:5px;text-decoration:none;">
+       🚫 Supprimer toutes les tentatives</a>
   </div>
 </div>
 
 <script>
   function fermerFenetreOuRediriger() {
     window.close();
-    setTimeout(function() {
+    setTimeout(function () {
       if (!window.closed) {
         window.location.href = '/';
       }
