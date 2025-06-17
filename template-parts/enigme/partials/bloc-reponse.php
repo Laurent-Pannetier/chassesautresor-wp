@@ -1,8 +1,20 @@
 <?php
 defined('ABSPATH') || exit;
 
+defined('ABSPATH') || exit;
+
 $post_id = $args['post_id'] ?? null;
-if (!$post_id) return;
+$user_id = $args['user_id'] ?? get_current_user_id(); // ✅ sécurisation
+
+error_log("👤 STATUT ACTUEL : " . enigme_get_statut_utilisateur($post_id, $user_id));
+
+
+if (!$post_id || !$user_id) return;
+
+if (!utilisateur_peut_repondre_manuelle($user_id, $post_id)) {
+  echo '<p class="message-deja-repondu">Vous avez déjà répondu ou résolu cette énigme.</p>';
+  return;
+}
 
 // Récupération du mode de validation
 $mode_validation = get_field('enigme_mode_validation', $post_id);

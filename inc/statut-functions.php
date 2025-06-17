@@ -7,10 +7,9 @@ if (!defined('ABSPATH')) {
 
 //
 // 🧩 GESTION DES STATUTS ET DE L’ACCESSIBILITÉ DES ÉNIGMES
-//
 // 🧠 GESTION DES STATUTS DES CHASSES
-//
 // 🧭 CALCUL DU STATUT D’UN ORGANISATEUR
+// 🧑‍💻 GESTION DES STATUTS DES JOUEURS (UTILISATEUR ↔ ÉNIGME)
 //
 
 // ==================================================
@@ -777,4 +776,51 @@ function forcer_statut_selon_validation_chasse($post_id, $post, $update) {
     ]);
     */
   }
+}
+
+
+// ==================================================
+// 🧑‍💻 GESTION DES STATUTS DES JOUEURS (UTILISATEUR ↔ ÉNIGME)
+// ==================================================
+/**
+ * 🔹 get_statut_utilisateur_enigme() → Retourne le statut du joueur pour une énigme donnée.
+ * 🔹 est_enigme_resolue_par_utilisateur() → Booléen : l’utilisateur a-t-il résolu l’énigme ?
+ */
+
+/**
+ * Retourne le statut du joueur pour une énigme donnée (avec cache interne).
+ *
+ * @param int $user_id
+ * @param int $enigme_id
+ * @return string|null Le statut ('non_commencee', 'resolue', etc.) ou null si absent
+ */
+function get_statut_utilisateur_enigme($user_id, $enigme_id) {
+    static $cache = [];
+    $key = $user_id . '-' . $enigme_id;
+
+    if (isset($cache[$key])) {
+        return $cache[$key];
+    }
+
+    global $wpdb;
+    $table = $wpdb->prefix . 'enigme_statuts_utilisateur';
+
+    $statut = $wpdb->get_var($wpdb->prepare(
+        "SELECT statut FROM $table WHERE user_id = %d AND enigme_id = %d",
+        $user_id, $enigme_id
+    ));
+
+    $cache[$key] = $statut ?: null;
+    return $cache[$key];
+}
+
+/**
+ * Vérifie si l'utilisateur a résolu une énigme.
+ *
+ * @param int $user_id
+ * @param int $enigme_id
+ * @return bool
+ */
+function est_enigme_resolue_par_utilisateur($user_id, $enigme_id) {
+    return get_statut_utilisateur_enigme($user_id, $enigme_id) === 'resolue';
 }

@@ -25,9 +25,9 @@ if ($organisateur_id) {
 
 // récupération stats du joueur
 if ($user_id) {
-    ob_start(); // Capture l'affichage des stats joueur
-    afficher_stats_utilisateur($user_id);
-    $stats_output = ob_get_clean(); // Récupère le contenu affiché et le stocke
+    //ob_start(); // Capture l'affichage des stats joueur
+    //afficher_stats_utilisateur($user_id);
+    //$stats_output = ob_get_clean(); // Récupère le contenu affiché et le stocke
 }
 
 //* récupération des trophées
