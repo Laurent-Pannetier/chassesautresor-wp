@@ -52,11 +52,10 @@ if (isset($_GET['reset_tentatives_totales'])) {
     return;
 }
 
-// ✅ Traitement (si applicable)
 $traitement_effectue = traiter_tentative_manuelle($uid, $resultat_param);
-
-// 📊 Lecture du statut final (quelle que soit l'issue)
 $infos = recuperer_infos_tentative($uid);
+$infos['vient_d_etre_traitee'] = $traitement_effectue;
+
 
 get_template_part('template-parts/traitement/tentative-feedback', null, [
     'etat_tentative'    => $infos['etat_tentative'] ?? 'invalide',
