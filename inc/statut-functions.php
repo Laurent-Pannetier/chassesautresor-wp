@@ -200,7 +200,7 @@ function enigme_verifier_verrouillage(int $enigme_id, int $user_id): array {
         ]);
     }
 
-    $statut = enigme_get_statut($enigme_id, $user_id);
+    $statut = enigme_get_statut_utilisateur($enigme_id, $user_id);
 
     switch ($statut) {
         case 'bloquee_date':
