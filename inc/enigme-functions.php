@@ -958,8 +958,15 @@
         $table = $wpdb->prefix . 'enigme_tentatives';
 
         $tentative = get_tentative_by_uid($uid);
-        if (!$tentative) return false;
-        if ($tentative->resultat !== 'attente') return false;
+        if (!$tentative) {
+            error_log("❌ tentative inexistante");
+            return false;
+        }
+        if ($tentative->resultat !== 'attente') {
+            error_log("⛔ tentative déjà traitée → statut actuel = " . $tentative->resultat);
+            return false;
+        }
+
 
         $current_user_id = get_current_user_id();
         $chasse_id = recuperer_id_chasse_associee((int) $tentative->enigme_id);
