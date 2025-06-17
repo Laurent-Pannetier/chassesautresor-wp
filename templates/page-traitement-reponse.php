@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Template Name: Traitement Réponse (Finalisation Sécurisée)
  */
@@ -18,9 +17,11 @@ if (!$uid || !in_array($resultat_param, ['bon', 'faux'], true)) {
 $tentative = get_tentative_by_uid($uid);
 if (!$tentative) wp_die('Tentative introuvable.');
 
+error_log('📥 EARLY: statut initial = ' . ($tentative->resultat ?? 'null'));
+
 $enigme_id = (int) $tentative->enigme_id;
 
-// 🔐 Vérification des droits (admin ou organisateur associé)
+// 🔐 Vérification des droits
 $chasse_id = recuperer_id_chasse_associee($enigme_id);
 $organisateur_id = get_organisateur_from_chasse($chasse_id);
 $organisateur_user_ids = (array) get_field('utilisateurs_associes', $organisateur_id);
@@ -33,7 +34,7 @@ if (
   wp_die('⛔ Accès refusé : vous n’êtes pas autorisé à traiter cette tentative.');
 }
 
-// 🧹 Gestion réinitialisations (facultatif)
+// 🧹 Réinitialisations
 global $wpdb;
 
 if (isset($_GET['reset_tentatives'])) {
@@ -53,22 +54,22 @@ if (isset($_GET['reset_tentatives_totales'])) {
   return;
 }
 
-// 🔁 Traitement réel de la tentative
+// 🔄 Traitement
+$etat_avant = get_etat_tentative($uid);
 $traitement_effectue = traiter_tentative_manuelle($uid, $resultat_param);
-
-// 🔎 Lecture post-traitement
 $infos = recuperer_infos_tentative($uid);
 
-// ✅ Marque explicitement si le traitement a été fait à l’instant
-$infos['vient_d_etre_traitee'] = $traitement_effectue;
+$etat_apres = $infos['etat_tentative'] ?? 'invalide';
+$infos['vient_d_etre_traitee'] = (
+  $etat_avant === 'attente' &&
+  in_array($etat_apres, ['validee', 'refusee'], true)
+);
 
-// 🐛 Log de contrôle
+// 🔎 Logs de vérification
 error_log("🧪 traitement_effectue = " . ($traitement_effectue ? 'true' : 'false'));
 error_log("🧪 resultat enregistré = " . ($infos['resultat'] ?? 'null'));
 error_log("🧪 etat_tentative = " . ($infos['etat_tentative'] ?? 'null'));
 error_log("🧪 vient_d_etre_traitee = " . ($infos['vient_d_etre_traitee'] ? 'true' : 'false'));
-
-
 
 get_template_part('template-parts/traitement/tentative-feedback', null, [
   'etat_tentative'       => $infos['etat_tentative'] ?? 'invalide',
@@ -80,5 +81,5 @@ get_template_part('template-parts/traitement/tentative-feedback', null, [
   'statistiques'         => $infos['statistiques'] ?? [],
   'deja_traitee'         => $infos['deja_traitee'] ?? false,
   'traitee'              => $infos['traitee'] ?? false,
-  'vient_d_etre_traitee' => $infos['vient_d_etre_traitee'] ?? false, // 🟢 LE VOICI !
+  'vient_d_etre_traitee' => $infos['vient_d_etre_traitee'] ?? false,
 ]);
