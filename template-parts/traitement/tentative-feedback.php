@@ -1,11 +1,10 @@
 <?php
-
 /**
  * Template Part : tentative-feedback.php
  * Affiche le retour après traitement d'une tentative manuelle
  * Reçoit via get_template_part(..., ..., [ '...' => ... ]) :
  * - etat_tentative : 'attente' | 'validee' | 'refusee' | 'invalide' | 'inexistante'
- * - resultat, statut_initial, statut_final, nom_user, permalink, statistiques
+ * - resultat, statut_initial, statut_final, nom_user, permalink, statistiques, deja_traitee
  */
 
 $etat_tentative = $args['etat_tentative'] ?? 'invalide';
@@ -15,12 +14,12 @@ $statut_final = $args['statut_final'] ?? '';
 $permalink = $args['permalink'] ?? '';
 $nom_user = $args['nom_user'] ?? 'Utilisateur';
 $statistiques = $args['statistiques'] ?? [];
-
+$deja_traitee = $args['deja_traitee'] ?? false;
 ?>
 
 <div style="max-width:600px;margin:3em auto;text-align:center;font-family:sans-serif;">
 
-  <?php if (!empty($args['deja_traitee'])): ?>
+  <?php if ($deja_traitee && $statut_initial !== 'attente'): ?>
     <div style="background:#fff3cd; color:#856404; border:1px solid #ffeeba; padding:1em; border-radius:5px; margin-bottom:2em;">
       ⚠️ Cette tentative a déjà été <strong>traitée</strong> (validée ou refusée).<br>
       Vous ne pouvez plus la modifier.
@@ -34,9 +33,9 @@ $statistiques = $args['statistiques'] ?? [];
 
   <?php
   if ($etat_tentative === 'validee') {
-    echo '<p>✅ Cette tentative a déjà été <strong>validée</strong>.</p>';
+    echo '<p>✅ Statut de la proposition : <strong>validée</strong>.</p>';
   } elseif ($etat_tentative === 'refusee') {
-    echo '<p>❌ Proposition de réponse <strong>invalidée</strong>.</p>';
+    echo '<p>❌ Statut de la proposition : <strong>invalidée</strong>.</p>';
   } elseif ($etat_tentative === 'attente') {
     echo '<p>⏳ Votre tentative est en <strong>attente de traitement</strong>.</p>';
   } elseif ($etat_tentative === 'inexistante') {
