@@ -581,6 +581,8 @@
      */
     function soumettre_reponse_manuelle()
     {
+        global $wpdb;
+
         if (
             isset($_POST['reponse_manuelle_nonce'], $_POST['reponse_manuelle'], $_POST['enigme_id']) &&
             wp_verify_nonce($_POST['reponse_manuelle_nonce'], 'reponse_manuelle_nonce') &&
@@ -590,20 +592,30 @@
             $enigme_id = (int) $_POST['enigme_id'];
             $reponse   = sanitize_textarea_field($_POST['reponse_manuelle']);
 
-            // Insère la tentative et envoie les notifications
+            // Blocage si interdiction de répondre
             if (!utilisateur_peut_repondre_manuelle($user_id, $enigme_id)) {
-                return; // rejet silencieux
+                return;
             }
 
+            // Vérifie si l'utilisateur a déjà résolu l'énigme
+            $current_statut = $wpdb->get_var($wpdb->prepare(
+                "SELECT statut FROM {$wpdb->prefix}enigme_statuts_utilisateur WHERE user_id = %d AND enigme_id = %d",
+                $user_id,
+                $enigme_id
+            ));
+
+            if (in_array($current_statut, ['resolue', 'terminee'], true)) {
+                error_log("❌ Tentative rejetée car joueur a déjà résolu l’énigme (UID=$user_id / Enigme=$enigme_id).");
+                return;
+            }
+
+            // Insertion tentative + mise à jour statut = "soumis"
             $uid = inserer_tentative($user_id, $enigme_id, $reponse);
             enigme_mettre_a_jour_statut_utilisateur($enigme_id, $user_id, 'soumis', true);
-
-
 
             envoyer_mail_reponse_manuelle($user_id, $enigme_id, $reponse, $uid);
             envoyer_mail_accuse_reception_joueur($user_id, $enigme_id, $uid);
 
-            // Redirige proprement vers la même page avec un paramètre
             add_action('template_redirect', function () {
                 wp_redirect(add_query_arg('reponse_envoyee', '1'));
                 exit;
@@ -611,7 +623,6 @@
         }
     }
     add_action('init', 'soumettre_reponse_manuelle');
-
 
 
     /**
