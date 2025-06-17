@@ -13,7 +13,7 @@ get_header();
 // 🔹 Initialisation
 $chasse_id = get_the_ID();
 if (!$chasse_id) {
-    wp_die('Chasse introuvable.');
+  wp_die('Chasse introuvable.');
 }
 
 // 🔄 Vérification du statut logique si non à jour
@@ -81,23 +81,23 @@ $nb_joueurs = 0;
 ?>
 
 <?php if ($organisateur_id) : ?>
-    <?php
-      get_template_part('template-parts/organisateur/header-organisateur', null, [
-          'organisateur_id' => $organisateur_id
-      ]);
-    ?>
+  <?php
+  get_template_part('template-parts/organisateur/header-organisateur', null, [
+    'organisateur_id' => $organisateur_id
+  ]);
+  ?>
 <?php endif; ?>
 
 <div class="page-chasse-wrapper">
-    
-<?php
-// 🧩 Fiche complète de la chasse (édition + contenu)
-get_template_part('template-parts/chasse/chasse-complete', null, [
-    'chasse_id' => $chasse_id
-]);
-?>
 
-    <div class="separateur-avec-icone"></div>
+  <?php
+  // 🧩 Fiche complète de la chasse (édition + contenu)
+  get_template_part('template-parts/chasse/chasse-complete', null, [
+    'chasse_id' => $chasse_id
+  ]);
+  ?>
+
+  <div class="separateur-avec-icone"></div>
 
 </div>
 <section class="chasse-enigmes-wrapper" id="chasse-enigmes-wrapper">
@@ -121,28 +121,28 @@ get_template_part('template-parts/chasse/chasse-complete', null, [
     $liens = is_array($liens) ? $liens : [];
     $vide  = empty($liens);
     ?>
-    
+
     <div class="champ-chasse champ-liens champ-fiche-publication <?php echo $vide ? 'champ-vide' : 'champ-rempli'; ?>"
-         data-champ="chasse_principale_liens"
-         data-cpt="chasse"
-         data-post-id="<?php echo esc_attr($chasse_id); ?>">
-    
-    
-        <div class="champ-donnees"
-           data-valeurs='<?php echo json_encode($liens, JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT); ?>'></div>
-    
-        <div class="champ-affichage">
+      data-champ="chasse_principale_liens"
+      data-cpt="chasse"
+      data-post-id="<?php echo esc_attr($chasse_id); ?>">
+
+
+      <div class="champ-donnees"
+        data-valeurs='<?php echo json_encode($liens, JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT); ?>'></div>
+
+      <div class="champ-affichage">
         <?php echo render_liens_publics($liens, 'chasse', [
-            'afficher_titre' => false,
-            'wrap'           => false
-         ]); ?>
-        </div>
-        <div class="champ-feedback"></div>
-        </div>
+          'afficher_titre' => false,
+          'wrap'           => false
+        ]); ?>
+      </div>
+      <div class="champ-feedback"></div>
+    </div>
   </header>
 
   <div class="chasse-enigmes-liste">
-   <?php
+    <?php
     get_template_part('template-parts/enigme/boucle-enigmes', null, [
       'chasse_id' => get_the_ID(),
     ]);
@@ -155,8 +155,14 @@ get_template_part('template-parts/chasse/chasse-complete', null, [
   </footer>
 </section>
 
+<?php
+get_template_part('template-parts/enigme/boucle-enigmes-chasse', null, [
+  'chasse_id' => get_the_ID()
+]);
+?>
 
-<?php 
+
+<?php
 get_template_part('template-parts/chasse/description-chasse', null, [
   'description' => $description,
   'titre_recompense' => $titre_recompense, // 🔥 Manquait ici
@@ -182,7 +188,7 @@ if (!$modal_deja_vue) {
 
     // Prépare le contenu (tu peux aussi utiliser apply_filters('the_content') si blocs Gutenberg)
     $contenu = apply_filters('the_content', $post_bienvenue->post_content);
-    ?>
+?>
 
     <div class="modal-bienvenue-wrapper" role="dialog" aria-modal="true" aria-labelledby="modal-titre">
       <div class="modal-bienvenue-inner">
@@ -237,7 +243,7 @@ if (!$modal_deja_vue) {
       }
     </style>
 
-    <?php
+<?php
   }
 }
 ?>
