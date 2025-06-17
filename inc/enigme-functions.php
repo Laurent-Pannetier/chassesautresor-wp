@@ -23,17 +23,17 @@
     /**
      * Récupère le statut actuel de l’utilisateur pour une énigme.
      *
-     * Valeurs possibles :
-     * - non_souscrite
-     * - en_cours
-     * - resolue
-     * - terminee
-     * - echouee
-     * - abandonnee
+     * Statuts possibles :
+     * - non_souscrite : le joueur n'a jamais interagi avec l’énigme
+     * - en_cours      : le joueur a commencé l’énigme
+     * - resolue       : le joueur a trouvé la bonne réponse
+     * - terminee      : l’énigme a été finalisée dans un autre contexte
+     * - echouee       : le joueur a tenté et échoué
+     * - abandonnee    : le joueur a abandonné explicitement ou par expiration
      *
-     * @param int $enigme_id
-     * @param int $user_id
-     * @return string
+     * @param int $enigme_id ID de l’énigme.
+     * @param int $user_id   ID de l’utilisateur.
+     * @return string Statut actuel (par défaut : 'non_souscrite').
      */
     function enigme_get_statut_utilisateur($enigme_id, $user_id)
     {
@@ -945,7 +945,7 @@
         );
 
         $nouveau_statut = $resultat === 'bon' ? 'resolue' : 'echouee';
-        mettre_a_jour_statut_utilisateur($user_id, $enigme_id, $nouveau_statut);
+        enigme_mettre_a_jour_statut_utilisateur($enigme_id, $user_id, $nouveau_statut);
         envoyer_mail_resultat_joueur($user_id, $enigme_id, $resultat);
 
         error_log("✅ Tentative UID=$uid traitée comme $resultat → statut joueur mis à jour en $nouveau_statut");
