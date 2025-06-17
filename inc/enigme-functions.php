@@ -40,7 +40,6 @@
     {
         if (!$enigme_id || !$user_id) {
             return 'non_souscrite';
-        }
 
         $meta_key = 'enigme_' . $enigme_id . '_statut';
         $statut = get_user_meta($user_id, $meta_key, true);
