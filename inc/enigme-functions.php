@@ -526,10 +526,16 @@
      */
     function afficher_formulaire_reponse_manuelle($enigme_id)
     {
-        if (!is_user_logged_in()) return '<p>Veuillez vous connecter pour répondre à cette énigme.</p>';
-        if (!utilisateur_peut_repondre_manuelle(get_current_user_id(), $enigme_id)) {
-            return '<p>Vous ne pouvez pas répondre à cette énigme actuellement.</p>';
+        if (!is_user_logged_in()) {
+            return '<p>Veuillez vous connecter pour répondre à cette énigme.</p>';
         }
+
+        $user_id = get_current_user_id();
+
+        if (!utilisateur_peut_repondre_manuelle($user_id, $enigme_id)) {
+            return '<p>Vous ne pouvez plus répondre à cette énigme.</p>';
+        }
+
         $nonce = wp_create_nonce('reponse_manuelle_nonce');
         ob_start();
     ?>
