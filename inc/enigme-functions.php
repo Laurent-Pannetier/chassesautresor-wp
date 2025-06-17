@@ -866,18 +866,25 @@
             $wpdb->prepare("SELECT statut FROM $table WHERE user_id = %d AND enigme_id = %d", $user_id, $enigme_id)
         );
 
-        if (!$statut_actuel || !is_string($statut_actuel)) {
+        // Fallback safe
+        if (!$statut_actuel || !isset($priorites[$statut_actuel])) {
             $statut_actuel = 'non_souscrite';
         }
 
-        $niveau_actuel = $priorites[$statut_actuel] ?? -1;
-        $niveau_nouveau = $priorites[$nouveau_statut] ?? -1;
+        // Valide ?
+        if (!isset($priorites[$nouveau_statut])) {
+            error_log("❌ Statut utilisateur invalide : $nouveau_statut");
+            return false;
+        }
+
+        $niveau_actuel = $priorites[$statut_actuel];
+        $niveau_nouveau = $priorites[$nouveau_statut];
 
         if ($niveau_nouveau <= $niveau_actuel) {
             return false;
         }
 
-        if ($statut_actuel !== null) {
+        if ($statut_actuel !== 'non_souscrite') {
             $wpdb->update(
                 $table,
                 ['statut' => $nouveau_statut],
@@ -895,8 +902,8 @@
                 ],
                 ['%d', '%d', '%s']
             );
+            error_log("💾 INSERT statut utilisateur : $nouveau_statut (user $user_id / enigme $enigme_id)");
         }
-
         return true;
     }
 
