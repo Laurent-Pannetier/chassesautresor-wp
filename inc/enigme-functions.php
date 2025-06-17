@@ -17,7 +17,6 @@
     // ==================================================
     /**
      * 🔹 enigme_get_statut_utilisateur() → Retourne le statut actuel de l’utilisateur pour une énigme.
-     * 🔹 enigme_mettre_a_jour_statut_utilisateur() → Met à jour le statut utilisateur avec vérification de transition.
      */
 
 
@@ -51,51 +50,6 @@
 
         return $statut;
     }
-
-
-    /**
-     * Met à jour le statut utilisateur pour une énigme.
-     * Vérifie que la transition est autorisée.
-     *
-     * @param int $enigme_id
-     * @param int $user_id
-     * @param string $nouveau_statut
-     * @return bool True si le statut a été modifié, false sinon
-     */
-    function enigme_mettre_a_jour_statut_utilisateur($enigme_id, $user_id, $nouveau_statut)
-    {
-        if (!$enigme_id || !$user_id) return false;
-
-        $meta_key = 'enigme_' . $enigme_id . '_statut';
-        $ancien_statut = get_user_meta($user_id, $meta_key, true) ?: 'non_souscrite';
-
-        // Liste des statuts autorisés
-        $valides = ['non_souscrite', 'en_cours', 'resolue', 'terminee', 'echouee', 'abandonnee'];
-        if (!in_array($nouveau_statut, $valides, true)) {
-            return false;
-        }
-
-        // Sécurité : autoriser uniquement les transitions valides
-        $transitions_valides = [
-            'non_souscrite' => ['en_cours'],
-            'en_cours'      => ['resolue', 'echouee', 'terminee'],
-            'resolue'       => [], // état final
-            'terminee'      => [], // état final
-            'echouee'       => [], // état final
-            'abandonnee'    => ['en_cours'], // optionnel : retour autorisé
-        ];
-
-        $autorisations = $transitions_valides[$ancien_statut] ?? [];
-        if (!in_array($nouveau_statut, $autorisations, true)) {
-            return false;
-        }
-
-        // Mise à jour
-        update_user_meta($user_id, $meta_key, $nouveau_statut);
-
-        return true;
-    }
-
 
 
     // ==================================================
@@ -556,7 +510,7 @@
     // 🔹 envoyer_mail_reponse_manuelle() → Envoie un mail HTML à l'organisateur avec la réponse (expéditeur = joueur).
     // 🔹 envoyer_mail_resultat_joueur() → Envoie un mail HTML au joueur après validation ou refus de sa réponse.
     // 🔹 envoyer_mail_accuse_reception_joueur() → Envoie un accusé de réception au joueur juste après sa soumission.
-    // 🔹 mettre_a_jour_statut_utilisateur() → Met à jour le statut d'un joueur sur une énigme (si progression).
+    // 🔹 enigme_mettre_a_jour_statut_utilisateur() → Met à jour le statut d'un joueur (user_meta).
     // 🔹 inserer_tentative() → Insère une tentative dans la table personnalisée.
     // 🔹 get_tentative_by_uid() → Récupère une tentative par son identifiant UID.
     // 🔹 traiter_tentative_manuelle() → Effectue la validation/refus d'une tentative (une seule fois).
@@ -841,17 +795,23 @@
     }
 
     /**
-     * Met à jour le statut d'un joueur sur une énigme, uniquement si le nouveau statut est meilleur.
-     *
-     * @param int $user_id ID de l'utilisateur.
-     * @param int $enigme_id ID de l'énigme.
-     * @param string $nouveau_statut Nouveau statut à appliquer.
-     * @return bool True si mise à jour effectuée, false sinon.
+     * Met à jour le statut d'une énigme pour un utilisateur (stocké dans user_meta).
+     * 
+     * Autorise uniquement les transitions progressives de statut selon la priorité définie.
+     * 
+     * @param int    $enigme_id       L'identifiant de l'énigme.
+     * @param int    $user_id         L'identifiant de l'utilisateur.
+     * @param string $nouveau_statut  Le nouveau statut à appliquer à l'utilisateur pour cette énigme.
+     *                                Doit être l'une des valeurs suivantes : 'non_souscrite', 'en_cours', 'abandonnee', 'echouee', 'resolue', 'terminee'.
+     * 
+     * @return bool  Retourne true si la mise à jour a été effectuée, false sinon.
      */
-    function mettre_a_jour_statut_utilisateur($user_id, $enigme_id, $nouveau_statut): bool
+    function enigme_mettre_a_jour_statut_utilisateur($enigme_id, $user_id, $nouveau_statut): bool
     {
-        global $wpdb;
-        $table = $wpdb->prefix . 'enigme_statuts_utilisateur';
+        if (!$enigme_id || !$user_id) return false;
+
+        $meta_key = 'enigme_' . $enigme_id . '_statut';
+        $ancien_statut = get_user_meta($user_id, $meta_key, true) ?: 'non_souscrite';
 
         $priorites = [
             'non_souscrite' => 0,
@@ -862,53 +822,22 @@
             'terminee'      => 5,
         ];
 
-        $statut_actuel = $wpdb->get_var(
-            $wpdb->prepare("SELECT statut FROM $table WHERE user_id = %d AND enigme_id = %d", $user_id, $enigme_id)
-        );
-
-        if (!$statut_actuel || !isset($priorites[$statut_actuel])) {
-            $statut_actuel = 'non_souscrite';
-        }
-
         if (!isset($priorites[$nouveau_statut])) {
             error_log("❌ Statut utilisateur invalide : $nouveau_statut");
             return false;
         }
 
-        $niveau_actuel = $priorites[$statut_actuel];
+        $niveau_actuel = $priorites[$ancien_statut] ?? 0;
         $niveau_nouveau = $priorites[$nouveau_statut];
 
         if ($niveau_nouveau <= $niveau_actuel) {
             return false;
         }
 
-        if ($statut_actuel !== 'non_souscrite') {
-            $wpdb->update(
-                $table,
-                [
-                    'statut' => $nouveau_statut,
-                    'date_mise_a_jour' => current_time('mysql')
-                ],
-                ['user_id' => $user_id, 'enigme_id' => $enigme_id],
-                ['%s', '%s'],
-                ['%d', '%d']
-            );
-        } else {
-            $wpdb->insert(
-                $table,
-                [
-                    'user_id' => $user_id,
-                    'enigme_id' => $enigme_id,
-                    'statut' => $nouveau_statut,
-                    'date_mise_a_jour' => current_time('mysql')
-                ],
-                ['%d', '%d', '%s', '%s']
-            );
-            error_log("💾 INSERT statut utilisateur : $nouveau_statut (user $user_id / enigme $enigme_id)");
-        }
-
+        update_user_meta($user_id, $meta_key, $nouveau_statut);
         return true;
     }
+
 
 
     /**
