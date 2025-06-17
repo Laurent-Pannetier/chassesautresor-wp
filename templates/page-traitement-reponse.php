@@ -53,24 +53,21 @@ if (isset($_GET['reset_tentatives_totales'])) {
   return;
 }
 
-$etat_avant = get_etat_tentative($uid); // état AVANT traitement
-
+// 🔁 Traitement réel de la tentative
 $traitement_effectue = traiter_tentative_manuelle($uid, $resultat_param);
 
+// 🔎 Lecture post-traitement
 $infos = recuperer_infos_tentative($uid);
 
-// On compare l’état avant et après
-$etat_apres = $infos['etat_tentative'] ?? 'invalide';
+// ✅ Marque explicitement si le traitement a été fait à l’instant
+$infos['vient_d_etre_traitee'] = $traitement_effectue;
 
-$infos['vient_d_etre_traitee'] = (
-  $etat_avant === 'attente' &&
-  in_array($etat_apres, ['validee', 'refusee'], true)
-);
-
+// 🐛 Log de contrôle
 error_log("🧪 traitement_effectue = " . ($traitement_effectue ? 'true' : 'false'));
 error_log("🧪 resultat enregistré = " . ($infos['resultat'] ?? 'null'));
 error_log("🧪 etat_tentative = " . ($infos['etat_tentative'] ?? 'null'));
-error_log("🧪 vient_d_etre_traitee = " . ($infos['vient_d_etre_traitee'] ?? 'null'));
+error_log("🧪 vient_d_etre_traitee = " . ($infos['vient_d_etre_traitee'] ? 'true' : 'false'));
+
 
 
 get_template_part('template-parts/traitement/tentative-feedback', null, [
