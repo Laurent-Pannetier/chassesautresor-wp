@@ -956,6 +956,13 @@
         global $wpdb;
         $table = $wpdb->prefix . 'enigme_tentatives';
 
+        static $deja_traitee_internally = [];
+
+        if (isset($deja_traitee_internally[$uid])) {
+            error_log("🔁 tentative UID=$uid déjà traitée dans ce cycle PHP");
+            return $deja_traitee_internally[$uid];
+        }
+
         error_log("👉 traiter_tentative_manuelle() appelée : UID=$uid, resultat demandé=$resultat");
 
         $tentative = get_tentative_by_uid($uid);
@@ -983,7 +990,7 @@
 
         if ($statut_initial !== 'attente') {
             error_log("⛔ Déjà traitée → aucune mise à jour effectuée pour UID=$uid");
-            return [
+            $retour = [
                 'deja_traitee'     => true,
                 'etat_tentative'   => $statut_initial === 'bon' ? 'validee' : 'refusee',
                 'statut_initial'   => $statut_initial,
@@ -998,6 +1005,8 @@
                     'total_chasse' => 0,
                 ],
             ];
+            $deja_traitee_internally[$uid] = $retour;
+            return $retour;
         }
 
         error_log("🛠 Mise à jour tentative UID=$uid avec resultat=$resultat");
@@ -1020,7 +1029,7 @@
         envoyer_mail_resultat_joueur((int) $tentative->user_id, (int) $tentative->enigme_id, $resultat);
         error_log("📧 Mail de résultat envoyé pour UID=$uid");
 
-        return [
+        $retour = [
             'deja_traitee'     => false,
             'etat_tentative'   => $resultat === 'bon' ? 'validee' : 'refusee',
             'statut_initial'   => $statut_initial,
@@ -1035,8 +1044,10 @@
                 'total_chasse' => 0,
             ],
         ];
-    }
 
+        $deja_traitee_internally[$uid] = $retour;
+        return $retour;
+    }
 
 
     /**
