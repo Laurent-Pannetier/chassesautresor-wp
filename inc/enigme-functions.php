@@ -1000,7 +1000,7 @@
             ['%s']
         );
 
-        $nouveau_statut = $resultat === 'bon' ? 'resolue' : 'abandonnee';
+        $nouveau_statut = $resultat === 'bon' ? 'resolue' : 'echouee';
         mettre_a_jour_statut_utilisateur($user_id, $enigme_id, $nouveau_statut);
         envoyer_mail_resultat_joueur($user_id, $enigme_id, $resultat);
 
