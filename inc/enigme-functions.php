@@ -506,6 +506,7 @@
     // ==================================================
     // ✅ TRAITEMENT REPONSES A UNE ENIGME
     // ==================================================
+
     // 🔹 afficher_formulaire_reponse_manuelle() → Affiche le formulaire de réponse manuelle (frontend).
     // 🔹 utilisateur_peut_repondre_manuelle() → Vérifie si l'utilisateur peut répondre à une énigme manuelle.
     // 🔹 soumettre_reponse_manuelle() → Traite la soumission d'une réponse manuelle (frontend).
@@ -518,6 +519,7 @@
     // 🔹 traiter_tentative_manuelle() → Effectue la validation/refus d'une tentative (une seule fois).
     // 🔹 recuperer_infos_tentative() → Renvoie toutes les données pour l'affichage d'une tentative.
     // 🔹 get_etat_tentative() → Retourne l'état logique d'une tentative selon son champ `resultat`.
+
 
 
     /**
@@ -940,9 +942,11 @@
      * @return bool true si traitement effectué, false si déjà traité ou interdit.
      */
     function traiter_tentative_manuelle(string $uid, string $resultat): bool
+
     {
         global $wpdb;
         $table = $wpdb->prefix . 'enigme_tentatives';
+
 
         error_log("👣 Tentative traitement UID=$uid par IP=" . ($_SERVER['REMOTE_ADDR'] ?? 'inconnue'));
 
@@ -956,6 +960,7 @@
             error_log("⛔ Tentative déjà traitée → statut actuel = " . $tentative->resultat);
             return false;
         }
+
 
         $user_id = (int) $tentative->user_id;
         $enigme_id = (int) $tentative->enigme_id;
@@ -998,6 +1003,7 @@
         $nouveau_statut = $resultat === 'bon' ? 'resolue' : 'echouee';
         enigme_mettre_a_jour_statut_utilisateur($enigme_id, $user_id, $nouveau_statut);
         envoyer_mail_resultat_joueur($user_id, $enigme_id, $resultat);
+
 
         error_log("✅ Tentative UID=$uid traitée comme $resultat → statut joueur mis à jour en $nouveau_statut");
         return true;
@@ -1045,6 +1051,7 @@
             ],
         ];
     }
+
 
 
     /**
