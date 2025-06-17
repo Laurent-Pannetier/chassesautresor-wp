@@ -2,11 +2,6 @@
 
 $log_prefix = '[voir-fichier.php]';
 
-// Activer les logs si besoin
-if (!defined('WP_DEBUG')) define('WP_DEBUG', true);
-if (!defined('WP_DEBUG_LOG')) define('WP_DEBUG_LOG', true);
-if (!defined('WP_DEBUG_DISPLAY')) define('WP_DEBUG_DISPLAY', false);
-
 function logf($message) {
     error_log("[voir-fichier.php] $message");
 }
