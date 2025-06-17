@@ -62,36 +62,64 @@
      * @param string $nouveau_statut
      * @return bool True si le statut a été modifié, false sinon
      */
-    function enigme_mettre_a_jour_statut_utilisateur($enigme_id, $user_id, $nouveau_statut)
+    function mettre_a_jour_statut_utilisateur($user_id, $enigme_id, $nouveau_statut): bool
     {
-        if (!$enigme_id || !$user_id) return false;
+        global $wpdb;
+        $table = $wpdb->prefix . 'enigme_statuts_utilisateur';
 
-        $meta_key = 'enigme_' . $enigme_id . '_statut';
-        $ancien_statut = get_user_meta($user_id, $meta_key, true) ?: 'non_souscrite';
-
-        // Liste des statuts autorisés
-        $valides = ['non_souscrite', 'en_cours', 'resolue', 'terminee', 'echouee', 'abandonnee'];
-        if (!in_array($nouveau_statut, $valides, true)) {
-            return false;
-        }
-
-        // Sécurité : autoriser uniquement les transitions valides
-        $transitions_valides = [
-            'non_souscrite' => ['en_cours'],
-            'en_cours'      => ['resolue', 'echouee', 'terminee'],
-            'resolue'       => [], // état final
-            'terminee'      => [], // état final
-            'echouee'       => [], // état final
-            'abandonnee'    => ['en_cours'], // optionnel : retour autorisé
+        $priorites = [
+            'non_souscrite' => 0,
+            'en_cours'      => 1,
+            'abandonnee'    => 2,
+            'echouee'       => 3,
+            'resolue'       => 4,
+            'terminee'      => 5,
         ];
 
-        $autorisations = $transitions_valides[$ancien_statut] ?? [];
-        if (!in_array($nouveau_statut, $autorisations, true)) {
+        $statut_actuel = $wpdb->get_var(
+            $wpdb->prepare("SELECT statut FROM $table WHERE user_id = %d AND enigme_id = %d", $user_id, $enigme_id)
+        );
+
+        if (!$statut_actuel || !isset($priorites[$statut_actuel])) {
+            $statut_actuel = 'non_souscrite';
+        }
+
+        if (!isset($priorites[$nouveau_statut])) {
+            error_log("❌ Statut utilisateur invalide : $nouveau_statut");
             return false;
         }
 
-        // Mise à jour
-        update_user_meta($user_id, $meta_key, $nouveau_statut);
+        $niveau_actuel = $priorites[$statut_actuel];
+        $niveau_nouveau = $priorites[$nouveau_statut];
+
+        if ($niveau_nouveau <= $niveau_actuel) {
+            return false;
+        }
+
+        if ($statut_actuel !== 'non_souscrite') {
+            $wpdb->update(
+                $table,
+                [
+                    'statut' => $nouveau_statut,
+                    'date_mise_a_jour' => current_time('mysql')
+                ],
+                ['user_id' => $user_id, 'enigme_id' => $enigme_id],
+                ['%s', '%s'],
+                ['%d', '%d']
+            );
+        } else {
+            $wpdb->insert(
+                $table,
+                [
+                    'user_id' => $user_id,
+                    'enigme_id' => $enigme_id,
+                    'statut' => $nouveau_statut,
+                    'date_mise_a_jour' => current_time('mysql')
+                ],
+                ['%d', '%d', '%s', '%s']
+            );
+            error_log("💾 INSERT statut utilisateur : $nouveau_statut (user $user_id / enigme $enigme_id)");
+        }
 
         return true;
     }
