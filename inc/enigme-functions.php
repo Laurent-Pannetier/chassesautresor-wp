@@ -596,7 +596,8 @@
             }
 
             $uid = inserer_tentative($user_id, $enigme_id, $reponse);
-            enigme_mettre_a_jour_statut_utilisateur($enigme_id, $user_id, 'soumis');
+            enigme_mettre_a_jour_statut_utilisateur($enigme_id, $user_id, 'soumis', true);
+
 
 
             envoyer_mail_reponse_manuelle($user_id, $enigme_id, $reponse, $uid);
@@ -809,7 +810,7 @@
      * @param string $nouveau_statut Nouveau statut ('non_commencee', 'en_cours', 'abandonnee', 'echouee', 'resolue', 'terminee').
      * @return bool True si la mise à jour est faite, false sinon.
      */
-    function enigme_mettre_a_jour_statut_utilisateur(int $enigme_id, int $user_id, string $nouveau_statut): bool
+    function enigme_mettre_a_jour_statut_utilisateur(int $enigme_id, int $user_id, string $nouveau_statut, bool $forcer = false): bool
     {
         if (!$enigme_id || !$user_id || !$nouveau_statut) {
             return false;
@@ -842,39 +843,29 @@
         $niveau_actuel  = $priorites[$statut_actuel] ?? 0;
         $niveau_nouveau = $priorites[$nouveau_statut];
 
-        if ($niveau_nouveau <= $niveau_actuel) {
+        if (!$forcer && $niveau_nouveau <= $niveau_actuel) {
             return false;
         }
 
+        $data = [
+            'statut'            => $nouveau_statut,
+            'date_mise_a_jour'  => current_time('mysql'),
+        ];
+
+        $where = [
+            'user_id'   => $user_id,
+            'enigme_id' => $enigme_id,
+        ];
+
         if ($statut_actuel !== null) {
-            $wpdb->update(
-                $table,
-                [
-                    'statut'            => $nouveau_statut,
-                    'date_mise_a_jour'  => current_time('mysql'),
-                ],
-                [
-                    'user_id'   => $user_id,
-                    'enigme_id' => $enigme_id,
-                ],
-                ['%s', '%s'],
-                ['%d', '%d']
-            );
+            $wpdb->update($table, $data, $where, ['%s', '%s'], ['%d', '%d']);
         } else {
-            $wpdb->insert(
-                $table,
-                [
-                    'user_id'          => $user_id,
-                    'enigme_id'        => $enigme_id,
-                    'statut'           => $nouveau_statut,
-                    'date_mise_a_jour' => current_time('mysql'),
-                ],
-                ['%d', '%d', '%s', '%s']
-            );
+            $wpdb->insert($table, array_merge($where, $data), ['%d', '%d', '%s', '%s']);
         }
 
         return true;
     }
+
 
 
     /**
