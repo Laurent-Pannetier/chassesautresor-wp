@@ -556,21 +556,19 @@
      * @param int $enigme_id
      * @return bool
      */
-    function utilisateur_peut_repondre_manuelle($user_id, $enigme_id)
+    function utilisateur_peut_repondre_manuelle(int $user_id, int $enigme_id): bool
     {
-        // ⚠️ MODE TEST — conditions de validation désactivées temporairement
-        /*
+        if (!$user_id || !$enigme_id) return false;
 
-        $current_statut = enigme_get_statut_utilisateur($enigme_id, $user_id);
+        $statut = enigme_get_statut_utilisateur($enigme_id, $user_id);
 
-        if (in_array($current_statut, ['soumis', 'resolue', 'terminee', 'echouee'], true)) {
-            return false;
-        }
+        // Autoriser uniquement les statuts actifs
+        $autorisés = ['en_cours', 'echouee', 'abandonnee'];
 
-        */
-
-        return true;
+        return in_array($statut, $autorisés, true);
     }
+
+
     /**
      * Intercepte et traite la soumission d'une réponse manuelle à une énigme (frontend).
      *
