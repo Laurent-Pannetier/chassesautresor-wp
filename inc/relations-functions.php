@@ -272,7 +272,7 @@ function recuperer_enigmes_associees(int $chasse_id): array {
     $groupe = get_field('champs_caches', $chasse_id);
     $liste = $groupe['chasse_cache_enigmes'] ?? [];
 
-    return is_array($liste) ? array_map('intval', $liste) : [];
+    return is_array($liste) ? array_values(array_unique(array_map('intval', $liste))) : [];
 }
 
 
