@@ -272,7 +272,7 @@ function enigme_verifier_verrouillage(int $enigme_id, int $user_id): array {
  */
 function traiter_statut_enigme(int $enigme_id, ?int $user_id = null): array {
     $user_id = $user_id ?: get_current_user_id();
-    $statut  = enigme_get_statut($enigme_id, $user_id);
+    $statut = enigme_get_statut_utilisateur($enigme_id, $user_id);
     $chasse_id = recuperer_id_chasse_associee($enigme_id);
 
     // 🔓 Bypass total : admin ou organisateur
