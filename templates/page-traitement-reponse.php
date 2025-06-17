@@ -56,25 +56,14 @@ if (isset($_GET['reset_tentatives_totales'])) {
 // Traitement normal
 $etat = get_etat_tentative($uid);
 
-if ($etat === 'attente') {
-  $traitement = traiter_tentative_manuelle($uid, $resultat_param);
-  $etat = get_etat_tentative($uid); // relire après traitement
-} else {
-  $traitement = [
-    'etat_tentative' => $etat,
-    'tentative' => $tentative,
-    'resultat' => $tentative->resultat ?? '',
-    'statut_initial' => null,
-    'statut_final' => $tentative->resultat ?? '',
-    'nom_user' => get_userdata($tentative->user_id)?->display_name ?? 'Utilisateur inconnu',
-    'permalink' => get_permalink($tentative->enigme_id ?? 0) . '?statistiques=1',
-    'statistiques' => [
-      'total_user' => 0,
-      'total_enigme' => 0,
-      'total_chasse' => 0,
-    ],
-  ];
+$traitement = traiter_tentative_manuelle($uid, $resultat_param);
+
+if (!empty($traitement['erreur'])) {
+    wp_die($traitement['erreur']);
 }
+
+$etat = $traitement['etat_tentative'] ?? 'invalide';
+
 
 get_template_part('template-parts/traitement/tentative-feedback', null, [
   'etat_tentative'    => $etat,
