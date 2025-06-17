@@ -519,6 +519,7 @@
     // 🔹 traiter_tentative_manuelle() → Effectue la validation/refus d'une tentative (une seule fois).
     // 🔹 recuperer_infos_tentative() → Renvoie toutes les données pour l'affichage d'une tentative.
     // 🔹 get_etat_tentative() → Retourne l'état logique d'une tentative selon son champ `resultat`.
+    // 🔹 utilisateur_peut_engager_enigme() → Vérifie si un utilisateur peut engager une énigme.
 
 
 
@@ -1073,3 +1074,16 @@
 
         return 'invalide';
     }
+
+
+ * @param int $enigme_id L’ID de l’énigme à tester.
+ * @param int|null $user_id L’ID du joueur (par défaut : current_user).
+ * @return bool True si engagement autorisé.
+ */
+function utilisateur_peut_engager_enigme($enigme_id, $user_id = null): bool {
+  $user_id = $user_id ?? get_current_user_id();
+  $etat = enigme_get_etat_systeme($enigme_id);
+  $statut = enigme_get_statut_utilisateur($enigme_id, $user_id);
+
+  return ($etat === 'accessible' && $statut === 'non_souscrite');
+}

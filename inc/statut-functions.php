@@ -16,7 +16,7 @@ if (!defined('ABSPATH')) {
 // 🧩 GESTION DES STATUTS ET DE L’ACCESSIBILITÉ DES ÉNIGMES
 // ==================================================
 /**
- * 🔹 enigme_get_statut                     → Récupérer le statut logique d’une énigme pour un utilisateur.
+
  * 🔹 enigme_is_accessible                 → Déterminer si une énigme est accessible.
  * 🔹 enigme_pre_requis_remplis            → Vérifier les prérequis d’une énigme pour un utilisateur.
  * 🔹 enigme_verifier_verrouillage         → Détail du verrouillage éventuel d’une énigme.
@@ -27,84 +27,6 @@ if (!defined('ABSPATH')) {
  * 🔹 enigme_mettre_a_jour_etat_systeme_automatiquement → Hook ACF (enregistrement admin ou front).
  * 🔹 forcer_recalcul_statut_enigme        → Recalcul AJAX côté front (édition directe).
  */
-
-
-/**
- * 📄 Récupère le statut logique d'une énigme pour un utilisateur donné.
- *
- * Statuts possibles (retours) :
- * - 'en_cours'        : L'utilisateur a commencé l'énigme.
- * - 'resolue'         : L'utilisateur a résolu l'énigme.
- * - 'terminee'        : La chasse est terminée et l'utilisateur a terminé l’énigme.
- * - 'terminee_non_resolue' : La chasse est terminée mais l'utilisateur n’a pas résolu l’énigme.
- * - 'bloquee_date'    : L’énigme ou la chasse est à venir.
- * - 'bloquee_pre_requis' : L’utilisateur n’a pas rempli les conditions d’accès.
- * - 'bloquee_chasse'  : Aucune chasse valide liée.
- * - 'echouee'         : Statut utilisateur = échouée.
- * - 'abandonnee'      : L’utilisateur a abandonné l’énigme.
- * - 'non_souscrite'   : Aucun statut défini → invite à engager.
- * - 'invalide'        : Erreur de configuration (ACF ou état système incohérent).
- *
- * @param int $enigme_id ID de l'énigme.
- * @param int|null $user_id ID de l'utilisateur (optionnel, auto-détecté).
- * @return string Statut logique de l'énigme.
- */
-function enigme_get_statut(int $enigme_id, ?int $user_id = null): string {
-    $user_id = $user_id ?: get_current_user_id();
-
-    // 1️⃣ Statut utilisateur (métadonnée directe)
-    $statut_meta = get_user_meta($user_id, "statut_enigme_{$enigme_id}", true);
-
-    if (in_array($statut_meta, ['en_cours', 'resolue', 'terminee', 'echouee', 'abandonnee'], true)) {
-        return $statut_meta;
-    }
-
-    // 2️⃣ État système de l'énigme (ACF)
-    $etat = get_field('enigme_cache_etat_systeme', $enigme_id);
-
-    switch ($etat) {
-        case 'bloquee_date':
-            return 'bloquee_date';
-        case 'bloquee_chasse':
-            return 'bloquee_chasse';
-        case 'invalide':
-        case 'cache_invalide':
-            return 'invalide';
-        case 'accessible':
-            break; // on continue l’analyse
-        default:
-            return 'invalide';
-    }
-
-    // 3️⃣ Statut de la chasse liée
-    $chasse_val = get_field('enigme_chasse_associee', $enigme_id);
-    $chasse_id = null;
-
-    if (is_array($chasse_val)) {
-        $chasse_id = is_object($chasse_val[0]) ? $chasse_val[0]->ID : (int) $chasse_val[0];
-    } elseif (is_object($chasse_val)) {
-        $chasse_id = $chasse_val->ID;
-    } else {
-        $chasse_id = (int) $chasse_val;
-    }
-
-    if ($chasse_id) {
-        $cache = get_field('champs_caches', $chasse_id);
-        $statut_chasse = $cache['chasse_cache_statut'] ?? null;
-
-        if ($statut_chasse === 'termine') {
-            return 'terminee';
-        }
-        if ($statut_chasse === 'a_venir') {
-            return 'bloquee_date';
-        }
-    } else {
-        return 'bloquee_chasse';
-    }
-
-    // 4️⃣ Si aucune condition bloquante : état par défaut
-    return 'non_souscrite';
-}
 
 
 /**
