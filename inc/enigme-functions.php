@@ -663,7 +663,7 @@
      */
     function envoyer_mail_reponse_manuelle($user_id, $enigme_id, $reponse, $uid)
     {
-        // 🔍 Récupération de l'email organisateur lié à l'énigme
+        // 🔍 Email organisateur
         $chasse  = get_field('enigme_chasse_associee', $enigme_id, false);
         if (is_array($chasse)) {
             $chasse_id = is_object($chasse[0]) ? (int) $chasse[0]->ID : (int) $chasse[0];
@@ -673,51 +673,40 @@
             $chasse_id = (int) $chasse;
         }
 
-        $organisateur_id  = $chasse_id ? get_organisateur_from_chasse($chasse_id) : null;
+        $organisateur_id = $chasse_id ? get_organisateur_from_chasse($chasse_id) : null;
         $email_organisateur = $organisateur_id ? get_field('email_organisateur', $organisateur_id) : '';
-
         if (!$email_organisateur) {
             $email_organisateur = get_option('admin_email');
         }
 
         $titre_enigme = html_entity_decode(get_the_title($enigme_id), ENT_QUOTES, 'UTF-8');
-        $user         = get_userdata($user_id);
-
+        $user = get_userdata($user_id);
         $subject_raw = '[Réponse Énigme] ' . $titre_enigme;
 
-        if (function_exists('wp_encode_mime_header')) {
-            $subject = wp_encode_mime_header($subject_raw);
-        } else {
-            $subject = mb_encode_mimeheader($subject_raw, 'UTF-8', 'B', "\r\n");
-        }
-
-        $valider_url = esc_url(add_query_arg([
-            'uid' => $uid,
-        ], home_url('/valider-reponse')));
-
-        $invalider_url = esc_url(add_query_arg([
-            'uid' => $uid,
-        ], home_url('/invalider-reponse')));
+        $subject = function_exists('wp_encode_mime_header')
+            ? wp_encode_mime_header($subject_raw)
+            : mb_encode_mimeheader($subject_raw, 'UTF-8', 'B', "\r\n");
 
         $date        = date_i18n('j F Y à H:i', current_time('timestamp'));
-        $titre_enigme = html_entity_decode(get_the_title($enigme_id), ENT_QUOTES, 'UTF-8');
         $url_enigme  = get_permalink($enigme_id);
         $profil_url  = get_author_posts_url($user_id);
+        $traitement_url = esc_url(add_query_arg([
+            'uid' => $uid,
+        ], home_url('/traitement-tentative')));
 
+        // 📧 Message HTML
         $message  = '<div style="font-family:Arial,sans-serif; font-size:14px;">';
-        $message .= '<p>Une nouvelle réponse manuelle a été soumise par l\'utilisateur <strong><a href="' . esc_url($profil_url) . '" target="_blank">' . esc_html($user->user_login) . '</a></strong>.</p>';
-        $message .= '<p><strong>🧩 Énigme concernée :</strong> <em>' . esc_html($titre_enigme) . '</em></p>';
-        $message .= '<p><strong>📝 Réponse proposée :</strong><br><blockquote>' . nl2br(esc_html($reponse)) . '</blockquote></p>';
+        $message .= '<p>Une nouvelle réponse manuelle a été soumise par <strong><a href="' . esc_url($profil_url) . '" target="_blank">' . esc_html($user->user_login) . '</a></strong>.</p>';
+        $message .= '<p><strong>🧩 Énigme :</strong> <em>' . esc_html($titre_enigme) . '</em></p>';
+        $message .= '<p><strong>📝 Réponse :</strong><br><blockquote>' . nl2br(esc_html($reponse)) . '</blockquote></p>';
         $message .= '<p><strong>📅 Soumise le :</strong> ' . esc_html($date) . '</p>';
-        $message .= '<p><strong>🔐 Référence de la soumission :</strong> ' . esc_html($uid) . '</p>';
+        $message .= '<p><strong>🔐 Identifiant :</strong> ' . esc_html($uid) . '</p>';
         $message .= '<hr>';
-        $message .= '<p>';
-        $message .= '<a href="' . $valider_url . '" style="display:inline-block; padding:8px 16px; background-color:#28a745; color:white; text-decoration:none; border-radius:4px;">✅ Valider</a> &nbsp; ';
-        $message .= '<a href="' . $invalider_url . '" style="display:inline-block; padding:8px 16px; background-color:#dc3545; color:white; text-decoration:none; border-radius:4px;">❌ Invalider</a>';
+        $message .= '<p style="text-align:center;">';
+        $message .= '<a href="' . $traitement_url . '" style="background:#0073aa;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold;display:inline-block;">🛠️ Traiter cette tentative</a>';
         $message .= '</p>';
-        $message .= '<p><strong>✉️ Contacter ce joueur :</strong><br>';
+        $message .= '<p><strong>✉️ Contacter le joueur :</strong><br>';
         $message .= '<a href="mailto:' . esc_attr($user->user_email) . '">' . esc_html($user->display_name) . ' (' . esc_html($user->user_email) . ')</a></p>';
-
         $message .= '<p><a href="' . esc_url($url_enigme) . '" target="_blank" style="font-size:0.9em;">🔗 Voir l’énigme en ligne</a></p>';
         $message .= '</div>';
 
@@ -725,12 +714,15 @@
             'Content-Type: text/html; charset=UTF-8',
             'Reply-To: ' . $user->display_name . ' <' . $user->user_email . '>',
         ];
+
         add_filter('wp_mail_from_name', function () use ($user) {
             return $user->display_name;
         });
 
         wp_mail($email_organisateur, $subject, $message, $headers);
+        remove_filter('wp_mail_from_name', '__return_false');
     }
+
 
     /**
      * Envoie un email de notification au joueur concernant le résultat de sa réponse à une énigme.
@@ -954,31 +946,52 @@
      */
     function traiter_tentative_manuelle(string $uid, string $resultat): bool
     {
-        error_log("👣 Accès au traitement par IP : " . ($_SERVER['REMOTE_ADDR'] ?? 'inconnue'));
-
         global $wpdb;
         $table = $wpdb->prefix . 'enigme_tentatives';
 
+        error_log("👣 Tentative traitement UID=$uid par IP=" . ($_SERVER['REMOTE_ADDR'] ?? 'inconnue'));
+
         $tentative = get_tentative_by_uid($uid);
         if (!$tentative) {
-            error_log("❌ tentative inexistante");
+            error_log("❌ Tentative introuvable");
             return false;
         }
+
         if ($tentative->resultat !== 'attente') {
-            error_log("⛔ tentative déjà traitée → statut actuel = " . $tentative->resultat);
+            error_log("⛔ Tentative déjà traitée → statut actuel = " . $tentative->resultat);
             return false;
         }
 
+        $user_id = (int) $tentative->user_id;
+        $enigme_id = (int) $tentative->enigme_id;
 
+        // 🔐 Sécurité : si déjà "résolue", on refuse toute tentative de traitement
+        $statut_user = $wpdb->get_var($wpdb->prepare(
+            "SELECT statut FROM {$wpdb->prefix}enigme_statuts_utilisateur WHERE user_id = %d AND enigme_id = %d",
+            $user_id,
+            $enigme_id
+        ));
+
+        if ($statut_user === 'resolue') {
+            error_log("⛔ Statut utilisateur déjà 'resolue' → refus de traitement UID=$uid");
+            return false;
+        }
+
+        // 🔐 Vérification organisateur ou admin
         $current_user_id = get_current_user_id();
-        $chasse_id = recuperer_id_chasse_associee((int) $tentative->enigme_id);
+        $chasse_id = recuperer_id_chasse_associee($enigme_id);
         $organisateur_id = get_organisateur_from_chasse($chasse_id);
         $organisateur_user_ids = (array) get_field('utilisateurs_associes', $organisateur_id);
 
-        if (!current_user_can('manage_options') && !in_array($current_user_id, array_map('intval', $organisateur_user_ids), true)) {
+        if (
+            !current_user_can('manage_options') &&
+            !in_array($current_user_id, array_map('intval', $organisateur_user_ids), true)
+        ) {
+            error_log("⛔ Accès interdit au traitement pour UID=$uid");
             return false;
         }
 
+        // ✅ Mise à jour
         $wpdb->update(
             $table,
             ['resultat' => $resultat, 'traitee' => 1],
@@ -988,11 +1001,13 @@
         );
 
         $nouveau_statut = $resultat === 'bon' ? 'resolue' : 'abandonnee';
-        mettre_a_jour_statut_utilisateur((int) $tentative->user_id, (int) $tentative->enigme_id, $nouveau_statut);
-        envoyer_mail_resultat_joueur((int) $tentative->user_id, (int) $tentative->enigme_id, $resultat);
+        mettre_a_jour_statut_utilisateur($user_id, $enigme_id, $nouveau_statut);
+        envoyer_mail_resultat_joueur($user_id, $enigme_id, $resultat);
 
+        error_log("✅ Tentative UID=$uid traitée comme $resultat → statut joueur mis à jour en $nouveau_statut");
         return true;
     }
+
 
     /**
      * Renvoie toutes les données d'affichage pour une tentative (état, utilisateur, statut, etc.)
@@ -1000,33 +1015,42 @@
      * @param string $uid Identifiant unique de la tentative.
      * @return array
      */
+    /**
+     * Récupère toutes les informations nécessaires à l'affichage d'une tentative.
+     *
+     * @param string $uid UID unique de la tentative.
+     * @return array Données enrichies : statut, nom, etc.
+     */
     function recuperer_infos_tentative(string $uid): array
     {
         $tentative = get_tentative_by_uid($uid);
-        if (!$tentative) return ['etat_tentative' => 'inexistante'];
+        if (!$tentative) {
+            return ['etat_tentative' => 'inexistante'];
+        }
 
-        $etat = get_etat_tentative($uid);
-        $resultat = $tentative->resultat;
-        $statut_initial = $resultat ?? 'invalide';
+        $etat_tentative = get_etat_tentative($uid); // logique métier (attente/validee/refusee)
+        $resultat = $tentative->resultat ?? '';
+        $traitee = (int) ($tentative->traitee ?? 0) === 1;
 
         return [
-            'etat_tentative' => $etat,
-            'statut_initial' => $statut_initial,
-            'statut_final'   => $resultat,
-            'deja_traitee'   => ($etat !== 'attente'),
-            'resultat'       => $resultat,
-            'tentative'      => $tentative,
-            'traitee'       => (int) $tentative->traitee === 1,
-            'vient_d_etre_traitee' => ((int) $tentative->traitee === 1 && $tentative->resultat === $resultat),
-            'nom_user'       => get_userdata($tentative->user_id)?->display_name ?? 'Utilisateur inconnu',
-            'permalink'      => get_permalink($tentative->enigme_id),
-            'statistiques'   => [
+            'etat_tentative'        => $etat_tentative,
+            'statut_initial'        => $resultat ?: 'invalide',
+            'statut_final'          => $resultat,
+            'resultat'              => $resultat,
+            'deja_traitee'          => ($etat_tentative !== 'attente'),
+            'traitee'               => $traitee,
+            'vient_d_etre_traitee'  => $traitee && $etat_tentative !== 'attente',
+            'tentative'             => $tentative,
+            'nom_user'              => get_userdata($tentative->user_id)?->display_name ?? 'Utilisateur inconnu',
+            'permalink'             => get_permalink($tentative->enigme_id),
+            'statistiques'          => [
                 'total_user'   => 0,
                 'total_enigme' => 0,
                 'total_chasse' => 0,
             ],
         ];
     }
+
 
     /**
      * Retourne l'état logique d'une tentative selon son champ `resultat`.
