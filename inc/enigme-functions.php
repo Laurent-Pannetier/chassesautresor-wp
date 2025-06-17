@@ -953,15 +953,18 @@
      */
     function traiter_tentative_manuelle(string $uid, string $resultat): array
     {
-        error_log("👉 traiter_tentative_manuelle() appelée : UID=$uid, resultat demandé=$resultat");
         global $wpdb;
         $table = $wpdb->prefix . 'enigme_tentatives';
-        
+
+        error_log("👉 traiter_tentative_manuelle() appelée : UID=$uid, resultat demandé=$resultat");
 
         $tentative = get_tentative_by_uid($uid);
         if (!$tentative) {
+            error_log("❌ Tentative introuvable pour UID=$uid");
             return ['erreur' => 'Tentative introuvable.'];
         }
+
+        error_log("🔎 Tentative récupérée : resultat={$tentative->resultat}");
 
         // 🛡 Vérification d'accès
         $current_user_id = get_current_user_id();
@@ -973,13 +976,14 @@
             !current_user_can('manage_options') &&
             !in_array($current_user_id, array_map('intval', $organisateur_user_ids), true)
         ) {
+            error_log("⛔ Accès interdit à la tentative UID=$uid pour user $current_user_id");
             return ['erreur' => 'Accès interdit à cette tentative.'];
         }
 
         $statut_initial = $tentative->resultat ?? 'invalide';
 
-        // ❌ Tentative déjà traitée : ne pas retraiter
         if ($tentative->resultat !== 'attente') {
+            error_log("⛔ Déjà traitée → aucune mise à jour effectuée pour UID=$uid");
             return [
                 'deja_traitee'     => true,
                 'etat_tentative'   => get_etat_tentative($uid),
@@ -997,10 +1001,9 @@
             ];
         }
 
-        error_log("⛔ Déjà traitée : en base = {$tentative->resultat}, on NE TRAITE PAS");
+        error_log("🛠 Mise à jour tentative UID=$uid avec resultat=$resultat");
 
-
-        // ✅ Traitement normal
+        // Traitement
         $wpdb->update(
             $table,
             ['resultat' => $resultat],
@@ -1009,11 +1012,14 @@
             ['%s']
         );
 
-        $nouveau_statut = $resultat === 'bon' ? 'resolue' : 'abandonnee';
-        mettre_a_jour_statut_utilisateur((int) $tentative->user_id, (int) $tentative->enigme_id, $nouveau_statut);
-        envoyer_mail_resultat_joueur((int) $tentative->user_id, (int) $tentative->enigme_id, $resultat);
+        error_log("✅ Traitement effectué : résultat mis à jour en base → $resultat");
 
-        error_log("✅ Traitement effectué : nouveau resultat = $resultat");
+        $nouveau_statut = $resultat === 'bon' ? 'resolue' : 'abandonnee';
+        $maj = mettre_a_jour_statut_utilisateur((int) $tentative->user_id, (int) $tentative->enigme_id, $nouveau_statut);
+        error_log("🔄 Mise à jour statut utilisateur ($nouveau_statut) → " . ($maj ? 'OK' : 'NON EFFECTUÉ'));
+
+        envoyer_mail_resultat_joueur((int) $tentative->user_id, (int) $tentative->enigme_id, $resultat);
+        error_log("📧 Mail de résultat envoyé pour UID=$uid");
 
         return [
             'deja_traitee'     => false,
@@ -1031,6 +1037,7 @@
             ],
         ];
     }
+
 
 
     /**
