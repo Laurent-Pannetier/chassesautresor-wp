@@ -29,6 +29,7 @@ defined( 'ABSPATH' ) || exit;
  * 🔹 ajouter_modal_points → Charger le script du modal des points en ajoutant un paramètre de version dynamique.
  * 🔹 utilisateur_a_assez_de_points → Vérifie si l'utilisateur a suffisamment de points pour une opération donnée.
  * 🔹 deduire_points_utilisateur → Déduit un montant de points à un utilisateur.
+ * 🔹 ajouter_points_utilisateur → Ajoute un montant de points à un utilisateur .
  */
 
 /**
@@ -208,6 +209,19 @@ function utilisateur_a_assez_de_points(int $user_id, int $montant): bool {
 function deduire_points_utilisateur(int $user_id, int $montant): void {
     if ($user_id && $montant > 0) {
         update_user_points($user_id, -$montant);
+    }
+}
+
+/**
+ * ➕ Ajoute un montant de points à un utilisateur.
+ *
+ * @param int $user_id
+ * @param int $montant Nombre de points à ajouter (doit être positif).
+ * @return void
+ */
+function ajouter_points_utilisateur(int $user_id, int $montant): void {
+    if ($user_id && $montant > 0) {
+        update_user_points($user_id, $montant);
     }
 }
 
