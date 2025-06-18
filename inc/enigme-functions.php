@@ -89,97 +89,111 @@
 
 
     /**
-     * Retourne les données nécessaires à l'affichage du bouton CTA d'une énigme
-     * selon le statut utilisateur, le coût en points, et les tentatives restantes.
+     * 🔹 get_cta_enigme() → Retourne les données d’affichage du bouton d’engagement d’une énigme.
+     *
+     * Types possibles :
+     * - connexion   → utilisateur non connecté
+     * - engager     → première tentative ou ré-engagement possible
+     * - continuer   → énigme en cours
+     * - revoir      → énigme résolue
+     * - terminee    → énigme finalisée (lecture seule)
+     * - bloquee     → bloquée par la chasse ou une date
+     * - invalide    → configuration incorrecte
      *
      * @param int $enigme_id
      * @param int|null $user_id
      * @return array{
-     *   type: string,             // Nom logique du CTA (ex: 'decouvrir', 'reessayer')
-     *   label: string,            // Texte affiché sur le bouton
-     *   sous_label: string|null, // Texte d'aide ou info affiché sous le bouton
-     *   points: int|null,         // Coût en points si applicable
-     *   action: string            // Type d'action attendue ('formulaire', 'paiement', 'message', etc.)
+     *   type: string,
+     *   label: string,
+     *   sous_label: string|null,
+     *   action: 'form'|'link'|'disabled',
+     *   url: string|null,
+     *   points: int|null
      * }
      */
     function get_cta_enigme(int $enigme_id, ?int $user_id = null): array
     {
-        $user_id = $user_id ?: get_current_user_id();
-        $statut = enigme_get_statut($enigme_id, $user_id);
-        $points = (int) get_field('enigme_tentative_cout_points', $enigme_id);
-        $limite = (int) get_field('enigme_tentative_max', $enigme_id);
+        $user_id = $user_id ?? get_current_user_id();
 
-        $tentatives_restantes = null;
-        if ($points === 0 && $user_id) {
-            $tentatives_restantes = enigme_get_tentatives_restantes($enigme_id, $user_id);
+        if (!is_user_logged_in()) {
+            return [
+                'type'       => 'connexion',
+                'label'      => '🔐 Connectez-vous',
+                'sous_label' => null,
+                'action'     => 'link',
+                'url'        => site_url('/mon-compte'),
+                'points'     => null,
+            ];
+        }
+
+        $etat = enigme_get_etat_systeme($enigme_id);
+        $statut = enigme_get_statut_utilisateur($enigme_id, $user_id);
+        $tentative = get_field('enigme_tentative', $enigme_id);
+        $points = intval($tentative['enigme_tentative_cout_points'] ?? 0);
+
+        if (!in_array($etat, ['accessible'], true)) {
+            $type = in_array($etat, ['bloquee_date', 'bloquee_chasse']) ? 'bloquee' : 'invalide';
+            return [
+                'type'       => $type,
+                'label'      => 'Indisponible',
+                'sous_label' => 'Cette énigme est bloquée ou mal configurée.',
+                'action'     => 'disabled',
+                'url'        => null,
+                'points'     => null,
+            ];
         }
 
         switch ($statut) {
             case 'resolue':
                 return [
                     'type'       => 'revoir',
-                    'label'      => 'Revoir',
-                    'sous_label' => 'Vous avez déjà résolu cette énigme.',
+                    'label'      => '🔁 Revoir',
+                    'sous_label' => 'Énigme déjà résolue',
+                    'action'     => 'link',
+                    'url'        => get_permalink($enigme_id),
                     'points'     => null,
-                    'action'     => 'formulaire',
-                ];
-
-            case 'echouee':
-                return [
-                    'type'       => 'reessayer',
-                    'label'      => 'Réessayer',
-                    'sous_label' => ($points === 0 && $tentatives_restantes !== null)
-                        ? "$tentatives_restantes tentative(s) restante(s) aujourd'hui"
-                        : null,
-                    'points'     => $points ?: null,
-                    'action'     => 'formulaire',
-                ];
-
-            case 'abandonnee':
-                return [
-                    'type'       => 'reprendre',
-                    'label'      => 'Reprendre',
-                    'sous_label' => 'Revenir là où vous en étiez.',
-                    'points'     => null,
-                    'action'     => 'formulaire',
                 ];
 
             case 'en_cours':
                 return [
                     'type'       => 'continuer',
-                    'label'      => 'Continuer',
+                    'label'      => '▶️ Continuer',
                     'sous_label' => null,
+                    'action'     => 'link',
+                    'url'        => get_permalink($enigme_id),
                     'points'     => null,
-                    'action'     => 'formulaire',
                 ];
 
-            case 'non_souscrite':
-                if ($points > 0) {
-                    return [
-                        'type'       => 'debloquer',
-                        'label'      => 'Débloquer',
-                        'sous_label' => "$points points",
-                        'points'     => $points,
-                        'action'     => 'paiement',
-                    ];
-                }
+            case 'terminee':
                 return [
-                    'type'       => 'decouvrir',
-                    'label'      => 'Découvrir',
-                    'sous_label' => ($tentatives_restantes !== null)
-                        ? "$tentatives_restantes tentative(s) restante(s) aujourd'hui"
-                        : null,
+                    'type'       => 'terminee',
+                    'label'      => '✔️ Terminé',
+                    'sous_label' => null,
+                    'action'     => 'disabled',
+                    'url'        => null,
                     'points'     => null,
-                    'action'     => 'formulaire',
+                ];
+
+            case 'non_commencee':
+            case 'abandonnee':
+            case 'echouee':
+                return [
+                    'type'       => 'engager',
+                    'label'      => ($points > 0) ? "Débloquer pour $points pts" : "Commencer gratuitement",
+                    'sous_label' => null,
+                    'action'     => 'form',
+                    'url'        => site_url('/traitement-engagement'),
+                    'points'     => $points,
                 ];
 
             default:
                 return [
-                    'type'       => 'indisponible',
-                    'label'      => 'Indisponible',
-                    'sous_label' => 'Cette énigme est actuellement inaccessible.',
-                    'points'     => null,
+                    'type'       => 'invalide',
+                    'label'      => 'Erreur',
+                    'sous_label' => 'Statut utilisateur inconnu',
                     'action'     => 'disabled',
+                    'url'        => null,
+                    'points'     => null,
                 ];
         }
     }
