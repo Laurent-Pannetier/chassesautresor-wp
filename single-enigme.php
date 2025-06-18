@@ -73,8 +73,7 @@ $legende = get_field('enigme_visuel_legende', $enigme_id);
 if (is_singular('enigme')) {
   forcer_relation_enigme_dans_chasse_si_absente(get_the_ID());
 }
-afficher_enigme_stylisee(get_the_ID());
-
+afficher_enigme_stylisee($enigme_id, $statut_data);
 ?>
 
 <main id="primary" class="site-main single-enigme-main statut-<?= esc_attr($statut_enigme); ?>">

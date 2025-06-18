@@ -444,13 +444,23 @@
     /**
      * @param int $post_id ID de l’énigme à afficher.
      */
-    function afficher_enigme_stylisee($post_id)
+    /**
+     * Affiche l’énigme avec son style et son état selon le contexte utilisateur.
+     *
+     * @param int $enigme_id ID de l’énigme à afficher.
+     * @param array $statut_data Données de statut retournées par traiter_statut_enigme().
+     */
+    function afficher_enigme_stylisee(int $enigme_id, array $statut_data = [])
     {
-        if (get_post_type($post_id) !== 'enigme') return;
+        if (get_post_type($enigme_id) !== 'enigme') return;
 
-        $etat = get_field('enigme_cache_etat_systeme', $post_id) ?? 'accessible';
+        if (!empty($statut_data['afficher_message'])) {
+            echo $statut_data['message_html'];
+        }
+
+        $etat = get_field('enigme_cache_etat_systeme', $enigme_id) ?? 'accessible';
         if ($etat !== 'accessible') {
-            $chasse = get_field('enigme_chasse_associee', $post_id);
+            $chasse = get_field('enigme_chasse_associee', $enigme_id);
             $chasse_id = is_array($chasse) ? $chasse[0] ?? null : $chasse;
             if ($chasse_id) {
                 wp_safe_redirect(get_permalink($chasse_id));
@@ -464,19 +474,19 @@
             }
         }
 
-        $user_id = get_current_user_id(); // ✅ récupère l'utilisateur ici
-        $style = get_field('enigme_style_affichage', $post_id) ?? 'defaut';
+        $user_id = get_current_user_id();
+        $style = get_field('enigme_style_affichage', $enigme_id) ?? 'defaut';
 
         echo '<div class="enigme-affichage enigme-style-' . esc_attr($style) . '">';
-        enigme_get_partial('titre', $style, ['post_id' => $post_id]);
-        enigme_get_partial('images', $style, ['post_id' => $post_id]);
-        enigme_get_partial('texte', $style, ['post_id' => $post_id]);
-        enigme_get_partial('bloc-reponse', $style, [ // ✅ ajoute le user_id ici
-            'post_id' => $post_id,
+        enigme_get_partial('titre', $style, ['post_id' => $enigme_id]);
+        enigme_get_partial('images', $style, ['post_id' => $enigme_id]);
+        enigme_get_partial('texte', $style, ['post_id' => $enigme_id]);
+        enigme_get_partial('bloc-reponse', $style, [
+            'post_id' => $enigme_id,
             'user_id' => $user_id,
         ]);
-        enigme_get_partial('solution', $style, ['post_id' => $post_id]);
-        enigme_get_partial('retour-chasse', $style, ['post_id' => $post_id]);
+        enigme_get_partial('solution', $style, ['post_id' => $enigme_id]);
+        enigme_get_partial('retour-chasse', $style, ['post_id' => $enigme_id]);
         echo '</div>';
     }
 
