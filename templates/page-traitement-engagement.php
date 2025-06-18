@@ -35,7 +35,9 @@ require_once get_theme_file_path('inc/statut-functions.php');
 $etat_systeme = enigme_get_etat_systeme($enigme_id);
 $statut_utilisateur = enigme_get_statut_utilisateur($enigme_id, $current_user_id);
 
-if ($etat_systeme !== 'accessible' || $statut_utilisateur !== 'non_commencee') {
+$statuts_engageables = ['non_commencee', 'abandonnee', 'echouee'];
+
+if ($etat_systeme !== 'accessible' || !in_array($statut_utilisateur, $statuts_engageables, true)) {
   wp_redirect(get_permalink($enigme_id)); // Redirection silencieuse
   exit;
 }
