@@ -41,6 +41,7 @@
     /**
      * 🔹 enigme_get_liste_prerequis_possibles() → Retourne les autres énigmes de la même chasse pouvant être définies comme prérequis.
      * 🔹 get_cta_enigme() → Retourne les informations d'affichage du bouton CTA en fonction du statut et du contexte de l'énigme.
+     * 🔹 render_cta_enigme() → Affiche le bouton CTA d'une énigme à partir des données retournées par get_cta_enigme().
      */
 
     /**
@@ -199,6 +200,51 @@
     }
 
 
+    /**
+     * @param array $cta Résultat de get_cta_enigme().
+     * @param int $enigme_id ID de l’énigme concernée (utile pour les formulaires).
+     */
+    function render_cta_enigme(array $cta, int $enigme_id): void
+    {
+        switch ($cta['action']) {
+            case 'form':
+    ?>
+             <form method="post" action="<?= esc_url($cta['url']); ?>" class="cta-enigme-form">
+                 <input type="hidden" name="enigme_id" value="<?= esc_attr($enigme_id); ?>">
+                 <?php wp_nonce_field('engager_enigme_' . $enigme_id, 'engager_enigme_nonce'); ?>
+                 <button type="submit"><?= esc_html($cta['label']); ?></button>
+                 <?php if (!empty($cta['sous_label'])): ?>
+                     <div class="cta-sous-label"><?= esc_html($cta['sous_label']); ?></div>
+                 <?php endif; ?>
+             </form>
+         <?php
+                break;
+
+            case 'link':
+            ?>
+             <a href="<?= esc_url($cta['url']); ?>" class="cta-enigme-lien">
+                 <?= esc_html($cta['label']); ?>
+             </a>
+             <?php if (!empty($cta['sous_label'])): ?>
+                 <div class="cta-sous-label"><?= esc_html($cta['sous_label']); ?></div>
+             <?php endif; ?>
+         <?php
+                break;
+
+            case 'disabled':
+            default:
+            ?>
+             <p class="cta-enigme-desactive"><?= esc_html($cta['label']); ?></p>
+             <?php if (!empty($cta['sous_label'])): ?>
+                 <div class="cta-sous-label"><?= esc_html($cta['sous_label']); ?></div>
+             <?php endif; ?>
+     <?php
+                break;
+        }
+    }
+
+
+
     // ==================================================
     // 🧾 ENREGISTREMENT DES ENGAGEMENTS
     // ==================================================
@@ -242,6 +288,7 @@
     // ==================================================
     /**
      * 🔹 afficher_visuels_enigme() → Affiche la galerie visuelle de l’énigme si l’utilisateur y a droit (image principale + vignettes).
+     * 🔹 get_url_vignette_enigme() → Retourne l’URL proxy de la première vignette d’une énigme.
      */
 
     /**
@@ -300,7 +347,7 @@
         }
 
         // 🔁 JS interaction
-    ?>
+        ?>
      <script>
          document.addEventListener('DOMContentLoaded', function() {
              const vignettes = document.querySelectorAll('.vignette');
@@ -338,6 +385,31 @@
          });
      </script>
  <?php
+    }
+
+
+    /**
+     * @param int $enigme_id
+     * @return string|null
+     */
+    function get_url_vignette_enigme(int $enigme_id): ?string
+    {
+        if (!utilisateur_peut_voir_enigme($enigme_id)) {
+            return null;
+        }
+
+        $images = get_field('enigme_visuel_image', $enigme_id);
+        if (!$images || !is_array($images)) {
+            return null;
+        }
+
+        $image_id = $images[0]['ID'] ?? null;
+        if (!$image_id) return null;
+
+        return esc_url(add_query_arg([
+            'id' => $image_id,
+            'taille' => 'thumbnail',
+        ], site_url('/voir-image-enigme')));
     }
 
 

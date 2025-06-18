@@ -19,7 +19,6 @@ defined('ABSPATH') || exit;
  * 🔹 forcer_chargement_acf_scripts_chasse → Force le chargement des scripts ACF sur les fiches chasse pour activer les WYSIWYG.
  * 🔹 personnaliser_acf_wysiwyg_toolbars → options minimales en "basic"
  * 🔹 enqueue_core_edit_scripts → chargement des modules JS mutualisés (édition front)
- * 🔹 verifier_et_synchroniser_cache_enigmes_si_autorise → vérifie la synchronisation entre les énigmes et le cache de la chasse (toutes les 30 min par post)
  */
 
 
@@ -102,50 +101,6 @@ function enqueue_core_edit_scripts()
     $previous_handle = $handle; // pour chaîner la dépendance
   }
 }
-
-
-/**
- * 🔄 Vérifie et synchronise le cache des énigmes liées à une chasse.
- *
- * @param int $chasse_id ID du post de type chasse
- */
-function verifier_et_synchroniser_cache_enigmes_si_autorise($chasse_id)
-{
-    if (!current_user_can('administrator') && !current_user_can('organisateur') && !current_user_can('organisateur_creation')) {
-        return;
-    }
-    $cache = get_field('chasse_cache_enigmes', $chasse_id);
-    error_log(print_r($cache, true));
-
-
-    $transient_key = 'verif_sync_chasse_' . $chasse_id;
-
-    if (!get_transient($transient_key)) {
-        // 🔁 Synchronisation réelle du cache
-        $resultat = synchroniser_cache_enigmes_chasse($chasse_id, true, true);
-        set_transient($transient_key, 'done', 30 * MINUTE_IN_SECONDS);
-
-        // 🔍 Log des énigmes détectées
-        if (!empty($resultat['liste_attendue'])) {
-            $liste = implode(', ', $resultat['liste_attendue']);
-            error_log("[ChassesAuTresor] Énigmes détectées pour chasse #$chasse_id : [$liste]");
-        } else {
-            error_log("[ChassesAuTresor] Aucune énigme détectée pour chasse #$chasse_id");
-        }
-
-        // ✅ Correction effectuée
-        if (!empty($resultat['correction_effectuee']) && !empty($resultat['valide'])) {
-            $titre = get_the_title($chasse_id);
-            $ids = implode(', ', $resultat['liste_attendue']);
-            error_log("[ChassesAuTresor] Correction cache enigmes pour chasse #$chasse_id ($titre) → Nouveaux IDs : [$ids]");
-        }
-        
-        $cache_final = get_field('chasse_cache_enigmes', $chasse_id);
-        error_log('[DEBUG] chasse_cache_enigmes après sync : ' . print_r($cache_final, true));
-
-    }
-}
-
 
 
 

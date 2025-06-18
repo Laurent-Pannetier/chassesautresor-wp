@@ -1,27 +1,13 @@
 <?php
 defined('ABSPATH') || exit;
 
-// ==================================================
 // 📚 SOMMAIRE DU FICHIER : relations-functions.php
-// ==================================================
-//
 //  📦 RÉCUPÉRATION CPT ORGANISATEUR
-//    - Fonctions pour récupérer un organisateur depuis un utilisateur ou une chasse.
-//
 //  📦 RÉCUPÉRATION CPT CHASSE
-//    - Fonctions pour récupérer une chasse depuis une énigme ou un organisateur.
-//
 //  📦 RÉCUPÉRATION CPT ÉNIGME
-//    - Fonction pour récupérer les énigmes associées à une chasse.
-//
 //  📦 RECUPERATION TROPHEE
-//    - Fonction pour récupérer les trophées associés à une énigme ou une chasse.
-//
 //  📦 ASSIGNATION AUTOMATIQUES
-//    - assignations automatiques organisateur, chasse...
-//
 //  🔁 SYNCHRONISATION CHASSE ↔ ÉNIGMES
-// 
 
 
 
@@ -261,10 +247,12 @@ function get_chasses_de_organisateur($organisateur_id)
 }
 
 // ==================================================
-// 📦 RECUPERATION CPT ENIGME
+//  📦 RÉCUPÉRATION CPT ÉNIGME
 // ==================================================
 /**
  * 🔹 recuperer_enigmes_associees() → Récupère les énigmes associées à une chasse.
+ * 🔹 recuperer_enigmes_pour_chasse() → Retourne la liste des énigmes liées à une chasse via WP_Query.
+ * 🔹 recuperer_ids_enigmes_pour_chasse() → Retourne les IDs des énigmes liées à une chasse (requête directe).
  */
 
 /**
@@ -276,32 +264,91 @@ function get_chasses_de_organisateur($organisateur_id)
  * @param int $chasse_id ID de la chasse.
  * @return array Liste unique d’IDs d’énigmes (int).
  */
-function recuperer_enigmes_associees(int $chasse_id): array {
-    if (!$chasse_id || get_post_type($chasse_id) !== 'chasse') {
-        error_log("❌ [recuperer_enigmes_associees] Appel invalide pour ID $chasse_id");
-        return [];
-    }
+function recuperer_enigmes_associees(int $chasse_id): array
+{
+  if (!$chasse_id || get_post_type($chasse_id) !== 'chasse') {
+    error_log("❌ [recuperer_enigmes_associees] Appel invalide pour ID $chasse_id");
+    return [];
+  }
 
-    $groupe = get_field('champs_caches', $chasse_id);
-    $liste_brute = $groupe['chasse_cache_enigmes'] ?? [];
+  $groupe = get_field('champs_caches', $chasse_id);
+  $liste_brute = $groupe['chasse_cache_enigmes'] ?? [];
 
-    // Log brut pour analyse
-    error_log("📥 [recuperer_enigmes_associees] Contenu brut chasse_cache_enigmes (chasse #$chasse_id) : " . print_r($liste_brute, true));
+  // Log brut pour analyse
+  error_log("📥 [recuperer_enigmes_associees] Contenu brut chasse_cache_enigmes (chasse #$chasse_id) : " . print_r($liste_brute, true));
 
-    // Extraction des IDs (objet ou int)
-    $ids = [];
+  // Extraction des IDs (objet ou int)
+  $ids = [];
 
-    foreach ($liste_brute as $item) {
-        $ids[] = is_object($item) && isset($item->ID) ? (int)$item->ID : (int)$item;
-    }
+  foreach ($liste_brute as $item) {
+    $ids[] = is_object($item) && isset($item->ID) ? (int)$item->ID : (int)$item;
+  }
 
-    // Détection et log des doublons
-    $doublons = array_diff_key($ids, array_unique($ids));
-    if (!empty($doublons)) {
-        error_log("⚠️ [recuperer_enigmes_associees] Doublons détectés pour la chasse #$chasse_id : " . implode(', ', $doublons));
-    }
+  // Détection et log des doublons
+  $doublons = array_diff_key($ids, array_unique($ids));
+  if (!empty($doublons)) {
+    error_log("⚠️ [recuperer_enigmes_associees] Doublons détectés pour la chasse #$chasse_id : " . implode(', ', $doublons));
+  }
 
-    return array_values(array_unique($ids));
+  return array_values(array_unique($ids));
+}
+
+/** *
+ * ⚠️ Contrairement à `chasse_cache_enigmes`, cette fonction interroge la base en direct.
+ *
+ * @param int $chasse_id
+ * @return WP_Post[] Liste d’objets WP_Post
+ */
+function recuperer_enigmes_pour_chasse(int $chasse_id): array
+{
+  if (!$chasse_id || get_post_type($chasse_id) !== 'chasse') {
+    return [];
+  }
+
+  $query = new WP_Query([
+    'post_type'      => 'enigme',
+    'posts_per_page' => -1,
+    'post_status'    => ['publish', 'pending', 'draft'], // extensible
+    'orderby'        => 'menu_order', // ou autre critère futur
+    'order'          => 'ASC',
+    'meta_query'     => [
+      [
+        'key'     => 'enigme_chasse_associee',
+        'value'   => '"' . $chasse_id . '"',
+        'compare' => 'LIKE',
+      ],
+    ],
+  ]);
+
+  return $query->have_posts() ? $query->posts : [];
+}
+
+
+/**
+ * @param int $chasse_id
+ * @return int[] Liste d’IDs (int)
+ */
+function recuperer_ids_enigmes_pour_chasse(int $chasse_id): array
+{
+  if (!$chasse_id || get_post_type($chasse_id) !== 'chasse') {
+    return [];
+  }
+
+  $query = new WP_Query([
+    'post_type'      => 'enigme',
+    'fields'         => 'ids', // ⚠️ retourne un tableau d'IDs
+    'posts_per_page' => -1,
+    'post_status'    => ['publish', 'pending', 'draft'],
+    'meta_query'     => [
+      [
+        'key'     => 'enigme_chasse_associee',
+        'value'   => '"' . $chasse_id . '"',
+        'compare' => 'LIKE',
+      ],
+    ],
+  ]);
+
+  return $query->posts;
 }
 
 
@@ -403,8 +450,6 @@ function synchroniser_cache_enigmes_chasse($chasse_id, $forcer_recalcul = false,
     } else {
       error_log("❌ [ÉCHEC] La synchronisation ACF relation a échoué pour la chasse #$chasse_id");
     }
-  } else {
-    error_log("➖ [INFO] Aucune mise à jour nécessaire (cache déjà synchronisé)");
   }
 
   error_log("🌀 [SYNC] Fin de synchronisation pour chasse #$chasse_id");
@@ -474,8 +519,9 @@ function verifier_chasse_cache_enigmes($chasse_id, $mettre_a_jour = false)
   $cache_ids = is_array($cache) ? array_map('intval', $cache) : [];
 
   // 🎯 Comparaison brute
-  $diff = array_diff($attendu_ids, $cache_ids) || array_diff($cache_ids, $attendu_ids);
-  $synchronise = empty($diff);
+  $diff1 = array_diff($attendu_ids, $cache_ids);
+  $diff2 = array_diff($cache_ids, $attendu_ids);
+  $synchronise = empty($diff1) && empty($diff2);
 
   if ($mettre_a_jour && !$synchronise) {
     update_field('chasse_cache_enigmes', $attendu_ids, $chasse_id);
@@ -514,11 +560,8 @@ function verifier_cache_chasse_enigmes_valides($chasse_id, $retirer_si_invalide 
 
   // 📦 Liste brute depuis le cache
   $cache = get_field('chasse_cache_enigmes', $chasse_id);
-  if (!is_array($cache)) {
-    $cache = [];
-  }
+  $cache_ids = is_array($cache) ? array_map('intval', $cache) : [];
 
-  $cache_ids = array_map('intval', $cache);
   $invalides = [];
 
   foreach ($cache_ids as $enigme_id) {
