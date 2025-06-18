@@ -250,6 +250,7 @@
     // ==================================================
     /**
      * 🔹 enregistrer_engagement_enigme() → Insère un engagement dans la table SQL `wp_enigme_engagements`.
+     * 🔹 marquer_enigme_comme_engagee() → Met à jour le statut utilisateur ET enregistre un engagement SQL.
      */
 
     /**
@@ -279,6 +280,20 @@
         ], ['%d', '%d', '%s']);
 
         return $result !== false;
+    }
+
+
+    /** *
+     * @param int $user_id
+     * @param int $enigme_id
+     * @return bool True si tout s’est bien passé.
+     */
+    function marquer_enigme_comme_engagee(int $user_id, int $enigme_id): bool
+    {
+        $ok1 = enigme_mettre_a_jour_statut_utilisateur($enigme_id, $user_id, 'en_cours');
+        $ok2 = enregistrer_engagement_enigme($user_id, $enigme_id);
+
+        return $ok1 && $ok2;
     }
 
 
