@@ -290,8 +290,13 @@ function recuperer_enigmes_associees(int $chasse_id): array
     error_log("⚠️ [recuperer_enigmes_associees] Doublons détectés pour la chasse #$chasse_id : " . implode(', ', $doublons));
   }
 
-  return array_values(array_unique($ids));
+  $ids_valides = array_filter(array_unique($ids), function ($id) {
+    return get_post_type($id) === 'enigme';
+  });
+
+  return array_values($ids_valides);
 }
+
 
 /** *
  * ⚠️ Contrairement à `chasse_cache_enigmes`, cette fonction interroge la base en direct.
@@ -720,18 +725,19 @@ function forcer_relation_enigme_dans_chasse_si_absente(int $enigme_id): void
  * @param int $chasse_id
  * @return void
  */
-function verifier_et_synchroniser_cache_enigmes_si_autorise(int $chasse_id): void {
-    if (!current_user_can('administrator') && !current_user_can('organisateur') && !current_user_can('organisateur_creation')) {
-        return;
-    }
+function verifier_et_synchroniser_cache_enigmes_si_autorise(int $chasse_id): void
+{
+  if (!current_user_can('administrator') && !current_user_can('organisateur') && !current_user_can('organisateur_creation')) {
+    return;
+  }
 
-    if (get_post_type($chasse_id) !== 'chasse') return;
+  if (get_post_type($chasse_id) !== 'chasse') return;
 
-    $transient_key = 'verif_sync_chasse_' . $chasse_id;
+  $transient_key = 'verif_sync_chasse_' . $chasse_id;
 
-    if (!get_transient($transient_key)) {
-        // Lancer la synchronisation réelle
-        synchroniser_cache_enigmes_chasse($chasse_id, true, true);
-        set_transient($transient_key, 'done', 30 * MINUTE_IN_SECONDS);
-    }
+  if (!get_transient($transient_key)) {
+    // Lancer la synchronisation réelle
+    synchroniser_cache_enigmes_chasse($chasse_id, true, true);
+    set_transient($transient_key, 'done', 30 * MINUTE_IN_SECONDS);
+  }
 }
