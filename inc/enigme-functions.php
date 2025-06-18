@@ -3,35 +3,12 @@
 
 
     // 🔧 CONTRÔLES ET RÉGLAGES AVANCÉS – ÉNIGMES
-    //    • enigme_get_liste_prerequis_possibles()
-    //    • get_cta_enigme()
-    //
     // 🧾 ENREGISTREMENT DES ENGAGEMENTS
-    //    • enregistrer_engagement_enigme()
-    //
     // 🖼️ AFFICHAGE DES VISUELS D’ÉNIGMES
-    //    • afficher_visuels_enigme()
-    //
     // 🎨 AFFICHAGE STYLISÉ DES ÉNIGMES
-    //    • afficher_enigme_stylisee()
-    //    • enigme_get_partial()
-    //
     // 📬 GESTION DES RÉPONSES MANUELLES (FRONTEND)
-    //    • afficher_formulaire_reponse_manuelle()
-    //    • utilisateur_peut_repondre_manuelle()
-    //    • soumettre_reponse_manuelle()
-    //
     // ✉️ ENVOI D'EMAILS (RÉPONSES MANUELLES)
-    //    • envoyer_mail_reponse_manuelle()
-    //    • envoyer_mail_resultat_joueur()
-    //    • envoyer_mail_accuse_reception_joueur()
-    //
     // 📊 GESTION DES TENTATIVES UTILISATEUR
-    //    • inserer_tentative()
-    //    • get_tentative_by_uid()
-    //    • traiter_tentative_manuelle()
-    //    • recuperer_infos_tentative()
-    //    • get_etat_tentative()
 
 
 
@@ -90,9 +67,10 @@
 
 
     /**
-     * 🔹 get_cta_enigme() → Retourne les données d’affichage du bouton d’engagement d’une énigme.
+     * Retourne les données d’affichage du bouton d’engagement d’une énigme.
      *
      * Types possibles :
+     * - voir        → lien direct réservé admin / organisateur
      * - connexion   → utilisateur non connecté
      * - engager     → première tentative ou ré-engagement possible
      * - continuer   → énigme en cours
@@ -115,6 +93,21 @@
     function get_cta_enigme(int $enigme_id, ?int $user_id = null): array
     {
         $user_id = $user_id ?? get_current_user_id();
+
+        $chasse_id = recuperer_id_chasse_associee($enigme_id);
+        if (
+            current_user_can('manage_options') ||
+            utilisateur_est_organisateur_associe_a_chasse($user_id, $chasse_id)
+        ) {
+            return [
+                'type'       => 'voir',
+                'label'      => '👁️ Voir l’énigme',
+                'sous_label' => 'Accès organisateur',
+                'action'     => 'link',
+                'url'        => get_permalink($enigme_id),
+                'points'     => null,
+            ];
+        }
 
         if (!is_user_logged_in()) {
             return [
