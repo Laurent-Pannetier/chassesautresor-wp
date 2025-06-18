@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Template Name: Traitement Engagement Énigme
  * Route d’engagement – appelée uniquement via POST
@@ -45,8 +46,13 @@ $cout_points = intval($groupe_tentative['enigme_tentative_cout_points'] ?? 0);
 
 // Vérification des points
 if (!utilisateur_a_assez_de_points($current_user_id, $cout_points)) {
-  wp_die('Vous n’avez pas assez de points pour débloquer cette énigme.');
+  $chasse_id = recuperer_id_chasse_associee($enigme_id);
+  $url = $chasse_id ? get_permalink($chasse_id) : home_url('/');
+  $url = add_query_arg('erreur', 'points_insuffisants', $url);
+  wp_redirect($url);
+  exit;
 }
+
 
 // Déduction + enregistrement du statut
 deduire_points_utilisateur($current_user_id, $cout_points);

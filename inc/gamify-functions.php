@@ -27,6 +27,7 @@ defined( 'ABSPATH' ) || exit;
  * 🔹 woocommerce_thankyou (function) → Attribuer les points et vider le panier après la commande.
  * 🔹 afficher_points_utilisateur_callback → Afficher les points de l’utilisateur selon le statut de l’énigme.
  * 🔹 ajouter_modal_points → Charger le script du modal des points en ajoutant un paramètre de version dynamique.
+ * 🔹 utilisateur_a_assez_de_points → Vérifie si l'utilisateur a suffisamment de points pour une opération donnée.
  */
 
 /**
@@ -181,6 +182,20 @@ function charger_script_modal_points() {
 }
 add_action('wp_enqueue_scripts', 'charger_script_modal_points');
 
+
+/**
+ * 🔒 Vérifie si l'utilisateur a suffisamment de points pour une opération donnée.
+ *
+ * @param int $user_id
+ * @param int $montant Nombre de points nécessaires.
+ * @return bool True si le solde est suffisant.
+ */
+function utilisateur_a_assez_de_points(int $user_id, int $montant): bool {
+    if (!$user_id || $montant < 0) return false;
+
+    $points_disponibles = get_user_points($user_id);
+    return $points_disponibles >= $montant;
+}
 
 
 

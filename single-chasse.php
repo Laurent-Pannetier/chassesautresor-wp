@@ -78,6 +78,12 @@ $statut = get_field('champs_caches')['chasse_cache_statut'] ?? 'revision';
 // 🔹 Nombre de joueurs (sera dynamique plus tard)
 $nb_joueurs = 0;
 
+if (!empty($_GET['erreur']) && $_GET['erreur'] === 'points_insuffisants') {
+    echo '<div class="message-erreur" role="alert" style="color:red; margin-bottom:1em;">
+        ❌ Vous n’avez pas assez de points pour engager cette énigme.
+        <a href="' . esc_url(home_url('/boutique')) . '">Accéder à la boutique</a>
+    </div>';
+}
 ?>
 
 <?php if ($organisateur_id) : ?>
