@@ -398,6 +398,7 @@ add_action('save_post', 'assigner_organisateur_automatiquement', 10, 2);
  * 🔹 verifier_cache_chasse_enigmes_valides() → Supprime les ID orphelins du cache
  * 🔹 synchroniser_relations_cache_enigmes() → Met à jour le champ relation avec le format attendu par ACF
  * 🔹 forcer_relation_enigme_dans_chasse_si_absente() → Depuis une fiche énigme, vérifie que la chasse associée référence bien cette énigme
+ * 🔹 verifier_et_synchroniser_cache_enigmes_si_autorise() → Vérifie et synchronise le cache des énigmes liées à une chasse, avec protection par transient
  */
 
 
@@ -708,4 +709,29 @@ function forcer_relation_enigme_dans_chasse_si_absente(int $enigme_id): void
       error_log("❌ [RELATION AUTO] Échec ajout énigme #$enigme_id → chasse #$chasse_id");
     }
   }
+}
+
+
+/**
+ * 🔁 Vérifie et synchronise le cache des énigmes liées à une chasse, avec protection par transient.
+ *
+ * ⚠️ Peut déclencher une mise à jour si le cache est désynchronisé.
+ *
+ * @param int $chasse_id
+ * @return void
+ */
+function verifier_et_synchroniser_cache_enigmes_si_autorise(int $chasse_id): void {
+    if (!current_user_can('administrator') && !current_user_can('organisateur') && !current_user_can('organisateur_creation')) {
+        return;
+    }
+
+    if (get_post_type($chasse_id) !== 'chasse') return;
+
+    $transient_key = 'verif_sync_chasse_' . $chasse_id;
+
+    if (!get_transient($transient_key)) {
+        // Lancer la synchronisation réelle
+        synchroniser_cache_enigmes_chasse($chasse_id, true, true);
+        set_transient($transient_key, 'done', 30 * MINUTE_IN_SECONDS);
+    }
 }
