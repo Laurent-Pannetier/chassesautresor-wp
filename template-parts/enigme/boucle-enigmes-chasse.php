@@ -40,4 +40,15 @@ if (empty($posts)) return;
       <!-- <p style="font-size:0.85em; color:#888;">ID #<?= $enigme_id; ?> / post_type = <?= get_post_type($enigme_id); ?></p> -->
     </article>
   <?php endforeach; ?>
+  <?php
+  // Vérifie si l'utilisateur peut modifier cette chasse
+  if (utilisateur_peut_modifier_post($chasse_id)) {
+    $has_enigmes = !empty($posts ?? []);
+    get_template_part('template-parts/enigme/carte-ajout-enigme', null, [
+      'has_enigmes' => $has_enigmes,
+      'chasse_id'   => $chasse_id,
+    ]);
+  }
+  ?>
+
 </div>

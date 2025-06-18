@@ -79,7 +79,7 @@ $statut = get_field('champs_caches')['chasse_cache_statut'] ?? 'revision';
 $nb_joueurs = 0;
 
 if (!empty($_GET['erreur']) && $_GET['erreur'] === 'points_insuffisants') {
-    echo '<div class="message-erreur" role="alert" style="color:red; margin-bottom:1em;">
+  echo '<div class="message-erreur" role="alert" style="color:red; margin-bottom:1em;">
         ❌ Vous n’avez pas assez de points pour engager cette énigme.
         <a href="' . esc_url(home_url('/boutique')) . '">Accéder à la boutique</a>
     </div>';
@@ -149,8 +149,8 @@ if (!empty($_GET['erreur']) && $_GET['erreur'] === 'points_insuffisants') {
 
   <div class="chasse-enigmes-liste">
     <?php
-    get_template_part('template-parts/enigme/boucle-enigmes', null, [
-      'chasse_id' => get_the_ID(),
+    get_template_part('template-parts/enigme/boucle-enigmes-chasse', null, [
+      'chasse_id' => get_the_ID()
     ]);
     ?>
 
@@ -161,11 +161,6 @@ if (!empty($_GET['erreur']) && $_GET['erreur'] === 'points_insuffisants') {
   </footer>
 </section>
 
-<?php
-get_template_part('template-parts/enigme/boucle-enigmes-chasse', null, [
-  'chasse_id' => get_the_ID()
-]);
-?>
 
 
 <?php
