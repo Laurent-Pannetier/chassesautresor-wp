@@ -454,15 +454,27 @@
     {
         if (get_post_type($enigme_id) !== 'enigme') return;
 
+        error_log("🧩 [afficher_enigme_stylisee] Appel pour énigme #$enigme_id");
+
+        if (!empty($statut_data)) {
+            error_log("📦 statut_data transmis : " . print_r($statut_data, true));
+        } else {
+            error_log("❗ Aucune donnée statut_data transmise à afficher_enigme_stylisee()");
+        }
+
         if (!empty($statut_data['afficher_message'])) {
+            error_log("✅ Affichage du message : " . strip_tags($statut_data['message_html']));
             echo $statut_data['message_html'];
         }
 
         $etat = get_field('enigme_cache_etat_systeme', $enigme_id) ?? 'accessible';
+        error_log("📌 État système de l’énigme : $etat");
+
         if ($etat !== 'accessible') {
             $chasse = get_field('enigme_chasse_associee', $enigme_id);
             $chasse_id = is_array($chasse) ? $chasse[0] ?? null : $chasse;
             if ($chasse_id) {
+                error_log("🔁 Redirection vers chasse #$chasse_id");
                 wp_safe_redirect(get_permalink($chasse_id));
                 exit;
             } else {
@@ -476,6 +488,7 @@
 
         $user_id = get_current_user_id();
         $style = get_field('enigme_style_affichage', $enigme_id) ?? 'defaut';
+        error_log("🎨 Style utilisé : $style");
 
         echo '<div class="enigme-affichage enigme-style-' . esc_attr($style) . '">';
         enigme_get_partial('titre', $style, ['post_id' => $enigme_id]);
