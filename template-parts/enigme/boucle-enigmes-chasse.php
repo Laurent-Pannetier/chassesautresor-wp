@@ -5,7 +5,8 @@ $chasse_id = $args['chasse_id'] ?? null;
 if (!$chasse_id || get_post_type($chasse_id) !== 'chasse') return;
 
 $posts = recuperer_enigmes_pour_chasse($chasse_id);
-if (empty($posts)) return;
+$has_enigmes = !empty($posts);
+
 ?>
 
 <div class="bloc-enigmes-chasse">
@@ -43,7 +44,6 @@ if (empty($posts)) return;
   <?php
   // Vérifie si l'utilisateur peut modifier cette chasse
   if (utilisateur_peut_modifier_post($chasse_id)) {
-    $has_enigmes = !empty($posts ?? []);
     get_template_part('template-parts/enigme/carte-ajout-enigme', null, [
       'has_enigmes' => $has_enigmes,
       'chasse_id'   => $chasse_id,
