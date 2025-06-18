@@ -28,6 +28,7 @@ defined( 'ABSPATH' ) || exit;
  * 🔹 afficher_points_utilisateur_callback → Afficher les points de l’utilisateur selon le statut de l’énigme.
  * 🔹 ajouter_modal_points → Charger le script du modal des points en ajoutant un paramètre de version dynamique.
  * 🔹 utilisateur_a_assez_de_points → Vérifie si l'utilisateur a suffisamment de points pour une opération donnée.
+ * 🔹 deduire_points_utilisateur → Déduit un montant de points à un utilisateur.
  */
 
 /**
@@ -195,6 +196,19 @@ function utilisateur_a_assez_de_points(int $user_id, int $montant): bool {
 
     $points_disponibles = get_user_points($user_id);
     return $points_disponibles >= $montant;
+}
+
+/**
+ * ➖ Déduit un montant de points à un utilisateur.
+ *
+ * @param int $user_id
+ * @param int $montant Nombre de points à retirer (doit être positif).
+ * @return void
+ */
+function deduire_points_utilisateur(int $user_id, int $montant): void {
+    if ($user_id && $montant > 0) {
+        update_user_points($user_id, -$montant);
+    }
 }
 
 
