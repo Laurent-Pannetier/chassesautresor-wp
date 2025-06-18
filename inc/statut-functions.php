@@ -278,6 +278,7 @@ function traiter_statut_enigme(int $enigme_id, ?int $user_id = null): array
     $chasse_id = recuperer_id_chasse_associee($enigme_id);
 
     // 🔓 Bypass total : admin ou organisateur
+    // 🛡️ Organisateur ou admin : pas de réponse possible
     if (
         current_user_can('manage_options') ||
         utilisateur_est_organisateur_associe_a_chasse($user_id, $chasse_id)
@@ -286,9 +287,9 @@ function traiter_statut_enigme(int $enigme_id, ?int $user_id = null): array
             'etat' => $statut,
             'rediriger' => false,
             'url' => null,
-            'afficher_formulaire' => true,
-            'afficher_message' => false,
-            'message_html' => '',
+            'afficher_formulaire' => false,
+            'afficher_message' => true,
+            'message_html' => '<p class="message-statut">⚠️ Vous êtes l’organisateur de cette énigme.</p>',
         ];
     }
 
