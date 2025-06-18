@@ -168,12 +168,21 @@
                     'points'     => null,
                 ];
 
-            case 'non_commencee':
+            case 'echouee':
+                return [
+                    'type'       => 'engager',
+                    'label'      => ($points > 0) ? "Réessayer pour $points pts" : "Réessayer",
+                    'sous_label' => null,
+                    'action'     => 'form',
+                    'url'        => site_url('/traitement-engagement'),
+                    'points'     => $points,
+                ];
+
             case 'abandonnee':
             case 'echouee':
                 return [
                     'type'       => 'engager',
-                    'label'      => ($points > 0) ? "Débloquer pour $points pts" : "Commencer gratuitement",
+                    'label'      => ($points > 0) ? "Débloquer pour $points pts" : "Commencer",
                     'sous_label' => null,
                     'action'     => 'form',
                     'url'        => site_url('/traitement-engagement'),
@@ -283,11 +292,11 @@
      */
     function marquer_enigme_comme_engagee(int $user_id, int $enigme_id): bool
     {
-        $ok1 = enigme_mettre_a_jour_statut_utilisateur($enigme_id, $user_id, 'en_cours');
+        $ok1 = enigme_mettre_a_jour_statut_utilisateur($enigme_id, $user_id, 'en_cours', true);
         $ok2 = enregistrer_engagement_enigme($user_id, $enigme_id);
-
         return $ok1 && $ok2;
     }
+
 
 
 
