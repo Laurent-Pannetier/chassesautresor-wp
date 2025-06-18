@@ -104,7 +104,7 @@ function enigme_mettre_a_jour_statut_utilisateur(int $enigme_id, int $user_id, s
     ));
 
     // Protection : interdiction de rétrograder un joueur ayant déjà résolu l’énigme
-    if (in_array($statut_actuel, ['resolue', 'terminee'], true)) {
+    if (!$forcer && in_array($statut_actuel, ['resolue', 'terminee'], true)) {
         error_log("🔒 Statut non modifié : $statut_actuel → tentative de mise à jour vers $nouveau_statut bloquée (UID: $user_id / Enigme: $enigme_id)");
         return false;
     }
