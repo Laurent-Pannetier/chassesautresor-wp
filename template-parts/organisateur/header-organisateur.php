@@ -29,140 +29,114 @@ $est_contact = (strpos($_SERVER['REQUEST_URI'], '/contact') !== false);
 $email_contact = get_field('profil_public_email_contact', $organisateur_id);
 
 if (!$email_contact || !is_email($email_contact)) {
-    $auteur_id = get_post_field('post_author', $organisateur_id);
-    $email_contact = get_the_author_meta('user_email', $auteur_id);
+  $auteur_id = get_post_field('post_author', $organisateur_id);
+  $email_contact = get_the_author_meta('user_email', $auteur_id);
 }
 
 $base_url = trailingslashit(get_permalink($organisateur_id));
 $url_contact = esc_url($base_url . 'contact?email_organisateur=' . urlencode($email_contact));
 ?>
 <div class="header-organisateur-wrapper">
-    <div class="ligne-morse" aria-hidden="true">
-      <div class="morse-wrapper" data-morse="<?= esc_attr($titre_organisateur); ?>"></div>
+  <div class="ligne-morse" aria-hidden="true">
+    <div class="morse-wrapper" data-morse="<?= esc_attr($titre_organisateur); ?>"></div>
+  </div>
+  <header class="header-organisateur">
+    <div class="conteneur-organisateur">
+
+      <!-- Colonne gauche : logo -->
+      <div class="colonne-logo">
+        <div class="champ-organisateur champ-img champ-logo <?= empty($logo_id) ? 'champ-vide' : ''; ?>"
+          data-cpt="organisateur"
+          data-champ="profil_public_logo_organisateur"
+          data-post-id="<?= esc_attr($organisateur_id); ?>">
+
+          <div class="champ-affichage">
+            <?php if ($peut_modifier) : ?>
+              <button type="button"
+                class="champ-modifier header-img-modifiable header-organisateur__logo"
+                aria-label="Modifier le logo"
+                data-champ="profil_public_logo_organisateur"
+                data-cpt="organisateur"
+                data-post-id="<?= esc_attr($organisateur_id); ?>">
+                <img src="<?= esc_url($logo_url); ?>" alt="Logo de l’organisateur">
+                <span class="icone-modif">✏️</span>
+              </button>
+            <?php else : ?>
+              <div class="header-organisateur__logo">
+                <img src="<?= esc_url($logo_url); ?>" alt="Logo de l’organisateur">
+              </div>
+            <?php endif; ?>
+          </div>
+
+          <input type="hidden" class="champ-input" value="<?= esc_attr($logo_id ?? '') ?>">
+          <div class="champ-feedback"></div>
+        </div>
+      </div>
+
+      <!-- Colonne droite : contenu -->
+      <div class="colonne-texte">
+        <h1 class="header-organisateur__nom"><?= esc_html($titre_organisateur); ?></h1>
+      </div>
+
+      <!-- Slogan -->
+      <div class="champ-organisateur champ-txt-editable champ-slogan <?= empty($slogan) ? 'champ-vide' : ''; ?>"
+        data-champ="profil_public_description_courte"
+        data-cpt="organisateur"
+        data-post-id="<?= esc_attr($organisateur_id); ?>">
+
+        <div class="champ-affichage champ-affichage-slogan">
+          <h2 class="header-organisateur__slogan">
+            <?= $slogan ? esc_html($slogan) : ($peut_modifier ? 'Votre slogan ici…' : ''); ?>
+          </h2>
+
+          <?php if ($peut_modifier) : ?>
+            <button type="button"
+              class="champ-modifier"
+              aria-label="Modifier le slogan">
+              ✏️
+            </button>
+          <?php endif; ?>
+        </div>
+
+        <div class="champ-edition" style="display: none;">
+          <input type="text" maxlength="70" value="<?= esc_attr($slogan); ?>" class="champ-input">
+          <button type="button" class="champ-enregistrer">✓</button>
+          <button type="button" class="champ-annuler">✖</button>
+        </div>
+
+        <div class="champ-feedback"></div>
+      </div>
     </div>
-    <header class="header-organisateur">
-      <div class="conteneur-organisateur">
-    
-        <!-- Colonne gauche : logo -->
-        <div class="colonne-logo">
-          <div class="champ-organisateur champ-img champ-logo <?= empty($logo_id) ? 'champ-vide' : ''; ?>"
-               data-cpt="organisateur"
-               data-champ="profil_public_logo_organisateur"
-               data-post-id="<?= esc_attr($organisateur_id); ?>">
-    
-            <div class="champ-affichage">
-              <?php if ($peut_modifier) : ?>
-                <button type="button"
-                        class="champ-modifier header-img-modifiable header-organisateur__logo"
-                        aria-label="Modifier le logo"
-                        data-champ="profil_public_logo_organisateur"
-                        data-cpt="organisateur"
-                        data-post-id="<?= esc_attr($organisateur_id); ?>">
-                  <img src="<?= esc_url($logo_url); ?>" alt="Logo de l’organisateur">
-                  <span class="icone-modif">✏️</span>
-                </button>
-              <?php else : ?>
-                <div class="header-organisateur__logo">
-                  <img src="<?= esc_url($logo_url); ?>" alt="Logo de l’organisateur">
-                </div>
-              <?php endif; ?>
-            </div>
-    
-            <input type="hidden" class="champ-input" value="<?= esc_attr($logo_id ?? '') ?>">
-            <div class="champ-feedback"></div>
-          </div>
-        </div>
-    
-        <!-- Colonne droite : contenu -->
-        <div class="colonne-texte">
-          <!-- Titre -->
-          <div class="champ-organisateur champ-txt-editable champ-titre <?= empty($titre_organisateur) ? 'champ-vide' : ''; ?>"
-               data-champ="post_title"
-               data-cpt="organisateur"
-               data-post-id="<?= esc_attr($organisateur_id); ?>">
-    
-            <div class="champ-affichage champ-affichage-titre">
-              <h1 class="header-organisateur__nom <?= $class_titre; ?>">
-                <?= esc_html($titre_organisateur); ?>
-              </h1>
-    
-              <?php if ($peut_modifier) : ?>
-                <button type="button"
-                        class="champ-modifier"
-                        aria-label="Modifier le nom d’organisateur">
-                  ✏️
-                </button>
-              <?php endif; ?>
-            </div>
-    
-            <div class="champ-edition" style="display: none;">
-              <input type="text" maxlength="50" value="<?= esc_attr($titre_organisateur); ?>" class="champ-input">
-              <button type="button" class="champ-enregistrer">✓</button>
-              <button type="button" class="champ-annuler">✖</button>
-            </div>
-    
-            <div class="champ-feedback"></div>
-          </div>
-    
-          <!-- Slogan -->
-          <div class="champ-organisateur champ-txt-editable champ-slogan <?= empty($slogan) ? 'champ-vide' : ''; ?>"
-               data-champ="profil_public_description_courte"
-               data-cpt="organisateur"
-               data-post-id="<?= esc_attr($organisateur_id); ?>">
-    
-            <div class="champ-affichage champ-affichage-slogan">
-              <h2 class="header-organisateur__slogan">
-                <?= $slogan ? esc_html($slogan) : ($peut_modifier ? 'Votre slogan ici…' : ''); ?>
-              </h2>
-    
-              <?php if ($peut_modifier) : ?>
-                <button type="button"
-                        class="champ-modifier"
-                        aria-label="Modifier le slogan">
-                  ✏️
-                </button>
-              <?php endif; ?>
-            </div>
-    
-            <div class="champ-edition" style="display: none;">
-              <input type="text" maxlength="70" value="<?= esc_attr($slogan); ?>" class="champ-input">
-              <button type="button" class="champ-enregistrer">✓</button>
-              <button type="button" class="champ-annuler">✖</button>
-            </div>
-    
-            <div class="champ-feedback"></div>
-          </div>
-        </div>
-    
-        <!-- Icône réglage (toggle panneau + stylos) -->
-        <div class="header-actions-droite">
-          <button id="toggle-mode-edition" class="bouton-edition-toggle" aria-label="Paramètres organisateur">
-            <i class="fa-solid fa-sliders"></i>
-          </button>
-        </div>
-      </div>
-    
-      <!-- Bande menu en dehors du flex principal -->
-      <div class="header-organisateur__menu-bar">
-        <nav class="header-organisateur__menu header-organisateur__menu--sous-titre">
-          <ul>
-            <li class="onglet-chasses <?= !$est_contact ? 'active' : ''; ?>">
-              <a href="<?= esc_url($est_contact ? $base_url . '#chasses' : '#chasses'); ?>">Chasses</a>
-            </li>
-            <li class="onglet-presentation <?= !$est_contact ? '' : ''; ?>">
-              <a href="<?= esc_url($est_contact ? $base_url . '#presentation' : '#presentation'); ?>">Présentation</a>
-            </li>
-            <li class="onglet-contact <?= $est_contact ? 'active' : ''; ?>">
-              <a href="<?= esc_url($url_contact); ?>" class="onglet-nav">Contact</a>
-            </li>
-          </ul>
-        </nav>
-      </div>
-    </header>
+
+    <!-- Icône réglage (toggle panneau + stylos) -->
+    <div class="header-actions-droite">
+      <button id="toggle-mode-edition" class="bouton-edition-toggle" aria-label="Paramètres organisateur">
+        <i class="fa-solid fa-sliders"></i>
+      </button>
+    </div>
+</div>
+
+<!-- Bande menu en dehors du flex principal -->
+<div class="header-organisateur__menu-bar">
+  <nav class="header-organisateur__menu header-organisateur__menu--sous-titre">
+    <ul>
+      <li class="onglet-chasses <?= !$est_contact ? 'active' : ''; ?>">
+        <a href="<?= esc_url($est_contact ? $base_url . '#chasses' : '#chasses'); ?>">Chasses</a>
+      </li>
+      <li class="onglet-presentation <?= !$est_contact ? '' : ''; ?>">
+        <a href="<?= esc_url($est_contact ? $base_url . '#presentation' : '#presentation'); ?>">Présentation</a>
+      </li>
+      <li class="onglet-contact <?= $est_contact ? 'active' : ''; ?>">
+        <a href="<?= esc_url($url_contact); ?>" class="onglet-nav">Contact</a>
+      </li>
+    </ul>
+  </nav>
+</div>
+</header>
 </div>
 
 <script>
-  document.addEventListener('DOMContentLoaded', function () {
+  document.addEventListener('DOMContentLoaded', function() {
     document.body.dataset.organisateurId = "<?= esc_attr($organisateur_id); ?>";
   });
 </script>
@@ -170,13 +144,11 @@ $url_contact = esc_url($base_url . 'contact?email_organisateur=' . urlencode($em
 <?php
 
 get_template_part('template-parts/organisateur/panneau-organisateur', null, [
-    'organisateur_id' => $organisateur_id
+  'organisateur_id' => $organisateur_id
 ]);
 get_template_part('template-parts/organisateur/presentation-organisateur', null, [
-    'organisateur_id' => $organisateur_id
+  'organisateur_id' => $organisateur_id
 ]);
 
 
 ?>
-
-
