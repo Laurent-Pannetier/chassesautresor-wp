@@ -8,7 +8,6 @@ $logo_id = get_field('profil_public_logo_organisateur', $organisateur_id, false)
 $logo = wp_get_attachment_image_src($logo_id, 'medium');
 $logo_url = $logo ? $logo[0] : esc_url(wp_get_attachment_image_src(3927, 'medium')[0]);
 
-$slogan = get_field('profil_public_description_courte', $organisateur_id);
 $titre_organisateur = get_post_field('post_title', $organisateur_id);
 
 if (!is_numeric($organisateur_id)) return;
@@ -78,42 +77,22 @@ $url_contact = esc_url($base_url . 'contact?email_organisateur=' . urlencode($em
         <h1 class="header-organisateur__nom"><?= esc_html($titre_organisateur); ?></h1>
       </div>
 
-      <!-- Slogan -->
-      <div class="champ-organisateur champ-txt-editable champ-slogan <?= empty($slogan) ? 'champ-vide' : ''; ?>"
-        data-champ="profil_public_description_courte"
-        data-cpt="organisateur"
-        data-post-id="<?= esc_attr($organisateur_id); ?>">
-
-        <div class="champ-affichage champ-affichage-slogan">
-          <h2 class="header-organisateur__slogan">
-            <?= $slogan ? esc_html($slogan) : ($peut_modifier ? 'Votre slogan ici…' : ''); ?>
-          </h2>
-
-          <?php if ($peut_modifier) : ?>
-            <button type="button"
-              class="champ-modifier"
-              aria-label="Modifier le slogan">
-              ✏️
-            </button>
-          <?php endif; ?>
-        </div>
-
-        <div class="champ-edition" style="display: none;">
-          <input type="text" maxlength="70" value="<?= esc_attr($slogan); ?>" class="champ-input">
-          <button type="button" class="champ-enregistrer">✓</button>
-          <button type="button" class="champ-annuler">✖</button>
-        </div>
-
-        <div class="champ-feedback"></div>
+      <div class="champ-edition" style="display: none;">
+        <input type="text" maxlength="70" value="<?= esc_attr($slogan); ?>" class="champ-input">
+        <button type="button" class="champ-enregistrer">✓</button>
+        <button type="button" class="champ-annuler">✖</button>
       </div>
-    </div>
 
-    <!-- Icône réglage (toggle panneau + stylos) -->
-    <div class="header-actions-droite">
-      <button id="toggle-mode-edition" class="bouton-edition-toggle" aria-label="Paramètres organisateur">
-        <i class="fa-solid fa-sliders"></i>
-      </button>
+      <div class="champ-feedback"></div>
     </div>
+</div>
+
+<!-- Icône réglage (toggle panneau + stylos) -->
+<div class="header-actions-droite">
+  <button id="toggle-mode-edition" class="bouton-edition-toggle" aria-label="Paramètres organisateur">
+    <i class="fa-solid fa-sliders"></i>
+  </button>
+</div>
 </div>
 
 <!-- Bande menu en dehors du flex principal -->

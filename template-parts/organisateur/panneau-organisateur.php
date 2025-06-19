@@ -18,7 +18,6 @@ $edition_active = in_array('organisateur_creation', $roles);
 $titre        = get_post_field('post_title', $organisateur_id);
 $logo         = get_field('profil_public_logo_organisateur', $organisateur_id);
 $description  = get_field('description_longue', $organisateur_id);
-$slogan       = get_field('profil_public_description_courte', $organisateur_id);
 $reseaux      = get_field('reseaux_sociaux', $organisateur_id);
 $site         = get_field('lien_site_web', $organisateur_id);
 $email_contact = get_field('profil_public_email_contact', $organisateur_id);
@@ -125,19 +124,6 @@ $classe_vide_coordonnees = ($iban_vide || $bic_vide) ? 'champ-vide' : '';
           <div class="resume-bloc resume-facultatif deux-col-bloc">
             <h3>Facultatif (mais recommandé)</h3>
             <ul class="resume-infos">
-              <li class="ligne-slogan <?= !empty($slogan) ? 'champ-rempli' : ''; ?>" data-champ="profil_public_description_courte">
-                Un slogan
-                <?php if ($peut_modifier) : ?>
-                  <button type="button"
-                    class="champ-modifier"
-                    aria-label="Modifier le slogan"
-                    data-champ="profil_public_description_courte"
-                    data-cpt="organisateur"
-                    data-post-id="<?php echo esc_attr($organisateur_id); ?>">
-                    ✏️
-                  </button>
-                <?php endif; ?>
-              </li>
 
               <li class="ligne-liens <?= ($nb_liens > 0) ? 'champ-rempli' : ''; ?>" data-champ="liens_publics">
                 des liens externes (réseau social ou site)

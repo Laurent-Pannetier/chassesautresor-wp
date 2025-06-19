@@ -414,13 +414,6 @@ function initChampTexte(bloc) {
         affichageTexte.innerHTML = '<strong>Email de contact :</strong> <em>' + fallback + '</em>';
       }
     }
-
-    if (champ === 'profil_public_description_courte') {
-      const affichageTexte = affichage.querySelector('h2');
-      if (affichageTexte && input.value.trim() === '') {
-        affichageTexte.textContent = 'Votre slogan ici…';
-      }
-    }
   });
 
   // ❌ Annulation
@@ -480,9 +473,6 @@ function initChampTexte(bloc) {
             if (p) {
               p.innerHTML = '<strong>Email de contact :</strong> ' + (valeur ? valeur : '<em>' + fallbackEmail + '</em>');
             }
-          } else if (champ === 'profil_public_description_courte') {
-            const h2 = affichage.querySelector('h2');
-            if (h2) h2.textContent = valeur || 'Votre slogan ici…';
           } else if (affichageTexte) {
             affichageTexte.textContent = valeur;
           }

@@ -198,9 +198,7 @@ function ajax_modifier_champ_organisateur()
 
   // 🗺️ Table de correspondance si champ dans un groupe ACF
   $champ_correspondances = [
-    'description_courte'                => 'profil_public_description_courte',
     'email_contact'                     => 'profil_public_email_contact',
-    'profil_public_description_courte' => 'profil_public_description_courte',
     'parlez_de_vous_presentation'       => 'description_longue',
   ];
 
