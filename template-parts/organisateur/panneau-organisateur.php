@@ -64,7 +64,7 @@ $classe_vide_coordonnees = ($iban_vide || $bic_vide) ? 'champ-vide' : '';
           <div class="resume-bloc resume-obligatoire deux-col-bloc">
             <h3>Champs obligatoires</h3>
             <ul class="resume-infos">
-              <<li class="champ-organisateur champ-titre ligne-titre <?= empty($titre) ? 'champ-vide' : 'champ-rempli'; ?>"
+              <li class="champ-organisateur champ-titre ligne-titre <?= empty($titre) ? 'champ-vide' : 'champ-rempli'; ?>"
                 data-champ="post_title"
                 data-cpt="organisateur"
                 data-post-id="<?= esc_attr($organisateur_id); ?>">
