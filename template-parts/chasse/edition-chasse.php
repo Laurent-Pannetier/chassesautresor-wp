@@ -68,27 +68,22 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
                   data-cpt="chasse"
                   data-post-id="<?= esc_attr($chasse_id); ?>">
 
-                  Titre de la chasse
-                  <button type="button"
-                    class="champ-modifier"
-                    aria-label="Modifier le titre">
-                    ✏️
-                  </button>
+                  <div class="champ-affichage">
+                    <label for="champ-titre-chasse">Titre de la chasse</label>
+                    <button type="button" class="champ-modifier" aria-label="Modifier le titre">
+                      ✏️
+                    </button>
+                  </div>
 
-                  <div class="champ-edition">
-                    <input type="text"
-                      class="champ-input"
-                      maxlength="70"
-                      value="<?= esc_attr($titre); ?>"
-                      id="champ-titre-chasse">
+                  <div class="champ-edition" style="display: none;">
+                    <input type="text" class="champ-input" maxlength="70" value="<?= esc_attr($titre); ?>" id="champ-titre-chasse">
                     <button type="button" class="champ-enregistrer">✓</button>
                     <button type="button" class="champ-annuler">✖</button>
                   </div>
 
                   <div class="champ-feedback"></div>
                 </li>
-
-
+                
                 <!-- Description -->
                 <li class="champ-chasse champ-description <?= empty($description) ? 'champ-vide' : 'champ-rempli'; ?>"
                   data-champ="chasse_principale_description"
