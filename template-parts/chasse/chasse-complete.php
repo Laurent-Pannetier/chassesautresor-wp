@@ -7,6 +7,9 @@ if (!$chasse_id || get_post_type($chasse_id) !== 'chasse') {
 }
 
 $titre = get_the_title($chasse_id);
+$champTitreParDefaut = 'nouvelle chasse';
+$isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut);
+
 
 // Champs ACF principaux
 $caracteristiques = get_field('caracteristiques', $chasse_id);
@@ -139,23 +142,8 @@ if (current_user_can('administrator')) {
     <!-- 📟 Informations -->
     <div class="chasse-details-wrapper">
 
-      <!-- Titre editable -->
-      <li class="champ-chasse champ-titre <?= ($isTitreParDefaut ? 'champ-vide' : 'champ-rempli'); ?>"
-        data-champ="post_title"
-        data-cpt="chasse"
-        data-post-id="<?= esc_attr($chasse_id); ?>">
-
-        <label for="champ-titre-chasse">Titre de la chasse</label>
-
-        <div class="champ-edition">
-          <input type="text" class="champ-input" maxlength="70" value="<?= esc_attr($titre); ?>" id="champ-titre-chasse">
-          <button type="button" class="champ-enregistrer">✓</button>
-          <button type="button" class="champ-annuler">✖</button>
-        </div>
-
-        <div class="champ-feedback"></div>
-      </li>
-
+      <!-- Titre -->
+      
 
       <?php if ($organisateur_id): ?>
         <p class="txt-small auteur-organisateur">
