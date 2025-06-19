@@ -68,14 +68,12 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
                   data-cpt="chasse"
                   data-post-id="<?= esc_attr($chasse_id); ?>">
 
-                  <div class="champ-affichage">
-                    <label for="champ-titre-chasse">Titre de la chasse</label>
-                    <button type="button"
-                      class="champ-modifier"
-                      aria-label="Modifier le titre">
-                      ✏️
-                    </button>
-                  </div>
+                  Titre de la chasse
+                  <button type="button"
+                    class="champ-modifier"
+                    aria-label="Modifier le titre">
+                    ✏️
+                  </button>
 
                   <div class="champ-edition" style="display: none;">
                     <input type="text"
@@ -89,6 +87,7 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
 
                   <div class="champ-feedback"></div>
                 </li>
+
 
                 <!-- Description -->
                 <li class="champ-chasse champ-description <?= empty($description) ? 'champ-vide' : 'champ-rempli'; ?>"

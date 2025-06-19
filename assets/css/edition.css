@@ -215,13 +215,7 @@ body .header-img-modifiable .icone-modif{
 
 /* ========== 🎯 BOUTON ✏️ ÉDITION DE CONTENU ========== */
 
-/* initialisation champs cachés par défaut */
-.champ-modifier {
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.2s ease;
-  display: none;
-}
+
 /* Boutons d’édition */
 body.edition-active-chasse .page-chasse-wrapper .champ-modifier,
 body.edition-active .header-organisateur-wrapper .champ-modifier,
