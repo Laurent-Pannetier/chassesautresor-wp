@@ -2,186 +2,24 @@
     defined('ABSPATH') || exit;
 
 
-    //
-    // 👤 STATUT UTILISATEUR – ÉNIGMES
-    // 🎯 TENTATIVES – ÉNIGMES (pointage & limitations)
-    // 🧩 CONTRÔLES ET RÉGLAGES AVANCÉS
-    // 🖼️️ AFFICHAGE DES VISUELS D’ÉNIGMES
-    // 🧩 AFFICHAGE DES ÉNIGMES – TEMPLATE UNIQUE & VARIANTS
-    // 📬 GESTION DES RÉPONSES MANUELLES AUX ÉNIGMES
-    //
-
-
-    // ==================================================
-    // 👤 STATUT UTILISATEUR – ÉNIGMES
-    // ==================================================
-    /**
-     * 🔹 enigme_get_statut_utilisateur() → Retourne le statut actuel de l’utilisateur pour une énigme.
-     */
-
-
-    /**
-     * Récupère le statut actuel de l’utilisateur pour une énigme.
-     *
-     * Statuts possibles :
-     * - non_souscrite : le joueur n'a jamais interagi avec l’énigme
-     * - en_cours      : le joueur a commencé l’énigme
-     * - resolue       : le joueur a trouvé la bonne réponse
-     * - terminee      : l’énigme a été finalisée dans un autre contexte
-     * - echouee       : le joueur a tenté et échoué
-     * - abandonnee    : le joueur a abandonné explicitement ou par expiration
-     *
-     * @param int $enigme_id ID de l’énigme.
-     * @param int $user_id   ID de l’utilisateur.
-     * @return string Statut actuel (par défaut : 'non_souscrite').
-     */
-    function enigme_get_statut_utilisateur(int $enigme_id, int $user_id): string
-    {
-        if (!$enigme_id || !$user_id) {
-            return 'non_commencee';
-        }
-
-        global $wpdb;
-        $table = $wpdb->prefix . 'enigme_statuts_utilisateur';
-
-        $statut = $wpdb->get_var($wpdb->prepare(
-            "SELECT statut FROM $table WHERE user_id = %d AND enigme_id = %d",
-            $user_id,
-            $enigme_id
-        ));
-
-        return $statut ?: 'non_commencee';
-    }
+    // 🔧 CONTRÔLES ET RÉGLAGES AVANCÉS – ÉNIGMES
+    // 🧾 ENREGISTREMENT DES ENGAGEMENTS
+    // 🖼️ AFFICHAGE DES VISUELS D’ÉNIGMES
+    // 🎨 AFFICHAGE STYLISÉ DES ÉNIGMES
+    // 📬 GESTION DES RÉPONSES MANUELLES (FRONTEND)
+    // ✉️ ENVOI D'EMAILS (RÉPONSES MANUELLES)
+    // 📊 GESTION DES TENTATIVES UTILISATEUR
 
 
 
     // ==================================================
-    // 🎯 TENTATIVES – ÉNIGMES (pointage & limitations)
-    // ==================================================
-    /**
-     * 🔹 enigme_get_tentatives_restantes() → Retourne le nombre de tentatives restantes pour un utilisateur sur une énigme.
-     */
-
-    /**
-     * Retourne le nombre de tentatives restantes pour un utilisateur sur une énigme, pour aujourd’hui.
-     * Tient compte de la limite quotidienne définie dans `enigme_tentative_max`.
-     *
-     * @param int $enigme_id
-     * @param int $user_id
-     * @return int|null Null si illimité, sinon nombre de tentatives restantes
-     */
-    function enigme_get_tentatives_restantes($enigme_id, $user_id)
-    {
-        if (!$enigme_id || !$user_id) return null;
-
-        $limite = get_field('enigme_tentative_max', $enigme_id);
-        if (!$limite || $limite <= 0) {
-            return null; // Tentatives illimitées
-        }
-
-        // Clé formatée pour la date du jour
-        $date = current_time('Ymd'); // Ex: 20250430
-        $meta_key = "enigme_{$enigme_id}_tentatives_{$date}";
-
-        $deja_fait = (int) get_user_meta($user_id, $meta_key, true);
-        return max(0, $limite - $deja_fait);
-    }
-
-
-    /**
-     * Enregistre une tentative pour un utilisateur donné sur une énigme,
-     * en incrémentant le compteur du jour.
-     *
-     * @param int $enigme_id
-     * @param int $user_id
-     * @return bool True si la tentative a été enregistrée, false sinon
-     */
-    function enigme_enregistrer_tentative($enigme_id, $user_id)
-    {
-        if (!$enigme_id || !$user_id) return false;
-
-        $date = current_time('Ymd');
-        $meta_key = "enigme_{$enigme_id}_tentatives_{$date}";
-
-        $compteur = (int) get_user_meta($user_id, $meta_key, true);
-        $compteur++;
-
-        update_user_meta($user_id, $meta_key, $compteur);
-
-        // 🔍 Log (désactivable plus tard)
-        $titre = get_the_title($enigme_id);
-        error_log("[Enigme] Tentative enregistrée pour #$user_id sur énigme #$enigme_id ($titre) → $compteur tentative(s)");
-
-        return true;
-    }
-
-
-    /**
-     * Vérifie si l’utilisateur a dépassé le nombre de tentatives autorisées aujourd’hui pour une énigme.
-     *
-     * @param int $enigme_id
-     * @param int $user_id
-     * @return bool True si le nombre de tentatives est dépassé, false sinon
-     */
-    function enigme_tentatives_depassees($enigme_id, $user_id)
-    {
-        if (!$enigme_id || !$user_id) return false;
-
-        $limite = get_field('enigme_tentative_max', $enigme_id);
-        if (!$limite || $limite <= 0) {
-            return false; // Illimité = jamais dépassé
-        }
-
-        $date = current_time('Ymd');
-        $meta_key = "enigme_{$enigme_id}_tentatives_{$date}";
-
-        $compteur = (int) get_user_meta($user_id, $meta_key, true);
-        return $compteur >= $limite;
-    }
-
-
-    /**
-     * Réinitialise les tentatives d’un utilisateur pour une énigme donnée.
-     *
-     * @param int $enigme_id
-     * @param int $user_id
-     * @param bool $toutes True pour supprimer toutes les tentatives (par défaut : seulement aujourd’hui)
-     * @return int Nombre de lignes supprimées
-     */
-    function enigme_reinitialiser_tentatives($enigme_id, $user_id, $toutes = false)
-    {
-        if (!$enigme_id || !$user_id) return 0;
-
-        global $wpdb;
-        $prefix = "enigme_{$enigme_id}_tentatives_";
-
-        if ($toutes) {
-            // Supprime toutes les tentatives (toutes dates)
-            $like = $wpdb->esc_like($prefix) . '%';
-            return (int) $wpdb->query(
-                $wpdb->prepare(
-                    "DELETE FROM {$wpdb->usermeta} WHERE user_id = %d AND meta_key LIKE %s",
-                    $user_id,
-                    $like
-                )
-            );
-        } else {
-            // Supprime uniquement la tentative du jour
-            $date = current_time('Ymd');
-            $meta_key = $prefix . $date;
-            return delete_user_meta($user_id, $meta_key) ? 1 : 0;
-        }
-    }
-
-
-    // ==================================================
-    // 🧩 CONTRÔLES ET RÉGLAGES AVANCÉS – ÉNIGMES
+    // 🔧 CONTRÔLES ET RÉGLAGES AVANCÉS – ÉNIGMES
     // ==================================================
     /**
      * 🔹 enigme_get_liste_prerequis_possibles() → Retourne les autres énigmes de la même chasse pouvant être définies comme prérequis.
      * 🔹 get_cta_enigme() → Retourne les informations d'affichage du bouton CTA en fonction du statut et du contexte de l'énigme.
+     * 🔹 render_cta_enigme() → Affiche le bouton CTA d'une énigme à partir des données retournées par get_cta_enigme().
      */
-
 
     /**
      * 🔍 Retourne la liste des énigmes pouvant être sélectionnées comme prérequis.
@@ -229,100 +67,236 @@
 
 
     /**
-     * Retourne les données nécessaires à l'affichage du bouton CTA d'une énigme
-     * selon le statut utilisateur, le coût en points, et les tentatives restantes.
+     * Retourne les données d’affichage du bouton d’engagement d’une énigme.
+     *
+     * Types possibles :
+     * - voir        → lien direct réservé admin / organisateur
+     * - connexion   → utilisateur non connecté
+     * - engager     → première tentative ou ré-engagement possible
+     * - continuer   → énigme en cours
+     * - revoir      → énigme résolue
+     * - terminee    → énigme finalisée (lecture seule)
+     * - bloquee     → bloquée par la chasse ou une date
+     * - invalide    → configuration incorrecte
      *
      * @param int $enigme_id
      * @param int|null $user_id
      * @return array{
-     *   type: string,             // Nom logique du CTA (ex: 'decouvrir', 'reessayer')
-     *   label: string,            // Texte affiché sur le bouton
-     *   sous_label: string|null, // Texte d'aide ou info affiché sous le bouton
-     *   points: int|null,         // Coût en points si applicable
-     *   action: string            // Type d'action attendue ('formulaire', 'paiement', 'message', etc.)
+     *   type: string,
+     *   label: string,
+     *   sous_label: string|null,
+     *   action: 'form'|'link'|'disabled',
+     *   url: string|null,
+     *   points: int|null
      * }
      */
     function get_cta_enigme(int $enigme_id, ?int $user_id = null): array
     {
-        $user_id = $user_id ?: get_current_user_id();
-        $statut = enigme_get_statut($enigme_id, $user_id);
-        $points = (int) get_field('enigme_tentative_cout_points', $enigme_id);
-        $limite = (int) get_field('enigme_tentative_max', $enigme_id);
+        $user_id = $user_id ?? get_current_user_id();
 
-        $tentatives_restantes = null;
-        if ($points === 0 && $user_id) {
-            $tentatives_restantes = enigme_get_tentatives_restantes($enigme_id, $user_id);
+        $chasse_id = recuperer_id_chasse_associee($enigme_id);
+        if (
+            current_user_can('manage_options') ||
+            utilisateur_est_organisateur_associe_a_chasse($user_id, $chasse_id)
+        ) {
+            return [
+                'type'       => 'voir',
+                'label'      => '👁️ Voir l’énigme',
+                'sous_label' => 'Accès organisateur',
+                'action'     => 'link',
+                'url'        => get_permalink($enigme_id),
+                'points'     => null,
+            ];
+        }
+
+        if (!is_user_logged_in()) {
+            return [
+                'type'       => 'connexion',
+                'label'      => '🔐 Connectez-vous',
+                'sous_label' => null,
+                'action'     => 'link',
+                'url'        => site_url('/mon-compte'),
+                'points'     => null,
+            ];
+        }
+
+        $etat = enigme_get_etat_systeme($enigme_id);
+        $statut = enigme_get_statut_utilisateur($enigme_id, $user_id);
+        $tentative = get_field('enigme_tentative', $enigme_id);
+        $points = intval($tentative['enigme_tentative_cout_points'] ?? 0);
+
+        if (!in_array($etat, ['accessible'], true)) {
+            $type = in_array($etat, ['bloquee_date', 'bloquee_chasse']) ? 'bloquee' : 'invalide';
+            return [
+                'type'       => $type,
+                'label'      => 'Indisponible',
+                'sous_label' => 'Cette énigme est bloquée ou mal configurée.',
+                'action'     => 'disabled',
+                'url'        => null,
+                'points'     => null,
+            ];
         }
 
         switch ($statut) {
             case 'resolue':
                 return [
                     'type'       => 'revoir',
-                    'label'      => 'Revoir',
-                    'sous_label' => 'Vous avez déjà résolu cette énigme.',
+                    'label'      => '🔁 Revoir',
+                    'sous_label' => 'Énigme déjà résolue',
+                    'action'     => 'link',
+                    'url'        => get_permalink($enigme_id),
                     'points'     => null,
-                    'action'     => 'formulaire',
-                ];
-
-            case 'echouee':
-                return [
-                    'type'       => 'reessayer',
-                    'label'      => 'Réessayer',
-                    'sous_label' => ($points === 0 && $tentatives_restantes !== null)
-                        ? "$tentatives_restantes tentative(s) restante(s) aujourd'hui"
-                        : null,
-                    'points'     => $points ?: null,
-                    'action'     => 'formulaire',
-                ];
-
-            case 'abandonnee':
-                return [
-                    'type'       => 'reprendre',
-                    'label'      => 'Reprendre',
-                    'sous_label' => 'Revenir là où vous en étiez.',
-                    'points'     => null,
-                    'action'     => 'formulaire',
                 ];
 
             case 'en_cours':
                 return [
                     'type'       => 'continuer',
-                    'label'      => 'Continuer',
+                    'label'      => '▶️ Continuer',
                     'sous_label' => null,
+                    'action'     => 'link',
+                    'url'        => get_permalink($enigme_id),
                     'points'     => null,
-                    'action'     => 'formulaire',
                 ];
 
-            case 'non_souscrite':
-                if ($points > 0) {
-                    return [
-                        'type'       => 'debloquer',
-                        'label'      => 'Débloquer',
-                        'sous_label' => "$points points",
-                        'points'     => $points,
-                        'action'     => 'paiement',
-                    ];
-                }
+            case 'terminee':
                 return [
-                    'type'       => 'decouvrir',
-                    'label'      => 'Découvrir',
-                    'sous_label' => ($tentatives_restantes !== null)
-                        ? "$tentatives_restantes tentative(s) restante(s) aujourd'hui"
-                        : null,
+                    'type'       => 'terminee',
+                    'label'      => '✔️ Terminé',
+                    'sous_label' => null,
+                    'action'     => 'disabled',
+                    'url'        => null,
                     'points'     => null,
-                    'action'     => 'formulaire',
+                ];
+
+            case 'echouee':
+                return [
+                    'type'       => 'engager',
+                    'label'      => ($points > 0) ? "Réessayer pour $points pts" : "Réessayer",
+                    'sous_label' => null,
+                    'action'     => 'form',
+                    'url'        => site_url('/traitement-engagement'),
+                    'points'     => $points,
+                ];
+
+            case 'abandonnee':
+            case 'echouee':
+                return [
+                    'type'       => 'engager',
+                    'label'      => ($points > 0) ? "Débloquer pour $points pts" : "Commencer",
+                    'sous_label' => null,
+                    'action'     => 'form',
+                    'url'        => site_url('/traitement-engagement'),
+                    'points'     => $points,
                 ];
 
             default:
                 return [
-                    'type'       => 'indisponible',
-                    'label'      => 'Indisponible',
-                    'sous_label' => 'Cette énigme est actuellement inaccessible.',
-                    'points'     => null,
+                    'type'       => 'invalide',
+                    'label'      => 'Erreur',
+                    'sous_label' => 'Statut utilisateur inconnu',
                     'action'     => 'disabled',
+                    'url'        => null,
+                    'points'     => null,
                 ];
         }
     }
+
+
+    /**
+     * @param array $cta Résultat de get_cta_enigme().
+     * @param int $enigme_id ID de l’énigme concernée (utile pour les formulaires).
+     */
+    function render_cta_enigme(array $cta, int $enigme_id): void
+    {
+        switch ($cta['action']) {
+            case 'form':
+    ?>
+             <form method="post" action="<?= esc_url($cta['url']); ?>" class="cta-enigme-form">
+                 <input type="hidden" name="enigme_id" value="<?= esc_attr($enigme_id); ?>">
+                 <?php wp_nonce_field('engager_enigme_' . $enigme_id, 'engager_enigme_nonce'); ?>
+                 <button type="submit"><?= esc_html($cta['label']); ?></button>
+                 <?php if (!empty($cta['sous_label'])): ?>
+                     <div class="cta-sous-label"><?= esc_html($cta['sous_label']); ?></div>
+                 <?php endif; ?>
+             </form>
+         <?php
+                break;
+
+            case 'link':
+            ?>
+             <a href="<?= esc_url($cta['url']); ?>" class="cta-enigme-lien">
+                 <?= esc_html($cta['label']); ?>
+             </a>
+             <?php if (!empty($cta['sous_label'])): ?>
+                 <div class="cta-sous-label"><?= esc_html($cta['sous_label']); ?></div>
+             <?php endif; ?>
+         <?php
+                break;
+
+            case 'disabled':
+            default:
+            ?>
+             <p class="cta-enigme-desactive"><?= esc_html($cta['label']); ?></p>
+             <?php if (!empty($cta['sous_label'])): ?>
+                 <div class="cta-sous-label"><?= esc_html($cta['sous_label']); ?></div>
+             <?php endif; ?>
+     <?php
+                break;
+        }
+    }
+
+
+
+    // ==================================================
+    // 🧾 ENREGISTREMENT DES ENGAGEMENTS
+    // ==================================================
+    /**
+     * 🔹 enregistrer_engagement_enigme() → Insère un engagement dans la table SQL `wp_enigme_engagements`.
+     * 🔹 marquer_enigme_comme_engagee() → Met à jour le statut utilisateur ET enregistre un engagement SQL.
+     */
+
+    /**
+     * Vérifie d’abord si un engagement identique existe déjà.
+     *
+     * @param int $user_id
+     * @param int $enigme_id
+     * @return bool True si insertion effectuée ou déjà existante.
+     */
+    function enregistrer_engagement_enigme(int $user_id, int $enigme_id): bool
+    {
+        global $wpdb;
+        $table = $wpdb->prefix . 'enigme_engagements';
+
+        $existe = $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*) FROM $table WHERE user_id = %d AND enigme_id = %d",
+            $user_id,
+            $enigme_id
+        ));
+
+        if ($existe) return true;
+
+        $result = $wpdb->insert($table, [
+            'user_id'         => $user_id,
+            'enigme_id'       => $enigme_id,
+            'date_engagement' => current_time('mysql'),
+        ], ['%d', '%d', '%s']);
+
+        return $result !== false;
+    }
+
+
+    /** *
+     * @param int $user_id
+     * @param int $enigme_id
+     * @return bool True si tout s’est bien passé.
+     */
+    function marquer_enigme_comme_engagee(int $user_id, int $enigme_id): bool
+    {
+        $ok1 = enigme_mettre_a_jour_statut_utilisateur($enigme_id, $user_id, 'en_cours', true);
+        $ok2 = enregistrer_engagement_enigme($user_id, $enigme_id);
+        return $ok1 && $ok2;
+    }
+
 
 
 
@@ -331,6 +305,7 @@
     // ==================================================
     /**
      * 🔹 afficher_visuels_enigme() → Affiche la galerie visuelle de l’énigme si l’utilisateur y a droit (image principale + vignettes).
+     * 🔹 get_url_vignette_enigme() → Retourne l’URL proxy de la première vignette d’une énigme.
      */
 
     /**
@@ -389,7 +364,7 @@
         }
 
         // 🔁 JS interaction
-    ?>
+        ?>
      <script>
          document.addEventListener('DOMContentLoaded', function() {
              const vignettes = document.querySelectorAll('.vignette');
@@ -430,10 +405,35 @@
     }
 
 
+    /**
+     * @param int $enigme_id
+     * @return string|null
+     */
+    function get_url_vignette_enigme(int $enigme_id): ?string
+    {
+        if (!utilisateur_peut_voir_enigme($enigme_id)) {
+            return null;
+        }
+
+        $images = get_field('enigme_visuel_image', $enigme_id);
+        if (!$images || !is_array($images)) {
+            return null;
+        }
+
+        $image_id = $images[0]['ID'] ?? null;
+        if (!$image_id) return null;
+
+        return esc_url(add_query_arg([
+            'id' => $image_id,
+            'taille' => 'thumbnail',
+        ], site_url('/voir-image-enigme')));
+    }
+
+
 
 
     // ==================================================
-    // 🧩 AFFICHAGE DES ÉNIGMES – TEMPLATE UNIQUE & VARIANTS
+    // 🎨 AFFICHAGE STYLISÉ DES ÉNIGMES
     // ==================================================
     /**
      * 🔹 afficher_enigme_stylisee() → Affiche l’énigme avec son style d’affichage (structure unique + blocs surchargeables).
@@ -444,15 +444,37 @@
     /**
      * @param int $post_id ID de l’énigme à afficher.
      */
-    function afficher_enigme_stylisee($post_id)
+    /**
+     * Affiche l’énigme avec son style et son état selon le contexte utilisateur.
+     *
+     * @param int $enigme_id ID de l’énigme à afficher.
+     * @param array $statut_data Données de statut retournées par traiter_statut_enigme().
+     */
+    function afficher_enigme_stylisee(int $enigme_id, array $statut_data = [])
     {
-        if (get_post_type($post_id) !== 'enigme') return;
+        if (get_post_type($enigme_id) !== 'enigme') return;
 
-        $etat = get_field('enigme_cache_etat_systeme', $post_id) ?? 'accessible';
+        error_log("🧩 [afficher_enigme_stylisee] Appel pour énigme #$enigme_id");
+
+        if (!empty($statut_data)) {
+            error_log("📦 statut_data transmis : " . print_r($statut_data, true));
+        } else {
+            error_log("❗ Aucune donnée statut_data transmise à afficher_enigme_stylisee()");
+        }
+
+        if (!empty($statut_data['afficher_message'])) {
+            error_log("✅ Affichage du message : " . strip_tags($statut_data['message_html']));
+            echo $statut_data['message_html'];
+        }
+
+        $etat = get_field('enigme_cache_etat_systeme', $enigme_id) ?? 'accessible';
+        error_log("📌 État système de l’énigme : $etat");
+
         if ($etat !== 'accessible') {
-            $chasse = get_field('enigme_chasse_associee', $post_id);
+            $chasse = get_field('enigme_chasse_associee', $enigme_id);
             $chasse_id = is_array($chasse) ? $chasse[0] ?? null : $chasse;
             if ($chasse_id) {
+                error_log("🔁 Redirection vers chasse #$chasse_id");
                 wp_safe_redirect(get_permalink($chasse_id));
                 exit;
             } else {
@@ -464,19 +486,20 @@
             }
         }
 
-        $user_id = get_current_user_id(); // ✅ récupère l'utilisateur ici
-        $style = get_field('enigme_style_affichage', $post_id) ?? 'defaut';
+        $user_id = get_current_user_id();
+        $style = get_field('enigme_style_affichage', $enigme_id) ?? 'defaut';
+        error_log("🎨 Style utilisé : $style");
 
         echo '<div class="enigme-affichage enigme-style-' . esc_attr($style) . '">';
-        enigme_get_partial('titre', $style, ['post_id' => $post_id]);
-        enigme_get_partial('images', $style, ['post_id' => $post_id]);
-        enigme_get_partial('texte', $style, ['post_id' => $post_id]);
-        enigme_get_partial('bloc-reponse', $style, [ // ✅ ajoute le user_id ici
-            'post_id' => $post_id,
+        enigme_get_partial('titre', $style, ['post_id' => $enigme_id]);
+        enigme_get_partial('images', $style, ['post_id' => $enigme_id]);
+        enigme_get_partial('texte', $style, ['post_id' => $enigme_id]);
+        enigme_get_partial('bloc-reponse', $style, [
+            'post_id' => $enigme_id,
             'user_id' => $user_id,
         ]);
-        enigme_get_partial('solution', $style, ['post_id' => $post_id]);
-        enigme_get_partial('retour-chasse', $style, ['post_id' => $post_id]);
+        enigme_get_partial('solution', $style, ['post_id' => $enigme_id]);
+        enigme_get_partial('retour-chasse', $style, ['post_id' => $enigme_id]);
         echo '</div>';
     }
 
@@ -504,21 +527,12 @@
 
 
     // ==================================================
-    // ✅ TRAITEMENT REPONSES A UNE ENIGME
+    // 📬 GESTION DES RÉPONSES MANUELLES (FRONTEND)
     // ==================================================
 
     // 🔹 afficher_formulaire_reponse_manuelle() → Affiche le formulaire de réponse manuelle (frontend).
     // 🔹 utilisateur_peut_repondre_manuelle() → Vérifie si l'utilisateur peut répondre à une énigme manuelle.
     // 🔹 soumettre_reponse_manuelle() → Traite la soumission d'une réponse manuelle (frontend).
-    // 🔹 envoyer_mail_reponse_manuelle() → Envoie un mail HTML à l'organisateur avec la réponse (expéditeur = joueur).
-    // 🔹 envoyer_mail_resultat_joueur() → Envoie un mail HTML au joueur après validation ou refus de sa réponse.
-    // 🔹 envoyer_mail_accuse_reception_joueur() → Envoie un accusé de réception au joueur juste après sa soumission.
-    // 🔹 enigme_mettre_a_jour_statut_utilisateur() → Met à jour le statut d'un joueur (user_meta).
-    // 🔹 inserer_tentative() → Insère une tentative dans la table personnalisée.
-    // 🔹 get_tentative_by_uid() → Récupère une tentative par son identifiant UID.
-    // 🔹 traiter_tentative_manuelle() → Effectue la validation/refus d'une tentative (une seule fois).
-    // 🔹 recuperer_infos_tentative() → Renvoie toutes les données pour l'affichage d'une tentative.
-    // 🔹 get_etat_tentative() → Retourne l'état logique d'une tentative selon son champ `resultat`.
 
 
 
@@ -632,6 +646,15 @@
     }
     add_action('init', 'soumettre_reponse_manuelle');
 
+
+
+    // ==================================================
+    // ✉️ ENVOI D'EMAILS (RÉPONSES MANUELLES)
+    // ==================================================
+
+    // 🔹 envoyer_mail_reponse_manuelle() → Envoie un mail HTML à l'organisateur avec la réponse (expéditeur = joueur).
+    // 🔹 envoyer_mail_resultat_joueur() → Envoie un mail HTML au joueur après validation ou refus de sa réponse.
+    // 🔹 envoyer_mail_accuse_reception_joueur() → Envoie un accusé de réception au joueur juste après sa soumission.
 
     /**
      * Envoie un email à l'organisateur avec la réponse manuelle soumise.
@@ -820,78 +843,15 @@
 
     }
 
-    /**
-     * Met à jour le statut d'un joueur pour une énigme dans la table personnalisée `wp_enigme_statuts_utilisateur`.
-     * La mise à jour ne s'effectue que si le nouveau statut est plus avancé que l'ancien.
-     *
-     * @param int $enigme_id ID de l'énigme.
-     * @param int $user_id   ID de l'utilisateur.
-     * @param string $nouveau_statut Nouveau statut ('non_commencee', 'en_cours', 'abandonnee', 'echouee', 'resolue', 'terminee').
-     * @return bool True si la mise à jour est faite, false sinon.
-     */
-    function enigme_mettre_a_jour_statut_utilisateur(int $enigme_id, int $user_id, string $nouveau_statut, bool $forcer = false): bool
-    {
-        if (!$enigme_id || !$user_id || !$nouveau_statut) {
-            return false;
-        }
 
-        global $wpdb;
-        $table = $wpdb->prefix . 'enigme_statuts_utilisateur';
-
-        $priorites = [
-            'non_commencee' => 0,
-            'soumis'        => 1,
-            'en_cours'      => 2,
-            'abandonnee'    => 3,
-            'echouee'       => 4,
-            'resolue'       => 5,
-            'terminee'      => 6,
-        ];
-
-        if (!isset($priorites[$nouveau_statut])) {
-            error_log("❌ Statut utilisateur invalide : $nouveau_statut");
-            return false;
-        }
-
-        $statut_actuel = $wpdb->get_var($wpdb->prepare(
-            "SELECT statut FROM $table WHERE user_id = %d AND enigme_id = %d",
-            $user_id,
-            $enigme_id
-        ));
-
-        // Protection : interdiction de rétrograder un joueur ayant déjà résolu l’énigme
-        if (in_array($statut_actuel, ['resolue', 'terminee'], true)) {
-            error_log("🔒 Statut non modifié : $statut_actuel → tentative de mise à jour vers $nouveau_statut bloquée (UID: $user_id / Enigme: $enigme_id)");
-            return false;
-        }
-
-        $niveau_actuel  = $priorites[$statut_actuel] ?? 0;
-        $niveau_nouveau = $priorites[$nouveau_statut];
-
-        if (!$forcer && $niveau_nouveau <= $niveau_actuel) {
-            return false;
-        }
-
-        $data = [
-            'statut'            => $nouveau_statut,
-            'date_mise_a_jour'  => current_time('mysql'),
-        ];
-
-        $where = [
-            'user_id'   => $user_id,
-            'enigme_id' => $enigme_id,
-        ];
-
-        if ($statut_actuel !== null) {
-            $wpdb->update($table, $data, $where, ['%s', '%s'], ['%d', '%d']);
-        } else {
-            $wpdb->insert($table, array_merge($where, $data), ['%d', '%d', '%s', '%s']);
-        }
-
-        return true;
-    }
-
-
+    // ==================================================
+    // 📊 GESTION DES TENTATIVES UTILISATEUR
+    // ==================================================
+    // 🔹 inserer_tentative() → Insère une tentative dans la table personnalisée.
+    // 🔹 get_tentative_by_uid() → Récupère une tentative par son identifiant UID.
+    // 🔹 traiter_tentative_manuelle() → Effectue la validation/refus d'une tentative (une seule fois).
+    // 🔹 recuperer_infos_tentative() → Renvoie toutes les données pour l'affichage d'une tentative.
+    // 🔹 get_etat_tentative() → Retourne l'état logique d'une tentative selon son champ `resultat`.
 
     /**
      * Fonction générique pour insérer une tentative dans la table personnalisée.
@@ -1051,7 +1011,6 @@
             ],
         ];
     }
-
 
 
     /**

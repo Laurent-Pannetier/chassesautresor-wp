@@ -16,95 +16,125 @@ if (!defined('ABSPATH')) {
 // 🧩 GESTION DES STATUTS ET DE L’ACCESSIBILITÉ DES ÉNIGMES
 // ==================================================
 /**
- * 🔹 enigme_get_statut                     → Récupérer le statut logique d’une énigme pour un utilisateur.
- * 🔹 enigme_is_accessible                 → Déterminer si une énigme est accessible.
- * 🔹 enigme_pre_requis_remplis            → Vérifier les prérequis d’une énigme pour un utilisateur.
- * 🔹 enigme_verifier_verrouillage         → Détail du verrouillage éventuel d’une énigme.
+ * 
+ * 🔹 enigme_get_statut_utilisateur        → Retourne le statut actuel de l’utilisateur pour une énigme.
+ * 🔹 enigme_mettre_a_jour_statut_utilisateur() → Met à jour le statut d'un joueur dans la table personnalisée.
+ * 🔹 enigme_pre_requis_remplis            → Vérifie les prérequis d’une énigme pour un utilisateur.
+ * 🔹 enigme_verifier_verrouillage         → Détaille le verrouillage éventuel d’une énigme.
  * 🔹 traiter_statut_enigme                → Détermine le comportement global à adopter (formulaire, redirection…).
  * 🔹 enigme_est_visible_pour              → Vérifie si un utilisateur peut voir une énigme.
  * 🔹 mettre_a_jour_statuts_enigmes_de_la_chasse → Recalcule tous les statuts des énigmes liées à une chasse.
  * 🔹 enigme_mettre_a_jour_etat_systeme    → Calcule ou met à jour le champ `enigme_cache_etat_systeme`.
  * 🔹 enigme_mettre_a_jour_etat_systeme_automatiquement → Hook ACF (enregistrement admin ou front).
  * 🔹 forcer_recalcul_statut_enigme        → Recalcul AJAX côté front (édition directe).
+ * 🔹 enigme_get_etat_systeme              → Retourne l’état système de l’énigme (champ ACF cache).
+ * 🔹 utilisateur_peut_engager_enigme      → Vérifie si un joueur peut engager une énigme.
  */
+
+/**
+ * Récupère le statut actuel de l’utilisateur pour une énigme.
+ *
+ * Statuts possibles :
+ * - non_souscrite : le joueur n'a jamais interagi avec l’énigme
+ * - en_cours      : le joueur a commencé l’énigme
+ * - resolue       : le joueur a trouvé la bonne réponse
+ * - terminee      : l’énigme a été finalisée dans un autre contexte
+ * - echouee       : le joueur a tenté et échoué
+ * - abandonnee    : le joueur a abandonné explicitement ou par expiration
+ *
+ * @param int $enigme_id ID de l’énigme.
+ * @param int $user_id   ID de l’utilisateur.
+ * @return string Statut actuel (par défaut : 'non_souscrite').
+ */
+function enigme_get_statut_utilisateur(int $enigme_id, int $user_id): string
+{
+    if (!$enigme_id || !$user_id) {
+        return 'non_commencee';
+    }
+
+    global $wpdb;
+    $table = $wpdb->prefix . 'enigme_statuts_utilisateur';
+
+    $statut = $wpdb->get_var($wpdb->prepare(
+        "SELECT statut FROM $table WHERE user_id = %d AND enigme_id = %d",
+        $user_id,
+        $enigme_id
+    ));
+
+    return $statut ?: 'non_commencee';
+}
 
 
 /**
- * 📄 Récupère le statut logique d'une énigme pour un utilisateur donné.
- *
- * Statuts possibles (retours) :
- * - 'en_cours'        : L'utilisateur a commencé l'énigme.
- * - 'resolue'         : L'utilisateur a résolu l'énigme.
- * - 'terminee'        : La chasse est terminée et l'utilisateur a terminé l’énigme.
- * - 'terminee_non_resolue' : La chasse est terminée mais l'utilisateur n’a pas résolu l’énigme.
- * - 'bloquee_date'    : L’énigme ou la chasse est à venir.
- * - 'bloquee_pre_requis' : L’utilisateur n’a pas rempli les conditions d’accès.
- * - 'bloquee_chasse'  : Aucune chasse valide liée.
- * - 'echouee'         : Statut utilisateur = échouée.
- * - 'abandonnee'      : L’utilisateur a abandonné l’énigme.
- * - 'non_souscrite'   : Aucun statut défini → invite à engager.
- * - 'invalide'        : Erreur de configuration (ACF ou état système incohérent).
+ * Met à jour le statut d'un joueur pour une énigme dans la table personnalisée `wp_enigme_statuts_utilisateur`.
+ * La mise à jour ne s'effectue que si le nouveau statut est plus avancé que l'ancien.
  *
  * @param int $enigme_id ID de l'énigme.
- * @param int|null $user_id ID de l'utilisateur (optionnel, auto-détecté).
- * @return string Statut logique de l'énigme.
+ * @param int $user_id   ID de l'utilisateur.
+ * @param string $nouveau_statut Nouveau statut ('non_commencee', 'en_cours', 'abandonnee', 'echouee', 'resolue', 'terminee').
+ * @return bool True si la mise à jour est faite, false sinon.
  */
-function enigme_get_statut(int $enigme_id, ?int $user_id = null): string {
-    $user_id = $user_id ?: get_current_user_id();
+function enigme_mettre_a_jour_statut_utilisateur(int $enigme_id, int $user_id, string $nouveau_statut, bool $forcer = false): bool
+{
+    if (!$enigme_id || !$user_id || !$nouveau_statut) {
+        return false;
+    }
+    global $wpdb;
+    $table = $wpdb->prefix . 'enigme_statuts_utilisateur';
 
-    // 1️⃣ Statut utilisateur (métadonnée directe)
-    $statut_meta = get_user_meta($user_id, "statut_enigme_{$enigme_id}", true);
+    $priorites = [
+        'non_commencee' => 0,
+        'soumis'        => 1,
+        'en_cours'      => 2,
+        'abandonnee'    => 3,
+        'echouee'       => 4,
+        'resolue'       => 5,
+        'terminee'      => 6,
+    ];
 
-    if (in_array($statut_meta, ['en_cours', 'resolue', 'terminee', 'echouee', 'abandonnee'], true)) {
-        return $statut_meta;
+    if (!isset($priorites[$nouveau_statut])) {
+        error_log("❌ Statut utilisateur invalide : $nouveau_statut");
+        return false;
     }
 
-    // 2️⃣ État système de l'énigme (ACF)
-    $etat = get_field('enigme_cache_etat_systeme', $enigme_id);
+    $statut_actuel = $wpdb->get_var($wpdb->prepare(
+        "SELECT statut FROM $table WHERE user_id = %d AND enigme_id = %d",
+        $user_id,
+        $enigme_id
+    ));
 
-    switch ($etat) {
-        case 'bloquee_date':
-            return 'bloquee_date';
-        case 'bloquee_chasse':
-            return 'bloquee_chasse';
-        case 'invalide':
-        case 'cache_invalide':
-            return 'invalide';
-        case 'accessible':
-            break; // on continue l’analyse
-        default:
-            return 'invalide';
+    // Protection : interdiction de rétrograder un joueur ayant déjà résolu l’énigme
+    if (!$forcer && in_array($statut_actuel, ['resolue', 'terminee'], true)) {
+        error_log("🔒 Statut non modifié : $statut_actuel → tentative de mise à jour vers $nouveau_statut bloquée (UID: $user_id / Enigme: $enigme_id)");
+        return false;
     }
 
-    // 3️⃣ Statut de la chasse liée
-    $chasse_val = get_field('enigme_chasse_associee', $enigme_id);
-    $chasse_id = null;
+    $niveau_actuel  = $priorites[$statut_actuel] ?? 0;
+    $niveau_nouveau = $priorites[$nouveau_statut];
 
-    if (is_array($chasse_val)) {
-        $chasse_id = is_object($chasse_val[0]) ? $chasse_val[0]->ID : (int) $chasse_val[0];
-    } elseif (is_object($chasse_val)) {
-        $chasse_id = $chasse_val->ID;
+    if (!$forcer && $niveau_nouveau <= $niveau_actuel) {
+        return false;
+    }
+
+    $data = [
+        'statut'            => $nouveau_statut,
+        'date_mise_a_jour'  => current_time('mysql'),
+    ];
+
+    $where = [
+        'user_id'   => $user_id,
+        'enigme_id' => $enigme_id,
+    ];
+
+    if ($statut_actuel !== null) {
+        $wpdb->update($table, $data, $where, ['%s', '%s'], ['%d', '%d']);
     } else {
-        $chasse_id = (int) $chasse_val;
+        $wpdb->insert($table, array_merge($where, $data), ['%d', '%d', '%s', '%s']);
     }
 
-    if ($chasse_id) {
-        $cache = get_field('champs_caches', $chasse_id);
-        $statut_chasse = $cache['chasse_cache_statut'] ?? null;
-
-        if ($statut_chasse === 'termine') {
-            return 'terminee';
-        }
-        if ($statut_chasse === 'a_venir') {
-            return 'bloquee_date';
-        }
-    } else {
-        return 'bloquee_chasse';
-    }
-
-    // 4️⃣ Si aucune condition bloquante : état par défaut
-    return 'non_souscrite';
+    return true;
 }
+
 
 
 /**
@@ -114,7 +144,8 @@ function enigme_get_statut(int $enigme_id, ?int $user_id = null): string {
  * @param int $user_id   ID de l'utilisateur.
  * @return bool True si tous les prérequis sont remplis ou inexistants, false sinon.
  */
-function enigme_pre_requis_remplis(int $enigme_id, int $user_id): bool {
+function enigme_pre_requis_remplis(int $enigme_id, int $user_id): bool
+{
     $pre_requis = get_field('enigme_acces_pre_requis', $enigme_id);
 
     if (empty($pre_requis) || !is_array($pre_requis)) {
@@ -139,8 +170,6 @@ function enigme_pre_requis_remplis(int $enigme_id, int $user_id): bool {
     return true; // ✅ Tous les prérequis sont remplis
 }
 
-
-
 /**
  * ✅ Vérifie si l’énigme est verrouillée et retourne le motif.
  *
@@ -154,7 +183,8 @@ function enigme_pre_requis_remplis(int $enigme_id, int $user_id): bool {
  *  - 'cout_points' (int|null) : Coût en points si concerné.
  *  - 'message_variante' (string|null) : Message en cas de variante.
  */
-function enigme_verifier_verrouillage(int $enigme_id, int $user_id): array {
+function enigme_verifier_verrouillage(int $enigme_id, int $user_id): array
+{
     $resultat = [
         'est_verrouillee'   => false,
         'motif'             => 'aucun',
@@ -171,7 +201,7 @@ function enigme_verifier_verrouillage(int $enigme_id, int $user_id): array {
         ]);
     }
 
-    $statut = enigme_get_statut($enigme_id, $user_id);
+    $statut = enigme_get_statut_utilisateur($enigme_id, $user_id);
 
     switch ($statut) {
         case 'bloquee_date':
@@ -241,12 +271,14 @@ function enigme_verifier_verrouillage(int $enigme_id, int $user_id): array {
  *   message_html: string
  * }
  */
-function traiter_statut_enigme(int $enigme_id, ?int $user_id = null): array {
+function traiter_statut_enigme(int $enigme_id, ?int $user_id = null): array
+{
     $user_id = $user_id ?: get_current_user_id();
-    $statut  = enigme_get_statut($enigme_id, $user_id);
+    $statut = enigme_get_statut_utilisateur($enigme_id, $user_id);
     $chasse_id = recuperer_id_chasse_associee($enigme_id);
 
     // 🔓 Bypass total : admin ou organisateur
+    // 🛡️ Organisateur ou admin : pas de réponse possible
     if (
         current_user_can('manage_options') ||
         utilisateur_est_organisateur_associe_a_chasse($user_id, $chasse_id)
@@ -255,9 +287,9 @@ function traiter_statut_enigme(int $enigme_id, ?int $user_id = null): array {
             'etat' => $statut,
             'rediriger' => false,
             'url' => null,
-            'afficher_formulaire' => true,
-            'afficher_message' => false,
-            'message_html' => '',
+            'afficher_formulaire' => false,
+            'afficher_message' => true,
+            'message_html' => '<p class="message-statut">⚠️ Vous êtes l’organisateur de cette énigme.</p>',
         ];
     }
 
@@ -324,7 +356,8 @@ function traiter_statut_enigme(int $enigme_id, ?int $user_id = null): array {
  * @param int $enigme_id ID de l’énigme
  * @return bool True si l’énigme est visible pour cet utilisateur
  */
-function enigme_est_visible_pour(int $user_id, int $enigme_id): bool {
+function enigme_est_visible_pour(int $user_id, int $enigme_id): bool
+{
     $data = traiter_statut_enigme($enigme_id, $user_id);
     return !$data['rediriger'];
 }
@@ -337,8 +370,9 @@ function enigme_est_visible_pour(int $user_id, int $enigme_id): bool {
  * @param int $chasse_id ID de la chasse.
  * @return void
  */
-function mettre_a_jour_statuts_enigmes_de_la_chasse(int $chasse_id): void {
-    
+function mettre_a_jour_statuts_enigmes_de_la_chasse(int $chasse_id): void
+{
+
     if (get_post_type($chasse_id) !== 'chasse') return;
     $ids_enigmes = recuperer_enigmes_associees($chasse_id);
     foreach ($ids_enigmes as $enigme_id) {
@@ -362,7 +396,8 @@ function mettre_a_jour_statuts_enigmes_de_la_chasse(int $chasse_id): void {
  * @param string|null $statut_chasse_forcé Permet de passer un statut de chasse sans relecture ACF.
  * @return string Statut calculé.
  */
-function enigme_mettre_a_jour_etat_systeme(int $enigme_id, bool $mettre_a_jour = true, ?string $statut_chasse_forcé = null): string {
+function enigme_mettre_a_jour_etat_systeme(int $enigme_id, bool $mettre_a_jour = true, ?string $statut_chasse_forcé = null): string
+{
     if (get_post_type($enigme_id) !== 'enigme') {
         error_log("❌ [STATUT] Post #$enigme_id n'est pas une énigme");
         return 'cache_invalide';
@@ -425,13 +460,13 @@ function enigme_mettre_a_jour_etat_systeme(int $enigme_id, bool $mettre_a_jour =
  * @param int|string $post_id ID de l’énigme ou identifiant ACF (ex : 'options')
  * @return void
  */
-function enigme_mettre_a_jour_etat_systeme_automatiquement($post_id): void {
+function enigme_mettre_a_jour_etat_systeme_automatiquement($post_id): void
+{
     if (!is_numeric($post_id) || get_post_type($post_id) !== 'enigme') return;
     if ($post_id === 'options' || wp_is_post_revision($post_id)) return;
 
     enigme_mettre_a_jour_etat_systeme((int) $post_id); // appelle la version unifiée
 }
-
 
 
 /**
@@ -442,7 +477,8 @@ function enigme_mettre_a_jour_etat_systeme_automatiquement($post_id): void {
  */
 add_action('wp_ajax_forcer_recalcul_statut_enigme', 'forcer_recalcul_statut_enigme');
 
-function forcer_recalcul_statut_enigme() {
+function forcer_recalcul_statut_enigme()
+{
     if (!is_user_logged_in()) {
         wp_send_json_error('non_connecte');
     }
@@ -456,6 +492,39 @@ function forcer_recalcul_statut_enigme() {
     enigme_mettre_a_jour_etat_systeme($post_id);
     wp_send_json_success('statut_enigme_recalcule');
 }
+
+/**
+ * 🔍 Retourne l'état système de l'énigme (champ ACF cache).
+ *
+ * @param int $enigme_id ID de l’énigme
+ * @return string Valeur du champ (accessible, bloquee_date, etc.)
+ */
+function enigme_get_etat_systeme(int $enigme_id): string
+{
+    return get_field('enigme_cache_etat_systeme', $enigme_id) ?: 'invalide';
+}
+
+/**
+ * ✅ Vérifie si un joueur peut engager une énigme (accès + pas déjà engagé).
+ *
+ * @param int $enigme_id ID de l’énigme
+ * @param int|null $user_id ID du joueur (par défaut : utilisateur courant)
+ * @return bool True si engagement possible
+ */
+function utilisateur_peut_engager_enigme(int $enigme_id, ?int $user_id = null): bool
+{
+    $user_id = $user_id ?? get_current_user_id();
+
+    $etat_systeme = enigme_get_etat_systeme($enigme_id);
+    $statut = enigme_get_statut_utilisateur($enigme_id, $user_id);
+
+    $statuts_autorises = ['non_commencee', 'abandonnee', 'echouee'];
+
+    return $etat_systeme === 'accessible' && in_array($statut, $statuts_autorises, true);
+}
+
+
+
 
 
 
@@ -482,9 +551,10 @@ function forcer_recalcul_statut_enigme() {
  * @param int $chasse_id
  * @return void
  */
-function verifier_ou_recalculer_statut_chasse($chasse_id): void {
+function verifier_ou_recalculer_statut_chasse($chasse_id): void
+{
     if (get_post_type($chasse_id) !== 'chasse') return;
-    
+
     static $chasses_traitees = [];
 
     if (in_array($chasse_id, $chasses_traitees, true)) return;
@@ -522,7 +592,8 @@ function verifier_ou_recalculer_statut_chasse($chasse_id): void {
  *
  * @param int $chasse_id ID du post de type "chasse".
  */
-function mettre_a_jour_statuts_chasse($chasse_id) {
+function mettre_a_jour_statuts_chasse($chasse_id)
+{
     if (get_post_type($chasse_id) !== 'chasse') return;
 
     $carac = get_field('caracteristiques', $chasse_id);
@@ -559,11 +630,11 @@ function mettre_a_jour_statuts_chasse($chasse_id) {
     }
 
     $ancien = $cache['chasse_cache_statut'] ?? '(inconnu)';
-    
+
     // ✅ Si terminée, déclenche les planifications PDF
     if ($statut === 'termine') {
         $liste_enigmes = recuperer_enigmes_associees($chasse_id);
-        
+
         foreach ($liste_enigmes as $enigme_id) {
             planifier_ou_deplacer_pdf_solution_immediatement($enigme_id);
         }
@@ -594,19 +665,20 @@ add_action('wp_ajax_forcer_recalcul_statut_chasse', 'forcer_recalcul_statut_chas
 /**
  * Forcer le recalcul du statut d'une chasse (via appel AJAX séparé, après modification d’un champ).
  */
-function forcer_recalcul_statut_chasse() {
-  if (!is_user_logged_in()) {
-    wp_send_json_error('non_connecte');
-  }
+function forcer_recalcul_statut_chasse()
+{
+    if (!is_user_logged_in()) {
+        wp_send_json_error('non_connecte');
+    }
 
-  $post_id = isset($_POST['post_id']) ? (int) $_POST['post_id'] : 0;
+    $post_id = isset($_POST['post_id']) ? (int) $_POST['post_id'] : 0;
 
-  if (!$post_id || get_post_type($post_id) !== 'chasse') {
-    wp_send_json_error('post_invalide');
-  }
+    if (!$post_id || get_post_type($post_id) !== 'chasse') {
+        wp_send_json_error('post_invalide');
+    }
 
-  mettre_a_jour_statuts_chasse($post_id);
-  wp_send_json_success('statut_recalcule');
+    mettre_a_jour_statuts_chasse($post_id);
+    wp_send_json_success('statut_recalcule');
 }
 
 
@@ -621,16 +693,17 @@ function forcer_recalcul_statut_chasse() {
  */
 add_action('acf/save_post', 'mettre_a_jour_statut_si_chasse', 20);
 
-function mettre_a_jour_statut_si_chasse($post_id) {
-  if (!is_numeric($post_id)) return;
+function mettre_a_jour_statut_si_chasse($post_id)
+{
+    if (!is_numeric($post_id)) return;
 
-  if (get_post_type($post_id) === 'chasse') {
-    // 🔁 Supprimer le champ pour forcer une relecture propre (évite valeurs en cache)
-    delete_transient("acf_field_{$post_id}_champs_caches");
+    if (get_post_type($post_id) === 'chasse') {
+        // 🔁 Supprimer le champ pour forcer une relecture propre (évite valeurs en cache)
+        delete_transient("acf_field_{$post_id}_champs_caches");
 
-    error_log("🔁 Recalcul du statut via acf/save_post pour la chasse $post_id");
-    mettre_a_jour_statuts_chasse($post_id);
-  }
+        error_log("🔁 Recalcul du statut via acf/save_post pour la chasse $post_id");
+        mettre_a_jour_statuts_chasse($post_id);
+    }
 }
 
 
@@ -645,26 +718,27 @@ function mettre_a_jour_statut_si_chasse($post_id) {
  */
 add_action('wp_ajax_recuperer_statut_chasse', 'recuperer_statut_chasse');
 
-function recuperer_statut_chasse() {
-  if (!is_user_logged_in()) {
-    wp_send_json_error('non_connecte');
-  }
+function recuperer_statut_chasse()
+{
+    if (!is_user_logged_in()) {
+        wp_send_json_error('non_connecte');
+    }
 
-  $post_id = isset($_POST['post_id']) ? (int) $_POST['post_id'] : 0;
+    $post_id = isset($_POST['post_id']) ? (int) $_POST['post_id'] : 0;
 
-  if (!$post_id || get_post_type($post_id) !== 'chasse') {
-    wp_send_json_error('post_invalide');
-  }
+    if (!$post_id || get_post_type($post_id) !== 'chasse') {
+        wp_send_json_error('post_invalide');
+    }
 
-  $statut = get_field('champs_caches_chasse_cache_statut', $post_id);
-  if (!$statut) {
-    wp_send_json_error('statut_indisponible');
-  }
+    $statut = get_field('champs_caches_chasse_cache_statut', $post_id);
+    if (!$statut) {
+        wp_send_json_error('statut_indisponible');
+    }
 
-  wp_send_json_success([
-    'statut' => $statut,
-    'statut_label' => ucfirst(str_replace('_', ' ', $statut))
-  ]);
+    wp_send_json_success([
+        'statut' => $statut,
+        'statut_label' => ucfirst(str_replace('_', ' ', $statut))
+    ]);
 }
 
 
@@ -678,32 +752,33 @@ function recuperer_statut_chasse() {
  * @param string|null $nouvelle_validation  Valeur à forcer (valide, banni, etc.). Optionnel.
  * @return void
  */
-function forcer_statut_apres_acf($post_id, $nouvelle_validation = null) {
-  if (!is_numeric($post_id) || get_post_type($post_id) !== 'chasse') return;
+function forcer_statut_apres_acf($post_id, $nouvelle_validation = null)
+{
+    if (!is_numeric($post_id) || get_post_type($post_id) !== 'chasse') return;
 
-  // Lecture et mise à jour facultative
-  $champs = get_field('champs_caches', $post_id) ?: [];
+    // Lecture et mise à jour facultative
+    $champs = get_field('champs_caches', $post_id) ?: [];
 
-  if ($nouvelle_validation !== null) {
-    $champs['chasse_cache_statut_validation'] = sanitize_text_field($nouvelle_validation);
-    update_field('champs_caches', $champs, $post_id);
-  }
+    if ($nouvelle_validation !== null) {
+        $champs['chasse_cache_statut_validation'] = sanitize_text_field($nouvelle_validation);
+        update_field('champs_caches', $champs, $post_id);
+    }
 
-  $validation = $champs['chasse_cache_statut_validation'] ?? null;
-  if (!$validation) return;
+    $validation = $champs['chasse_cache_statut_validation'] ?? null;
+    if (!$validation) return;
 
-  $statut_voulu = match ($validation) {
-    'valide'     => 'publish',
-    'banni'      => 'draft',
-    default      => 'pending',
-  };
+    $statut_voulu = match ($validation) {
+        'valide'     => 'publish',
+        'banni'      => 'draft',
+        default      => 'pending',
+    };
 
-  if (get_post_status($post_id) !== $statut_voulu) {
-    wp_update_post([
-      'ID'          => $post_id,
-      'post_status' => $statut_voulu,
-    ]);
-  }
+    if (get_post_status($post_id) !== $statut_voulu) {
+        wp_update_post([
+            'ID'          => $post_id,
+            'post_status' => $statut_voulu,
+        ]);
+    }
 }
 add_action('acf/save_post', 'forcer_statut_apres_acf', 99);
 
@@ -718,7 +793,8 @@ add_action('acf/save_post', 'forcer_statut_apres_acf', 99);
  *
  * @return bool
  */
-function is_canevas_creation() {
+function is_canevas_creation()
+{
     if (!is_user_logged_in()) {
         return false;
     }
@@ -744,38 +820,39 @@ function is_canevas_creation() {
  */
 add_action('save_post_chasse', 'forcer_statut_selon_validation_chasse', 20, 3);
 
-function forcer_statut_selon_validation_chasse($post_id, $post, $update) {
-  // Éviter boucle infinie
-  remove_action('save_post_chasse', 'forcer_statut_selon_validation_chasse', 20);
+function forcer_statut_selon_validation_chasse($post_id, $post, $update)
+{
+    // Éviter boucle infinie
+    remove_action('save_post_chasse', 'forcer_statut_selon_validation_chasse', 20);
 
-  // Ne pas agir sur autosave ou révisions
-  if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) return;
-  if (wp_is_post_revision($post_id)) return;
+    // Ne pas agir sur autosave ou révisions
+    if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) return;
+    if (wp_is_post_revision($post_id)) return;
 
-  $cache = get_field('champs_caches', $post_id);
-  if (!$cache || !isset($cache['chasse_cache_statut_validation'])) return;
+    $cache = get_field('champs_caches', $post_id);
+    if (!$cache || !isset($cache['chasse_cache_statut_validation'])) return;
 
-  $validation = $cache['chasse_cache_statut_validation'];
-  $statut_wp = get_post_status($post_id);
+    $validation = $cache['chasse_cache_statut_validation'];
+    $statut_wp = get_post_status($post_id);
 
-  $statut_attendu = match ($validation) {
-    'valide'   => 'publish',
-    'banni'    => 'draft',
-    default    => 'pending',
-  };
+    $statut_attendu = match ($validation) {
+        'valide'   => 'publish',
+        'banni'    => 'draft',
+        default    => 'pending',
+    };
 
-  if ($statut_wp !== $statut_attendu) {
-    error_log("⚠️ Décalage statut WP vs ACF pour chasse $post_id → WP = $statut_wp / ACF = $validation");
+    if ($statut_wp !== $statut_attendu) {
+        error_log("⚠️ Décalage statut WP vs ACF pour chasse $post_id → WP = $statut_wp / ACF = $validation");
 
-    // ⛔ EN DÉVELOPPEMENT : synchronisation désactivée
-    // ✅ À ACTIVER EN PROD :
-    /*
+        // ⛔ EN DÉVELOPPEMENT : synchronisation désactivée
+        // ✅ À ACTIVER EN PROD :
+        /*
     wp_update_post([
       'ID'          => $post_id,
       'post_status' => $statut_attendu,
     ]);
     */
-  }
+    }
 }
 
 
@@ -794,7 +871,8 @@ function forcer_statut_selon_validation_chasse($post_id, $post, $update) {
  * @param int $enigme_id
  * @return string|null Le statut ('non_commencee', 'resolue', etc.) ou null si absent
  */
-function get_statut_utilisateur_enigme($user_id, $enigme_id) {
+function get_statut_utilisateur_enigme($user_id, $enigme_id)
+{
     static $cache = [];
     $key = $user_id . '-' . $enigme_id;
 
@@ -807,7 +885,8 @@ function get_statut_utilisateur_enigme($user_id, $enigme_id) {
 
     $statut = $wpdb->get_var($wpdb->prepare(
         "SELECT statut FROM $table WHERE user_id = %d AND enigme_id = %d",
-        $user_id, $enigme_id
+        $user_id,
+        $enigme_id
     ));
 
     $cache[$key] = $statut ?: null;
@@ -821,6 +900,7 @@ function get_statut_utilisateur_enigme($user_id, $enigme_id) {
  * @param int $enigme_id
  * @return bool
  */
-function est_enigme_resolue_par_utilisateur($user_id, $enigme_id) {
+function est_enigme_resolue_par_utilisateur($user_id, $enigme_id)
+{
     return get_statut_utilisateur_enigme($user_id, $enigme_id) === 'resolue';
 }

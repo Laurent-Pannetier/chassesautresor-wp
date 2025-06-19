@@ -62,7 +62,12 @@ require_once $inc_path . 'statut-functions.php';
 require_once $inc_path . 'admin-functions.php';
 require_once $inc_path . 'organisateur-functions.php';
 //require_once $inc_path . 'stat-functions.php';
-require_once $inc_path . 'edition-functions.php';
+require_once $inc_path . 'edition/edition-core.php';
+require_once $inc_path . 'edition/edition-organisateur.php';
+require_once $inc_path . 'edition/edition-chasse.php';
+require_once $inc_path . 'edition/edition-enigme.php';
+require_once $inc_path . 'edition/edition-securite.php';
+
 require_once $inc_path . 'access-functions.php';
 require_once $inc_path . 'relations-functions.php';
 require_once $inc_path . 'layout-functions.php';
@@ -92,4 +97,33 @@ function forcer_acf_form_head_chasse() {
 }
 
 
+/**
+ * 🔁 TÂCHES QUOTIDIENNES INTERNES – SYNCHRONISATION DU CACHE DES ÉNIGMES
+ *
+ * Cette fonction est appelée par le cron quotidien global du site pour assurer la cohérence
+ * entre les chasses et les énigmes qui leur sont réellement associées.
+ *
+ * Elle utilise la fonction `verifier_et_synchroniser_cache_enigmes_si_autorise()` qui déclenche,
+ * si nécessaire, une correction du champ ACF `chasse_cache_enigmes` (relation).
+ *
+ * 🔧 Cette fonction est placée exceptionnellement dans `functions.php` (racine du thème)
+ * car elle fait partie du cœur d'exécution automatique du site, mais ne s’intègre à aucun module métier isolé.
+ *
+ * 🧱 Si d’autres tâches automatiques internes sont ajoutées à terme (purge, maintenance, synchronisation...),
+ * cette logique pourra être déplacée dans un fichier dédié (`inc/cron-functions.php`) pour allègement.
+ *
+ * @return void
+ */
+function tache_cron_synchroniser_cache_enigmes(): void {
+    $chasses = get_posts([
+        'post_type'      => 'chasse',
+        'post_status'    => ['publish', 'pending', 'draft'],
+        'posts_per_page' => -1,
+        'fields'         => 'ids',
+    ]);
+
+    foreach ($chasses as $chasse_id) {
+        verifier_et_synchroniser_cache_enigmes_si_autorise($chasse_id);
+    }
+}
 

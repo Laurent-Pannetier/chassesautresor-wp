@@ -11,8 +11,19 @@ error_log("👤 STATUT ACTUEL : " . enigme_get_statut_utilisateur($post_id, $use
 
 if (!$post_id || !$user_id) return;
 
+// 🛡️ Organisateur / admin : on n'affiche rien
+$chasse_id = recuperer_id_chasse_associee($post_id);
+if (
+  current_user_can('manage_options') ||
+  utilisateur_est_organisateur_associe_a_chasse($user_id, $chasse_id)
+) {
+  echo '<p class="message-organisateur">🛠️ Cette énigme est la vôtre. Aucun formulaire n’est affiché.</p>';
+  return;
+}
+
+
 if (!utilisateur_peut_repondre_manuelle($user_id, $post_id)) {
-  echo '<p class="message-deja-repondu">Vous avez déjà répondu ou résolu cette énigme.</p>';
+  echo '<p class="message-joueur-statut">Vous avez déjà répondu ou résolu cette énigme.</p>';
   return;
 }
 

@@ -3,10 +3,13 @@ defined('ABSPATH') || exit;
 
 $chasse_id = $args['chasse_id'] ?? null;
 if (!$chasse_id || get_post_type($chasse_id) !== 'chasse') {
-    return;
+  return;
 }
 
 $titre = get_the_title($chasse_id);
+$champTitreParDefaut = 'nouvelle chasse';
+$isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut);
+
 
 // Champs ACF principaux
 $caracteristiques = get_field('caracteristiques', $chasse_id);
@@ -54,16 +57,16 @@ $organisateur_nom = $organisateur_id ? get_the_title($organisateur_id) : get_the
 
 
 if (current_user_can('administrator')) {
-    $chasse_id = get_the_ID();
+  $chasse_id = get_the_ID();
 
-    error_log("📦 [TEST] Statut stocké (admin) : " . get_field('champs_caches')['chasse_cache_statut']);
+  error_log("📦 [TEST] Statut stocké (admin) : " . get_field('champs_caches')['chasse_cache_statut']);
 
-    $statut_calcule = calculer_statut_chasse($chasse_id);
-    error_log("🧠 [TEST] Statut recalculé (logique) : $statut_calcule");
+  $statut_calcule = calculer_statut_chasse($chasse_id);
+  error_log("🧠 [TEST] Statut recalculé (logique) : $statut_calcule");
 
-    mettre_a_jour_statuts_chasse($chasse_id);
+  mettre_a_jour_statuts_chasse($chasse_id);
 
-    error_log("✅ [TEST] Recalcul exécuté via mettre_a_jour_statuts_chasse($chasse_id)");
+  error_log("✅ [TEST] Recalcul exécuté via mettre_a_jour_statuts_chasse($chasse_id)");
 }
 
 
@@ -71,41 +74,41 @@ if (current_user_can('administrator')) {
 
 
 <section class="chasse-section-intro">
+  <?php
+  $validation = get_field('champs_caches')['chasse_cache_statut_validation'] ?? 'creation';
+
+  $messages = [
+    'creation'   => "Visibilité confidentielle. Cette chasse est en cours de création.",
+    'en_attente' => "Visibilité confidentielle. Cette chasse a été soumise à validation.",
+    'correction' => "Visibilité confidentielle. Cette chasse nécessite des ajustements.",
+    'banni'      => "Non publiée. Cette chasse a été refusée par l’équipe."
+  ];
+
+  if ($validation !== 'valide' && isset($messages[$validation])) :
+  ?>
+    <div class="statut-banner">
+      <?= esc_html($messages[$validation]); ?>
+    </div>
+  <?php endif; ?>
+
+  <div class="chasse-fiche-container flex-row">
     <?php
-    $validation = get_field('champs_caches')['chasse_cache_statut_validation'] ?? 'creation';
-
-    $messages = [
-        'creation'   => "Visibilité confidentielle. Cette chasse est en cours de création.",
-        'en_attente' => "Visibilité confidentielle. Cette chasse a été soumise à validation.",
-        'correction' => "Visibilité confidentielle. Cette chasse nécessite des ajustements.",
-        'banni'      => "Non publiée. Cette chasse a été refusée par l’équipe."
-    ];
-
-    if ($validation !== 'valide' && isset($messages[$validation])) :
+    $cache = get_field('champs_caches', $chasse_id);
+    $statut = get_field('champs_caches')['chasse_cache_statut'] ?? 'revision';
+    if ($statut !== 'revision') :
     ?>
-      <div class="statut-banner">
-        <?= esc_html($messages[$validation]); ?>
-      </div>
+      <span class="badge-statut statut-<?= esc_attr($statut); ?>" data-post-id="<?= esc_attr($chasse_id); ?>">
+        <?= ucfirst(str_replace('_', ' ', $statut)); ?>
+      </span>
     <?php endif; ?>
-
-    <div class="chasse-fiche-container flex-row">
-        <?php
-        $cache = get_field('champs_caches', $chasse_id);
-        $statut = get_field('champs_caches')['chasse_cache_statut'] ?? 'revision';
-        if ($statut !== 'revision') :
-        ?>
-          <span class="badge-statut statut-<?= esc_attr($statut); ?>" data-post-id="<?= esc_attr($chasse_id); ?>">
-            <?= ucfirst(str_replace('_', ' ', $statut)); ?>
-          </span>
-        <?php endif; ?>
 
     <!-- 🔧 Bouton panneau édition -->
     <?php if ($edition_active) : ?>
       <div class="header-actions-droite">
         <button id="toggle-mode-edition-chasse" type="button"
-                class="bouton-edition-toggle"
-                data-cpt="chasse"
-                aria-label="Activer le mode édition">
+          class="bouton-edition-toggle"
+          data-cpt="chasse"
+          aria-label="Activer le mode édition">
           <i class="fa-solid fa-sliders"></i>
         </button>
       </div>
@@ -113,21 +116,21 @@ if (current_user_can('administrator')) {
 
     <!-- 📷 Image principale -->
     <div class="champ-chasse champ-img <?= empty($image_url) ? 'champ-vide' : 'champ-rempli'; ?>"
-         data-champ="chasse_principale_image"
-         data-cpt="chasse"
-         data-post-id="<?= esc_attr($chasse_id); ?>">
+      data-champ="chasse_principale_image"
+      data-cpt="chasse"
+      data-post-id="<?= esc_attr($chasse_id); ?>">
 
       <div class="champ-affichage">
         <button type="button"
-                class="champ-modifier header-img-modifiable header-chasse__image"
-                aria-label="Modifier l’image"
-                data-champ="chasse_principale_image"
-                data-cpt="chasse"
-                data-post-id="<?= esc_attr($chasse_id); ?>">
+          class="champ-modifier header-img-modifiable header-chasse__image"
+          aria-label="Modifier l’image"
+          data-champ="chasse_principale_image"
+          data-cpt="chasse"
+          data-post-id="<?= esc_attr($chasse_id); ?>">
           <img src="<?= esc_url($image_url); ?>"
-               alt="Image de la chasse"
-               class="chasse-image"
-               style="width:100%; height:auto;" />
+            alt="Image de la chasse"
+            class="chasse-image"
+            style="width:100%; height:auto;" />
           <span class="icone-modif">✏️</span>
         </button>
       </div>
@@ -139,27 +142,8 @@ if (current_user_can('administrator')) {
     <!-- 📟 Informations -->
     <div class="chasse-details-wrapper">
 
-      <!-- Titre editable -->
-      <div class="champ-chasse champ-txt-editable champ-titre <?= empty($titre) ? 'champ-vide' : 'champ-rempli'; ?>"
-           data-champ="post_title"
-           data-cpt="chasse"
-           data-post-id="<?= esc_attr($chasse_id); ?>">
-
-        <div class="champ-affichage">
-          <h1 class="chasse-titre"><?= esc_html($titre); ?></h1>
-          <?php if ($edition_active) : ?>
-            <button type="button" class="champ-modifier" aria-label="Modifier le titre">✏️</button>
-          <?php endif; ?>
-        </div>
-
-        <div class="champ-edition" style="display: none;">
-          <input type="text" maxlength="70" value="<?= esc_attr($titre); ?>" class="champ-input">
-          <button type="button" class="champ-enregistrer">✓</button>
-          <button type="button" class="champ-annuler">✖</button>
-        </div>
-
-        <div class="champ-feedback"></div>
-      </div>
+      <!-- Titre -->
+      
 
       <?php if ($organisateur_id): ?>
         <p class="txt-small auteur-organisateur">
@@ -169,15 +153,15 @@ if (current_user_can('administrator')) {
 
       <div class="meta-row svg-xsmall">
         <div class="meta-regular">
-            <?php echo get_svg_icon('enigme'); ?> <?= esc_html($total_enigmes); ?> énigme<?= ($total_enigmes > 1 ? 's' : ''); ?> —
-            <?php echo get_svg_icon('participants'); ?><?= esc_html($nb_joueurs); ?> joueur<?= ($nb_joueurs > 1 ? 's' : ''); ?>
+          <?php echo get_svg_icon('enigme'); ?> <?= esc_html($total_enigmes); ?> énigme<?= ($total_enigmes > 1 ? 's' : ''); ?> —
+          <?php echo get_svg_icon('participants'); ?><?= esc_html($nb_joueurs); ?> joueur<?= ($nb_joueurs > 1 ? 's' : ''); ?>
         </div>
         <div class="meta-etiquette">
-            <?php echo get_svg_icon('calendar'); ?>
-            <span class="chasse-date-plage">
-              Du <span class="date-debut"><?= esc_html($date_debut_formatee); ?></span> → 
-              <span class="date-fin"><?= esc_html($date_fin_formatee); ?></span>
-            </span>
+          <?php echo get_svg_icon('calendar'); ?>
+          <span class="chasse-date-plage">
+            Du <span class="date-debut"><?= esc_html($date_debut_formatee); ?></span> →
+            <span class="date-fin"><?= esc_html($date_fin_formatee); ?></span>
+          </span>
 
         </div>
       </div>
@@ -189,37 +173,37 @@ if (current_user_can('administrator')) {
       </div>
 
       <div class="bloc-metas-inline">
-        
+
         <div class="prix chasse-prix" data-cpt="chasse" data-post-id="<?= esc_attr($chasse_id); ?>">
-           <span class="cout-affichage" data-cout="<?= esc_attr((int)$cout_points); ?>">
-              <?php if ((int)$cout_points === 0) : ?>
-                <?php echo get_svg_icon('free'); ?>
-                <span class="texte-cout">Gratuit</span>
-              <?php else : ?>
-                <?php echo get_svg_icon('unlock'); ?>
-                <span class="valeur-cout"><?= esc_html($cout_points); ?></span>
-                <span class="prix-devise">pts</span>
-              <?php endif; ?>
-            </span>
+          <span class="cout-affichage" data-cout="<?= esc_attr((int)$cout_points); ?>">
+            <?php if ((int)$cout_points === 0) : ?>
+              <?php echo get_svg_icon('free'); ?>
+              <span class="texte-cout">Gratuit</span>
+            <?php else : ?>
+              <?php echo get_svg_icon('unlock'); ?>
+              <span class="valeur-cout"><?= esc_html($cout_points); ?></span>
+              <span class="prix-devise">pts</span>
+            <?php endif; ?>
+          </span>
         </div>
       </div>
       <?php if (!empty($titre_recompense) && (float) $valeur_recompense > 0) : ?>
-          <div class="chasse-lot" aria-live="polite">
-            <?php echo get_svg_icon('trophee'); ?>
-            <?= esc_html($titre_recompense); ?> — <?= esc_html($valeur_recompense); ?> €
-          </div>
-        <?php endif; ?>
-      
-        <div class="bloc-discret">
-          <?php if ($extrait) : ?>
-            <p class="chasse-intro-extrait liste-elegante">
-              <strong>Présentation :</strong> <?= esc_html($extrait); ?>
-              <?php if ($est_tronque) : ?>
-                <a href="#chasse-description">Voir les détails</a>
-              <?php endif; ?>
-            </p>
-          <?php endif; ?>
+        <div class="chasse-lot" aria-live="polite">
+          <?php echo get_svg_icon('trophee'); ?>
+          <?= esc_html($titre_recompense); ?> — <?= esc_html($valeur_recompense); ?> €
         </div>
+      <?php endif; ?>
+
+      <div class="bloc-discret">
+        <?php if ($extrait) : ?>
+          <p class="chasse-intro-extrait liste-elegante">
+            <strong>Présentation :</strong> <?= esc_html($extrait); ?>
+            <?php if ($est_tronque) : ?>
+              <a href="#chasse-description">Voir les détails</a>
+            <?php endif; ?>
+          </p>
+        <?php endif; ?>
+      </div>
 
     </div>
   </div>
