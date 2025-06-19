@@ -94,86 +94,91 @@ if (!empty($_GET['erreur']) && $_GET['erreur'] === 'points_insuffisants') {
   ?>
 <?php endif; ?>
 
-<div class="page-chasse-wrapper">
+<div class="ast-container">
+  <div id="primary" class="content-area">
+    <main id="main" class="site-main">
 
-  <?php
-  // 🧩 Fiche complète de la chasse (édition + contenu)
-  get_template_part('template-parts/chasse/chasse-complete', null, [
-    'chasse_id' => $chasse_id
-  ]);
-  ?>
+      <?php
+      get_template_part('template-parts/chasse/chasse-complete', null, [
+        'chasse_id' => $chasse_id
+      ]);
+      ?>
 
-  <div class="separateur-avec-icone"></div>
+      <div class="separateur-avec-icone"></div>
 
-</div>
-<section class="chasse-enigmes-wrapper" id="chasse-enigmes-wrapper">
-  <header class="chasse-enigmes-header">
-    <p class="progression-joueur">
-      🔍 Vous avez résolu <strong>2</strong> énigmes sur <strong>5</strong>.
-    </p>
-    <div class="barre-progression">
-      <div class="remplissage" style="width: 40%;"></div>
-    </div>
+    </main>
 
-    <?php if (!empty($date_decouverte_formatee)) : ?>
-      <div class="meta-etiquette">
-        🕵️‍♂️ Trouvée le <?php echo esc_html($date_decouverte_formatee); ?>
+    <section class="chasse-enigmes-wrapper" id="chasse-enigmes-wrapper">
+      <header class="chasse-enigmes-header">
+        <p class="progression-joueur">
+          🔍 Vous avez résolu <strong>2</strong> énigmes sur <strong>5</strong>.
+        </p>
+        <div class="barre-progression">
+          <div class="remplissage" style="width: 40%;"></div>
+        </div>
+
+        <?php if (!empty($date_decouverte_formatee)) : ?>
+          <div class="meta-etiquette">
+            🕵️‍♂️ Trouvée le <?php echo esc_html($date_decouverte_formatee); ?>
+          </div>
+        <?php endif; ?>
+
+
+        <?php
+        $liens = get_field('chasse_principale_liens', $chasse_id);
+        $liens = is_array($liens) ? $liens : [];
+        $vide  = empty($liens);
+        ?>
+
+        <div class="champ-chasse champ-liens champ-fiche-publication <?php echo $vide ? 'champ-vide' : 'champ-rempli'; ?>"
+          data-champ="chasse_principale_liens"
+          data-cpt="chasse"
+          data-post-id="<?php echo esc_attr($chasse_id); ?>">
+
+
+          <div class="champ-donnees"
+            data-valeurs='<?php echo json_encode($liens, JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT); ?>'></div>
+
+          <div class="champ-affichage">
+            <?php echo render_liens_publics($liens, 'chasse', [
+              'afficher_titre' => false,
+              'wrap'           => false
+            ]); ?>
+          </div>
+          <div class="champ-feedback"></div>
+        </div>
+      </header>
+
+      <div class="chasse-enigmes-liste">
+        <?php
+        get_template_part('template-parts/enigme/boucle-enigmes-chasse', null, [
+          'chasse_id' => get_the_ID()
+        ]);
+        ?>
+
       </div>
-    <?php endif; ?>
+
+      <footer class="chasse-enigmes-footer">
+        <!-- Message de fin -->
+      </footer>
+    </section>
+
 
 
     <?php
-    $liens = get_field('chasse_principale_liens', $chasse_id);
-    $liens = is_array($liens) ? $liens : [];
-    $vide  = empty($liens);
-    ?>
-
-    <div class="champ-chasse champ-liens champ-fiche-publication <?php echo $vide ? 'champ-vide' : 'champ-rempli'; ?>"
-      data-champ="chasse_principale_liens"
-      data-cpt="chasse"
-      data-post-id="<?php echo esc_attr($chasse_id); ?>">
-
-
-      <div class="champ-donnees"
-        data-valeurs='<?php echo json_encode($liens, JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT); ?>'></div>
-
-      <div class="champ-affichage">
-        <?php echo render_liens_publics($liens, 'chasse', [
-          'afficher_titre' => false,
-          'wrap'           => false
-        ]); ?>
-      </div>
-      <div class="champ-feedback"></div>
-    </div>
-  </header>
-
-  <div class="chasse-enigmes-liste">
-    <?php
-    get_template_part('template-parts/enigme/boucle-enigmes-chasse', null, [
-      'chasse_id' => get_the_ID()
+    get_template_part('template-parts/chasse/description-chasse', null, [
+      'description' => $description,
+      'titre_recompense' => $titre_recompense, // 🔥 Manquait ici
+      'lot' => $lot,
+      'valeur_recompense' => $valeur_recompense,
+      'nb_max' => $nb_max,
+      'chasse_id' => $chasse_id,
+      'mode' => 'complet'
     ]);
     ?>
 
   </div>
-
-  <footer class="chasse-enigmes-footer">
-    <!-- Message de fin -->
-  </footer>
-</section>
-
-
-
-<?php
-get_template_part('template-parts/chasse/description-chasse', null, [
-  'description' => $description,
-  'titre_recompense' => $titre_recompense, // 🔥 Manquait ici
-  'lot' => $lot,
-  'valeur_recompense' => $valeur_recompense,
-  'nb_max' => $nb_max,
-  'chasse_id' => $chasse_id,
-  'mode' => 'complet'
-]);
-?>
+</div>
 
 <?php
 // Vérifie si la modale a déjà été vue pour cette chasse
