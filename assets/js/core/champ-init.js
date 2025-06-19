@@ -321,8 +321,8 @@ function mettreAJourAffichageDateFin() {
 // ================================
 function modifierChampSimple(champ, valeur, postId, cpt = 'enigme') {
   const action = (cpt === 'enigme') ? 'modifier_champ_enigme' :
-                 (cpt === 'organisateur') ? 'modifier_champ_organisateur' :
-                 'modifier_champ_chasse';
+    (cpt === 'organisateur') ? 'modifier_champ_organisateur' :
+      'modifier_champ_chasse';
 
   return fetch(ajaxurl, {
     method: 'POST',
@@ -383,8 +383,9 @@ function initChampTexte(bloc) {
     bloc.appendChild(feedback);
   }
 
-  // ✅ Mode fallback si édition directe sans stylo
-  if (isEditionDirecte || (!boutonEdit && !boutonSave && !boutonCancel)) {
+  // 🔐 Protection anti-édition directe pour post_title
+  const forcerEditionDirecte = isEditionDirecte || (!boutonEdit && !boutonSave && !boutonCancel);
+  if (forcerEditionDirecte && champ !== 'post_title') {
     let timer;
     input.addEventListener('input', () => {
       clearTimeout(timer);
@@ -517,21 +518,21 @@ function initChampDeclencheur(bouton) {
   if (!champ || !postId || !cpt) return;
 
   bouton.addEventListener('click', () => {
-  const bloc = document.querySelector(
-    `.champ-${cpt}[data-champ="${champ}"][data-post-id="${postId}"]`
-  );
+    const bloc = document.querySelector(
+      `.champ-${cpt}[data-champ="${champ}"][data-post-id="${postId}"]`
+    );
 
-  if (!bloc) return;
+    if (!bloc) return;
 
-  // 🛡️ Sécurité : ignorer si c'est un résumé
-  if (bloc.classList.contains('resume-ligne')) {
-    return; // Ne pas essayer d'ouvrir l'édition sur une ligne résumé
-  }
+    // 🛡️ Sécurité : ignorer si c'est un résumé
+    if (bloc.classList.contains('resume-ligne')) {
+      return; // Ne pas essayer d'ouvrir l'édition sur une ligne résumé
+    }
 
-  const vraiBouton = [...bloc.querySelectorAll('.champ-modifier')].find(b => b !== bouton);
+    const vraiBouton = [...bloc.querySelectorAll('.champ-modifier')].find(b => b !== bouton);
 
-  if (vraiBouton) vraiBouton.click();
-});
+    if (vraiBouton) vraiBouton.click();
+  });
 
 }
 
@@ -549,8 +550,8 @@ function initChampImage(bloc) {
   const feedback = bloc.querySelector('.champ-feedback');
   const boutonEdit = bloc.querySelector('.champ-modifier');
   const action = (cpt === 'chasse') ? 'modifier_champ_chasse' :
-                 (cpt === 'enigme') ? 'modifier_champ_enigme' :
-                 'modifier_champ_organisateur';
+    (cpt === 'enigme') ? 'modifier_champ_enigme' :
+      'modifier_champ_organisateur';
 
   if (!champ || !cpt || !postId || !input || !image || !boutonEdit) return;
 
@@ -590,30 +591,30 @@ function initChampImage(bloc) {
           post_id: postId
         })
       })
-      .then(res => res.json())
-      .then(res => {
-        if (res.success) {
-          bloc.classList.remove('champ-vide');
-          if (feedback) {
-            feedback.textContent = '';
-            feedback.className = 'champ-feedback champ-success';
+        .then(res => res.json())
+        .then(res => {
+          if (res.success) {
+            bloc.classList.remove('champ-vide');
+            if (feedback) {
+              feedback.textContent = '';
+              feedback.className = 'champ-feedback champ-success';
+            }
+            if (typeof window.mettreAJourResumeInfos === 'function') {
+              window.mettreAJourResumeInfos();
+            }
+          } else {
+            if (feedback) {
+              feedback.textContent = '❌ Erreur : ' + (res.data || 'inconnue');
+              feedback.className = 'champ-feedback champ-error';
+            }
           }
-          if (typeof window.mettreAJourResumeInfos === 'function') {
-            window.mettreAJourResumeInfos();
-          }
-        } else {
+        })
+        .catch(() => {
           if (feedback) {
-            feedback.textContent = '❌ Erreur : ' + (res.data || 'inconnue');
+            feedback.textContent = '❌ Erreur réseau.';
             feedback.className = 'champ-feedback champ-error';
           }
-        }
-      })
-      .catch(() => {
-        if (feedback) {
-          feedback.textContent = '❌ Erreur réseau.';
-          feedback.className = 'champ-feedback champ-error';
-        }
-      });
+        });
     });
 
     frame.open();
@@ -625,7 +626,7 @@ function initChampImage(bloc) {
 // 📅 initChampDate
 // ==============================
 function initChampDate(input) {
-    console.log('⏱️ Attachement initChampDate à', input, '→ ID:', input.id);
+  console.log('⏱️ Attachement initChampDate à', input, '→ ID:', input.id);
 
   const bloc = input.closest('[data-champ]');
   const champ = bloc?.dataset.champ;
@@ -651,9 +652,9 @@ function initChampDate(input) {
     }
 
     const action = (cpt === 'chasse') ? 'modifier_champ_chasse' :
-                   (cpt === 'enigme') ? 'modifier_champ_enigme' :
-                   'modifier_champ_organisateur';
-    
+      (cpt === 'enigme') ? 'modifier_champ_enigme' :
+        'modifier_champ_organisateur';
+
     console.log('📤 Envoi AJAX date', { champ, valeur, postId });
 
     fetch(ajaxurl, {
@@ -666,29 +667,29 @@ function initChampDate(input) {
         post_id: postId
       })
     })
-    .then(r => r.json())
-    .then(res => {
-      if (res.success) {
+      .then(r => r.json())
+      .then(res => {
+        if (res.success) {
           console.log('[initChampDate] Hook onDateFieldUpdated =', typeof window.onDateFieldUpdated);
 
-        if (typeof window.onDateFieldUpdated === 'function') {
+          if (typeof window.onDateFieldUpdated === 'function') {
             console.log('[initChampDate] Appel de onDateFieldUpdated() avec valeur =', valeur);
 
-          window.onDateFieldUpdated(input, valeur);
+            window.onDateFieldUpdated(input, valeur);
+          }
+        } else {
+          console.warn('❌ Erreur serveur (date)', res.data || res);
         }
-      } else {
-        console.warn('❌ Erreur serveur (date)', res.data || res);
-      }
-    })
-    .catch(err => {
-      console.error('❌ Erreur réseau (date)', err);
-    });
+      })
+      .catch(err => {
+        console.error('❌ Erreur réseau (date)', err);
+      });
   });
   if (typeof window.onDateFieldUpdated === 'function') {
-      const valeurInit = input.value?.trim() || ''; // 🔹 protection + fallback vide
-      window.onDateFieldUpdated(input, valeurInit);
-    }
-    input.dataset.previous = input.value?.trim() || '';
+    const valeurInit = input.value?.trim() || ''; // 🔹 protection + fallback vide
+    window.onDateFieldUpdated(input, valeurInit);
+  }
+  input.dataset.previous = input.value?.trim() || '';
 
 }
 
@@ -765,7 +766,7 @@ function initAffichageBoutonsCout() {
     boutons.style.transition = 'none';
     boutons.style.opacity = '0';
     boutons.style.visibility = 'hidden';
-    
+
     // Ensuite (petit timeout pour réactiver les transitions après masquage immédiat)
     setTimeout(() => {
       boutons.style.transition = 'opacity 0.3s ease, visibility 0.3s ease';
@@ -813,20 +814,20 @@ function initChampCoutPoints() {
 
     const enregistrerCout = () => {
       clearTimeout(timerDebounce);
-        timerDebounce = setTimeout(() => {
-          let valeur = parseInt(input.value.trim(), 10);
-          if (isNaN(valeur) || valeur < 0) valeur = 0;
-          input.value = valeur;
-          modifierChampSimple(champ, valeur, postId, bloc.dataset.cpt);
-        
-          // ✅ Mise à jour visuelle du badge coût pour la chasse
-          if (
-            champ === 'caracteristiques.chasse_infos_cout_points' &&
-            typeof mettreAJourAffichageCout === 'function'
-          ) {
-            mettreAJourAffichageCout(postId, valeur);
-          }
-        }, 500);
+      timerDebounce = setTimeout(() => {
+        let valeur = parseInt(input.value.trim(), 10);
+        if (isNaN(valeur) || valeur < 0) valeur = 0;
+        input.value = valeur;
+        modifierChampSimple(champ, valeur, postId, bloc.dataset.cpt);
+
+        // ✅ Mise à jour visuelle du badge coût pour la chasse
+        if (
+          champ === 'caracteristiques.chasse_infos_cout_points' &&
+          typeof mettreAJourAffichageCout === 'function'
+        ) {
+          mettreAJourAffichageCout(postId, valeur);
+        }
+      }, 500);
     };
 
     // ✅ état initial : disable si gratuit

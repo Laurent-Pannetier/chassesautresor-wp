@@ -69,44 +69,55 @@ $classe_vide_coordonnees = ($iban_vide || $bic_vide) ? 'champ-vide' : '';
                 data-cpt="organisateur"
                 data-post-id="<?= esc_attr($organisateur_id); ?>">
 
-                <label for="champ-titre-organisateur">Nom d’organisateur</label>
+                <div class="champ-affichage">
+                  <label for="champ-titre-organisateur">Nom d’organisateur</label>
+                  <button type="button"
+                    class="champ-modifier"
+                    aria-label="Modifier le nom d’organisateur">
+                    ✏️
+                  </button>
+                </div>
 
-                <div class="champ-edition">
-                  <input type="text" class="champ-input" maxlength="50" value="<?= esc_attr($titre); ?>" id="champ-titre-organisateur">
+                <div class="champ-edition" style="display: none;">
+                  <input type="text"
+                    class="champ-input"
+                    maxlength="50"
+                    value="<?= esc_attr($titre); ?>"
+                    id="champ-titre-organisateur">
                   <button type="button" class="champ-enregistrer">✓</button>
                   <button type="button" class="champ-annuler">✖</button>
                 </div>
 
                 <div class="champ-feedback"></div>
-                </li>
+              </li>
 
-                <li class="champ-organisateur champ-logo ligne-logo <?= !empty($logo) ? 'champ-rempli' : 'champ-vide'; ?>" data-champ="profil_public_logo_organisateur">
-                  Un logo
-                  <?php if ($peut_modifier) : ?>
-                    <button type="button"
-                      class="champ-modifier"
-                      aria-label="Modifier le logo"
-                      data-champ="profil_public_logo_organisateur"
-                      data-cpt="organisateur"
-                      data-post-id="<?php echo esc_attr($organisateur_id); ?>">
-                      ✏️
-                    </button>
+              <li class="champ-organisateur champ-logo ligne-logo <?= !empty($logo) ? 'champ-rempli' : 'champ-vide'; ?>" data-champ="profil_public_logo_organisateur">
+                Un logo
+                <?php if ($peut_modifier) : ?>
+                  <button type="button"
+                    class="champ-modifier"
+                    aria-label="Modifier le logo"
+                    data-champ="profil_public_logo_organisateur"
+                    data-cpt="organisateur"
+                    data-post-id="<?php echo esc_attr($organisateur_id); ?>">
+                    ✏️
+                  </button>
 
-                  <?php endif; ?>
-                  <input type="hidden" class="champ-input" value="<?= esc_attr($logo_id ?? '') ?>">
-                  <div class="champ-feedback"></div>
-                </li>
-                <li class="ligne-description champ-rempli champ-description" data-champ="description_longue">
-                  Une présentation
-                  <?php if ($peut_modifier) : ?>
-                    <button type="button"
-                      class="champ-modifier ouvrir-panneau-description"
-                      aria-label="Modifier la description longue">
-                      ✏️
-                    </button>
+                <?php endif; ?>
+                <input type="hidden" class="champ-input" value="<?= esc_attr($logo_id ?? '') ?>">
+                <div class="champ-feedback"></div>
+              </li>
+              <li class="ligne-description champ-rempli champ-description" data-champ="description_longue">
+                Une présentation
+                <?php if ($peut_modifier) : ?>
+                  <button type="button"
+                    class="champ-modifier ouvrir-panneau-description"
+                    aria-label="Modifier la description longue">
+                    ✏️
+                  </button>
 
-                  <?php endif; ?>
-                </li>
+                <?php endif; ?>
+              </li>
             </ul>
           </div>
 

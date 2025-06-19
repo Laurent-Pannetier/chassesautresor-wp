@@ -90,16 +90,28 @@ $has_variantes = ($nb_variantes > 0);
               data-cpt="enigme"
               data-post-id="<?= esc_attr($enigme_id); ?>">
 
-              <label for="champ-titre-enigme">Titre de l’énigme</label>
+              <div class="champ-affichage">
+                <label for="champ-titre-enigme">Titre de l’énigme</label>
+                <button type="button"
+                  class="champ-modifier"
+                  aria-label="Modifier le titre">
+                  ✏️
+                </button>
+              </div>
 
-              <div class="champ-edition">
-                <input type="text" class="champ-input" maxlength="80" value="<?= esc_attr($titre); ?>" id="champ-titre-enigme">
+              <div class="champ-edition" style="display: none;">
+                <input type="text"
+                  class="champ-input"
+                  maxlength="80"
+                  value="<?= esc_attr($titre); ?>"
+                  id="champ-titre-enigme">
                 <button type="button" class="champ-enregistrer">✓</button>
                 <button type="button" class="champ-annuler">✖</button>
               </div>
 
               <div class="champ-feedback"></div>
             </li>
+
             <?php
             $visuel_ids = is_array($visuel) ? array_map('intval', $visuel) : [];
             $images_utiles = array_filter($visuel_ids, fn($id) => $id !== 3925);

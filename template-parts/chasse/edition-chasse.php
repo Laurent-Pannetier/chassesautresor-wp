@@ -68,44 +68,55 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
                   data-cpt="chasse"
                   data-post-id="<?= esc_attr($chasse_id); ?>">
 
-                  <label for="champ-titre-chasse">Titre de la chasse</label>
+                  <div class="champ-affichage">
+                    <label for="champ-titre-chasse">Titre de la chasse</label>
+                    <button type="button"
+                      class="champ-modifier"
+                      aria-label="Modifier le titre">
+                      ✏️
+                    </button>
+                  </div>
 
-                  <div class="champ-edition">
-                    <input type="text" class="champ-input" maxlength="70" value="<?= esc_attr($titre); ?>" id="champ-titre-chasse">
+                  <div class="champ-edition" style="display: none;">
+                    <input type="text"
+                      class="champ-input"
+                      maxlength="70"
+                      value="<?= esc_attr($titre); ?>"
+                      id="champ-titre-chasse">
                     <button type="button" class="champ-enregistrer">✓</button>
                     <button type="button" class="champ-annuler">✖</button>
                   </div>
 
                   <div class="champ-feedback"></div>
-                  </li>
+                </li>
 
-                  <!-- Description -->
-                  <li class="champ-chasse champ-description <?= empty($description) ? 'champ-vide' : 'champ-rempli'; ?>"
-                    data-champ="chasse_principale_description"
+                <!-- Description -->
+                <li class="champ-chasse champ-description <?= empty($description) ? 'champ-vide' : 'champ-rempli'; ?>"
+                  data-champ="chasse_principale_description"
+                  data-cpt="chasse"
+                  data-post-id="<?= esc_attr($chasse_id); ?>">
+                  Une description
+                  <button type="button"
+                    class="champ-modifier ouvrir-panneau-description"
                     data-cpt="chasse"
-                    data-post-id="<?= esc_attr($chasse_id); ?>">
-                    Une description
-                    <button type="button"
-                      class="champ-modifier ouvrir-panneau-description"
-                      data-cpt="chasse"
-                      data-champ="chasse_principale_description"
-                      data-post-id="<?= esc_attr($chasse_id); ?>"
-                      aria-label="Modifier la description">✏️</button>
-                  </li>
+                    data-champ="chasse_principale_description"
+                    data-post-id="<?= esc_attr($chasse_id); ?>"
+                    aria-label="Modifier la description">✏️</button>
+                </li>
 
-                  <!-- Image -->
-                  <li class="champ-chasse champ-img <?= empty($image) ? 'champ-vide' : 'champ-rempli'; ?>"
+                <!-- Image -->
+                <li class="champ-chasse champ-img <?= empty($image) ? 'champ-vide' : 'champ-rempli'; ?>"
+                  data-champ="chasse_principale_image"
+                  data-cpt="chasse"
+                  data-post-id="<?= esc_attr($chasse_id); ?>">
+                  Une image principale
+                  <button type="button"
+                    class="champ-modifier"
                     data-champ="chasse_principale_image"
                     data-cpt="chasse"
-                    data-post-id="<?= esc_attr($chasse_id); ?>">
-                    Une image principale
-                    <button type="button"
-                      class="champ-modifier"
-                      data-champ="chasse_principale_image"
-                      data-cpt="chasse"
-                      data-post-id="<?= esc_attr($chasse_id); ?>"
-                      aria-label="Modifier l’image">✏️</button>
-                  </li>
+                    data-post-id="<?= esc_attr($chasse_id); ?>"
+                    aria-label="Modifier l’image">✏️</button>
+                </li>
 
               </ul>
             </div>
