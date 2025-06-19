@@ -63,7 +63,7 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
               <ul class="resume-infos">
 
                 <!-- Titre -->
-                <<li class="champ-chasse champ-titre <?= ($isTitreParDefaut ? 'champ-vide' : 'champ-rempli'); ?>"
+                <li class="champ-chasse champ-titre <?= ($isTitreParDefaut ? 'champ-vide' : 'champ-rempli'); ?>"
                   data-champ="post_title"
                   data-cpt="chasse"
                   data-post-id="<?= esc_attr($chasse_id); ?>">
@@ -78,7 +78,7 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
 
                   <div class="champ-feedback"></div>
                   </li>
-                  
+
                   <!-- Description -->
                   <li class="champ-chasse champ-description <?= empty($description) ? 'champ-vide' : 'champ-rempli'; ?>"
                     data-champ="chasse_principale_description"

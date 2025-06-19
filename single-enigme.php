@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Template : single-enigme.php (version minimale)
  * Affiche uniquement le header organisateur et le panneau d'édition
@@ -24,7 +23,6 @@ if (!enigme_est_visible_pour($user_id, $enigme_id)) {
   exit;
 }
 
-
 // 🛠️ Vérifie si l'utilisateur peut modifier ce post
 $edition_active = utilisateur_peut_modifier_post($enigme_id);
 if (
@@ -43,14 +41,7 @@ $statut_enigme   = $statut_data['etat'];
 $verrouillage    = enigme_verifier_verrouillage($enigme_id, $user_id);
 $pre_requis_ok   = enigme_pre_requis_remplis($enigme_id, $user_id);
 
-
-// 🔧 Chargement du header organisateur
-get_header();
-get_template_part('template-parts/organisateur/header-organisateur', null, [
-  'chasse_id' => $chasse_id,
-]);
-
-
+// 🔧 Titre et visuel
 $titre = get_the_title($enigme_id);
 $titre_defaut = 'nouvelle énigme';
 $isTitreParDefaut = strtolower(trim($titre)) === strtolower($titre_defaut);
@@ -80,6 +71,12 @@ afficher_enigme_stylisee($enigme_id, $statut_data);
   <div id="primary" class="content-area">
     <main id="main" class="site-main single-enigme-main statut-<?= esc_attr($statut_enigme); ?>">
 
+      <?php
+      get_header();
+      get_template_part('template-parts/organisateur/header-organisateur', null, [
+        'chasse_id' => $chasse_id,
+      ]);
+      ?>
 
       <?php if (enigme_est_visible_pour($user_id, $enigme_id)) : ?>
         <section class="enigme-wrapper">
@@ -125,30 +122,17 @@ afficher_enigme_stylisee($enigme_id, $statut_data);
         'user_id'   => $user_id,
       ]); ?>
 
+      <?php
+      if ($edition_active) {
+        // 📝 Panneaux complémentaires
+        get_template_part('template-parts/enigme/panneaux/panneau-description-enigme', null, ['enigme_id' => $enigme_id]);
+        get_template_part('template-parts/enigme/panneaux/panneau-images-enigme', null, ['enigme_id' => $enigme_id]);
+        get_template_part('template-parts/enigme/panneaux/panneau-variantes-enigme', null, ['enigme_id' => $enigme_id]);
+        get_template_part('template-parts/enigme/panneaux/panneau-solution-enigme', null, ['enigme_id' => $enigme_id]);
+      }
+      ?>
+
     </main>
-
-    <?php
-    if ($edition_active) {
-      // 📝 Panneau d’édition du texte
-      get_template_part('template-parts/enigme/panneaux/panneau-description-enigme', null, [
-        'enigme_id' => $enigme_id,
-      ]);
-
-      // 🖼️ Panneau d’édition des images
-      get_template_part('template-parts/enigme/panneaux/panneau-images-enigme', null, [
-        'enigme_id' => $enigme_id,
-      ]);
-
-      // 🎭 Panneau d’édition des variantes
-      get_template_part('template-parts/enigme/panneaux/panneau-variantes-enigme', null, [
-        'enigme_id' => $enigme_id,
-      ]);
-      // 📘 Panneau d’édition de la solution
-      get_template_part('template-parts/enigme/panneaux/panneau-solution-enigme', null, [
-        'enigme_id' => $enigme_id,
-      ]);
-    }
-    ?>
   </div>
 </div>
 
