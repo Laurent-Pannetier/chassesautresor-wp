@@ -75,7 +75,7 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
                     ✏️
                   </button>
 
-                  <div class="champ-edition" style="display: none;">
+                  <div class="champ-edition">
                     <input type="text"
                       class="champ-input"
                       maxlength="70"
