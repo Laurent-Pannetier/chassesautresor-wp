@@ -356,7 +356,7 @@ function modifierChampSimple(champ, valeur, postId, cpt = 'enigme') {
 
 
 
-// ==============================
+/// ==============================
 // 📝 initChampTexte
 // ==============================
 function initChampTexte(bloc) {
@@ -367,9 +367,10 @@ function initChampTexte(bloc) {
   const boutonEdit = bloc.querySelector('.champ-modifier');
   const boutonSave = bloc.querySelector('.champ-enregistrer');
   const boutonCancel = bloc.querySelector('.champ-annuler');
-  const affichage = bloc.querySelector('.champ-affichage');
+  const affichage = bloc.querySelector('.champ-affichage') || bloc;
   const edition = bloc.querySelector('.champ-edition');
   const isEditionDirecte = bloc.dataset.direct === 'true';
+
   const action = (cpt === 'chasse') ? 'modifier_champ_chasse'
     : (cpt === 'enigme') ? 'modifier_champ_enigme'
       : 'modifier_champ_organisateur';
@@ -383,7 +384,7 @@ function initChampTexte(bloc) {
     bloc.appendChild(feedback);
   }
 
-  // 🔐 Protection anti-édition directe pour post_title
+  // 🔐 Édition directe (autorisé uniquement si pas post_title)
   const forcerEditionDirecte = isEditionDirecte || (!boutonEdit && !boutonSave && !boutonCancel);
   if (forcerEditionDirecte && champ !== 'post_title') {
     let timer;
@@ -399,9 +400,10 @@ function initChampTexte(bloc) {
 
   // ✏️ Ouverture édition
   boutonEdit?.addEventListener('click', () => {
-    affichage.style.display = 'none';
-    edition.style.display = 'flex';
+    if (affichage?.style) affichage.style.display = 'none';
+    if (edition?.style) edition.style.display = 'flex';
     input.focus();
+
     feedback.textContent = '';
     feedback.className = 'champ-feedback';
 
@@ -423,8 +425,8 @@ function initChampTexte(bloc) {
 
   // ❌ Annulation
   boutonCancel?.addEventListener('click', () => {
-    edition.style.display = 'none';
-    affichage.style.display = '';
+    if (edition?.style) edition.style.display = 'none';
+    if (affichage?.style) affichage.style.display = '';
     feedback.textContent = '';
     feedback.className = 'champ-feedback';
   });
@@ -471,6 +473,7 @@ function initChampTexte(bloc) {
       .then(res => {
         if (res.success) {
           const affichageTexte = affichage.querySelector('h1, h2, p, span');
+
           if (champ === 'profil_public_email_contact') {
             const fallbackEmail = window.organisateurData?.defaultEmail || '…';
             const p = affichage.querySelector('p');
@@ -484,9 +487,10 @@ function initChampTexte(bloc) {
             affichageTexte.textContent = valeur;
           }
 
-          edition.style.display = 'none';
-          affichage.style.display = '';
+          if (edition?.style) edition.style.display = 'none';
+          if (affichage?.style) affichage.style.display = '';
           bloc.classList.toggle('champ-vide', !valeur);
+
           feedback.textContent = '';
           feedback.className = 'champ-feedback champ-success';
 
