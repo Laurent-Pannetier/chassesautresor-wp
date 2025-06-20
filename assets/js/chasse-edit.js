@@ -810,6 +810,7 @@ function rafraichirStatutChasse(postId) {
 // 🔄 Rafraîchissement dynamique après modification de certains champs
 // ==============================
 window.onChampSimpleMisAJour = function (champ, postId, valeur, cpt) {
+  console.log('🧪 onChampSimpleMisAJour', { champ, postId, valeur, cpt });
   if (cpt !== 'chasse') return;
 
   const champsQuiDoiventRafraichir = [
