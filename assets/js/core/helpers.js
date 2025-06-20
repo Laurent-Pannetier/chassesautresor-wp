@@ -58,9 +58,9 @@ window.renderLiensPublicsJS = renderLiensPublics;
  */
 window.mettreAJourTitreHeader = function (cpt, valeur) {
   const selecteurs = {
-    organisateur: '.header-organisateur .titre-objet',
-    chasse: '.header-chasse .titre-objet',
-    enigme: '.header-enigme .titre-objet'
+    organisateur: '.header-organisateur.titre-objet',
+    chasse: '.titre-objet.header-chasse',
+    enigme: '.header-enigme.titre-objet'
   };
 
   const cible = document.querySelector(selecteurs[cpt]);
