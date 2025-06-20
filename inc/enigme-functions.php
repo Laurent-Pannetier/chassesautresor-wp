@@ -437,6 +437,8 @@
   if (!isset($_GET['voir_image_debug'])) return;
 
   $file = WP_CONTENT_DIR . '/uploads/_enigmes/enigme-9257/Capture-decran-2025-01-15-205819.png';
+  error_log("📍 WP_CONTENT_DIR = " . WP_CONTENT_DIR);
+
 
   if (!file_exists($file)) {
     error_log("❌ Fichier introuvable : $file");
