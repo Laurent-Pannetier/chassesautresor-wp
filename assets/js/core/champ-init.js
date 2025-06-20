@@ -239,6 +239,82 @@ window.mettreAJourResumeInfos = function () {
   }
 };
 
+// ==============================
+// ✅ Hook unifié – Réagit à toute modification simple de champ pour tous les CPTs
+// ==============================
+window.onChampSimpleMisAJour = function (champ, postId, valeur, cpt) {
+  cpt = cpt?.toLowerCase?.() || cpt;
+
+  // ✅ ORGANISATEUR : mise à jour titre + image
+  if (cpt === 'organisateur') {
+    if (champ === 'post_title' && typeof window.mettreAJourTitreHeader === 'function') {
+      window.mettreAJourTitreHeader(cpt, valeur);
+    }
+    if (champ === 'profil_public_logo_organisateur') {
+      const bloc = document.querySelector(`.champ-organisateur[data-champ="${champ}"][data-post-id="${postId}"]`);
+      if (bloc && typeof bloc.__ouvrirMedia === 'function') bloc.__ouvrirMedia();
+    }
+    const champsResume = [
+      'post_title',
+      'profil_public_description',
+      'profil_public_logo',
+      'profil_public_logo_organisateur',
+      'profil_public_email_contact',
+      'coordonnees_bancaires',
+      'liens_publics'
+    ];
+    if (champsResume.includes(champ) && typeof window.mettreAJourResumeInfos === 'function') {
+      window.mettreAJourResumeInfos();
+    }
+  }
+
+  // ✅ CHASSE : titre + image + statut
+  if (cpt === 'chasse') {
+    if (champ === 'post_title' && typeof window.mettreAJourTitreHeader === 'function') {
+      window.mettreAJourTitreHeader(cpt, valeur);
+    }
+    if (champ === 'chasse_principale_image') {
+      const bloc = document.querySelector(`.champ-chasse[data-champ="${champ}"][data-post-id="${postId}"]`);
+      if (bloc && typeof bloc.__ouvrirMedia === 'function') bloc.__ouvrirMedia();
+    }
+    const champsStatut = [
+      'caracteristiques.chasse_infos_date_debut',
+      'caracteristiques.chasse_infos_date_fin',
+      'caracteristiques.chasse_infos_duree_illimitee',
+      'caracteristiques.chasse_infos_cout_points',
+      'champs_caches.chasse_cache_statut',
+      'champs_caches.chasse_cache_statut_validation'
+    ];
+    if (champsStatut.includes(champ)) {
+      rafraichirStatutChasse(postId);
+    }
+  }
+
+  // ✅ ENIGME : résumé uniquement
+  if (cpt === 'enigme') {
+    const champsResume = [
+      'post_title',
+      'enigme_visuel_legende',
+      'enigme_visuel_texte',
+      'enigme_mode_validation',
+      'enigme_tentative.enigme_tentative_cout_points',
+      'enigme_tentative.enigme_tentative_max',
+      'enigme_reponse_bonne',
+      'enigme_reponse_casse',
+      'enigme_acces_condition',
+      'enigme_acces_date',
+      'enigme_acces_pre_requis',
+      'enigme_style_affichage',
+      'enigme_solution_mode',
+      'enigme_solution_delai',
+      'enigme_solution_heure'
+    ];
+    if (champsResume.includes(champ) && typeof window.mettreAJourResumeInfos === 'function') {
+      window.mettreAJourResumeInfos();
+    }
+  }
+};
+
 
 
 // ================================
