@@ -320,6 +320,8 @@ function mettreAJourAffichageDateFin() {
 // 🛠️ Envoi AJAX d'un champ simple (texte, number, boolean)
 // ================================
 function modifierChampSimple(champ, valeur, postId, cpt = 'enigme') {
+  console.log('📤 modifierChampSimple()', { champ, valeur, postId, cpt }); // ⬅️ test
+
   const action = (cpt === 'enigme') ? 'modifier_champ_enigme' :
     (cpt === 'organisateur') ? 'modifier_champ_organisateur' :
       'modifier_champ_chasse';
