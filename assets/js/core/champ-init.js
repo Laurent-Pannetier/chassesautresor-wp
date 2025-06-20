@@ -291,28 +291,34 @@ window.onChampSimpleMisAJour = function (champ, postId, valeur, cpt) {
   }
 
   // ✅ ENIGME : résumé uniquement
-  if (cpt === 'enigme') {
-    const champsResume = [
-      'post_title',
-      'enigme_visuel_legende',
-      'enigme_visuel_texte',
-      'enigme_mode_validation',
-      'enigme_tentative.enigme_tentative_cout_points',
-      'enigme_tentative.enigme_tentative_max',
-      'enigme_reponse_bonne',
-      'enigme_reponse_casse',
-      'enigme_acces_condition',
-      'enigme_acces_date',
-      'enigme_acces_pre_requis',
-      'enigme_style_affichage',
-      'enigme_solution_mode',
-      'enigme_solution_delai',
-      'enigme_solution_heure'
-    ];
-    if (champsResume.includes(champ) && typeof window.mettreAJourResumeInfos === 'function') {
-      window.mettreAJourResumeInfos();
-    }
+ if (cpt === 'enigme') {
+  const champsResume = [
+    'post_title',
+    'enigme_visuel_legende',
+    'enigme_visuel_texte',
+    'enigme_mode_validation',
+    'enigme_tentative.enigme_tentative_cout_points',
+    'enigme_tentative.enigme_tentative_max',
+    'enigme_reponse_bonne',
+    'enigme_reponse_casse',
+    'enigme_acces_condition',
+    'enigme_acces_date',
+    'enigme_acces_pre_requis',
+    'enigme_style_affichage',
+    'enigme_solution_mode',
+    'enigme_solution_delai',
+    'enigme_solution_heure'
+  ];
+
+  if (champ === 'post_title' && typeof window.mettreAJourTitreHeader === 'function') {
+    window.mettreAJourTitreHeader(cpt, valeur);
   }
+
+  if (champsResume.includes(champ) && typeof window.mettreAJourResumeInfos === 'function') {
+    window.mettreAJourResumeInfos();
+  }
+}
+
 };
 
 
