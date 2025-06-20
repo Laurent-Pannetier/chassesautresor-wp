@@ -139,8 +139,12 @@ if (current_user_can('administrator')) {
     <!-- 📟 Informations -->
     <div class="chasse-details-wrapper">
 
-      <!-- Titre -->
-
+      <!-- Titre dynamique -->
+      <h1 class="titre-objet header-chasse"
+        data-cpt="chasse"
+        data-post-id="<?= esc_attr($chasse_id); ?>">
+        <?= esc_html($titre); ?>
+      </h1>
 
       <?php if ($organisateur_id): ?>
         <p class="txt-small auteur-organisateur">
