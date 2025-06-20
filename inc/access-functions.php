@@ -785,7 +785,7 @@ function utilisateur_peut_voir_enigme(int $enigme_id, ?int $user_id = null): boo
     }
 
     // 📌 Statut utilisateur logique
-    $statut = enigme_get_statut($enigme_id, $user_id);
+    $statut = enigme_get_statut_utilisateur($enigme_id, $user_id);
 
     // Autorisations minimales (à élargir plus tard si nécessaire)
     return in_array($statut, ['en_cours', 'resolue'], true);
