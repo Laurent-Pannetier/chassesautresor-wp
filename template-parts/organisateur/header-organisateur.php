@@ -102,6 +102,14 @@ $url_contact = esc_url($base_url . 'contact?email_organisateur=' . urlencode($em
         </ul>
       </nav>
     </div>
+
+    <!-- Icône réglage (toggle panneau + stylos) -->
+    <div class="header-actions-droite">
+      <button id="toggle-mode-edition" class="bouton-edition-toggle" aria-label="Paramètres organisateur">
+        <i class="fa-solid fa-sliders"></i>
+      </button>
+    </div>
+
   </header>
 </div>
 
@@ -115,12 +123,6 @@ get_template_part('template-parts/organisateur/presentation-organisateur', null,
 ?>
 </div>
 
-<!-- Icône réglage (toggle panneau + stylos) -->
-<div class="header-actions-droite">
-  <button id="toggle-mode-edition" class="bouton-edition-toggle" aria-label="Paramètres organisateur">
-    <i class="fa-solid fa-sliders"></i>
-  </button>
-</div>
 
 <script>
   document.addEventListener('DOMContentLoaded', function() {
