@@ -288,6 +288,7 @@ window.onChampSimpleMisAJour = function (champ, postId, valeur, cpt) {
 
   // ✅ MAJ dynamique du titre
   if (champ === 'post_title' && typeof window.mettreAJourTitreHeader === 'function') {
+    console.log('📛 Appel mettreAJourTitreHeader avec :', cpt, valeur);
     window.mettreAJourTitreHeader(cpt, valeur);
   }
 
