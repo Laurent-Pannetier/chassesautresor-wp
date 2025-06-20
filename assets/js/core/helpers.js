@@ -60,7 +60,7 @@ window.mettreAJourTitreHeader = function (cpt, valeur) {
   const selecteurs = {
     organisateur: '.header-organisateur__nom',
     chasse: '.titre-objet[data-cpt="chasse"]',
-    enigme: '.header-enigme .titre-objet'
+    enigme: '.titre-objet[data-cpt="enigme"]'
   };
 
   const cible = document.querySelector(selecteurs[cpt]);
