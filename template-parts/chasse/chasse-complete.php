@@ -228,7 +228,7 @@ if (current_user_can('administrator')) {
 <?php
 // Inclure le panneau si édition active
 if ($edition_active) {
-  get_template_part('template-parts/chasse/edition-chasse', null, [
+  get_template_part('template-parts/chasse/chasse-edition-main', null, [
     'chasse_id' => $chasse_id
   ]);
 }
