@@ -488,7 +488,7 @@ function initChampTexte(bloc) {
 
 
 // ==============================
-// initChampDeclencheur
+// initChampDeclencheur (déclenche ouverture + init JS au clic sur ✏️ résumé)
 // ==============================
 function initChampDeclencheur(bouton) {
   const champ = bouton.dataset.champ;
@@ -505,15 +505,17 @@ function initChampDeclencheur(bouton) {
     if (!bloc) return;
 
     // 🛡️ Sécurité : ignorer si c'est un résumé
-    if (bloc.classList.contains('resume-ligne')) {
-      return; // Ne pas essayer d'ouvrir l'édition sur une ligne résumé
+    if (bloc.classList.contains('resume-ligne')) return;
+
+    // ✅ Initialiser l’image dynamiquement si besoin
+    if (bloc.classList.contains('champ-img') && typeof initChampImage === 'function') {
+      initChampImage(bloc);
     }
 
+    // 🎯 Simuler clic sur vrai bouton si présent
     const vraiBouton = [...bloc.querySelectorAll('.champ-modifier')].find(b => b !== bouton);
-
     if (vraiBouton) vraiBouton.click();
   });
-
 }
 
 
@@ -573,8 +575,8 @@ function initChampImage(bloc) {
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
           action: (cpt === 'chasse') ? 'modifier_champ_chasse' :
-                  (cpt === 'enigme') ? 'modifier_champ_enigme' :
-                  'modifier_champ_organisateur',
+            (cpt === 'enigme') ? 'modifier_champ_enigme' :
+              'modifier_champ_organisateur',
           champ,
           valeur: id,
           post_id: postId
