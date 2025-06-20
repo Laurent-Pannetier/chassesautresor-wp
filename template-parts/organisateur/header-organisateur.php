@@ -86,14 +86,33 @@ $url_contact = esc_url($base_url . 'contact?email_organisateur=' . urlencode($em
       <div class="champ-feedback"></div>
     </div>
 
-    <?php
-    get_template_part('template-parts/organisateur/panneau-organisateur', null, [
-      'organisateur_id' => $organisateur_id
-    ]);
-    get_template_part('template-parts/organisateur/presentation-organisateur', null, [
-      'organisateur_id' => $organisateur_id
-    ]);
-    ?>
+    <!-- Bande menu en dehors du flex principal -->
+    <div class="header-organisateur__menu-bar">
+      <nav class="header-organisateur__menu header-organisateur__menu--sous-titre">
+        <ul>
+          <li class="onglet-chasses <?= !$est_contact ? 'active' : ''; ?>">
+            <a href="<?= esc_url($est_contact ? $base_url . '#chasses' : '#chasses'); ?>">Chasses</a>
+          </li>
+          <li class="onglet-presentation <?= !$est_contact ? '' : ''; ?>">
+            <a href="<?= esc_url($est_contact ? $base_url . '#presentation' : '#presentation'); ?>">Présentation</a>
+          </li>
+          <li class="onglet-contact <?= $est_contact ? 'active' : ''; ?>">
+            <a href="<?= esc_url($url_contact); ?>" class="onglet-nav">Contact</a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+</div>
+
+<?php
+get_template_part('template-parts/organisateur/panneau-organisateur', null, [
+  'organisateur_id' => $organisateur_id
+]);
+get_template_part('template-parts/organisateur/presentation-organisateur', null, [
+  'organisateur_id' => $organisateur_id
+]);
+?>
 </div>
 
 <!-- Icône réglage (toggle panneau + stylos) -->
@@ -102,25 +121,6 @@ $url_contact = esc_url($base_url . 'contact?email_organisateur=' . urlencode($em
     <i class="fa-solid fa-sliders"></i>
   </button>
 </div>
-</div>
-
-<!-- Bande menu en dehors du flex principal -->
-<div class="header-organisateur__menu-bar">
-  <nav class="header-organisateur__menu header-organisateur__menu--sous-titre">
-    <ul>
-      <li class="onglet-chasses <?= !$est_contact ? 'active' : ''; ?>">
-        <a href="<?= esc_url($est_contact ? $base_url . '#chasses' : '#chasses'); ?>">Chasses</a>
-      </li>
-      <li class="onglet-presentation <?= !$est_contact ? '' : ''; ?>">
-        <a href="<?= esc_url($est_contact ? $base_url . '#presentation' : '#presentation'); ?>">Présentation</a>
-      </li>
-      <li class="onglet-contact <?= $est_contact ? 'active' : ''; ?>">
-        <a href="<?= esc_url($url_contact); ?>" class="onglet-nav">Contact</a>
-      </li>
-    </ul>
-  </nav>
-</div>
-</header>
 </div>
 
 <script>
