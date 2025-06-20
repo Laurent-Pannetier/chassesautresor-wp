@@ -277,45 +277,19 @@ function initLiensOrganisateur(bloc) {
   });
 }
 
+
 // ==============================
 // 🔁 Rafraîchissement dynamique des infos organisateur après modification d'un champ
 // ==============================
 window.onChampSimpleMisAJour = function (champ, postId, valeur, cpt) {
   if (cpt !== 'organisateur') return;
 
-  // ✅ MAJ dynamique du titre header si modifié
+  // ✅ MAJ dynamique du titre
   if (champ === 'post_title' && typeof window.mettreAJourTitreHeader === 'function') {
     window.mettreAJourTitreHeader(cpt, valeur);
   }
 
-  // ✅ Mise à jour du résumé d’infos si disponible
-  const champsResume = [
-    'post_title',
-    'profil_public_description',
-    'profil_public_logo',
-    'profil_public_email_contact',
-    'coordonnees_bancaires',
-    'liens_publics'
-  ];
-
-  if (champsResume.includes(champ) && typeof window.mettreAJourResumeInfos === 'function') {
-    window.mettreAJourResumeInfos();
-  }
-};
-
-
-// ==============================
-// 🎯 Traitement spécial image organisateur (stylo résumé)
-// ==============================
-window.onChampSimpleMisAJour = function (champ, postId, valeur, cpt) {
-  if (cpt !== 'organisateur') return;
-
-  // 🔁 Mise à jour du titre affiché en header
-  if (champ === 'post_title' && typeof window.mettreAJourTitreHeader === 'function') {
-    window.mettreAJourTitreHeader(cpt, valeur);
-  }
-
-  // 🖼️ Déclenche ouverture image (stylo résumé)
+  // ✅ Ouverture media pour le logo
   if (champ === 'profil_public_logo_organisateur') {
     const bloc = document.querySelector(`.champ-organisateur[data-champ="${champ}"][data-post-id="${postId}"]`);
     if (bloc && typeof bloc.__ouvrirMedia === 'function') {
@@ -323,10 +297,11 @@ window.onChampSimpleMisAJour = function (champ, postId, valeur, cpt) {
     }
   }
 
-  // ✅ MAJ résumé si fonction dispo
+  // ✅ MAJ du résumé
   const champsResume = [
     'post_title',
     'profil_public_description',
+    'profil_public_logo',
     'profil_public_logo_organisateur',
     'profil_public_email_contact',
     'coordonnees_bancaires',
