@@ -429,37 +429,6 @@
         ], site_url('/voir-image-enigme')));
     }
 
-// ==================================================
-    // [TEMP] Fonction temporaire de test : affichage direct d'une image d'énigme via ?voir_image_enigme=ID
-    // À retirer en production !
-    // ==================================================
-add_action('init', function () {
-  if (!isset($_GET['voir_image_debug'])) return;
-
-  // 🔴 Désactive toutes les fonctionnalités WordPress
-  remove_all_actions('template_redirect');
-  remove_all_actions('shutdown');
-  ob_clean();
-  header_remove();
-
-  $file = WP_CONTENT_DIR . '/uploads/_enigmes/enigme-9257/Capture-decran-2025-01-15-205819.png';
-
-  error_log("🧪 Chemin utilisé : $file");
-
-  if (!file_exists($file)) {
-    error_log("❌ Fichier introuvable : $file");
-    http_response_code(404);
-    exit('not found');
-  }
-
-  header('Content-Type: image/png');
-  header('Content-Length: ' . filesize($file));
-  readfile($file);
-  exit;
-});
-
-
-
 
     // ==================================================
     // 🎨 AFFICHAGE STYLISÉ DES ÉNIGMES

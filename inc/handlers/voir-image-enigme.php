@@ -8,20 +8,26 @@ if (!isset($_GET['id']) || !ctype_digit($_GET['id'])) {
 $image_id = (int) $_GET['id'];
 $taille = $_GET['taille'] ?? 'full';
 
-// 🔎 Récupération des infos de l'image
+// 🔎 Récupération de l'URL de l'image à la bonne taille
 $src = wp_get_attachment_image_src($image_id, $taille);
-$fichier = get_attached_file($image_id);
+$url = $src[0] ?? null;
 
-// 🔍 Debug : log si besoin
-// error_log("🧩 Proxy image $image_id ($taille) → fichier = $fichier");
-
-// ⛔ Pas de chemin, fichier manquant ou erreur
-if (!$fichier || !file_exists($fichier)) {
+if (!$url) {
   http_response_code(404);
-  exit('Image non trouvée');
+  exit('Taille introuvable');
 }
 
-// ✅ Type MIME (WordPress sait ce que c’est)
+// 📁 Conversion URL → chemin absolu du fichier
+$upload_dir = wp_get_upload_dir();
+$path = str_replace($upload_dir['baseurl'], $upload_dir['basedir'], $url);
+
+// ⛔ Fichier inexistant
+if (!file_exists($path)) {
+  http_response_code(404);
+  exit('Fichier introuvable');
+}
+
+// ✅ Type MIME
 $mime = get_post_mime_type($image_id);
 if (!$mime) $mime = 'application/octet-stream';
 
@@ -33,6 +39,7 @@ remove_all_actions('template_redirect');
 
 // ✅ Envoi du fichier
 header('Content-Type: ' . $mime);
-header('Content-Length: ' . filesize($fichier));
-readfile($fichier);
+header('Content-Length: ' . filesize($path));
+readfile($path);
 exit;
+
