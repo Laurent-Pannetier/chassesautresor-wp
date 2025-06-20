@@ -282,7 +282,8 @@ document.addEventListener('click', (e) => {
   const postId = btn.dataset.postId;
   if (!postId) return;
 
-  // 🔐 Désactive temporairement la protection avant ouverture
+  // ❌ Ne PAS ouvrir le panneau ici
+
   fetch(ajaxurl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -298,9 +299,9 @@ document.addEventListener('click', (e) => {
         return;
       }
 
-      console.log(`🔓 Accès visuel énigme ${postId} autorisé temporairement`);
+      console.log(`🔓 htaccess désactivé pour énigme ${postId}`);
 
-      // 🪟 Ouverture du panneau après confirmation
+      // ✅ Ouverture du panneau uniquement maintenant
       document.querySelectorAll('.panneau-lateral.ouvert, .panneau-lateral-liens.ouvert').forEach((p) => {
         p.classList.remove('ouvert');
         p.setAttribute('aria-hidden', 'true');
@@ -314,6 +315,7 @@ document.addEventListener('click', (e) => {
       console.error('❌ Erreur réseau AJAX htaccess :', err);
     });
 });
+
 
 
 // ==============================
