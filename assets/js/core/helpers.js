@@ -71,6 +71,17 @@ window.mettreAJourTitreHeader = function (cpt, valeur) {
   }
 };
 
+/**
+ * 🔁 Met à jour dynamiquement la légende (sous-titre) d’une énigme dans le header.
+ * @param {string} valeur - La nouvelle légende à afficher
+ */
+window.mettreAJourLegendeEnigme = function (valeur) {
+  const legende = document.querySelector('.enigme-soustitre');
+  if (legende) {
+    legende.textContent = valeur;
+  }
+};
+
 
 
 /**
