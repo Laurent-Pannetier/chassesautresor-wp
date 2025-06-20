@@ -511,6 +511,12 @@ function initChampDeclencheur(bouton) {
     if (bloc.classList.contains('champ-img') && typeof initChampImage === 'function') {
       initChampImage(bloc);
     }
+    // ✅ Cas particulier : clic sur le stylo image → déclencher manuellement l’ouverture
+    if (bloc.classList.contains('champ-img') && typeof bloc.__ouvrirMedia === 'function') {
+      bloc.__ouvrirMedia();
+      return; // rien d’autre à faire
+    }
+
 
     // 🎯 Simuler clic sur vrai bouton si présent
     const vraiBouton = [...bloc.querySelectorAll('.champ-modifier')].find(b => b !== bouton);
@@ -561,8 +567,8 @@ function initChampImage(bloc) {
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
           action: (cpt === 'chasse') ? 'modifier_champ_chasse' :
-                  (cpt === 'enigme') ? 'modifier_champ_enigme' :
-                  'modifier_champ_organisateur',
+            (cpt === 'enigme') ? 'modifier_champ_enigme' :
+              'modifier_champ_organisateur',
           champ,
           valeur: id,
           post_id: postId
