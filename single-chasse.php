@@ -136,7 +136,7 @@ get_header();
 
       <!-- 📜 Description finale -->
       <?php
-      get_template_part('template-parts/chasse/description-chasse', null, [
+      get_template_part('template-parts/chasse/chasse-partial-description', null, [
         'description' => $description,
         'titre_recompense' => $titre_recompense,
         'lot' => $lot,
