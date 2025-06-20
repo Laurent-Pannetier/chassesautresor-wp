@@ -19,7 +19,6 @@ $iban_vide = empty($coordonnees['iban']);
 $bic_vide  = empty($coordonnees['bic']);
 $classe_vide_coordonnees = ($iban_vide || $bic_vide) ? 'champ-vide' : '';
 
-$has_slogan = !empty($slogan);
 $class_titre = $has_slogan ? '' : 'titre-sans-slogan';
 
 $base_url = get_permalink($organisateur_id);
@@ -73,7 +72,6 @@ $url_contact = esc_url($base_url . 'contact?email_organisateur=' . urlencode($em
       </div>
 
       <div class="champ-edition" style="display: none;">
-        <input type="text" maxlength="70" value="<?= esc_attr($slogan); ?>" class="champ-input">
         <button type="button" class="champ-enregistrer">✓</button>
         <button type="button" class="champ-annuler">✖</button>
       </div>

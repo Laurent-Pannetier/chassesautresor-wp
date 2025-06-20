@@ -526,7 +526,6 @@
 
         $user_id = get_current_user_id();
         $style = get_field('enigme_style_affichage', $enigme_id) ?? 'defaut';
-        error_log("🎨 Style utilisé : $style");
 
         echo '<div class="enigme-affichage enigme-style-' . esc_attr($style) . '">';
 

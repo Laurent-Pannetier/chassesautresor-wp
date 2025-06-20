@@ -471,11 +471,9 @@ function purger_htaccess_temp_enigmes()
     if (!is_dir($dossier)) continue;
 
     $post_id = intval(basename($dossier, '/'));
-    error_log("🔍 Scan énigme $post_id");
 
     $fichier_tmp = $dossier . '/.htaccess.tmp';
     if (!file_exists($fichier_tmp)) {
-      error_log("⏭️ Aucun fichier .tmp pour énigme $post_id");
       continue;
     }
 
