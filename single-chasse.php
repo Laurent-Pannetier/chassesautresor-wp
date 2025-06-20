@@ -84,7 +84,7 @@ get_header();
 
       <!-- 📦 Fiche complète (images + méta + actions) -->
       <?php
-      get_template_part('template-parts/chasse/chasse-complete', null, [
+      get_template_part('template-parts/chasse/chasse-affichage-complet', null, [
         'chasse_id' => $chasse_id
       ]);
       ?>
