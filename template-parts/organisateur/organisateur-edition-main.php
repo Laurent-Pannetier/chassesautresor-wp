@@ -225,15 +225,15 @@ $classe_vide_coordonnees = ($iban_vide || $bic_vide) ? 'champ-vide' : '';
   </section>
 <?php endif; ?>
 <?php if ($peut_modifier) : ?>
-  <?php get_template_part('template-parts/organisateur/panneaux/panneau-description', null, [
+  <?php get_template_part('template-parts/organisateur/panneaux/organisateur-edition-description', null, [
     'organisateur_id' => $organisateur_id
   ]); ?>
 
-  <?php get_template_part('template-parts/organisateur/panneaux/panneau-liens-publics', null, [
+  <?php get_template_part('template-parts/organisateur/panneaux/organisateur-edition-liens', null, [
     'organisateur_id' => $organisateur_id
   ]); ?>
 
-  <?php get_template_part('template-parts/organisateur/panneaux/panneau-coordonnees', null, [
+  <?php get_template_part('template-parts/organisateur/panneaux/organisateur-edition-coordonnees', null, [
     'organisateur_id' => $organisateur_id
   ]); ?>
 <?php endif; ?>
