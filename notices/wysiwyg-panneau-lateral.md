@@ -27,7 +27,7 @@ acf_form_head(); // doit être placé avant get_header()
 
 ```php
 if ($edition_active) {
-  get_template_part('template-parts/panneaux/panneau-description-enigme', null, [
+  get_template_part('template-parts/panneaux/enigme-edition-description', null, [
     'enigme_id' => $enigme_id
   ]);
 }

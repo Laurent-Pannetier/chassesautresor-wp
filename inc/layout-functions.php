@@ -5,6 +5,7 @@ defined( 'ABSPATH' ) || exit;
 // 🧩 TEMPLATES DE PAGE PERSONNALISÉS
 // 📦 MISE EN PAGE
 // 🧩 HEADERS
+// 🎯 AFFICHAGES SPÉCIFIQUES
 //
 
 
@@ -281,3 +282,54 @@ function filtrer_content_sans_titre($content) {
     return $content;
 }
 
+// ==================================================
+// 🎯 AFFICHAGES SPÉCIFIQUES
+// ==================================================
+/**
+ * Limite l'affichage d'un texte à un certain nombre de caractères, avec un bouton "Lire la suite" pour afficher la totalité.
+ *
+ * @param string $texte Le texte à afficher.
+ * @param int $limite Nombre de caractères à afficher avant le toggle.
+ * @param string $label_plus Libellé du bouton pour afficher la suite.
+ * @param string $label_moins Libellé du bouton pour masquer la suite.
+ * @return string HTML généré avec le texte tronqué et le toggle.
+ */
+function limiter_texte_avec_toggle($texte, $limite = 200, $label_plus = 'Lire la suite', $label_moins = 'Réduire') {
+    $texte = trim($texte);
+    if (mb_strlen($texte) <= $limite) {
+        return wpautop($texte);
+    }
+
+    $texte_visible = mb_substr($texte, 0, $limite);
+    $texte_cache = mb_substr($texte, $limite);
+
+    ob_start();
+    ?>
+    <span class="texte-limite">
+        <span class="texte-visible"><?php echo esc_html($texte_visible); ?></span>
+        <span class="texte-cache" style="display:none;"><?php echo esc_html($texte_cache); ?></span>
+        <button type="button" class="toggle-texte" aria-expanded="false"><?php echo esc_html($label_plus); ?></button>
+    </span>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.toggle-texte').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var parent = btn.closest('.texte-limite');
+                var cache = parent.querySelector('.texte-cache');
+                var visible = parent.querySelector('.texte-visible');
+                if (cache.style.display === 'none') {
+                    cache.style.display = '';
+                    btn.textContent = <?php echo json_encode($label_moins); ?>;
+                    btn.setAttribute('aria-expanded', 'true');
+                } else {
+                    cache.style.display = 'none';
+                    btn.textContent = <?php echo json_encode($label_plus); ?>;
+                    btn.setAttribute('aria-expanded', 'false');
+                }
+            });
+        });
+    });
+    </script>
+    <?php
+    return ob_get_clean();
+}

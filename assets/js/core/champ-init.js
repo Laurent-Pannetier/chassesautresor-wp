@@ -239,6 +239,93 @@ window.mettreAJourResumeInfos = function () {
   }
 };
 
+// ==============================
+// ✅ Hook unifié – Réagit à toute modification simple de champ pour tous les CPTs
+// ==============================
+window.onChampSimpleMisAJour = function (champ, postId, valeur, cpt) {
+  cpt = cpt?.toLowerCase?.() || cpt;
+
+  // ✅ ORGANISATEUR : mise à jour titre + image
+  if (cpt === 'organisateur') {
+    if (champ === 'post_title' && typeof window.mettreAJourTitreHeader === 'function') {
+      window.mettreAJourTitreHeader(cpt, valeur);
+    }
+    if (champ === 'profil_public_logo_organisateur') {
+      const bloc = document.querySelector(`.champ-organisateur[data-champ="${champ}"][data-post-id="${postId}"]`);
+      if (bloc && typeof bloc.__ouvrirMedia === 'function') bloc.__ouvrirMedia();
+    }
+    const champsResume = [
+      'post_title',
+      'profil_public_description',
+      'profil_public_logo',
+      'profil_public_logo_organisateur',
+      'profil_public_email_contact',
+      'coordonnees_bancaires',
+      'liens_publics'
+    ];
+    if (champsResume.includes(champ) && typeof window.mettreAJourResumeInfos === 'function') {
+      window.mettreAJourResumeInfos();
+    }
+  }
+
+  // ✅ CHASSE : titre + image + statut
+  if (cpt === 'chasse') {
+    if (champ === 'post_title' && typeof window.mettreAJourTitreHeader === 'function') {
+      window.mettreAJourTitreHeader(cpt, valeur);
+    }
+    if (champ === 'chasse_principale_image') {
+      const bloc = document.querySelector(`.champ-chasse[data-champ="${champ}"][data-post-id="${postId}"]`);
+      if (bloc && typeof bloc.__ouvrirMedia === 'function') bloc.__ouvrirMedia();
+    }
+    const champsStatut = [
+      'caracteristiques.chasse_infos_date_debut',
+      'caracteristiques.chasse_infos_date_fin',
+      'caracteristiques.chasse_infos_duree_illimitee',
+      'caracteristiques.chasse_infos_cout_points',
+      'champs_caches.chasse_cache_statut',
+      'champs_caches.chasse_cache_statut_validation'
+    ];
+    if (champsStatut.includes(champ)) {
+      rafraichirStatutChasse(postId);
+    }
+  }
+
+  // ✅ ENIGME : résumé uniquement
+  if (cpt === 'enigme') {
+    const champsResume = [
+      'post_title',
+      'enigme_visuel_legende',
+      'enigme_visuel_texte',
+      'enigme_mode_validation',
+      'enigme_tentative.enigme_tentative_cout_points',
+      'enigme_tentative.enigme_tentative_max',
+      'enigme_reponse_bonne',
+      'enigme_reponse_casse',
+      'enigme_acces_condition',
+      'enigme_acces_date',
+      'enigme_acces_pre_requis',
+      'enigme_style_affichage',
+      'enigme_solution_mode',
+      'enigme_solution_delai',
+      'enigme_solution_heure'
+    ];
+
+    if (champ === 'post_title' && typeof window.mettreAJourTitreHeader === 'function') {
+      window.mettreAJourTitreHeader(cpt, valeur);
+    }
+
+    if (champ === 'enigme_visuel_legende') {
+      const legende = document.querySelector('.enigme-soustitre');
+      if (legende) legende.textContent = valeur;
+    }
+
+    if (champsResume.includes(champ) && typeof window.mettreAJourResumeInfos === 'function') {
+      window.mettreAJourResumeInfos();
+    }
+  }
+
+};
+
 
 
 // ================================
@@ -320,6 +407,8 @@ function mettreAJourAffichageDateFin() {
 // 🛠️ Envoi AJAX d'un champ simple (texte, number, boolean)
 // ================================
 function modifierChampSimple(champ, valeur, postId, cpt = 'enigme') {
+  console.log('📤 modifierChampSimple()', { champ, valeur, postId, cpt }); // ⬅️ test
+
   const action = (cpt === 'enigme') ? 'modifier_champ_enigme' :
     (cpt === 'organisateur') ? 'modifier_champ_organisateur' :
       'modifier_champ_chasse';
@@ -384,20 +473,6 @@ function initChampTexte(bloc) {
     bloc.appendChild(feedback);
   }
 
-  // 🔐 Édition directe (autorisé uniquement si pas post_title)
-  const forcerEditionDirecte = isEditionDirecte || (!boutonEdit && !boutonSave && !boutonCancel);
-  if (forcerEditionDirecte && champ !== 'post_title') {
-    let timer;
-    input.addEventListener('input', () => {
-      clearTimeout(timer);
-      const valeur = input.value.trim();
-      timer = setTimeout(() => {
-        modifierChampSimple(champ, valeur, postId, cpt);
-      }, 500);
-    });
-    return;
-  }
-
   // ✏️ Ouverture édition
   boutonEdit?.addEventListener('click', () => {
     if (affichage?.style) affichage.style.display = 'none';
@@ -446,7 +521,7 @@ function initChampTexte(bloc) {
       }
     }
 
-    if (champ === 'post_title' && cpt === 'enigme') {
+    if (champ === 'post_title') {
       if (!valeur) {
         feedback.textContent = '❌ Le titre est obligatoire.';
         feedback.className = 'champ-feedback champ-error';
@@ -457,52 +532,43 @@ function initChampTexte(bloc) {
     feedback.textContent = 'Enregistrement en cours...';
     feedback.className = 'champ-feedback champ-loading';
 
-    fetch('/wp-admin/admin-ajax.php', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({ action, champ, valeur, post_id: postId })
-    })
-      .then(r => r.json())
-      .then(res => {
-        if (res.success) {
-          const affichageTexte = affichage.querySelector('h1, h2, p, span');
+    modifierChampSimple(champ, valeur, postId, cpt).then(success => {
+      if (success) {
+        const affichageTexte = affichage.querySelector('h1, h2, p, span');
 
-          if (champ === 'profil_public_email_contact') {
-            const fallbackEmail = window.organisateurData?.defaultEmail || '…';
-            const p = affichage.querySelector('p');
-            if (p) {
-              p.innerHTML = '<strong>Email de contact :</strong> ' + (valeur ? valeur : '<em>' + fallbackEmail + '</em>');
-            }
-          } else if (affichageTexte) {
-            affichageTexte.textContent = valeur;
+        if (champ === 'profil_public_email_contact') {
+          const fallbackEmail = window.organisateurData?.defaultEmail || '…';
+          const p = affichage.querySelector('p');
+          if (p) {
+            p.innerHTML = '<strong>Email de contact :</strong> ' + (valeur ? valeur : '<em>' + fallbackEmail + '</em>');
           }
-
-          if (edition?.style) edition.style.display = 'none';
-          if (affichage?.style) affichage.style.display = '';
-          bloc.classList.toggle('champ-vide', !valeur);
-
-          feedback.textContent = '';
-          feedback.className = 'champ-feedback champ-success';
-
-          if (typeof window.mettreAJourResumeInfos === 'function') {
-            window.mettreAJourResumeInfos();
-          }
-        } else {
-          feedback.textContent = 'Erreur lors de l’enregistrement.';
-          feedback.className = 'champ-feedback champ-error';
+        } else if (affichageTexte) {
+          affichageTexte.textContent = valeur;
         }
-      })
-      .catch(() => {
-        feedback.textContent = 'Erreur réseau.';
+
+        if (edition?.style) edition.style.display = 'none';
+        if (affichage?.style) affichage.style.display = '';
+        bloc.classList.toggle('champ-vide', !valeur);
+
+        feedback.textContent = '';
+        feedback.className = 'champ-feedback champ-success';
+
+        if (typeof window.mettreAJourResumeInfos === 'function') {
+          window.mettreAJourResumeInfos();
+        }
+      } else {
+        feedback.textContent = 'Erreur lors de l’enregistrement.';
         feedback.className = 'champ-feedback champ-error';
-      });
+      }
+    });
   });
+
 }
 
 
 
 // ==============================
-// initChampDeclencheur
+// initChampDeclencheur (déclenche ouverture + init JS au clic sur ✏️ résumé)
 // ==============================
 function initChampDeclencheur(bouton) {
   const champ = bouton.dataset.champ;
@@ -519,20 +585,28 @@ function initChampDeclencheur(bouton) {
     if (!bloc) return;
 
     // 🛡️ Sécurité : ignorer si c'est un résumé
-    if (bloc.classList.contains('resume-ligne')) {
-      return; // Ne pas essayer d'ouvrir l'édition sur une ligne résumé
+    if (bloc.classList.contains('resume-ligne')) return;
+
+    // ✅ Initialiser l’image dynamiquement si besoin
+    if (bloc.classList.contains('champ-img') && typeof initChampImage === 'function') {
+      initChampImage(bloc);
+    }
+    // ✅ Cas particulier : clic sur le stylo image → déclencher manuellement l’ouverture
+    if (bloc.classList.contains('champ-img') && typeof bloc.__ouvrirMedia === 'function') {
+      bloc.__ouvrirMedia();
+      return; // rien d’autre à faire
     }
 
-    const vraiBouton = [...bloc.querySelectorAll('.champ-modifier')].find(b => b !== bouton);
 
+    // 🎯 Simuler clic sur vrai bouton si présent
+    const vraiBouton = [...bloc.querySelectorAll('.champ-modifier')].find(b => b !== bouton);
     if (vraiBouton) vraiBouton.click();
   });
-
 }
 
 
 // ==============================
-// initChampImage
+// initChampImage (édition uniquement via panneau)
 // ==============================
 function initChampImage(bloc) {
   const champ = bloc.dataset.champ;
@@ -542,24 +616,25 @@ function initChampImage(bloc) {
   const input = bloc.querySelector('.champ-input');
   const image = bloc.querySelector('img');
   const feedback = bloc.querySelector('.champ-feedback');
-  const boutonEdit = bloc.querySelector('.champ-modifier');
-  const action = (cpt === 'chasse') ? 'modifier_champ_chasse' :
-    (cpt === 'enigme') ? 'modifier_champ_enigme' :
-      'modifier_champ_organisateur';
 
-  if (!champ || !cpt || !postId || !input || !image || !boutonEdit) return;
+  if (!champ || !cpt || !postId || !input || !image) return;
 
-  let frame = null;
+  // ✅ Création du frame à la volée quand appelé
+  const ouvrirMedia = () => {
+    // ✅ Empêcher double ouverture : reuse si déjà initialisé
+    if (bloc.__mediaFrame) {
+      bloc.__mediaFrame.open();
+      return;
+    }
 
-  boutonEdit.addEventListener('click', () => {
-    if (frame) return frame.open();
-
-    frame = wp.media({
+    const frame = wp.media({
       title: 'Choisir une image',
       multiple: false,
       library: { type: 'image' },
       button: { text: 'Utiliser cette image' }
     });
+
+    bloc.__mediaFrame = frame; // 💾 stocké pour usage unique
 
     frame.on('select', () => {
       const selection = frame.state().get('selection').first();
@@ -575,17 +650,19 @@ function initChampImage(bloc) {
         feedback.className = 'champ-feedback champ-loading';
       }
 
-      fetch('/wp-admin/admin-ajax.php', {
+      fetch(ajaxurl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
-          action,
+          action: (cpt === 'chasse') ? 'modifier_champ_chasse' :
+            (cpt === 'enigme') ? 'modifier_champ_enigme' :
+              'modifier_champ_organisateur',
           champ,
           valeur: id,
           post_id: postId
         })
       })
-        .then(res => res.json())
+        .then(r => r.json())
         .then(res => {
           if (res.success) {
             bloc.classList.remove('champ-vide');
@@ -595,6 +672,9 @@ function initChampImage(bloc) {
             }
             if (typeof window.mettreAJourResumeInfos === 'function') {
               window.mettreAJourResumeInfos();
+            }
+            if (typeof window.mettreAJourVisuelCPT === 'function') {
+              mettreAJourVisuelCPT(cpt, postId, url);
             }
           } else {
             if (feedback) {
@@ -612,7 +692,12 @@ function initChampImage(bloc) {
     });
 
     frame.open();
-  });
+  };
+
+  // ✅ On expose la fonction pour la déclencher manuellement
+  bloc.dataset.imageInitReady = '1';
+  bloc.dataset.imageInitTrigger = ouvrirMedia;
+  bloc.__ouvrirMedia = ouvrirMedia;
 }
 
 

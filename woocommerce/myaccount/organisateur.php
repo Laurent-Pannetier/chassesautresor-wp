@@ -124,7 +124,7 @@ $tableau_contenu = ob_get_clean(); // Récupérer la sortie et l'effacer du buff
                 is_page(77) && // Vérifie que nous sommes bien sur la page de compte (ID 77)
                 empty(WC()->query->get_current_endpoint()) // Vérifie qu'aucun endpoint WooCommerce n'est actif
             ) : ?>
-                <?php get_template_part('template-parts/crea-orga-cards'); ?>
+                <?php get_template_part('template-parts/organisateur-partial-cards'); ?>
             <?php endif; ?>
 
     

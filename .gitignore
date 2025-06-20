@@ -16,6 +16,7 @@
 /readme.html
 /wp-*.php
 /xmlrpc.php
+/git_cache_settings
 
 # Configuration
 wp-config.php

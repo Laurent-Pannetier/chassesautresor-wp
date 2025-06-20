@@ -551,7 +551,7 @@ li.ligne-logo.champ-organisateur.champ-vide {
     padding: 0;
     opacity: 1;
 }
-li.ligne-email, li.ligne-logo {
+li.ligne-email, li.ligne-logo, li.champ-titre {
     display: flex;
     align-items: start;
     gap:0.5rem;

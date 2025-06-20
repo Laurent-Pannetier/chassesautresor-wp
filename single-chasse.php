@@ -69,7 +69,7 @@ get_header();
       <?php
       // 🧭 Header organisateur (dans le flux visible)
       if ($organisateur_id) {
-        get_template_part('template-parts/organisateur/header-organisateur', null, [
+        get_template_part('template-parts/organisateur/organisateur-header', null, [
           'organisateur_id' => $organisateur_id
         ]);
       }
@@ -84,7 +84,7 @@ get_header();
 
       <!-- 📦 Fiche complète (images + méta + actions) -->
       <?php
-      get_template_part('template-parts/chasse/chasse-complete', null, [
+      get_template_part('template-parts/chasse/chasse-affichage-complet', null, [
         'chasse_id' => $chasse_id
       ]);
       ?>
@@ -125,7 +125,7 @@ get_header();
 
         <div class="chasse-enigmes-liste">
           <?php
-          get_template_part('template-parts/enigme/boucle-enigmes-chasse', null, [
+          get_template_part('template-parts/enigme/chasse-partial-boucle-enigmes', null, [
             'chasse_id' => $chasse_id
           ]);
           ?>
@@ -136,7 +136,7 @@ get_header();
 
       <!-- 📜 Description finale -->
       <?php
-      get_template_part('template-parts/chasse/description-chasse', null, [
+      get_template_part('template-parts/chasse/chasse-partial-description', null, [
         'description' => $description,
         'titre_recompense' => $titre_recompense,
         'lot' => $lot,

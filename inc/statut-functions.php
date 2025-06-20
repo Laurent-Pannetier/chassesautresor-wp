@@ -735,9 +735,10 @@ function recuperer_statut_chasse()
         wp_send_json_error('statut_indisponible');
     }
 
+    $statut_str = is_string($statut) ? $statut : '';
     wp_send_json_success([
-        'statut' => $statut,
-        'statut_label' => ucfirst(str_replace('_', ' ', $statut))
+        'statut' => $statut_str,
+        'statut_label' => ucfirst(str_replace('_', ' ', $statut_str))
     ]);
 }
 

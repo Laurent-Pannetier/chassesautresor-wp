@@ -247,36 +247,6 @@ document.addEventListener('DOMContentLoaded', () => {
       });
   }
 
-  // ================================
-  // ✅ Hook post-modification – Mise à jour du résumé énigme uniquement
-  // ================================
-  window.onChampSimpleMisAJour = function (champ, postId, valeur, cpt) {
-    if (cpt !== 'enigme') return;
-
-    const champsResume = [
-      'post_title',
-      'enigme_visuel_legende',
-      'enigme_visuel_texte',
-      'enigme_mode_validation',
-      'enigme_tentative.enigme_tentative_cout_points',
-      'enigme_tentative.enigme_tentative_max',
-      'enigme_reponse_bonne',
-      'enigme_reponse_casse',
-      'enigme_acces_condition',
-      'enigme_acces_date',
-      'enigme_acces_pre_requis',
-      'enigme_style_affichage',
-      'enigme_solution_mode',
-      'enigme_solution_delai',
-      'enigme_solution_heure'
-    ];
-
-    if (champsResume.includes(champ)) {
-      if (typeof window.mettreAJourResumeInfos === 'function') {
-        window.mettreAJourResumeInfos();
-      }
-    }
-  };
   
     (() => {
   const $cout = document.querySelector('.champ-cout');

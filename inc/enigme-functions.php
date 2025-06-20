@@ -442,15 +442,12 @@
      */
 
     /**
-     * @param int $post_id ID de l’énigme à afficher.
-     */
-    /**
      * Affiche l’énigme avec son style et son état selon le contexte utilisateur.
      *
      * @param int $enigme_id ID de l’énigme à afficher.
      * @param array $statut_data Données de statut retournées par traiter_statut_enigme().
      */
-    function afficher_enigme_stylisee(int $enigme_id, array $statut_data = [])
+    function afficher_enigme_stylisee(int $enigme_id, array $statut_data = []): void
     {
         if (get_post_type($enigme_id) !== 'enigme') return;
 
@@ -491,21 +488,20 @@
         error_log("🎨 Style utilisé : $style");
 
         echo '<div class="enigme-affichage enigme-style-' . esc_attr($style) . '">';
-        enigme_get_partial('titre', $style, ['post_id' => $enigme_id]);
-        enigme_get_partial('images', $style, ['post_id' => $enigme_id]);
-        enigme_get_partial('texte', $style, ['post_id' => $enigme_id]);
-        enigme_get_partial('bloc-reponse', $style, [
-            'post_id' => $enigme_id,
-            'user_id' => $user_id,
-        ]);
-        enigme_get_partial('solution', $style, ['post_id' => $enigme_id]);
-        enigme_get_partial('retour-chasse', $style, ['post_id' => $enigme_id]);
+
+        foreach (['titre', 'images', 'texte', 'bloc-reponse', 'solution', 'retour-chasse'] as $slug) {
+            enigme_get_partial($slug, $style, [
+                'post_id' => $enigme_id,
+                'user_id' => $user_id, // transmis même s’il ne sert pas toujours
+            ]);
+        }
+
         echo '</div>';
     }
 
 
     /**
-     * 🔸 enigme_get_partial() → Charge un partiel adapté au style (ex: pirate/images.php), avec fallback global.
+     * Charge un partiel adapté au style d’énigme (ex: pirate/images.php), avec fallback global.
      *
      * @param string $slug   Nom du bloc (titre, images, etc.)
      * @param string $style  Style d’affichage (ex : 'pirate', 'vintage')
@@ -514,15 +510,22 @@
     function enigme_get_partial(string $slug, string $style = 'defaut', array $args = []): void
     {
         $base_path = "template-parts/enigme/partials";
-        $variant = "{$base_path}/{$style}/{$slug}.php";
-        $fallback = "{$base_path}/{$slug}.php";
+
+        // 🧠 Nouveau : on préfixe tous les fichiers par 'enigme-partial-'
+        $slug_final = 'enigme-partial-' . $slug;
+
+        $variant = "{$base_path}/{$style}/{$slug_final}.php";
+        $fallback = "{$base_path}/{$slug_final}.php";
 
         if (locate_template($variant)) {
-            get_template_part("template-parts/enigme/partials/{$style}/{$slug}", null, $args);
+            get_template_part("{$base_path}/{$style}/{$slug_final}", null, $args);
         } elseif (locate_template($fallback)) {
-            get_template_part("template-parts/enigme/partials/{$slug}", null, $args);
+            get_template_part("{$base_path}/{$slug_final}", null, $args);
+        } else {
+            error_log("❌ Aucun partial trouvé pour $slug (style: $style)");
         }
     }
+
 
 
 
