@@ -57,13 +57,20 @@ window.renderLiensPublicsJS = renderLiensPublics;
  * @param {string} valeur - Le nouveau titre à afficher
  */
 window.mettreAJourTitreHeader = function (cpt, valeur) {
-  const cible = document.querySelector(`.titre-objet[data-cpt="${cpt}"]`);
+  const selecteurs = {
+    organisateur: '.header-organisateur__nom',
+    chasse: '.titre-objet[data-cpt="chasse"]',
+    enigme: '.header-enigme .titre-objet'
+  };
+
+  const cible = document.querySelector(selecteurs[cpt]);
   if (cible) {
     cible.textContent = valeur;
   } else {
-    console.warn('❌ Impossible de trouver le titre pour le CPT :', cpt);
+    console.warn('❌ Impossible de trouver le header pour le CPT :', cpt);
   }
 };
+
 
 
 /**
