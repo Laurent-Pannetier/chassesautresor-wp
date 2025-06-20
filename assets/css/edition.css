@@ -372,13 +372,6 @@ input[disabled].champ-cout {
     gap: 0.5rem;
     flex-wrap: wrap;
 }
-
-.champ-organisateur.champ-slogan {
-    display: none;
-}
-body.edition-active .champ-organisateur.champ-slogan {
-    display: block;
-}
 .champ-txt-editable.champ-titre .champ-edition {
     padding-right: 60px;
 }

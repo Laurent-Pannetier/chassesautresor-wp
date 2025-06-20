@@ -859,7 +859,7 @@ onDateFieldUpdated() est appelé automatiquement dès la réponse AJAX (pas beso
 principe général : le site est une plateforme de création de chasses, ce sont les organisateur qui sont mis en avant :
 - le header du site est dynamique = organisateur lié (à une chasse ou une énigme)
 - la présence de chassesautresor.com se limite à une top bar minimaliste et un footer
-- le header organisateur comprend un logo, un titre, éventuellement un slogan, un menu
+- le header organisateur comprend un logo, un titre, un menu
 -- chasse : toujours visible, conteneur des chasses liées à organisateur
 -- présentation : description complète, liens sociaux... (présentation est en réalité un panneau  affiché sous le header avant les chasses ou masqué)
 -- contact : formulaire envoyé par mail à l organisateur avec l email renseigné dans le cpt organisateur. 

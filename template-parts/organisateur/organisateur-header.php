@@ -19,8 +19,6 @@ $iban_vide = empty($coordonnees['iban']);
 $bic_vide  = empty($coordonnees['bic']);
 $classe_vide_coordonnees = ($iban_vide || $bic_vide) ? 'champ-vide' : '';
 
-$class_titre = $has_slogan ? '' : 'titre-sans-slogan';
-
 $base_url = get_permalink($organisateur_id);
 $est_contact = (strpos($_SERVER['REQUEST_URI'], '/contact') !== false);
 

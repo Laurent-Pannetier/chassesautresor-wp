@@ -23,7 +23,6 @@ $organisateur_id = $post->ID;
 $peut_modifier = utilisateur_peut_modifier_post($organisateur_id);
 $image_logo = get_the_post_thumbnail_url($organisateur_id, 'medium_large');
 $nom_organisateur = get_the_title($organisateur_id);
-$slogan = get_field('parlez_de_vous_description_courte', $organisateur_id);
 $description = get_field('parlez_de_vous_presentation', $organisateur_id);
 $site_internet = get_field('communication_site_internet', $organisateur_id);
 $reseaux_sociaux = get_field('communication_reseaux_sociaux', $organisateur_id);

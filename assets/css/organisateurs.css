@@ -86,21 +86,6 @@
   text-overflow: unset;
   margin: 0;
 }
-.header-organisateur__nom.titre-sans-slogan {
-  font-size: 2.2rem;
-}
-
-/* Slogan */
-body .header-organisateur__slogan {
-  font-family: 'Poppins', sans-serif;
-  font-size: 1.2rem;
-  font-weight: 300;
-  font-style: italic;
-  line-height: 1.3;
-  opacity: 0.95;
-  margin: 0.2rem 0;
-  max-width: 60ch;
-}
 
 
 /* ========== 📐 COLONNE LOGO & COLONNE TEXTE ========== */
@@ -368,15 +353,9 @@ body .header-organisateur__slogan {
     .champ-organisateur .champ-affichage {
         position: relative;
     }
-     /* 🔹 Boutons ✏️ */
-    .champ-affichage-titre .champ-modifier, .champ-affichage-slogan .champ-modifier {
-        margin-left: -0.3rem;
-        /* position: absolute;*/
-        right: -8px;
-        top: 0
-    }
-    /* 🔹 Titre sans Slogan */
-    .header-organisateur__nom.titre-sans-slogan {
+
+    /* 🔹 Titre  */
+    .header-organisateur__nom. {
         margin-bottom: 0.7rem;
     }
     .colonne-logo .champ-modifier{
@@ -401,11 +380,6 @@ body .header-organisateur__slogan {
     .header-organisateur__nom {
         font-size: 1.2rem;
     }
-
-  .header-organisateur__slogan {
-    font-size: 1rem;
-    margin-bottom: 0.6rem;
-  }
 }
 
 
@@ -433,11 +407,6 @@ body .header-organisateur__slogan {
   .header-organisateur__nom {
     font-size: 1.5rem;
   }
-
-  .header-organisateur__slogan {
-    font-size: 1rem;
-  }
-
   .header-organisateur__liens {
     justify-content: flex-start;
   }
@@ -481,19 +450,14 @@ body .header-organisateur__slogan {
     right: 0.5rem;
   }
 
-  /* 🔹 Titre sans Slogan */
+  /* 🔹 Titre  */
   .conteneur-organisateur .champ-titre .champ-edition {
         padding-right: 0;
     }
-  .header-organisateur__nom.titre-sans-slogan {
+  .header-organisateur__nom {
     font-size: 1.1rem;
     line-height: 1.3;
     margin-bottom: 0.7rem;
-  }
-
-  .header-organisateur__slogan {
-    font-size: 0.95rem;
-    margin-bottom: 0.8rem;
   }
 
   .colonne-texte {
