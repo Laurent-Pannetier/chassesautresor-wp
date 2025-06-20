@@ -282,6 +282,8 @@ function initLiensOrganisateur(bloc) {
 // 🔁 Rafraîchissement dynamique des infos organisateur après modification d'un champ
 // ==============================
 window.onChampSimpleMisAJour = function (champ, postId, valeur, cpt) {
+  cpt = cpt?.toLowerCase?.() || cpt;
+
   if (cpt !== 'organisateur') return;
 
   // ✅ MAJ dynamique du titre
