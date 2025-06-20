@@ -109,10 +109,10 @@ $url_contact = esc_url($base_url . 'contact?email_organisateur=' . urlencode($em
 </div>
 
 <?php
-get_template_part('template-parts/organisateur/panneau-organisateur', null, [
+get_template_part('template-parts/organisateur/organisateur-edition-main', null, [
   'organisateur_id' => $organisateur_id
 ]);
-get_template_part('template-parts/organisateur/presentation-organisateur', null, [
+get_template_part('template-parts/organisateur/organisateur-partial-presentation', null, [
   'organisateur_id' => $organisateur_id
 ]);
 ?>

@@ -10,7 +10,7 @@ defined('ABSPATH') || exit;
 
 // Si l’URL actuelle correspond à /contact, on affiche uniquement le formulaire
 if (preg_match('#/contact($|[/?])#', $_SERVER['REQUEST_URI'])) {
-    get_template_part('template-parts/organisateur/contact-form');
+    get_template_part('template-parts/organisateur/organisateur-partial-contact-form');
     return;
 }
 
@@ -88,7 +88,7 @@ get_header();
                         <?php while ($chasses_query->have_posts()) : $chasses_query->the_post(); ?>
                             <?php
                             $chasse_id = get_the_ID();
-                            get_template_part('template-parts/chasse-card', null, ['chasse_id' => $chasse_id]);
+                            get_template_part('template-parts/organisateur-partial-chasse-card', null, ['chasse_id' => $chasse_id]);
                             ?>
                         <?php endwhile; ?>
                         <?php wp_reset_postdata(); ?>
