@@ -121,7 +121,6 @@ get_template_part('template-parts/organisateur/presentation-organisateur', null,
     <i class="fa-solid fa-sliders"></i>
   </button>
 </div>
-</div>
 
 <script>
   document.addEventListener('DOMContentLoaded', function() {
