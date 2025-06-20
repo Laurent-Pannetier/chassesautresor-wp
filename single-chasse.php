@@ -125,7 +125,7 @@ get_header();
 
         <div class="chasse-enigmes-liste">
           <?php
-          get_template_part('template-parts/enigme/boucle-enigmes-chasse', null, [
+          get_template_part('template-parts/enigme/chasse-partial-boucle-enigmes', null, [
             'chasse_id' => $chasse_id
           ]);
           ?>

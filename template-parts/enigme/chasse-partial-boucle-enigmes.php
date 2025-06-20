@@ -44,7 +44,7 @@ $has_enigmes = !empty($posts);
   <?php
   // Vérifie si l'utilisateur peut modifier cette chasse
   if (utilisateur_peut_modifier_post($chasse_id)) {
-    get_template_part('template-parts/enigme/carte-ajout-enigme', null, [
+    get_template_part('template-parts/enigme/chasse-partial-ajout-enigme', null, [
       'has_enigmes' => $has_enigmes,
       'chasse_id'   => $chasse_id,
     ]);
