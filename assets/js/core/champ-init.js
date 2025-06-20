@@ -445,46 +445,37 @@ function initChampTexte(bloc) {
     feedback.textContent = 'Enregistrement en cours...';
     feedback.className = 'champ-feedback champ-loading';
 
-    fetch('/wp-admin/admin-ajax.php', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({ action, champ, valeur, post_id: postId })
-    })
-      .then(r => r.json())
-      .then(res => {
-        if (res.success) {
-          const affichageTexte = affichage.querySelector('h1, h2, p, span');
+    modifierChampSimple(champ, valeur, postId, cpt).then(success => {
+      if (success) {
+        const affichageTexte = affichage.querySelector('h1, h2, p, span');
 
-          if (champ === 'profil_public_email_contact') {
-            const fallbackEmail = window.organisateurData?.defaultEmail || '…';
-            const p = affichage.querySelector('p');
-            if (p) {
-              p.innerHTML = '<strong>Email de contact :</strong> ' + (valeur ? valeur : '<em>' + fallbackEmail + '</em>');
-            }
-          } else if (affichageTexte) {
-            affichageTexte.textContent = valeur;
+        if (champ === 'profil_public_email_contact') {
+          const fallbackEmail = window.organisateurData?.defaultEmail || '…';
+          const p = affichage.querySelector('p');
+          if (p) {
+            p.innerHTML = '<strong>Email de contact :</strong> ' + (valeur ? valeur : '<em>' + fallbackEmail + '</em>');
           }
-
-          if (edition?.style) edition.style.display = 'none';
-          if (affichage?.style) affichage.style.display = '';
-          bloc.classList.toggle('champ-vide', !valeur);
-
-          feedback.textContent = '';
-          feedback.className = 'champ-feedback champ-success';
-
-          if (typeof window.mettreAJourResumeInfos === 'function') {
-            window.mettreAJourResumeInfos();
-          }
-        } else {
-          feedback.textContent = 'Erreur lors de l’enregistrement.';
-          feedback.className = 'champ-feedback champ-error';
+        } else if (affichageTexte) {
+          affichageTexte.textContent = valeur;
         }
-      })
-      .catch(() => {
-        feedback.textContent = 'Erreur réseau.';
+
+        if (edition?.style) edition.style.display = 'none';
+        if (affichage?.style) affichage.style.display = '';
+        bloc.classList.toggle('champ-vide', !valeur);
+
+        feedback.textContent = '';
+        feedback.className = 'champ-feedback champ-success';
+
+        if (typeof window.mettreAJourResumeInfos === 'function') {
+          window.mettreAJourResumeInfos();
+        }
+      } else {
+        feedback.textContent = 'Erreur lors de l’enregistrement.';
         feedback.className = 'champ-feedback champ-error';
-      });
+      }
+    });
   });
+
 }
 
 
