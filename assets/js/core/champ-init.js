@@ -528,10 +528,23 @@ function initChampImage(bloc) {
   const input = bloc.querySelector('.champ-input');
   const image = bloc.querySelector('img');
   const feedback = bloc.querySelector('.champ-feedback');
-  const boutonEdit = bloc.querySelector('.champ-modifier');
+  let boutonEdit = bloc.querySelector('.champ-modifier');
+
   const action = (cpt === 'chasse') ? 'modifier_champ_chasse' :
     (cpt === 'enigme') ? 'modifier_champ_enigme' :
       'modifier_champ_organisateur';
+
+  // 🔁 S’il n’y a pas de bouton (ex: affichage custom), mais que le bloc est dans un panneau,
+  // on en injecte un manuellement
+  if (!boutonEdit && bloc.closest('.edition-panel-chasse, .panneau-organisateur')) {
+    boutonEdit = document.createElement('button');
+    boutonEdit.type = 'button';
+    boutonEdit.className = 'champ-modifier bouton-modif-auto';
+    boutonEdit.textContent = '✏️';
+
+    const affichage = bloc.querySelector('.champ-affichage');
+    if (affichage) affichage.appendChild(boutonEdit);
+  }
 
   if (!champ || !cpt || !postId || !input || !image || !boutonEdit) return;
 
