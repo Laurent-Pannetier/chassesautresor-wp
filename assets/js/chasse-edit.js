@@ -813,6 +813,21 @@ window.onChampSimpleMisAJour = function (champ, postId, valeur, cpt) {
   console.log('🧪 onChampSimpleMisAJour', { champ, postId, valeur, cpt });
   if (cpt !== 'chasse') return;
 
+  // ✅ Mise à jour titre
+  if (champ === 'post_title' && typeof window.mettreAJourTitreHeader === 'function') {
+    console.log('📛 MAJ titre header déclenchée');
+    window.mettreAJourTitreHeader(cpt, valeur);
+  }
+
+  // ✅ Ouverture media image
+  if (champ === 'chasse_principale_image') {
+    const bloc = document.querySelector(`.champ-chasse[data-champ="${champ}"][data-post-id="${postId}"]`);
+    if (bloc && typeof bloc.__ouvrirMedia === 'function') {
+      bloc.__ouvrirMedia();
+    }
+  }
+
+  // ✅ Rafraîchissement statut si champ impactant
   const champsQuiDoiventRafraichir = [
     'caracteristiques.chasse_infos_date_debut',
     'caracteristiques.chasse_infos_date_fin',
@@ -824,38 +839,6 @@ window.onChampSimpleMisAJour = function (champ, postId, valeur, cpt) {
 
   if (champsQuiDoiventRafraichir.includes(champ)) {
     console.log('📛 Recalcul dynamique requis →', champ);
-    rafraichirStatutChasse(postId);
-  }
-};
-
-
-// ==============================
-// 🎯 Traitement spécial pour l’image principale (résumé chasse)
-// ==============================
-window.onChampSimpleMisAJour = function (champ, postId, valeur, cpt) {
-  if (cpt !== 'chasse') return;
-
-  if (champ === 'post_title' && typeof window.mettreAJourTitreHeader === 'function') {
-    window.mettreAJourTitreHeader(cpt, valeur);
-  }
-
-  if (champ === 'chasse_principale_image') {
-    const bloc = document.querySelector(`.champ-chasse[data-champ="${champ}"][data-post-id="${postId}"]`);
-    if (bloc && typeof bloc.__ouvrirMedia === 'function') {
-      bloc.__ouvrirMedia(); // 🔁 ouvre la media library
-    }
-  }
-
-  const champsQuiDoiventRafraichir = [
-    'caracteristiques.chasse_infos_date_debut',
-    'caracteristiques.chasse_infos_date_fin',
-    'caracteristiques.chasse_infos_duree_illimitee',
-    'caracteristiques.chasse_infos_cout_points',
-    'champs_caches.chasse_cache_statut',
-    'champs_caches.chasse_cache_statut_validation'
-  ];
-
-  if (champsQuiDoiventRafraichir.includes(champ)) {
     rafraichirStatutChasse(postId);
   }
 };
