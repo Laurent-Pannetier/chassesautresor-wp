@@ -49,3 +49,24 @@ function renderLiensPublics(liens = []) {
     </ul>`;
 }
 window.renderLiensPublicsJS = renderLiensPublics;
+
+
+/**
+ * 🔁 met à jour dynamiquement le titre dans le header pour un CPT donné
+ * @param {string} cpt - Le type de post (ex: 'organisateur', 'chasse', 'enigme')
+ * @param {string} valeur - Le nouveau titre à afficher
+ */
+window.mettreAJourTitreHeader = function (cpt, valeur) {
+  const selecteurs = {
+    organisateur: '.header-organisateur .titre-objet',
+    chasse: '.header-chasse .titre-objet',
+    enigme: '.header-enigme .titre-objet'
+  };
+
+  const cible = document.querySelector(selecteurs[cpt]);
+  if (cible) {
+    cible.textContent = valeur;
+  } else {
+    console.warn('❌ Impossible de trouver le header pour le CPT :', cpt);
+  }
+};

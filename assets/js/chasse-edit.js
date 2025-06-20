@@ -11,11 +11,11 @@ let ancienneValeurFin = '';
 
 
 document.addEventListener('DOMContentLoaded', () => {
-    inputDateDebut = document.getElementById('chasse-date-debut');
-    inputDateFin = document.getElementById('chasse-date-fin');
-    erreurDebut = document.getElementById('erreur-date-debut');
-    erreurFin = document.getElementById('erreur-date-fin');
-    checkboxIllimitee = document.getElementById('duree-illimitee');
+  inputDateDebut = document.getElementById('chasse-date-debut');
+  inputDateFin = document.getElementById('chasse-date-fin');
+  erreurDebut = document.getElementById('erreur-date-debut');
+  erreurFin = document.getElementById('erreur-date-fin');
+  checkboxIllimitee = document.getElementById('duree-illimitee');
 
 
   // ==============================
@@ -81,21 +81,21 @@ document.addEventListener('DOMContentLoaded', () => {
   // 🏱 Panneau récompense
   // ==============================
   document.addEventListener('click', (e) => {
-      const btn = e.target.closest('.ouvrir-panneau-recompense');
-      if (!btn || btn.dataset.cpt !== 'chasse') return;
-      const panneau = document.getElementById('panneau-recompense-chasse');
-      if (!panneau) return;
-    
-      document.querySelectorAll('.panneau-lateral.ouvert, .panneau-lateral-liens.ouvert').forEach((p) => {
-        p.classList.remove('ouvert');
-        p.setAttribute('aria-hidden', 'true');
-      });
-    
-      panneau.classList.add('ouvert');
-      document.body.classList.add('panneau-ouvert');
-      panneau.setAttribute('aria-hidden', 'false');
-    
+    const btn = e.target.closest('.ouvrir-panneau-recompense');
+    if (!btn || btn.dataset.cpt !== 'chasse') return;
+    const panneau = document.getElementById('panneau-recompense-chasse');
+    if (!panneau) return;
+
+    document.querySelectorAll('.panneau-lateral.ouvert, .panneau-lateral-liens.ouvert').forEach((p) => {
+      p.classList.remove('ouvert');
+      p.setAttribute('aria-hidden', 'true');
     });
+
+    panneau.classList.add('ouvert');
+    document.body.classList.add('panneau-ouvert');
+    panneau.setAttribute('aria-hidden', 'false');
+
+  });
   document.querySelector('#panneau-recompense-chasse .panneau-fermer')?.addEventListener('click', () => {
     const panneau = document.getElementById('panneau-recompense-chasse');
     panneau.classList.remove('ouvert');
@@ -110,222 +110,222 @@ document.addEventListener('DOMContentLoaded', () => {
     window.mettreAJourResumeInfos();
   }
 
-    // ==============================
-    // 📅 Gestion Date de fin + Durée illimitée
-    // ==============================
-    let ancienneValeurFin = '';
-    if (inputDateFin) {
-        let ancienneValeurFin = inputDateFin.value;
-        
-          if (checkboxIllimitee) {
-              inputDateFin.disabled = checkboxIllimitee.checked;
-            
-              const postId = inputDateFin.closest('.champ-chasse')?.dataset.postId;
-            
-              checkboxIllimitee.addEventListener('change', function () {
-                inputDateFin.disabled = this.checked;
-            
-                // Si la case est décochée et les dates incohérentes, corriger la date de fin
-                if (!this.checked) {
-                  const debut = new Date(inputDateDebut.value);
-                  const fin = new Date(inputDateFin.value);
-            
-                  if (!isNaN(debut) && !isNaN(fin) && debut >= fin) {
-                    const nouvelleDateFin = new Date(debut);
-                    nouvelleDateFin.setFullYear(nouvelleDateFin.getFullYear() + 2);
-            
-                    const yyyy = nouvelleDateFin.getFullYear();
-                    const mm = String(nouvelleDateFin.getMonth() + 1).padStart(2, '0');
-                    const dd = String(nouvelleDateFin.getDate()).padStart(2, '0');
-            
-                    const nouvelleValeur = `${yyyy}-${mm}-${dd}`;
-                    inputDateFin.value = nouvelleValeur;
-                    
-                    fetch(ajaxurl, {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                      body: new URLSearchParams({
-                        action: 'modifier_champ_chasse',
-                        champ: 'caracteristiques.chasse_infos_date_fin',
-                        valeur: nouvelleValeur,
-                        post_id: postId
-                      })
-                    })
-                    .then(r => r.json())
-                    .then(res => {
-                      if (!res.success) {
-                        console.error('❌ Erreur lors de l’enregistrement de la date de fin auto-corrigée');
-                      }
-                    });
-                    rafraichirStatutChasse(postId);
-                  }
+  // ==============================
+  // 📅 Gestion Date de fin + Durée illimitée
+  // ==============================
+  let ancienneValeurFin = '';
+  if (inputDateFin) {
+    let ancienneValeurFin = inputDateFin.value;
+
+    if (checkboxIllimitee) {
+      inputDateFin.disabled = checkboxIllimitee.checked;
+
+      const postId = inputDateFin.closest('.champ-chasse')?.dataset.postId;
+
+      checkboxIllimitee.addEventListener('change', function () {
+        inputDateFin.disabled = this.checked;
+
+        // Si la case est décochée et les dates incohérentes, corriger la date de fin
+        if (!this.checked) {
+          const debut = new Date(inputDateDebut.value);
+          const fin = new Date(inputDateFin.value);
+
+          if (!isNaN(debut) && !isNaN(fin) && debut >= fin) {
+            const nouvelleDateFin = new Date(debut);
+            nouvelleDateFin.setFullYear(nouvelleDateFin.getFullYear() + 2);
+
+            const yyyy = nouvelleDateFin.getFullYear();
+            const mm = String(nouvelleDateFin.getMonth() + 1).padStart(2, '0');
+            const dd = String(nouvelleDateFin.getDate()).padStart(2, '0');
+
+            const nouvelleValeur = `${yyyy}-${mm}-${dd}`;
+            inputDateFin.value = nouvelleValeur;
+
+            fetch(ajaxurl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+              body: new URLSearchParams({
+                action: 'modifier_champ_chasse',
+                champ: 'caracteristiques.chasse_infos_date_fin',
+                valeur: nouvelleValeur,
+                post_id: postId
+              })
+            })
+              .then(r => r.json())
+              .then(res => {
+                if (!res.success) {
+                  console.error('❌ Erreur lors de l’enregistrement de la date de fin auto-corrigée');
                 }
-            
-                // Enregistrement de la case "illimité"
-                fetch(ajaxurl, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                  body: new URLSearchParams({
-                    action: 'modifier_champ_chasse',
-                    champ: 'caracteristiques.chasse_infos_duree_illimitee',
-                    valeur: this.checked ? 1 : 0,
-                    post_id: postId
-                  })
-                })
-                .then(r => r.json())
-                .then(res => {
-                  if (res.success) {
-                    rafraichirStatutChasse(postId);
-                  } else {
-                    console.error('❌ Erreur serveur durée illimitée:', res.data);
-                  }
-                })
-                .catch(err => {
-                  console.error('❌ Erreur réseau durée illimitée:', err);
-                });
-            
-                mettreAJourAffichageDateFin();
               });
+            rafraichirStatutChasse(postId);
           }
-
-        inputDateFin.addEventListener('change', function () {
-          const sauvegardeAvantChangement = this.value;
-        
-          const valid = validerDatesAvantEnvoi('fin');
-          if (!valid) {
-            this.value = ancienneValeurFin;
-            return;
-          }
-        
-          const nouvelleDateFin = this.value;
-          const regexDate = /^\d{4}-\d{2}-\d{2}$/;
-        
-          if (!regexDate.test(nouvelleDateFin)) {
-            console.error('❌ Format de date fin invalide:', nouvelleDateFin);
-            this.value = ancienneValeurFin;
-            return;
-          }
-        
-          const postId = this.closest('.champ-chasse')?.dataset.postId;
-          modifierChampSimple('caracteristiques.chasse_infos_date_fin', nouvelleDateFin, postId);
-          rafraichirStatutChasse(postId);
-        
-          mettreAJourAffichageDateFin();
-        
-          ancienneValeurFin = nouvelleDateFin;
-        });
-    }
-    if (inputDateDebut) {
-      ancienneValeurDebut = inputDateDebut.value;
-    
-      inputDateDebut.addEventListener('change', function () {
-        const nouvelleDateDebut = this.value;
-        const regexDate = /^\d{4}-\d{2}-\d{2}$/;
-    
-        if (!regexDate.test(nouvelleDateDebut)) {
-          console.error('❌ Format de date début invalide:', nouvelleDateDebut);
-          this.value = ancienneValeurDebut;
-          return;
         }
-    
-        const postId = this.closest('.champ-chasse')?.dataset.postId;
-        modifierChampSimple('caracteristiques.chasse_infos_date_debut', nouvelleDateDebut, postId);
-        rafraichirStatutChasse(postId);
-    
-        ancienneValeurDebut = nouvelleDateDebut;
-      });
-    }
 
-    
-    
-    // ================================
-    // 🏆 Gestion de l'enregistrement de la récompense (titre, texte, valeur)
-    // ================================
-    const boutonRecompense = document.getElementById('bouton-enregistrer-recompense');
-    const inputTitreRecompense = document.getElementById('champ-recompense-titre');
-    const inputTexteRecompense = document.getElementById('champ-recompense-texte');
-    const inputValeurRecompense = document.getElementById('champ-recompense-valeur');
-    const panneauRecompense = document.getElementById('panneau-recompense-chasse');
-    const boutonSupprimerRecompense = document.getElementById('bouton-supprimer-recompense');
-
-    if (boutonSupprimerRecompense) {
-      boutonSupprimerRecompense.addEventListener('click', () => {
-  const panneauEdition = document.querySelector('.edition-panel-chasse');
-  if (!panneauEdition) return;
-  const postId = panneauEdition.dataset.postId;
-  if (!postId) return;
-
-  if (!confirm('Voulez-vous vraiment supprimer la récompense ?')) return;
-
-  const champsASupprimer = [
-    'caracteristiques.chasse_infos_recompense_titre',
-    'caracteristiques.chasse_infos_recompense_texte',
-    'caracteristiques.chasse_infos_recompense_valeur'
-  ];
-
-  Promise.all(
-    champsASupprimer.map((champ) => {
-      return fetch(ajaxurl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({
-          action: 'modifier_champ_chasse',
-          champ,
-          valeur: '',
-          post_id: postId
-        })
-      });
-    })
-  ).then(() => {
-    location.reload();
-  });
-});
-
-    }
-
-    
-    if (boutonRecompense && inputTitreRecompense && inputTexteRecompense && inputValeurRecompense) {
-      boutonRecompense.addEventListener('click', () => {
-          const titre = inputTitreRecompense.value.trim();
-          const texte = inputTexteRecompense.value.trim();
-          const valeur = parseFloat(inputValeurRecompense.value);
-          const panneauEdition = document.querySelector('.edition-panel-chasse');
-          if (!panneauEdition) return;
-          const postId = panneauEdition.dataset.postId;
-          if (!postId) return;
-        
-          // 🚨 Vérification des 3 champs
-          if (!titre.length) {
-            alert('Veuillez saisir un titre de récompense.');
-            return;
-          }
-        
-          if (!texte.length) {
-            alert('Veuillez saisir une description de récompense.');
-            return;
-          }
-        
-          if (isNaN(valeur) || valeur <= 0) {
-            alert('Veuillez saisir une valeur en euros strictement supérieure à 0.');
-            return;
-          }
-    
-        // 🔵 Envoi titre de récompense d'abord
-        fetch('/wp-admin/admin-ajax.php', {
+        // Enregistrement de la case "illimité"
+        fetch(ajaxurl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
           body: new URLSearchParams({
             action: 'modifier_champ_chasse',
-            champ: 'caracteristiques.chasse_infos_recompense_titre',
-            valeur: titre,
+            champ: 'caracteristiques.chasse_infos_duree_illimitee',
+            valeur: this.checked ? 1 : 0,
             post_id: postId
           })
         })
+          .then(r => r.json())
+          .then(res => {
+            if (res.success) {
+              rafraichirStatutChasse(postId);
+            } else {
+              console.error('❌ Erreur serveur durée illimitée:', res.data);
+            }
+          })
+          .catch(err => {
+            console.error('❌ Erreur réseau durée illimitée:', err);
+          });
+
+        mettreAJourAffichageDateFin();
+      });
+    }
+
+    inputDateFin.addEventListener('change', function () {
+      const sauvegardeAvantChangement = this.value;
+
+      const valid = validerDatesAvantEnvoi('fin');
+      if (!valid) {
+        this.value = ancienneValeurFin;
+        return;
+      }
+
+      const nouvelleDateFin = this.value;
+      const regexDate = /^\d{4}-\d{2}-\d{2}$/;
+
+      if (!regexDate.test(nouvelleDateFin)) {
+        console.error('❌ Format de date fin invalide:', nouvelleDateFin);
+        this.value = ancienneValeurFin;
+        return;
+      }
+
+      const postId = this.closest('.champ-chasse')?.dataset.postId;
+      modifierChampSimple('caracteristiques.chasse_infos_date_fin', nouvelleDateFin, postId);
+      rafraichirStatutChasse(postId);
+
+      mettreAJourAffichageDateFin();
+
+      ancienneValeurFin = nouvelleDateFin;
+    });
+  }
+  if (inputDateDebut) {
+    ancienneValeurDebut = inputDateDebut.value;
+
+    inputDateDebut.addEventListener('change', function () {
+      const nouvelleDateDebut = this.value;
+      const regexDate = /^\d{4}-\d{2}-\d{2}$/;
+
+      if (!regexDate.test(nouvelleDateDebut)) {
+        console.error('❌ Format de date début invalide:', nouvelleDateDebut);
+        this.value = ancienneValeurDebut;
+        return;
+      }
+
+      const postId = this.closest('.champ-chasse')?.dataset.postId;
+      modifierChampSimple('caracteristiques.chasse_infos_date_debut', nouvelleDateDebut, postId);
+      rafraichirStatutChasse(postId);
+
+      ancienneValeurDebut = nouvelleDateDebut;
+    });
+  }
+
+
+
+  // ================================
+  // 🏆 Gestion de l'enregistrement de la récompense (titre, texte, valeur)
+  // ================================
+  const boutonRecompense = document.getElementById('bouton-enregistrer-recompense');
+  const inputTitreRecompense = document.getElementById('champ-recompense-titre');
+  const inputTexteRecompense = document.getElementById('champ-recompense-texte');
+  const inputValeurRecompense = document.getElementById('champ-recompense-valeur');
+  const panneauRecompense = document.getElementById('panneau-recompense-chasse');
+  const boutonSupprimerRecompense = document.getElementById('bouton-supprimer-recompense');
+
+  if (boutonSupprimerRecompense) {
+    boutonSupprimerRecompense.addEventListener('click', () => {
+      const panneauEdition = document.querySelector('.edition-panel-chasse');
+      if (!panneauEdition) return;
+      const postId = panneauEdition.dataset.postId;
+      if (!postId) return;
+
+      if (!confirm('Voulez-vous vraiment supprimer la récompense ?')) return;
+
+      const champsASupprimer = [
+        'caracteristiques.chasse_infos_recompense_titre',
+        'caracteristiques.chasse_infos_recompense_texte',
+        'caracteristiques.chasse_infos_recompense_valeur'
+      ];
+
+      Promise.all(
+        champsASupprimer.map((champ) => {
+          return fetch(ajaxurl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({
+              action: 'modifier_champ_chasse',
+              champ,
+              valeur: '',
+              post_id: postId
+            })
+          });
+        })
+      ).then(() => {
+        location.reload();
+      });
+    });
+
+  }
+
+
+  if (boutonRecompense && inputTitreRecompense && inputTexteRecompense && inputValeurRecompense) {
+    boutonRecompense.addEventListener('click', () => {
+      const titre = inputTitreRecompense.value.trim();
+      const texte = inputTexteRecompense.value.trim();
+      const valeur = parseFloat(inputValeurRecompense.value);
+      const panneauEdition = document.querySelector('.edition-panel-chasse');
+      if (!panneauEdition) return;
+      const postId = panneauEdition.dataset.postId;
+      if (!postId) return;
+
+      // 🚨 Vérification des 3 champs
+      if (!titre.length) {
+        alert('Veuillez saisir un titre de récompense.');
+        return;
+      }
+
+      if (!texte.length) {
+        alert('Veuillez saisir une description de récompense.');
+        return;
+      }
+
+      if (isNaN(valeur) || valeur <= 0) {
+        alert('Veuillez saisir une valeur en euros strictement supérieure à 0.');
+        return;
+      }
+
+      // 🔵 Envoi titre de récompense d'abord
+      fetch('/wp-admin/admin-ajax.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          action: 'modifier_champ_chasse',
+          champ: 'caracteristiques.chasse_infos_recompense_titre',
+          valeur: titre,
+          post_id: postId
+        })
+      })
         .then(r => r.json())
         .then(res => {
           if (res.success) {
             console.log('✅ Titre récompense enregistré.');
-    
+
             // 🔵 Ensuite, envoi texte récompense
             return fetch('/wp-admin/admin-ajax.php', {
               method: 'POST',
@@ -345,7 +345,7 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(res => {
           if (res.success) {
             console.log('✅ Texte récompense enregistré.');
-    
+
             // 🔵 Ensuite, envoi valeur récompense
             return fetch('/wp-admin/admin-ajax.php', {
               method: 'POST',
@@ -367,14 +367,14 @@ document.addEventListener('DOMContentLoaded', () => {
             if (typeof window.mettreAJourResumeInfos === 'function') {
               window.mettreAJourResumeInfos();
             }
-        
+
             if (document.activeElement && panneauRecompense.contains(document.activeElement)) {
               document.activeElement.blur();
               document.body.focus(); // 🔥 Correction ultime ici
             }
-        
+
             location.reload();
-        
+
           } else {
             console.error('❌ Erreur valeur récompense', res.data);
           }
@@ -382,8 +382,8 @@ document.addEventListener('DOMContentLoaded', () => {
         .catch(err => {
           console.error('❌ Erreur sur sauvegarde récompense', err);
         });
-      });
-    }
+    });
+  }
 });
 
 
@@ -468,8 +468,8 @@ function initLiensChasse(bloc) {
         const affichageFiche = blocFiche?.querySelector('.champ-affichage');
         if (affichageFiche && typeof renderLiensPublicsJS === 'function') {
           affichageFiche.innerHTML = renderLiensPublicsJS(donnees);
-          
-        
+
+
           // 🔁 Relance la détection de complétion (liens détectés après rendu)
           if (typeof window.mettreAJourResumeInfos === 'function') {
             window.mettreAJourResumeInfos();
@@ -635,8 +635,8 @@ document.querySelectorAll('.champ-cout-points .champ-enregistrer').forEach(bouto
     modifierChampSimple(champ, valeur, postId);
 
     if (champ === 'caracteristiques.chasse_infos_cout_points') {
-        mettreAJourAffichageCout(postId, valeur);
-        rafraichirStatutChasse(postId);
+      mettreAJourAffichageCout(postId, valeur);
+      rafraichirStatutChasse(postId);
     }
 
     // Cache les boutons après envoi
@@ -706,20 +706,20 @@ function initChampNbGagnants() {
   });
 
   inputNb.addEventListener('input', function () {
-      const postId = inputNb.closest('li').dataset.postId;
-      if (!postId) return;
-    
-      clearTimeout(timerDebounce);
-      timerDebounce = setTimeout(() => {
-        let valeur = parseInt(inputNb.value.trim(), 10);
-        if (isNaN(valeur) || valeur < 1) {
-          valeur = 1;
-          inputNb.value = '1';
-        }
-        modifierChampSimple('caracteristiques.chasse_infos_nb_max_gagants', valeur, postId);
-        mettreAJourAffichageNbGagnants(postId, valeur); // ✅ ici, APRES avoir défini valeur
-      }, 500);
-    });
+    const postId = inputNb.closest('li').dataset.postId;
+    if (!postId) return;
+
+    clearTimeout(timerDebounce);
+    timerDebounce = setTimeout(() => {
+      let valeur = parseInt(inputNb.value.trim(), 10);
+      if (isNaN(valeur) || valeur < 1) {
+        valeur = 1;
+        inputNb.value = '1';
+      }
+      modifierChampSimple('caracteristiques.chasse_infos_nb_max_gagants', valeur, postId);
+      mettreAJourAffichageNbGagnants(postId, valeur); // ✅ ici, APRES avoir défini valeur
+    }, 500);
+  });
 }
 
 // À appeler :
@@ -742,7 +742,7 @@ function mettreAJourAffichageNbGagnants(postId, nb) {
 
 
 
-document.addEventListener('acf/submit_success', function(e) {
+document.addEventListener('acf/submit_success', function (e) {
   console.log('✅ Formulaire ACF soumis avec succès', e);
   if (typeof window.mettreAJourResumeInfos === 'function') {
     window.mettreAJourResumeInfos();
@@ -764,51 +764,50 @@ function rafraichirStatutChasse(postId) {
       post_id: postId
     })
   })
-  .then(res => res.json())
-  .then(stat => {
-    if (!stat.success) {
-      console.warn('⚠️ Échec recalcul statut chasse', stat);
-      return;
-    }
-
-    fetch(ajaxurl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        action: 'recuperer_statut_chasse',
-        post_id: postId
-      })
-    })
-    .then(r => r.json())
-    .then(data => {
-      if (data.success && data.data?.statut) {
-        const statut = data.data.statut;
-        const label = data.data.statut_label;
-        const badge = document.querySelector(`.badge-statut[data-post-id="${postId}"]`);
-        console.log('🔎 Badge trouvé :', badge);
-
-        if (badge) {
-          badge.textContent = label;
-          badge.className = `badge-statut statut-${statut}`;
-        } else {
-          console.warn('❓ Aucun badge-statut trouvé pour postId', postId);
-        }
-      } else {
-        console.warn('⚠️ Données statut invalides', data);
+    .then(res => res.json())
+    .then(stat => {
+      if (!stat.success) {
+        console.warn('⚠️ Échec recalcul statut chasse', stat);
+        return;
       }
+
+      fetch(ajaxurl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          action: 'recuperer_statut_chasse',
+          post_id: postId
+        })
+      })
+        .then(r => r.json())
+        .then(data => {
+          if (data.success && data.data?.statut) {
+            const statut = data.data.statut;
+            const label = data.data.statut_label;
+            const badge = document.querySelector(`.badge-statut[data-post-id="${postId}"]`);
+            console.log('🔎 Badge trouvé :', badge);
+
+            if (badge) {
+              badge.textContent = label;
+              badge.className = `badge-statut statut-${statut}`;
+            } else {
+              console.warn('❓ Aucun badge-statut trouvé pour postId', postId);
+            }
+          } else {
+            console.warn('⚠️ Données statut invalides', data);
+          }
+        })
+        .catch(err => {
+          console.error('❌ Erreur réseau récupération statut chasse', err);
+        });
     })
     .catch(err => {
-      console.error('❌ Erreur réseau récupération statut chasse', err);
+      console.error('❌ Erreur réseau recalcul statut chasse', err);
     });
-  })
-  .catch(err => {
-    console.error('❌ Erreur réseau recalcul statut chasse', err);
-  });
 }
 
-
 // ==============================
-// 🧩 Hook de post-traitement après modification d’un champ simple
+// 🔄 Rafraîchissement dynamique après modification de certains champs
 // ==============================
 window.onChampSimpleMisAJour = function (champ, postId, valeur, cpt) {
   if (cpt !== 'chasse') return;

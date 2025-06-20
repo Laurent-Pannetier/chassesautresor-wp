@@ -383,18 +383,7 @@ function initChampTexte(bloc) {
     feedback.className = 'champ-feedback';
     bloc.appendChild(feedback);
   }
-
-  // 🔐 Édition directe (autorisé uniquement si pas post_title)
-  const forcerEditionDirecte = isEditionDirecte || (!boutonEdit && !boutonSave && !boutonCancel);
-  if (forcerEditionDirecte && champ !== 'post_title') {
-    let timer;
-    input.addEventListener('input', () => {
-      clearTimeout(timer);
-      const valeur = input.value.trim();
-      timer = setTimeout(() => {
-        modifierChampSimple(champ, valeur, postId, cpt);
-      }, 500);
-    });
+  
     return;
   }
 
@@ -446,7 +435,7 @@ function initChampTexte(bloc) {
       }
     }
 
-    if (champ === 'post_title' && cpt === 'enigme') {
+    if (champ === 'post_title') {
       if (!valeur) {
         feedback.textContent = '❌ Le titre est obligatoire.';
         feedback.className = 'champ-feedback champ-error';

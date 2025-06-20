@@ -276,3 +276,29 @@ function initLiensOrganisateur(bloc) {
       });
   });
 }
+
+// ==============================
+// 🔁 Rafraîchissement dynamique des infos organisateur après modification d'un champ
+// ==============================
+window.onChampSimpleMisAJour = function (champ, postId, valeur, cpt) {
+  if (cpt !== 'organisateur') return;
+
+  // ✅ MAJ dynamique du titre header si modifié
+  if (champ === 'post_title' && typeof window.mettreAJourTitreHeader === 'function') {
+    window.mettreAJourTitreHeader(cpt, valeur);
+  }
+
+  // ✅ Mise à jour du résumé d’infos si disponible
+  const champsResume = [
+    'post_title',
+    'profil_public_description',
+    'profil_public_logo',
+    'profil_public_email_contact',
+    'coordonnees_bancaires',
+    'liens_publics'
+  ];
+
+  if (champsResume.includes(champ) && typeof window.mettreAJourResumeInfos === 'function') {
+    window.mettreAJourResumeInfos();
+  }
+};
