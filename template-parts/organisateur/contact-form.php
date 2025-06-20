@@ -41,7 +41,7 @@ $est_en_creation = (
 get_header();
 
 // Affiche le header organisateur personnalisé
-get_template_part('template-parts/organisateur/header-organisateur', null, [
+get_template_part('template-parts/organisateur/organisateur-header', null, [
     'organisateur_id' => $organisateur_id,
     'onglet_actif' => 'contact',
 ]);

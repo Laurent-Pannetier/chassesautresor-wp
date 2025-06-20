@@ -73,7 +73,7 @@ if (is_singular('enigme')) {
 
       <?php
       // 🔧 Header organisateur (s'affiche en haut de page)
-      get_template_part('template-parts/organisateur/header-organisateur', null, [
+      get_template_part('template-parts/organisateur/organisateur-header', null, [
         'chasse_id' => $chasse_id,
       ]);
       ?>

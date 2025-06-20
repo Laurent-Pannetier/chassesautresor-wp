@@ -69,7 +69,7 @@ get_header();
       <?php
       // 🧭 Header organisateur (dans le flux visible)
       if ($organisateur_id) {
-        get_template_part('template-parts/organisateur/header-organisateur', null, [
+        get_template_part('template-parts/organisateur/organisateur-header', null, [
           'organisateur_id' => $organisateur_id
         ]);
       }

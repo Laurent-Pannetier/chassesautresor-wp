@@ -44,7 +44,7 @@ get_header();
         // Évite de doubler le header si on est sur /contact
         if (!preg_match('#/contact/?$#', $_SERVER['REQUEST_URI'])) : ?>
             <?php
-            get_template_part('template-parts/organisateur/header-organisateur', null, [
+            get_template_part('template-parts/organisateur/organisateur-header', null, [
                 'organisateur_id' => $organisateur_id
             ]);
             ?>
