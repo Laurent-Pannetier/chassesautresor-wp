@@ -290,13 +290,13 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
 
 <?php
 // 📎 Panneaux contextuels (description, liens, etc.)
-get_template_part('template-parts/chasse/panneaux/panneau-description-chasse', null, [
+get_template_part('template-parts/chasse/panneaux/chasse-edition-description', null, [
   'chasse_id' => $chasse_id
 ]);
-get_template_part('template-parts/chasse/panneaux/panneau-recompense-chasse', null, [
+get_template_part('template-parts/chasse/panneaux/chasse-edition-recompense', null, [
   'chasse_id' => $chasse_id
 ]);
-get_template_part('template-parts/chasse/panneaux/panneau-liens-chasse', null, [
+get_template_part('template-parts/chasse/panneaux/chasse-edition-liens', null, [
   'chasse_id' => $chasse_id
 ]);
 ?>
