@@ -826,3 +826,35 @@ window.onChampSimpleMisAJour = function (champ, postId, valeur, cpt) {
     rafraichirStatutChasse(postId);
   }
 };
+
+
+// ==============================
+// 🎯 Traitement spécial pour l’image principale (résumé chasse)
+// ==============================
+window.onChampSimpleMisAJour = function (champ, postId, valeur, cpt) {
+  if (cpt !== 'chasse') return;
+
+  if (champ === 'post_title' && typeof window.mettreAJourTitreHeader === 'function') {
+    window.mettreAJourTitreHeader(cpt, valeur);
+  }
+
+  if (champ === 'chasse_principale_image') {
+    const bloc = document.querySelector(`.champ-chasse[data-champ="${champ}"][data-post-id="${postId}"]`);
+    if (bloc && typeof bloc.__ouvrirMedia === 'function') {
+      bloc.__ouvrirMedia(); // 🔁 ouvre la media library
+    }
+  }
+
+  const champsQuiDoiventRafraichir = [
+    'caracteristiques.chasse_infos_date_debut',
+    'caracteristiques.chasse_infos_date_fin',
+    'caracteristiques.chasse_infos_duree_illimitee',
+    'caracteristiques.chasse_infos_cout_points',
+    'champs_caches.chasse_cache_statut',
+    'champs_caches.chasse_cache_statut_validation'
+  ];
+
+  if (champsQuiDoiventRafraichir.includes(champ)) {
+    rafraichirStatutChasse(postId);
+  }
+};

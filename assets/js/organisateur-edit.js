@@ -302,3 +302,38 @@ window.onChampSimpleMisAJour = function (champ, postId, valeur, cpt) {
     window.mettreAJourResumeInfos();
   }
 };
+
+
+// ==============================
+// 🎯 Traitement spécial image organisateur (stylo résumé)
+// ==============================
+window.onChampSimpleMisAJour = function (champ, postId, valeur, cpt) {
+  if (cpt !== 'organisateur') return;
+
+  // 🔁 Mise à jour du titre affiché en header
+  if (champ === 'post_title' && typeof window.mettreAJourTitreHeader === 'function') {
+    window.mettreAJourTitreHeader(cpt, valeur);
+  }
+
+  // 🖼️ Déclenche ouverture image (stylo résumé)
+  if (champ === 'profil_public_logo_organisateur') {
+    const bloc = document.querySelector(`.champ-organisateur[data-champ="${champ}"][data-post-id="${postId}"]`);
+    if (bloc && typeof bloc.__ouvrirMedia === 'function') {
+      bloc.__ouvrirMedia();
+    }
+  }
+
+  // ✅ MAJ résumé si fonction dispo
+  const champsResume = [
+    'post_title',
+    'profil_public_description',
+    'profil_public_logo_organisateur',
+    'profil_public_email_contact',
+    'coordonnees_bancaires',
+    'liens_publics'
+  ];
+
+  if (champsResume.includes(champ) && typeof window.mettreAJourResumeInfos === 'function') {
+    window.mettreAJourResumeInfos();
+  }
+};
