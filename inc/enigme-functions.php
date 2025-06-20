@@ -303,9 +303,10 @@
     // ==================================================
     // 🖼️ AFFICHAGE DES VISUELS D’ÉNIGMES
     // ==================================================
-    /**
-     * 🔹 afficher_visuels_enigme() → Affiche la galerie visuelle de l’énigme si l’utilisateur y a droit (image principale + vignettes).
-     * 🔹 get_url_vignette_enigme() → Retourne l’URL proxy de la première vignette d’une énigme.
+
+        * 🔹 afficher_visuels_enigme() → Affiche la galerie visuelle de l’énigme si l’utilisateur y a droit (image principale + vignettes).
+        * 🔹 get_url_vignette_enigme() → Retourne l’URL proxy de la première vignette d’une énigme.
+        * 🔹 afficher_picture_vignette_enigme() → Affiche un bloc <picture> responsive pour une énigme.
      */
 
     /**
@@ -406,28 +407,71 @@
 
 
     /**
+     * Retourne l'URL proxy pour une vignette d’énigme à la taille souhaitée.
+     *
      * @param int $enigme_id
+     * @param string $taille  Taille WordPress (ex: 'thumbnail', 'medium', 'full')
      * @return string|null
      */
-    function get_url_vignette_enigme(int $enigme_id): ?string
+    function get_url_vignette_enigme(int $enigme_id, string $taille = 'thumbnail'): ?string
     {
         if (!utilisateur_peut_voir_enigme($enigme_id)) {
             return null;
         }
 
-        $images = get_field('enigme_visuel_image', $enigme_id);
+        $images = get_field('enigme_visuel_image', $enigme_id, false);
         if (!$images || !is_array($images)) {
             return null;
         }
 
-        $image_id = $images[0]['ID'] ?? null;
+        $image_id = $images[0] ?? null; // on récupère l’ID brut directement
         if (!$image_id) return null;
 
         return esc_url(add_query_arg([
-            'id' => $image_id,
-            'taille' => 'thumbnail',
+            'id'     => $image_id,
+            'taille' => $taille,
         ], site_url('/voir-image-enigme')));
     }
+
+
+    /**
+     * Affiche un bloc <picture> responsive pour une énigme.
+     *
+     * @param int $enigme_id
+     * @param string $alt Texte alternatif
+     * @param array $sizes Liste des tailles WordPress à inclure (ordre croissant)
+     */
+    function afficher_picture_vignette_enigme(int $enigme_id, string $alt = '', array $sizes = ['thumbnail', 'medium']): void
+    {
+        if (!utilisateur_peut_voir_enigme($enigme_id)) return;
+
+        $images = get_field('enigme_visuel_image', $enigme_id, false);
+        if (!$images || !is_array($images)) return;
+
+        $image_id = $images[0] ?? null;
+        if (!$image_id) return;
+
+        echo '<picture>' . "\n";
+
+        foreach ($sizes as $taille) {
+            $base_url = site_url('/voir-image-enigme');
+            $src_webp = esc_url(add_query_arg(['id' => $image_id, 'taille' => $taille . '.webp'], $base_url));
+            $src_fallback = esc_url(add_query_arg(['id' => $image_id, 'taille' => $taille], $base_url));
+
+            echo '  <source srcset="' . $src_webp . '" type="image/webp">' . "\n";
+            echo '  <source srcset="' . $src_fallback . '" type="image/png">' . "\n";
+        }
+
+        // Dernier fallback : image medium ou full
+        $src_default = esc_url(add_query_arg([
+            'id'     => $image_id,
+            'taille' => end($sizes),
+        ], site_url('/voir-image-enigme')));
+
+        echo '  <img src="' . $src_default . '" alt="' . esc_attr($alt) . '" loading="lazy">' . "\n";
+        echo '</picture>' . "\n";
+    }
+
 
 
     // ==================================================

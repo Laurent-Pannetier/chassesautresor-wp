@@ -20,17 +20,15 @@ $has_enigmes = !empty($posts);
     $titre = get_the_title($enigme_id);
     $etat_systeme = enigme_get_etat_systeme($enigme_id);
     $statut_utilisateur = enigme_get_statut_utilisateur($enigme_id, get_current_user_id());
-    $image_src = get_url_vignette_enigme($enigme_id);
+    $image_src = get_url_vignette_enigme($enigme_id, 'medium');
     $cta = get_cta_enigme($enigme_id);
     ?>
 
     <article class="carte-enigme">
-      <?php if ($image_src): ?>
-        <div class="carte-enigme-image">
-          <img src="<?= esc_url($image_src); ?>" alt="Vignette de l’énigme" class="vignette-enigme">
-        </div>
-      <?php endif; ?>
-
+      <div class="carte-enigme-image">
+        <?php afficher_picture_vignette_enigme($enigme_id, "Vignette de l’énigme"); ?>
+      </div>
+      
       <h3><?= esc_html($titre); ?></h3>
       <p>État système : <strong><?= esc_html($etat_systeme); ?></strong></p>
       <p>Statut joueur : <strong><?= esc_html($statut_utilisateur); ?></strong></p>
