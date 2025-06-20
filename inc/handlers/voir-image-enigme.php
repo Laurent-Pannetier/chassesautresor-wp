@@ -8,26 +8,36 @@ if (!isset($_GET['id']) || !ctype_digit($_GET['id'])) {
 $image_id = (int) $_GET['id'];
 $taille = $_GET['taille'] ?? 'full';
 
-// 🔎 Récupération de l’URL correspondant à la taille demandée
-$src = wp_get_attachment_image_src($image_id, $taille);
-$url = $src[0] ?? null;
+function trouver_chemin_image(int $image_id, string $taille): ?string {
+  $src = wp_get_attachment_image_src($image_id, $taille);
+  $url = $src[0] ?? null;
 
-if (!$url) {
-  http_response_code(404);
-  exit('Taille non disponible');
+  if (!$url) return null;
+
+  if (str_starts_with($url, 'http')) {
+    $upload_dir = wp_get_upload_dir();
+    $path = str_replace($upload_dir['baseurl'], $upload_dir['basedir'], $url);
+  } else {
+    $path = $url;
+  }
+
+  return file_exists($path) ? $path : null;
 }
 
-// 📁 Conversion de l’URL vers le chemin local
-$upload_dir = wp_get_upload_dir();
-$path = str_replace($upload_dir['baseurl'], $upload_dir['basedir'], $url);
+// 🔎 Essai avec la taille demandée
+$path = trouver_chemin_image($image_id, $taille);
 
-// ⛔ Fichier non trouvé sur le disque
-if (!file_exists($path)) {
+// 🔁 Fallback automatique vers full si fichier manquant
+if (!$path && $taille !== 'full') {
+  $path = trouver_chemin_image($image_id, 'full');
+}
+
+if (!$path) {
   http_response_code(404);
   exit('Fichier introuvable');
 }
 
-// 📦 Type MIME cohérent (selon extension du fichier réel)
+// 📦 Type MIME basé sur l’extension réelle du fichier
 $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
 $mime_types = [
   'jpg'  => 'image/jpeg',
@@ -38,7 +48,7 @@ $mime_types = [
 ];
 $mime = $mime_types[$extension] ?? 'application/octet-stream';
 
-// 🧹 Nettoyage WP
+// 🧹 Nettoyage WordPress
 ob_clean();
 header_remove();
 remove_all_actions('shutdown');
