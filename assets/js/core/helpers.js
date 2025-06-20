@@ -70,3 +70,19 @@ window.mettreAJourTitreHeader = function (cpt, valeur) {
     console.warn('❌ Impossible de trouver le header pour le CPT :', cpt);
   }
 };
+
+
+/**
+ * 🖼️ Met à jour dynamiquement l’image visible pour un CPT donné
+ * après modification via un panneau d’édition.
+ *
+ * @param {string} cpt - Le nom du CPT (ex. "organisateur", "chasse", "enigme")
+ * @param {number|string} postId - L’ID du post
+ * @param {string} nouvelleUrl - L’URL de l’image mise à jour
+ */
+function mettreAJourVisuelCPT(cpt, postId, nouvelleUrl) {
+  document.querySelectorAll(`img.visuel-cpt[data-cpt="${cpt}"][data-post-id="${postId}"]`) 
+    .forEach(img => {
+      img.src = nouvelleUrl;
+    });
+}

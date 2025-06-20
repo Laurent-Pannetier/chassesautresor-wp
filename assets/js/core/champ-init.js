@@ -518,7 +518,7 @@ function initChampDeclencheur(bouton) {
 
 
 // ==============================
-// initChampImage
+// initChampImage (édition uniquement via panneau)
 // ==============================
 function initChampImage(bloc) {
   const champ = bloc.dataset.champ;
@@ -528,8 +528,6 @@ function initChampImage(bloc) {
   const input = bloc.querySelector('.champ-input');
   const image = bloc.querySelector('img');
   const feedback = bloc.querySelector('.champ-feedback');
-
-  // ⚠️ NE PAS chercher boutonEdit ici — il peut être injecté dynamiquement plus bas
 
   // ✅ Injection dynamique du bouton si manquant ET panneau édition détecté
   let boutonEdit = bloc.querySelector('.champ-modifier');
@@ -542,7 +540,6 @@ function initChampImage(bloc) {
     if (affichage) affichage.appendChild(boutonEdit);
   }
 
-  // ❗️Maintenant que tout est potentiellement injecté, on vérifie l’ensemble
   if (!champ || !cpt || !postId || !input || !image || !boutonEdit) return;
 
   let frame = null;
@@ -576,8 +573,8 @@ function initChampImage(bloc) {
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
           action: (cpt === 'chasse') ? 'modifier_champ_chasse' :
-            (cpt === 'enigme') ? 'modifier_champ_enigme' :
-              'modifier_champ_organisateur',
+                  (cpt === 'enigme') ? 'modifier_champ_enigme' :
+                  'modifier_champ_organisateur',
           champ,
           valeur: id,
           post_id: postId
@@ -593,6 +590,9 @@ function initChampImage(bloc) {
             }
             if (typeof window.mettreAJourResumeInfos === 'function') {
               window.mettreAJourResumeInfos();
+            }
+            if (typeof window.mettreAJourVisuelCPT === 'function') {
+              mettreAJourVisuelCPT(cpt, postId, url);
             }
           } else {
             if (feedback) {
@@ -612,6 +612,7 @@ function initChampImage(bloc) {
     frame.open();
   });
 }
+
 
 
 
