@@ -19,6 +19,7 @@ window.mettreAJourResumeInfos = function () {
         const valeurTitre = bloc?.querySelector('.champ-input')?.value.trim().toLowerCase();
         const titreParDefaut = "votre nom d’organisateur";
         estRempli = valeurTitre && valeurTitre !== titreParDefaut;
+      }
 
       if (champ === 'coordonnees_bancaires') {
         const iban = document.getElementById('champ-iban')?.value.trim();
@@ -381,9 +382,6 @@ function initChampTexte(bloc) {
     feedback = document.createElement('div');
     feedback.className = 'champ-feedback';
     bloc.appendChild(feedback);
-  }
-
-    return;
   }
 
   // ✏️ Ouverture édition

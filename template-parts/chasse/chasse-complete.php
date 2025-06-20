@@ -61,8 +61,8 @@ if (current_user_can('administrator')) {
 
   error_log("📦 [TEST] Statut stocké (admin) : " . get_field('champs_caches')['chasse_cache_statut']);
 
-  $statut_calcule = calculer_statut_chasse($chasse_id);
-  error_log("🧠 [TEST] Statut recalculé (logique) : $statut_calcule");
+  verifier_ou_recalculer_statut_chasse($chasse_id);
+
 
   mettre_a_jour_statuts_chasse($chasse_id);
 
@@ -143,7 +143,7 @@ if (current_user_can('administrator')) {
     <div class="chasse-details-wrapper">
 
       <!-- Titre -->
-      
+
 
       <?php if ($organisateur_id): ?>
         <p class="txt-small auteur-organisateur">
