@@ -304,9 +304,10 @@
     // 🖼️ AFFICHAGE DES VISUELS D’ÉNIGMES
     // ==================================================
 
-        * 🔹 afficher_visuels_enigme() → Affiche la galerie visuelle de l’énigme si l’utilisateur y a droit (image principale + vignettes).
-        * 🔹 get_url_vignette_enigme() → Retourne l’URL proxy de la première vignette d’une énigme.
-        * 🔹 afficher_picture_vignette_enigme() → Affiche un bloc <picture> responsive pour une énigme.
+    /**
+     * 🔹 afficher_visuels_enigme() → Affiche la galerie visuelle de l’énigme si l’utilisateur y a droit (image principale + vignettes).
+     * 🔹 get_url_vignette_enigme() → Retourne l’URL proxy de la première vignette d’une énigme.
+     * 🔹 afficher_picture_vignette_enigme() → Affiche un bloc <picture> responsive pour une énigme.
      */
 
     /**
