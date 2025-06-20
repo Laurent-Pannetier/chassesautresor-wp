@@ -311,46 +311,6 @@ PHPDoc (@param)	❌ Réservé à PHP (inc/)
 
 
 
-📂 Arborescence des templates (template-parts/, panneaux/, edition/)
-
-template-parts/
-  ├── chasse/
-  │     ├── chasse-carte.php
-  │     ├── chasse-complete.php
-  │     ├── description-chasse.php
-  │     ├── edition-chasse.php
-  │     └── panneaux/
-  │           ├── panneau-description-chasse.php
-  │           ├── panneau-liens-chasse.php
-  │           └── panneau-recompense-chasse.php
-  ├── enigme/
-  │     ├── boucle-enigmes.php
-  │     ├── carte-ajout-enigme.php
-  │     ├── edition-enigme.php
-  │     └── panneaux/
-  │           ├── panneau-description-enigme.php
-  │           └── panneau-images-enigme.php
-  │           └── panneau-variantes-enigme.php
-  ├── organisateur/
-  │     ├── contact-form.php
-  │     ├── header-organisateur.php
-  │     ├── panneau-organisateur.php
-  │     ├── presentation-organisateur.php
-  │     └── panneaux/
-  │           ├── panneau-coordonnees.php
-  │           ├── panneau-description.php
-  │           └── panneau-liens-publics.php
-  ├── chasse-card.php
-  ├── crea-orga-cards.php
-  ├── desktop.ini
-  ├── fallback-header.php
-  ├── modal-conversion-historique.php
-  ├── modal-conversion.php
-  └── modal-points.php
-
-
-
-
 
 3. ACF – Champs personnalisés
 
