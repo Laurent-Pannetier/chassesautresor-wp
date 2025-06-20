@@ -26,26 +26,26 @@ function renderLiensPublics(liens = []) {
       <div class="liens-placeholder">
         <p class="liens-placeholder-message">Aucun lien ajouté pour le moment.</p>
         ${Object.entries(icones).map(([type, icone]) =>
-          `<i class="fa ${icone} icone-grisee" title="${labels[type]}"></i>`
-        ).join('')}
+      `<i class="fa ${icone} icone-grisee" title="${labels[type]}"></i>`
+    ).join('')}
       </div>`;
   }
 
   return `
     <ul class="liste-liens-publics">
       ${liens.map(({ type_de_lien, url_lien }) => {
-        const type = Array.isArray(type_de_lien) ? type_de_lien[0] : type_de_lien;
-        const icone = icones[type] || 'fa-link';
-        const label = labels[type] || type;
-        const url = url_lien || '#';
-        return `
+    const type = Array.isArray(type_de_lien) ? type_de_lien[0] : type_de_lien;
+    const icone = icones[type] || 'fa-link';
+    const label = labels[type] || type;
+    const url = url_lien || '#';
+    return `
           <li class="item-lien-public">
             <a href="${url}" class="lien-public lien-${type}" target="_blank" rel="noopener">
               <i class="fa ${icone}"></i>
               <span class="texte-lien">${label}</span>
             </a>
           </li>`;
-      }).join('')}
+  }).join('')}
     </ul>`;
 }
 window.renderLiensPublicsJS = renderLiensPublics;
@@ -57,17 +57,11 @@ window.renderLiensPublicsJS = renderLiensPublics;
  * @param {string} valeur - Le nouveau titre à afficher
  */
 window.mettreAJourTitreHeader = function (cpt, valeur) {
-  const selecteurs = {
-    organisateur: '.header-organisateur.titre-objet',
-    chasse: '.titre-objet.header-chasse',
-    enigme: '.header-enigme.titre-objet'
-  };
-
-  const cible = document.querySelector(selecteurs[cpt]);
+  const cible = document.querySelector(`.titre-objet[data-cpt="${cpt}"]`);
   if (cible) {
     cible.textContent = valeur;
   } else {
-    console.warn('❌ Impossible de trouver le header pour le CPT :', cpt);
+    console.warn('❌ Impossible de trouver le titre pour le CPT :', cpt);
   }
 };
 
@@ -81,7 +75,7 @@ window.mettreAJourTitreHeader = function (cpt, valeur) {
  * @param {string} nouvelleUrl - L’URL de l’image mise à jour
  */
 function mettreAJourVisuelCPT(cpt, postId, nouvelleUrl) {
-  document.querySelectorAll(`img.visuel-cpt[data-cpt="${cpt}"][data-post-id="${postId}"]`) 
+  document.querySelectorAll(`img.visuel-cpt[data-cpt="${cpt}"][data-post-id="${postId}"]`)
     .forEach(img => {
       img.src = nouvelleUrl;
     });
