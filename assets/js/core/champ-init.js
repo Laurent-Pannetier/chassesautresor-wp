@@ -531,91 +531,72 @@ function initChampImage(bloc) {
   const image = bloc.querySelector('img');
   const feedback = bloc.querySelector('.champ-feedback');
 
-  // ✅ Injection dynamique du bouton si manquant ET panneau édition détecté
-  let boutonEdit = bloc.querySelector('.champ-modifier');
-  if (!boutonEdit && bloc.closest('.edition-panel-chasse, .panneau-organisateur')) {
-    boutonEdit = document.createElement('button');
-    boutonEdit.type = 'button';
-    boutonEdit.className = 'champ-modifier bouton-modif-auto';
-    boutonEdit.textContent = '✏️';
-    const affichage = bloc.querySelector('.champ-affichage');
-    if (affichage) affichage.appendChild(boutonEdit);
-  }
+  if (!champ || !cpt || !postId || !input || !image) return;
 
-  if (!champ || !cpt || !postId || !input || !image || !boutonEdit) return;
+  const frame = wp.media({
+    title: 'Choisir une image',
+    multiple: false,
+    library: { type: 'image' },
+    button: { text: 'Utiliser cette image' }
+  });
 
-  let frame = null;
+  frame.on('select', () => {
+    const selection = frame.state().get('selection').first();
+    const id = selection?.id;
+    const url = selection?.attributes?.url;
+    if (!id || !url) return;
 
-  boutonEdit.addEventListener('click', () => {
-    if (frame) return frame.open();
+    image.src = url;
+    input.value = id;
 
-    frame = wp.media({
-      title: 'Choisir une image',
-      multiple: false,
-      library: { type: 'image' },
-      button: { text: 'Utiliser cette image' }
-    });
+    if (feedback) {
+      feedback.textContent = 'Enregistrement...';
+      feedback.className = 'champ-feedback champ-loading';
+    }
 
-    frame.on('select', () => {
-      const selection = frame.state().get('selection').first();
-      const id = selection?.id;
-      const url = selection?.attributes?.url;
-      if (!id || !url) return;
-
-      image.src = url;
-      input.value = id;
-
-      if (feedback) {
-        feedback.textContent = 'Enregistrement...';
-        feedback.className = 'champ-feedback champ-loading';
-      }
-
-      fetch(ajaxurl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({
-          action: (cpt === 'chasse') ? 'modifier_champ_chasse' :
-            (cpt === 'enigme') ? 'modifier_champ_enigme' :
-              'modifier_champ_organisateur',
-          champ,
-          valeur: id,
-          post_id: postId
-        })
+    fetch(ajaxurl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        action: (cpt === 'chasse') ? 'modifier_champ_chasse' :
+                (cpt === 'enigme') ? 'modifier_champ_enigme' :
+                'modifier_champ_organisateur',
+        champ,
+        valeur: id,
+        post_id: postId
       })
-        .then(r => r.json())
-        .then(res => {
-          if (res.success) {
-            bloc.classList.remove('champ-vide');
-            if (feedback) {
-              feedback.textContent = '';
-              feedback.className = 'champ-feedback champ-success';
-            }
-            if (typeof window.mettreAJourResumeInfos === 'function') {
-              window.mettreAJourResumeInfos();
-            }
-            if (typeof window.mettreAJourVisuelCPT === 'function') {
-              mettreAJourVisuelCPT(cpt, postId, url);
-            }
-          } else {
-            if (feedback) {
-              feedback.textContent = '❌ Erreur : ' + (res.data || 'inconnue');
-              feedback.className = 'champ-feedback champ-error';
-            }
-          }
-        })
-        .catch(() => {
+    })
+      .then(r => r.json())
+      .then(res => {
+        if (res.success) {
+          bloc.classList.remove('champ-vide');
           if (feedback) {
-            feedback.textContent = '❌ Erreur réseau.';
+            feedback.textContent = '';
+            feedback.className = 'champ-feedback champ-success';
+          }
+          if (typeof window.mettreAJourResumeInfos === 'function') {
+            window.mettreAJourResumeInfos();
+          }
+          if (typeof window.mettreAJourVisuelCPT === 'function') {
+            mettreAJourVisuelCPT(cpt, postId, url);
+          }
+        } else {
+          if (feedback) {
+            feedback.textContent = '❌ Erreur : ' + (res.data || 'inconnue');
             feedback.className = 'champ-feedback champ-error';
           }
-        });
-    });
-
-    frame.open();
+        }
+      })
+      .catch(() => {
+        if (feedback) {
+          feedback.textContent = '❌ Erreur réseau.';
+          feedback.className = 'champ-feedback champ-error';
+        }
+      });
   });
+
+  frame.open();
 }
-
-
 
 
 // ==============================
