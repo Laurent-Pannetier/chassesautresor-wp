@@ -85,6 +85,15 @@ $url_contact = esc_url($base_url . 'contact?email_organisateur=' . urlencode($em
 
       <div class="champ-feedback"></div>
     </div>
+
+    <?php
+    get_template_part('template-parts/organisateur/panneau-organisateur', null, [
+      'organisateur_id' => $organisateur_id
+    ]);
+    get_template_part('template-parts/organisateur/presentation-organisateur', null, [
+      'organisateur_id' => $organisateur_id
+    ]);
+    ?>
 </div>
 
 <!-- Icône réglage (toggle panneau + stylos) -->
@@ -119,15 +128,3 @@ $url_contact = esc_url($base_url . 'contact?email_organisateur=' . urlencode($em
     document.body.dataset.organisateurId = "<?= esc_attr($organisateur_id); ?>";
   });
 </script>
-
-<?php
-
-get_template_part('template-parts/organisateur/panneau-organisateur', null, [
-  'organisateur_id' => $organisateur_id
-]);
-get_template_part('template-parts/organisateur/presentation-organisateur', null, [
-  'organisateur_id' => $organisateur_id
-]);
-
-
-?>
