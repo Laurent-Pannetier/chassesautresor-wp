@@ -50,21 +50,16 @@ $url_contact = esc_url($base_url . 'contact?email_organisateur=' . urlencode($em
           data-post-id="<?= esc_attr($organisateur_id); ?>">
 
           <div class="champ-affichage">
-            <?php if ($peut_modifier) : ?>
-              <button type="button"
-                class="champ-modifier header-img-modifiable header-organisateur__logo"
-                aria-label="Modifier le logo"
-                data-champ="profil_public_logo_organisateur"
-                data-cpt="organisateur"
-                data-post-id="<?= esc_attr($organisateur_id); ?>">
-                <img src="<?= esc_url($logo_url); ?>" alt="Logo de l’organisateur">
-                <span class="icone-modif">✏️</span>
-              </button>
-            <?php else : ?>
-              <div class="header-organisateur__logo">
-                <img src="<?= esc_url($logo_url); ?>" alt="Logo de l’organisateur">
-              </div>
-            <?php endif; ?>
+            <div class="header-organisateur__logo">
+              <a href="<?= esc_url(get_permalink($organisateur_id)); ?>" aria-label="Voir la page de l’organisateur">
+                <img src="<?= esc_url($logo_url); ?>"
+                  alt="Logo de l’organisateur"
+                  class="header-organisateur__logo visuel-cpt"
+                  data-cpt="organisateur"
+                  data-post-id="<?= esc_attr($organisateur_id); ?>"
+                  style="max-width:100%; height:auto;" />
+              </a>
+            </div>
           </div>
 
           <input type="hidden" class="champ-input" value="<?= esc_attr($logo_id ?? '') ?>">

@@ -121,23 +121,20 @@ if (current_user_can('administrator')) {
       data-post-id="<?= esc_attr($chasse_id); ?>">
 
       <div class="champ-affichage">
-        <button type="button"
-          class="champ-modifier header-img-modifiable header-chasse__image"
-          aria-label="Modifier l’image"
-          data-champ="chasse_principale_image"
-          data-cpt="chasse"
-          data-post-id="<?= esc_attr($chasse_id); ?>">
+        <div class="header-chasse__image">
           <img src="<?= esc_url($image_url); ?>"
             alt="Image de la chasse"
-            class="chasse-image"
+            class="chasse-image visuel-cpt"
+            data-cpt="chasse"
+            data-post-id="<?= esc_attr($chasse_id); ?>"
             style="width:100%; height:auto;" />
-          <span class="icone-modif">✏️</span>
-        </button>
+        </div>
       </div>
 
       <input type="hidden" class="champ-input" value="<?= esc_attr($image_id); ?>">
       <div class="champ-feedback"></div>
     </div>
+
 
     <!-- 📟 Informations -->
     <div class="chasse-details-wrapper">
