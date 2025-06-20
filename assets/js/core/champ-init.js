@@ -541,12 +541,20 @@ function initChampImage(bloc) {
 
   // ✅ Création du frame à la volée quand appelé
   const ouvrirMedia = () => {
+    // ✅ Empêcher double ouverture : reuse si déjà initialisé
+    if (bloc.__mediaFrame) {
+      bloc.__mediaFrame.open();
+      return;
+    }
+
     const frame = wp.media({
       title: 'Choisir une image',
       multiple: false,
       library: { type: 'image' },
       button: { text: 'Utiliser cette image' }
     });
+
+    bloc.__mediaFrame = frame; // 💾 stocké pour usage unique
 
     frame.on('select', () => {
       const selection = frame.state().get('selection').first();
