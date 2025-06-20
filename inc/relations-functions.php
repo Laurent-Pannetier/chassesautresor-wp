@@ -274,9 +274,6 @@ function recuperer_enigmes_associees(int $chasse_id): array
   $groupe = get_field('champs_caches', $chasse_id);
   $liste_brute = $groupe['chasse_cache_enigmes'] ?? [];
 
-  // Log brut pour analyse
-  error_log("📥 [recuperer_enigmes_associees] Contenu brut chasse_cache_enigmes (chasse #$chasse_id) : " . print_r($liste_brute, true));
-
   // Extraction des IDs (objet ou int)
   $ids = [];
 

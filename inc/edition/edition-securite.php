@@ -169,6 +169,8 @@ add_action('acf/save_post', 'verrouiller_visuels_enigme_si_nouveau_upload', 20);
 function filtrer_visuels_enigme_front($images, $post_id, $field)
 {
   error_log('[DEBUG] filtre gallery appelé pour post ID : ' . $post_id);
+  error_log("[✔️ filtre ACF gallery actif] post_id = $post_id | champ = " . ($field['name'] ?? 'inconnu'));
+
 
   if (is_admin()) return $images;
   if (!is_array($images)) return $images;

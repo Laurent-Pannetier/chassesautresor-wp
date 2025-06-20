@@ -8,3 +8,6 @@ if (!function_exists('update_field')) {
 if (!function_exists('acf_form_head')) {
     function acf_form_head() {}
 }
+if (!function_exists('wp_encode_mime_header')) {
+    function wp_encode_mime_header($str) {}
+}

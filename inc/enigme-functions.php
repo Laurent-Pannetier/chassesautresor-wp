@@ -59,8 +59,6 @@
                 $resultats[$id] = $titre;
             }
         }
-
-        error_log("[DEBUG] Liste brute des prérequis possibles : " . print_r($resultats, true));
         return $resultats;
     }
 
