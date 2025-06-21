@@ -228,9 +228,10 @@ function desactiver_htaccess_temporairement_enigme()
     error_log("ℹ️ .htaccess déjà désactivé pour énigme {$post_id} – renouvellement délai");
     $message = 'Déjà désactivé – délai renouvelé';
   } else {
-    error_log("⚠️ Aucun .htaccess trouvé pour énigme {$post_id}");
-    wp_send_json_error("Fichier introuvable");
+    error_log("ℹ️ Aucun .htaccess à désactiver (pas encore d’image) pour énigme {$post_id}");
+    $message = 'Aucun fichier à désactiver (pas encore d’image)';
   }
+
 
   // 🔁 Dans tous les cas on prolonge pour 3 minutes
   set_transient('htaccess_timeout_enigme_' . $post_id, time() + 180, 180);
