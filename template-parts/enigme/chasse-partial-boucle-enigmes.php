@@ -8,7 +8,7 @@ if (!$chasse_id || get_post_type($chasse_id) !== 'chasse') return;
 $organisateur_id = get_organisateur_of_chasse($chasse_id);
 $autorisations = get_users_of_organisateur($organisateur_id);
 $utilisateur_id = get_current_user_id();
-$peut_modifier = in_array($utilisateur_id, $autorisations, true);
+$peut_modifier = utilisateur_est_organisateur_associe_a_chasse($utilisateur_id, $chasse_id);
 
 // 🔎 Récupération large : filtrage visuel ensuite
 $posts = get_posts([
