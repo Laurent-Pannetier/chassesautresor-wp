@@ -15,10 +15,11 @@ $posts = get_posts([
   'post_status'    => ['publish', 'pending', 'draft'],
   'meta_query'     => [[
     'key'     => 'enigme_chasse_associee',
-    'value'   => '"' . $chasse_id . '"',
-    'compare' => 'LIKE'
+    'value'   => $chasse_id,
+    'compare' => '='
   ]]
 ]);
+
 var_dump($posts);
 $posts_visibles = array_filter($posts, function ($post) use ($peut_modifier) {
   return !in_array($post->post_status, ['pending', 'draft'], true) || $peut_modifier;
