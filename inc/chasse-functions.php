@@ -198,10 +198,12 @@ function afficher_picture_vignette_chasse($chasse_id, $alt = '') {
   if (!is_numeric($chasse_id)) return;
 
   $image = get_field('chasse_principale_image', $chasse_id);
+  $permalink = get_permalink($chasse_id);
 
   if (!is_array($image) || empty($image['url'])) {
-    // ❌ Aucune image → afficher un placeholder simple
-    echo '<div class="image-chasse-placeholder"><i class="fa-solid fa-map fa-2x"></i></div>';
+    echo '<a href="' . esc_url($permalink) . '" class="image-chasse-placeholder">';
+    echo '<i class="fa-solid fa-map fa-2x"></i>';
+    echo '</a>';
     return;
   }
 
@@ -209,11 +211,14 @@ function afficher_picture_vignette_chasse($chasse_id, $alt = '') {
   $src_large = $image['sizes']['large'] ?? $image['url'];
   $alt = esc_attr($alt ?: $image['alt'] ?? get_the_title($chasse_id));
 
+  echo '<a href="' . esc_url($permalink) . '">';
   echo '<picture>';
   echo '<source media="(min-width: 768px)" srcset="' . esc_url($src_large) . '">';
   echo '<img src="' . esc_url($src_small) . '" alt="' . $alt . '" loading="lazy">';
   echo '</picture>';
+  echo '</a>';
 }
+
 
 
 /**
