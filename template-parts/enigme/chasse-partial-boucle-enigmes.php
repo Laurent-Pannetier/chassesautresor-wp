@@ -39,10 +39,10 @@ $has_enigmes = !empty($posts_visibles);
         <?php afficher_picture_vignette_enigme($enigme_id, 'Vignette de l’énigme'); ?>
       </div>
       <h3><?= esc_html($titre); ?></h3>
-      <p>État système : <strong><?= esc_html($etat_systeme); ?></strong></p>
-      <p>Statut joueur : <strong><?= esc_html($statut_utilisateur); ?></strong></p>
+
       <?php render_cta_enigme($cta, $enigme_id); ?>
     </article>
+
   <?php endforeach; ?>
 
   <?php
