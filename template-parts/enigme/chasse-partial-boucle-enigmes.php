@@ -5,7 +5,6 @@ $chasse_id = $args['chasse_id'] ?? null;
 if (!$chasse_id || get_post_type($chasse_id) !== 'chasse') return;
 
 $utilisateur_id = get_current_user_id();
-$peut_modifier = utilisateur_est_organisateur_associe_a_chasse($utilisateur_id, $chasse_id);
 
 $posts = get_posts([
   'post_type'      => 'enigme',
@@ -19,8 +18,9 @@ $posts = get_posts([
     'compare' => '='
   ]]
 ]);
-$posts_visibles = array_filter($posts, function ($post) use ($peut_modifier) {
-  return !in_array($post->post_status, ['pending', 'draft'], true) || $peut_modifier;
+
+$posts_visibles = array_filter($posts, function ($post) use ($utilisateur_id) {
+  return utilisateur_peut_voir_enigme($post->ID, $utilisateur_id);
 });
 
 $has_enigmes = !empty($posts_visibles);
@@ -51,7 +51,16 @@ $has_enigmes = !empty($posts_visibles);
   <?php endif; ?>
 
   <?php
-  if ($peut_modifier) {
+  // ➕ Ajout autorisé seulement si l’utilisateur peut modifier une énigme de cette chasse
+  $peut_ajouter = utilisateur_peut_modifier_enigme(0, $utilisateur_id); // 🔍 appel factice à adapter
+  foreach ($posts as $p) {
+    if (utilisateur_peut_modifier_enigme($p->ID, $utilisateur_id)) {
+      $peut_ajouter = true;
+      break;
+    }
+  }
+
+  if ($peut_ajouter || utilisateur_peut_modifier_post($chasse_id)) {
     get_template_part('template-parts/enigme/chasse-partial-ajout-enigme', null, [
       'has_enigmes' => $has_enigmes,
       'chasse_id'   => $chasse_id,

@@ -138,18 +138,11 @@ add_filter('user_has_cap', function ($allcaps, $cap, $args, $user) {
  * 🔹 utilisateur_peut_creer_post → Vérifie si l’utilisateur peut créer un post (organisateur, chasse, énigme).
  * 🔹 utilisateur_peut_modifier_post → Vérifie si l’utilisateur peut modifier un post via ACF.
  * 🔹 utilisateur_peut_voir_enigme → Vérifie si un utilisateur peut voir une énigme.
+ * 🔹 utilisateur_peut_modifier_enigme → Vérifie si un utilisateur peut modifier une énigme.
  * 🔹 champ_est_editable → Vérifie si un champ est éditable pour un utilisateur donné.
  * 🔹 redirection_si_acces_refuse → Redirige si l’accès est refusé.
- * 🔹 Hooks load-post.php / load-post-new.php / admin_init
- */
-
-// ==================================================
-// 📄 ACCÈS À UN POST (voir, modifier, créer)
-// ==================================================
-/**
- * 🔹 redirection_si_acces_refuse → Redirige l’utilisateur si les conditions d’accès ne sont pas remplies.
  * 🔹 blocage_acces_admin_non_admins (admin_init) → Empêche certains rôles d’accéder à wp-admin.
- * 🔹 vérification load-post.php et load-post-new.php → Empêche les accès directs à l’admin via l’écran d’édition/création.
+ * 🔹 Hooks load-post.php / load-post-new.php / admin_init
  */
 
 
@@ -321,6 +314,32 @@ function utilisateur_peut_voir_enigme(int $enigme_id, ?int $user_id = null): boo
   return false;
 }
 
+/**
+ * Détermine si un utilisateur peut modifier une énigme.
+ *
+ * @param int $enigme_id
+ * @param int|null $user_id
+ * @return bool
+ */
+function utilisateur_peut_modifier_enigme(int $enigme_id, ?int $user_id = null): bool {
+  if (get_post_type($enigme_id) !== 'enigme') return false;
+  $user_id = $user_id ?? get_current_user_id();
+
+  // Admin → accès total
+  if (user_can($user_id, 'administrator')) return true;
+
+  // Récupérer la chasse associée
+  $chasse_id = recuperer_id_chasse_associee($enigme_id);
+  if (!$chasse_id || get_post_type($chasse_id) !== 'chasse') return false;
+
+  // Récupérer l'état de validation de la chasse
+  $statut_validation = get_field('champs_caches_chasse_cache_statut_validation', $chasse_id);
+  if ($statut_validation !== 'creation') return false;
+
+  // L'utilisateur doit être associé à l'organisateur de la chasse
+  return utilisateur_est_organisateur_associe_a_chasse($user_id, $chasse_id);
+}
+
 
 /**
  * Vérifie si un champ donné est éditable pour un utilisateur donné sur un post donné.
@@ -472,6 +491,7 @@ add_action('load-post.php', function () {
 
     redirection_si_acces_refuse($post_id, $post_type, '/mon-compte/');
 });
+
 
 
 // ==================================================
