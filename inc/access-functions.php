@@ -142,6 +142,7 @@ add_filter('user_has_cap', function ($allcaps, $cap, $args, $user) {
  * 🔹 utilisateur_peut_voir_enigme → Vérifie si un utilisateur peut voir une énigme.
  * 🔹 utilisateur_peut_ajouter_enigme → Vérifie si un utilisateur peut ajouter une énigme à une chasse.
  * 🔹 utilisateur_peut_modifier_enigme → Vérifie si un utilisateur peut modifier une énigme.
+ * 🔹 utilisateur_peut_ajouter_chasse → Vérifie si l’utilisateur peut ajouter une chasse à un organisateur donné.
  * 🔹 champ_est_editable → Vérifie si un champ est éditable pour un utilisateur donné.
  * 🔹 redirection_si_acces_refuse → Redirige si l’accès est refusé.
  * 🔹 blocage_acces_admin_non_admins (admin_init) → Empêche certains rôles d’accéder à wp-admin.
@@ -411,6 +412,31 @@ function utilisateur_peut_modifier_enigme(int $enigme_id, ?int $user_id = null):
 
     // L'utilisateur doit être associé à l'organisateur de la chasse
     return utilisateur_est_organisateur_associe_a_chasse($user_id, $chasse_id);
+}
+
+
+/**
+ * Vérifie si un utilisateur peut ajouter une nouvelle chasse à un organisateur donné.
+ *
+ * @param int $organisateur_id
+ * @return bool
+ */
+function utilisateur_peut_ajouter_chasse(int $organisateur_id): bool
+{
+    if (!is_user_logged_in()) return false;
+
+    $user_id = get_current_user_id();
+
+    // L'utilisateur doit être lié à l'organisateur
+    if (!utilisateur_peut_modifier_post($organisateur_id)) {
+        return false;
+    }
+
+    // ⚠️ Optionnel : nombre max de chasses (exemple : 5)
+    // $chasses = get_posts([...]);
+    // if (count($chasses) >= 5) return false;
+
+    return true;
 }
 
 
