@@ -300,15 +300,26 @@
 
     // ==================================================
     // 🖼️ AFFICHAGE DES VISUELS D’ÉNIGMES
-    // ==================================================
-    /*
-        * 🔹 afficher_visuels_enigme() → Affiche la galerie visuelle de l’énigme si l’utilisateur y a droit (image principale + vignettes).
-        * 🔹 get_image_enigme() → Renvoie l’URL de l’image principale d’une énigme ou un placeholder.
-        * 🔹 enigme_a_une_image() → Vérifie si l’énigme a une image définie.
-        * 🔹 get_url_vignette_enigme() → Retourne l’URL proxy de la première vignette d’une énigme.
-        * 🔹 afficher_picture_vignette_enigme() → Affiche un bloc <picture> responsive pour une énigme.
-        * 🔹 trouver_chemin_image() → Retourne le chemin absolu et le type MIME d’une image à une taille donnée.
+    /**
+     * 🔹 define('ID_IMAGE_PLACEHOLDER_ENIGME', 3925) → Définit l’identifiant de l’image placeholder utilisée pour les énigmes.
+     * 🔹 afficher_visuels_enigme() → Affiche la galerie visuelle de l’énigme si l’utilisateur y a droit (image principale + vignettes).
+     * 🔹 get_image_enigme() → Renvoie l’URL de l’image principale d’une énigme ou un placeholder.
+     * 🔹 enigme_a_une_image() → Vérifie si l’énigme a une image définie.
+     * 🔹 get_url_vignette_enigme() → Retourne l’URL proxy de la première vignette d’une énigme.
+     * 🔹 afficher_picture_vignette_enigme() → Affiche un bloc <picture> responsive pour une énigme.
+     * 🔹 trouver_chemin_image() → Retourne le chemin absolu et le type MIME d’une image à une taille donnée.
      */
+
+    /**
+     * Définit l'identifiant de l'image placeholder utilisée pour les énigmes.
+     * 
+     * Constante : ID_IMAGE_PLACEHOLDER_ENIGME
+     * Valeur : 3925
+     * 
+     * Cette constante est utilisée comme identifiant de l'image par défaut (placeholder)
+     * pour les énigmes dans le site WordPress.
+     */
+    define('ID_IMAGE_PLACEHOLDER_ENIGME', 3925);
 
 
     /**
@@ -474,26 +485,30 @@
     /**
      * Affiche un bloc <picture> responsive pour une énigme.
      *
-     * @param int $enigme_id
-     * @param string $alt Texte alternatif
-     * @param array $sizes Liste des tailles WordPress à inclure (ordre croissant)
+     * Génère un élément <picture> HTML avec différentes sources pour les tailles d’image spécifiées,
+     * en utilisant le proxy /voir-image-enigme. Si aucune image n’est définie, utilise le placeholder.
+     *
+     * @param int    $enigme_id  ID de l’énigme concernée.
+     * @param string $alt        Texte alternatif pour l’image.
+     * @param array  $sizes      Liste des tailles WordPress à inclure (ordre croissant).
+     * @return void
      */
     function afficher_picture_vignette_enigme(int $enigme_id, string $alt = '', array $sizes = ['thumbnail', 'medium']): void
     {
         if (!utilisateur_peut_voir_enigme($enigme_id)) return;
 
         $images = get_field('enigme_visuel_image', $enigme_id, false);
-        if (!$images || !is_array($images)) return;
+        $image_id = (is_array($images) && !empty($images[0])) ? (int) $images[0] : null;
 
-        $image_id = $images[0] ?? null;
-        if (!$image_id) return;
+        // ✅ Fallback si aucune image définie
+        if (!$image_id) {
+            $image_id = defined('ID_IMAGE_PLACEHOLDER_ENIGME') ? ID_IMAGE_PLACEHOLDER_ENIGME : 3925;
+        }
 
         echo '<picture>' . "\n";
 
         foreach ($sizes as $taille) {
             $base_url = site_url('/voir-image-enigme');
-
-            // 🔁 taille normale (ex: thumbnail)
             $src = esc_url(add_query_arg([
                 'id'     => $image_id,
                 'taille' => $taille,
@@ -502,7 +517,7 @@
             echo '  <source srcset="' . $src . '" type="image/webp">' . "\n";
             echo '  <source srcset="' . $src . '" type="image/png">' . "\n";
         }
-        // Dernier fallback : image medium ou full
+
         $src_default = esc_url(add_query_arg([
             'id'     => $image_id,
             'taille' => end($sizes),
@@ -511,6 +526,7 @@
         echo '  <img src="' . $src_default . '" alt="' . esc_attr($alt) . '" loading="lazy">' . "\n";
         echo '</picture>' . "\n";
     }
+
 
 
     /**
