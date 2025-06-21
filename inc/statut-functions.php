@@ -413,8 +413,15 @@ function enigme_mettre_a_jour_etat_systeme(int $enigme_id, bool $mettre_a_jour =
         $statut_chasse = $statut_chasse_forcé ?? (get_field('champs_caches', $chasse_id)['chasse_cache_statut'] ?? null);
         error_log("🧩 #$enigme_id → chasse #$chasse_id statut = $statut_chasse");
 
-        if (!in_array($statut_chasse, ['en_cours', 'payante', 'termine'], true)) {
+        $validation = get_field('champs_caches', $chasse_id)['chasse_cache_statut_validation'] ?? null;
+        if (
+            !in_array($statut_chasse, ['en_cours', 'payante', 'termine'], true) &&
+            !in_array($validation, ['creation', 'correction'], true)
+        ) {
             $etat = 'bloquee_chasse';
+            error_log("🧩 #$enigme_id → bloquee_chasse (statut chasse = $statut_chasse / validation = $validation)");
+        } else {
+            error_log("🧩 #$enigme_id → chasse OK (statut = $statut_chasse / validation = $validation)");
         }
     }
 
