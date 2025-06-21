@@ -5,10 +5,10 @@ defined( 'ABSPATH' ) || exit;
 // 📘 SOMMAIRE DU FICHIER : access-functions.php
 // ==================================================
 //  🔐 CONTRÔLES GÉNÉRAUX : rôle, statut global
-//  📄 ACCÈS À UN POST (voir, modifier, créer)
-//  📌 VISIBILITÉ ET AFFICHAGE 
+//  📄 ACCÈS À UN POST (voir, modifier, créer, voir)
 //  📂 ACCÈS AUX FICHIERS PROTÉGÉS
-//  🔒 CONTRÔLES SPÉCIFIQUES : accès conditionnel, prérequis
+//  🔒 CONTRÔLES SPÉCIFIQUES : ACF, conditions, prérequis
+// 📌 VISIBILITÉ ET AFFICHAGE (RÉSERVÉ FUTUR)
 
 
 // ==================================================
@@ -131,56 +131,27 @@ add_filter('user_has_cap', function ($allcaps, $cap, $args, $user) {
 }, 10, 4);
 
 
+// ==================================================
+// 📄 ACCÈS À UN POST (voir, modifier, créer, voir)
+// ==================================================
+/**
+ * 🔹 utilisateur_peut_creer_post → Vérifie si l’utilisateur peut créer un post (organisateur, chasse, énigme).
+ * 🔹 utilisateur_peut_modifier_post → Vérifie si l’utilisateur peut modifier un post via ACF.
+ * 🔹 utilisateur_peut_voir_enigme → Vérifie si un utilisateur peut voir une énigme.
+ * 🔹 champ_est_editable → Vérifie si un champ est éditable pour un utilisateur donné.
+ * 🔹 redirection_si_acces_refuse → Redirige si l’accès est refusé.
+ * 🔹 Hooks load-post.php / load-post-new.php / admin_init
+ */
 
 // ==================================================
 // 📄 ACCÈS À UN POST (voir, modifier, créer)
 // ==================================================
 /**
- * 🔹 champ_est_editable → Vérifie si un champ est modifiable par l’utilisateur connecté sur un post donné.
- * 🔹 utilisateur_peut_creer_post → Vérifie si l’utilisateur peut créer un post (organisateur, chasse, énigme).
- * 🔹 utilisateur_peut_modifier_post → Vérifie si l’utilisateur peut modifier un post (par lien ACF).
  * 🔹 redirection_si_acces_refuse → Redirige l’utilisateur si les conditions d’accès ne sont pas remplies.
  * 🔹 blocage_acces_admin_non_admins (admin_init) → Empêche certains rôles d’accéder à wp-admin.
  * 🔹 vérification load-post.php et load-post-new.php → Empêche les accès directs à l’admin via l’écran d’édition/création.
  */
 
-/**
- * Vérifie si un champ donné est éditable pour un utilisateur donné sur un post donné.
- *
- * @param string $champ Nom du champ ACF ou champ natif (ex : post_title)
- * @param int $post_id ID du post (CPT organisateur, chasse, etc.)
- * @param int|null $user_id ID utilisateur (par défaut : utilisateur connecté)
- * @return bool True si le champ est éditable, False sinon
- */
-function champ_est_editable($champ, $post_id, $user_id = null) {
-    if (!$post_id || !is_user_logged_in()) return false;
-
-    if (!$user_id) {
-        $user_id = get_current_user_id();
-    }
-
-    $post_type = get_post_type($post_id);
-    $status = get_post_status($post_id);
-    $roles = wp_get_current_user()->roles;
-
-    // 🔐 L'utilisateur doit être autorisé à modifier le post
-    if (!utilisateur_peut_modifier_post($post_id)) {
-        return false;
-    }
-
-    // 💡 Exemple : titre de chasse non modifiable après publication
-    if ($post_type === 'chasse' && $champ === 'post_title') {
-        return $status !== 'publish';
-    }
-
-    // ⚠️ Autres règles spécifiques à définir manuellement ensuite
-    // Exemple :
-    // if ($champ === 'caracteristiques.chasse_infos_date_debut') {
-    //     return in_array($status, ['draft', 'pending']);
-    // }
-
-    return true; // Par défaut : champ éditable
-}
 
 /**
  * Vérifie si un utilisateur peut créer un post d'un type spécifique.
@@ -304,6 +275,93 @@ function utilisateur_peut_modifier_post($post_id) {
 
 
 /**
+ * Détermine si un utilisateur peut voir une énigme donnée.
+ *
+ * @param int $enigme_id ID du post de type 'enigme'
+ * @param int|null $user_id ID utilisateur (null = utilisateur courant)
+ * @return bool
+ */
+function utilisateur_peut_voir_enigme(int $enigme_id, ?int $user_id = null): bool
+{
+  if (get_post_type($enigme_id) !== 'enigme') {
+    return false;
+  }
+
+  $post_status = get_post_status($enigme_id);
+  $etat_systeme = get_field('enigme_cache_etat_systeme', $enigme_id);
+  $user_id = $user_id ?? get_current_user_id();
+
+  // 🔓 Administrateur → accès total
+  if (current_user_can('administrator')) {
+    return true;
+  }
+
+  // 🔍 Anonyme ou abonné : uniquement publish + accessible
+  if (!is_user_logged_in() || in_array('abonne', wp_get_current_user()->roles, true)) {
+    return ($post_status === 'publish') && ($etat_systeme === 'accessible');
+  }
+
+  // 🎯 Chasse liée
+  $chasse_id = recuperer_id_chasse_associee($enigme_id);
+  if (!$chasse_id) {
+    return false;
+  }
+
+  // 🔐 L’utilisateur doit être lié à l’organisateur de la chasse
+  if (!utilisateur_est_organisateur_associe_a_chasse($user_id, $chasse_id)) {
+    return false;
+  }
+
+  // 👥 Rôles organisateur ou organisateur_creation : accès étendu
+  if (in_array('organisateur', wp_get_current_user()->roles, true) ||
+      in_array('organisateur_creation', wp_get_current_user()->roles, true)) {
+    return in_array($post_status, ['publish', 'pending', 'draft'], true);
+  }
+
+  return false;
+}
+
+
+/**
+ * Vérifie si un champ donné est éditable pour un utilisateur donné sur un post donné.
+ *
+ * @param string $champ Nom du champ ACF ou champ natif (ex : post_title)
+ * @param int $post_id ID du post (CPT organisateur, chasse, etc.)
+ * @param int|null $user_id ID utilisateur (par défaut : utilisateur connecté)
+ * @return bool True si le champ est éditable, False sinon
+ */
+function champ_est_editable($champ, $post_id, $user_id = null) {
+    if (!$post_id || !is_user_logged_in()) return false;
+
+    if (!$user_id) {
+        $user_id = get_current_user_id();
+    }
+
+    $post_type = get_post_type($post_id);
+    $status = get_post_status($post_id);
+    $roles = wp_get_current_user()->roles;
+
+    // 🔐 L'utilisateur doit être autorisé à modifier le post
+    if (!utilisateur_peut_modifier_post($post_id)) {
+        return false;
+    }
+
+    // 💡 Exemple : titre de chasse non modifiable après publication
+    if ($post_type === 'chasse' && $champ === 'post_title') {
+        return $status !== 'publish';
+    }
+
+    // ⚠️ Autres règles spécifiques à définir manuellement ensuite
+    // Exemple :
+    // if ($champ === 'caracteristiques.chasse_infos_date_debut') {
+    //     return in_array($status, ['draft', 'pending']);
+    // }
+
+    return true; // Par défaut : champ éditable
+}
+
+
+/**
  * Vérifie si un utilisateur peut créer ou modifier un post et redirige si l'accès est refusé.
  *
  * - Vérifie les permissions de création via `utilisateur_peut_creer_post()`.
@@ -394,7 +452,6 @@ add_action('load-post-new.php', function () {
     redirection_si_acces_refuse(null, $post_type, '/mon-compte/');
 });
 
-
 /**
  * Empêche les utilisateurs non autorisés d'accéder à l'écran de modification d'un post via l'admin (`post.php`).
  *
@@ -415,62 +472,6 @@ add_action('load-post.php', function () {
 
     redirection_si_acces_refuse($post_id, $post_type, '/mon-compte/');
 });
-
-
-
-// ==================================================
-// 📌 VISIBILITÉ ET AFFICHAGE 
-// ==================================================
-/**
- * 🔹 utilisateur_peut_voir_enigme → Vérifie si un utilisateur peut voir le contenu d’une énigme (visuels, texte).
- */
-
-/**
- * Détermine si un utilisateur peut voir une énigme donnée.
- *
- * @param int $enigme_id ID du post de type 'enigme'
- * @param int|null $user_id ID utilisateur (null = utilisateur courant)
- * @return bool
- */
-function utilisateur_peut_voir_enigme(int $enigme_id, ?int $user_id = null): bool
-{
-  if (get_post_type($enigme_id) !== 'enigme') {
-    return false;
-  }
-
-  $post_status = get_post_status($enigme_id);
-  $etat_systeme = get_field('enigme_cache_etat_systeme', $enigme_id);
-  $user_id = $user_id ?? get_current_user_id();
-
-  // 🔓 Administrateur → accès total
-  if (current_user_can('administrator')) {
-    return true;
-  }
-
-  // 🔍 Anonyme ou abonné : uniquement publish + accessible
-  if (!is_user_logged_in() || in_array('abonne', wp_get_current_user()->roles, true)) {
-    return ($post_status === 'publish') && ($etat_systeme === 'accessible');
-  }
-
-  // 🎯 Chasse liée
-  $chasse_id = recuperer_id_chasse_associee($enigme_id);
-  if (!$chasse_id) {
-    return false;
-  }
-
-  // 🔐 L’utilisateur doit être lié à l’organisateur de la chasse
-  if (!utilisateur_est_organisateur_associe_a_chasse($user_id, $chasse_id)) {
-    return false;
-  }
-
-  // 👥 Rôles organisateur ou organisateur_creation : accès étendu
-  if (in_array('organisateur', wp_get_current_user()->roles, true) ||
-      in_array('organisateur_creation', wp_get_current_user()->roles, true)) {
-    return in_array($post_status, ['publish', 'pending', 'draft'], true);
-  }
-
-  return false;
-}
 
 
 // ==================================================
@@ -591,7 +592,7 @@ add_action('template_redirect', function () {
 
 
 // ==================================================
-// 🔒 CONTRÔLES SPÉCIFIQUES : accès conditionnel, prérequis
+//  🔒 CONTRÔLES SPÉCIFIQUES : ACF, conditions, prérequis
 // ==================================================
 /**
  * 🔹 acf/load_field/name=enigme_acces_condition → Supprime l’option "pré-requis" si aucune énigme n’est éligible.
@@ -688,3 +689,14 @@ function verifier_et_enregistrer_condition_pre_requis() {
   wp_send_json_success('Condition "pré-requis" enregistrée');
 }
 add_action('wp_ajax_verifier_et_enregistrer_condition_pre_requis', 'verifier_et_enregistrer_condition_pre_requis');
+
+
+
+// ==================================================
+// 📌 VISIBILITÉ ET AFFICHAGE (RÉSERVÉ FUTUR)
+// ==================================================
+
+/*Préparer un bloc vide commenté pour y ajouter par exemple :
+enigme_est_affichable_pour_joueur() (à venir)
+get_cta_enigme() (à déplacer ici si elle migre du fichier visuel)
+tout helper type est_cliquable, affiche_indice, etc. */
