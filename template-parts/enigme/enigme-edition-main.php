@@ -123,7 +123,7 @@ $has_variantes = ($nb_variantes > 0);
 
               Image(s)
 
-              <<button
+              <button
                 type="button"
                 class="champ-modifier ouvrir-panneau-images"
                 data-champ="enigme_visuel_image"
