@@ -51,16 +51,7 @@ $has_enigmes = !empty($posts_visibles);
   <?php endif; ?>
 
   <?php
-  // ➕ Ajout autorisé seulement si l’utilisateur peut modifier une énigme de cette chasse
-  $peut_ajouter = utilisateur_peut_modifier_enigme(0, $utilisateur_id); // 🔍 appel factice à adapter
-  foreach ($posts as $p) {
-    if (utilisateur_peut_modifier_enigme($p->ID, $utilisateur_id)) {
-      $peut_ajouter = true;
-      break;
-    }
-  }
-
-  if ($peut_ajouter || utilisateur_peut_modifier_post($chasse_id)) {
+  if (utilisateur_peut_ajouter_enigme($chasse_id, $utilisateur_id)) {
     get_template_part('template-parts/enigme/chasse-partial-ajout-enigme', null, [
       'has_enigmes' => $has_enigmes,
       'chasse_id'   => $chasse_id,

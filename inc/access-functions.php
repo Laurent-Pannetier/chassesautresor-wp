@@ -138,6 +138,7 @@ add_filter('user_has_cap', function ($allcaps, $cap, $args, $user) {
  * 🔹 utilisateur_peut_creer_post → Vérifie si l’utilisateur peut créer un post (organisateur, chasse, énigme).
  * 🔹 utilisateur_peut_modifier_post → Vérifie si l’utilisateur peut modifier un post via ACF.
  * 🔹 utilisateur_peut_voir_enigme → Vérifie si un utilisateur peut voir une énigme.
+ * 🔹 utilisateur_peut_ajouter_enigme → Vérifie si un utilisateur peut ajouter une énigme à une chasse.
  * 🔹 utilisateur_peut_modifier_enigme → Vérifie si un utilisateur peut modifier une énigme.
  * 🔹 champ_est_editable → Vérifie si un champ est éditable pour un utilisateur donné.
  * 🔹 redirection_si_acces_refuse → Redirige si l’accès est refusé.
@@ -313,6 +314,31 @@ function utilisateur_peut_voir_enigme(int $enigme_id, ?int $user_id = null): boo
 
   return false;
 }
+
+/**
+ * Détermine si un utilisateur peut ajouter une énigme à une chasse.
+ *
+ * Conditions :
+ * - L'utilisateur doit être connecté
+ * - Il doit être associé à l'organisateur lié à la chasse
+ * - Le statut de validation de la chasse doit être 'creation' ou 'correction'
+ *
+ * @param int $chasse_id
+ * @param int|null $user_id
+ * @return bool
+ */
+function utilisateur_peut_ajouter_enigme(int $chasse_id, ?int $user_id = null): bool {
+  if (get_post_type($chasse_id) !== 'chasse') return false;
+  $user_id = $user_id ?? get_current_user_id();
+
+  if (!$user_id || !is_user_logged_in()) return false;
+
+  $statut = get_field('champs_caches_chasse_cache_statut_validation', $chasse_id);
+  if (!in_array($statut, ['creation', 'correction'], true)) return false;
+
+  return utilisateur_est_organisateur_associe_a_chasse($user_id, $chasse_id);
+}
+
 
 /**
  * Détermine si un utilisateur peut modifier une énigme.
