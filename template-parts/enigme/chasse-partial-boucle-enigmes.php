@@ -6,7 +6,7 @@ if (!$chasse_id || get_post_type($chasse_id) !== 'chasse') return;
 
 $utilisateur_id = get_current_user_id();
 $peut_modifier = utilisateur_est_organisateur_associe_a_chasse($utilisateur_id, $chasse_id);
-var_dump($peut_modifier);
+
 $posts = get_posts([
   'post_type'      => 'enigme',
   'posts_per_page' => -1,

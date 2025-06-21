@@ -4,18 +4,10 @@ defined( 'ABSPATH' ) || exit;
 // ==================================================
 // 📚 SOMMAIRE DU FICHIER : access-functions.php
 // ==================================================
-//
 //  📦 RESTRICTIONS GLOBALES
-//    - Limiter l’accès à la médiathèque et à l’éditeur Gutenberg pour les non-admins.
-//
 //  📦 RESTRICTIONS CHAMPS META
-//    - Masquer ou rendre en lecture seule certains champs ACF selon le rôle utilisateur.
-//
 //  📦 RESTRICTIONS POSTS
-//    - Restreindre la création ou la modification de certains CPT selon le rôle utilisateur.
-//
 //  🔓 CONTRÔLE D’ACCÈS AU CONTENU DES ÉNIGMES
-//
 //  🔒 GESTION DES CONDITIONS D’ACCÈS – PRÉREQUIS
 
 
@@ -757,38 +749,50 @@ function utilisateur_peut_voir_solution_enigme(int $enigme_id, int $user_id): bo
  */
 
 /**
- * Détermine si un utilisateur a le droit de consulter une énigme.
- * Cela conditionne l’accès aux visuels, au texte, et à tout le contenu restreint.
+ * Détermine si un utilisateur peut voir une énigme donnée.
  *
- * ⚠️ Cette version de base s’appuie sur le statut logique de l’énigme
- * renvoyé par `enigme_get_statut()`, et n’inclut pas encore la logique de résolution précise.
- *
- * @param int $enigme_id
- * @param int|null $user_id
+ * @param int $enigme_id ID du post de type 'enigme'
+ * @param int|null $user_id ID utilisateur (null = utilisateur courant)
  * @return bool
  */
-function utilisateur_peut_voir_enigme(int $enigme_id, ?int $user_id = null): bool {
-    $user_id = $user_id ?? get_current_user_id();
-    if (!$user_id) return false;
+function utilisateur_peut_voir_enigme(int $enigme_id, ?int $user_id = null): bool
+{
+  if (get_post_type($enigme_id) !== 'enigme') {
+    return false;
+  }
 
-    $chasse_id = recuperer_id_chasse_associee($enigme_id);
+  $post_status = get_post_status($enigme_id);
+  $etat_systeme = get_field('enigme_cache_etat_systeme', $enigme_id);
+  $user_id = $user_id ?? get_current_user_id();
 
-    // 🔐 Admin ou organisateur rattaché à la chasse
-    if (current_user_can('manage_options') || utilisateur_est_organisateur_associe_a_chasse($user_id, $chasse_id)) {
-        return true;
-    }
+  // 🔓 Administrateur → accès total
+  if (current_user_can('administrator')) {
+    return true;
+  }
 
-    // ✅ Si la chasse est terminée, tout devient visible
-    $cache_chasse = get_field('champs_caches', $chasse_id);
-    if (($cache_chasse['chasse_cache_statut'] ?? null) === 'termine') {
-        return true;
-    }
+  // 🔍 Anonyme ou abonné : uniquement publish + accessible
+  if (!is_user_logged_in() || in_array('abonne', wp_get_current_user()->roles, true)) {
+    return ($post_status === 'publish') && ($etat_systeme === 'accessible');
+  }
 
-    // 📌 Statut utilisateur logique
-    $statut = enigme_get_statut_utilisateur($enigme_id, $user_id);
+  // 🎯 Chasse liée
+  $chasse_id = recuperer_id_chasse_associee($enigme_id);
+  if (!$chasse_id) {
+    return false;
+  }
 
-    // Autorisations minimales (à élargir plus tard si nécessaire)
-    return in_array($statut, ['en_cours', 'resolue'], true);
+  // 🔐 L’utilisateur doit être lié à l’organisateur de la chasse
+  if (!utilisateur_est_organisateur_associe_a_chasse($user_id, $chasse_id)) {
+    return false;
+  }
+
+  // 👥 Rôles organisateur ou organisateur_creation : accès étendu
+  if (in_array('organisateur', wp_get_current_user()->roles, true) ||
+      in_array('organisateur_creation', wp_get_current_user()->roles, true)) {
+    return in_array($post_status, ['publish', 'pending', 'draft'], true);
+  }
+
+  return false;
 }
 
 
