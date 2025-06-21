@@ -136,6 +136,7 @@ function utilisateur_est_organisateur_associe_a_chasse(int $user_id, int $chasse
  * 🔹 recuperer_id_chasse_associee → Récupérer l’ID de la chasse associée à une énigme.
  * 🔹 organisateur_a_des_chasses → Vérifier si un organisateur a au moins une chasse associée.
  * 🔹 get_chasses_de_organisateur → Récupérer les chasses associées à un organisateur.
+ * 🔹 get_chasses_en_creation() → Récupère les chasses d’un organisateur en cours de création (statuts spécifiques).
  */
 
 /**
@@ -245,6 +246,40 @@ function get_chasses_de_organisateur($organisateur_id)
     ]
   ]);
 }
+
+
+/**
+ * @param int $organisateur_id
+ * @return WP_Post[]
+ */
+function get_chasses_en_creation($organisateur_id) {
+  if (!is_numeric($organisateur_id)) return [];
+
+  $args = [
+    'post_type'      => 'chasse',
+    'post_status'    => 'pending',
+    'posts_per_page' => -1,
+    'orderby'        => 'date',
+    'order'          => 'DESC',
+    'author'         => $organisateur_id,
+    'meta_query'     => [
+      [
+        'key'     => 'champs_caches.chasse_cache_statut_validation',
+        'value'   => 'creation',
+        'compare' => '='
+      ],
+      [
+        'key'     => 'champs_caches.chasse_cache_statut',
+        'value'   => 'revision',
+        'compare' => '='
+      ]
+    ]
+  ];
+
+  return get_posts($args);
+}
+
+
 
 // ==================================================
 //  📦 RÉCUPÉRATION CPT ÉNIGME

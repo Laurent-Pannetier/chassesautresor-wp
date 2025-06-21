@@ -27,7 +27,6 @@ $description = get_field('parlez_de_vous_presentation', $organisateur_id);
 $site_internet = get_field('communication_site_internet', $organisateur_id);
 $reseaux_sociaux = get_field('communication_reseaux_sociaux', $organisateur_id);
 $statut_organisateur = get_post_status($organisateur_id);
-$chasses_query = get_chasses_de_organisateur($organisateur_id);
 $coordonnees = get_field('coordonnees_bancaires', $organisateur_id);
 $iban = $coordonnees['iban'] ?? '';
 $bic  = $coordonnees['bic'] ?? '';
@@ -83,18 +82,34 @@ get_header();
                 </div>
 
                 <div class="liste-chasses">
-                    <?php if ($chasses_query->have_posts()) : ?>
-                        <?php while ($chasses_query->have_posts()) : $chasses_query->the_post(); ?>
-                            <?php
-                            $chasse_id = get_the_ID();
-                            get_template_part('template-parts/organisateur-partial-chasse-card', null, ['chasse_id' => $chasse_id]);
-                            ?>
-                        <?php endwhile; ?>
-                        <?php wp_reset_postdata(); ?>
-                    <?php endif; ?>
+                    <?php
+                    $organisateur_id = get_the_ID();
+                    $chasses = get_chasses_en_creation($organisateur_id);
+                    $peut_ajouter = utilisateur_peut_ajouter_chasse($organisateur_id);
+                    $has_chasses = !empty($chasses);
+
+                    foreach ($chasses as $post) :
+                        $chasse_id = $post->ID;
+                        $image_id = get_post_thumbnail_id($chasse_id);
+                    ?>
+                        <article class="carte-chasse" data-post-id="<?= esc_attr($chasse_id); ?>">
+                            <div class="carte-chasse-image">
+                                <?= wp_get_attachment_image($image_id, 'large'); ?>
+                            </div>
+                            <h2><?= esc_html(get_the_title($chasse_id)); ?></h2>
+                        </article>
+                    <?php endforeach; ?>
+
+                    <?php if ($peut_ajouter) :
+                        get_template_part('template-parts/chasse/chasse-partial-ajout-chasse', null, [
+                            'has_chasses' => $has_chasses,
+                            'organisateur_id' => $organisateur_id,
+                        ]);
+                    endif; ?>
                 </div>
             </div>
         </section>
+
     </main>
 </div>
 
