@@ -17,9 +17,6 @@ $ajout_url = esc_url(add_query_arg('chasse_id', $chasse_id, home_url('/creer-eni
 
 <div class="carte-ajout-enigme <?php echo $has_enigmes ? 'etat-suivante' : 'etat-vide'; ?>">
   <div class="contenu-carte">
-    <p class="texte-appel">
-      Ajouter une nouvelle énigme
-    </p>
     <a href="<?php echo $ajout_url; ?>" class="bouton-principal">
       ➕ <?php echo $has_enigmes ? 'Ajouter une énigme' : 'Créer la première énigme'; ?>
     </a>

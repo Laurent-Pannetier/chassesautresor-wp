@@ -536,27 +536,29 @@
     {
         if (get_post_type($enigme_id) !== 'enigme') return;
 
-        error_log("🧩 [afficher_enigme_stylisee] Appel pour énigme #$enigme_id");
-
         if (!empty($statut_data)) {
-            error_log("📦 statut_data transmis : " . print_r($statut_data, true));
+            // statut_data transmis
         } else {
-            error_log("❗ Aucune donnée statut_data transmise à afficher_enigme_stylisee()");
+            // Aucune donnée statut_data transmise à afficher_enigme_stylisee()
         }
 
         $etat = get_field('enigme_cache_etat_systeme', $enigme_id) ?? 'accessible';
-        error_log("📌 État système de l’énigme : $etat");
 
         if ($etat !== 'accessible') {
             echo '<div class="enigme-inaccessible">';
-            echo '<p>🔒 Cette énigme n’est pas accessible actuellement.</p>';
+            if (utilisateur_peut_modifier_enigme($enigme_id)) {
+                echo '<p>🛠️ Cette énigme est en cours d’édition.</p>';
+                echo '<p class="explication-organisateur">Elle ne sera visible par les joueurs qu’une fois la chasse validée.</p>';
+            } else {
+                echo '<p>🔒 Cette énigme n’est pas accessible actuellement.</p>';
+            }
+
             echo '<p><a href="' . esc_url(home_url('/')) . '" class="bouton-retour-home">← Retour à l’accueil</a></p>';
             echo '</div>';
             return;
         }
 
         if (!empty($statut_data['afficher_message'])) {
-            error_log("✅ Affichage du message : " . strip_tags($statut_data['message_html']));
             echo $statut_data['message_html'];
         }
 
