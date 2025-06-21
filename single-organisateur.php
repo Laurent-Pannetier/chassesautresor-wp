@@ -90,12 +90,12 @@ get_header();
 
                     foreach ($chasses as $post) :
                         $chasse_id = $post->ID;
-                        $image_id = get_post_thumbnail_id($chasse_id);
+                        $image = get_field('chasse_principale_image', $chasse_id);
+                        $image_url = is_array($image) ? $image['sizes']['large'] ?? $image['url'] : '';
+
                     ?>
                         <article class="carte-chasse" data-post-id="<?= esc_attr($chasse_id); ?>">
-                            <div class="carte-chasse-image">
-                                <?= wp_get_attachment_image($image_id, 'large'); ?>
-                            </div>
+                            <?php afficher_picture_vignette_chasse($chasse_id); ?>
                             <h2><?= esc_html(get_the_title($chasse_id)); ?></h2>
                         </article>
                     <?php endforeach; ?>
