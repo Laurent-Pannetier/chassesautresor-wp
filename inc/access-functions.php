@@ -267,7 +267,6 @@ function utilisateur_peut_modifier_post($post_id) {
     }
 }
 
-
 /**
  * Détermine si un utilisateur peut voir une énigme donnée.
  *
@@ -306,13 +305,14 @@ function utilisateur_peut_voir_enigme(int $enigme_id, ?int $user_id = null): boo
     return false;
   }
 
-  // 👥 Rôles organisateur ou organisateur_creation : accès étendu
-  if (in_array('organisateur', wp_get_current_user()->roles, true) ||
-      in_array('organisateur_creation', wp_get_current_user()->roles, true)) {
+  // ✅ Exception organisateur : accès même si état bloqué si la chasse est en création/correction
+  $statut_validation = get_field('champs_caches_chasse_cache_statut_validation', $chasse_id);
+  if (in_array($statut_validation, ['creation', 'correction'], true)) {
     return in_array($post_status, ['publish', 'pending', 'draft'], true);
   }
 
-  return false;
+  // ✅ Cas standard : uniquement si énigme réellement accessible
+  return ($post_status === 'publish') && ($etat_systeme === 'accessible');
 }
 
 /**
