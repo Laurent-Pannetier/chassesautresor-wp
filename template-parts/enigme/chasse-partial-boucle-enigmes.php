@@ -5,7 +5,7 @@ $chasse_id = $args['chasse_id'] ?? null;
 if (!$chasse_id || get_post_type($chasse_id) !== 'chasse') return;
 
 // 🔄 Relations : organisateur → utilisateurs
-$organisateur_id = get_organisateur_of_chasse($chasse_id);
+$organisateur_id = get_organisateur_from_chasse($chasse_id);
 $autorisations = get_users_of_organisateur($organisateur_id);
 $utilisateur_id = get_current_user_id();
 $peut_modifier = utilisateur_est_organisateur_associe_a_chasse($utilisateur_id, $chasse_id);
