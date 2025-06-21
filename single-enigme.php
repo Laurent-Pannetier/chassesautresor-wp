@@ -64,6 +64,22 @@ if (!$image_url) {
 if (is_singular('enigme')) {
   forcer_relation_enigme_dans_chasse_si_absente($enigme_id);
 }
+
+$enigmes = get_posts([
+  'post_type'      => 'enigme',
+  'post_status'    => ['publish', 'pending', 'draft'],
+  'numberposts'    => 10
+]);
+
+foreach ($enigmes as $post) {
+  $val = get_field('enigme_chasse_associee', $post->ID, false); // ⚠️ false = valeur brute (non formatée)
+  echo "<pre>";
+  echo "Énigme #{$post->ID} ({$post->post_title}) : ";
+  var_dump($val);
+  echo "</pre>";
+}
+// 🔹 Vérifie si l’énigme est verrouillée
+
 ?>
 <?php get_header(); ?>
 
