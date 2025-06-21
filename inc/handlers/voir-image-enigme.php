@@ -8,21 +8,10 @@ if (!isset($_GET['id']) || !ctype_digit($_GET['id'])) {
 $image_id = (int) $_GET['id'];
 $taille = $_GET['taille'] ?? 'full';
 
-function trouver_chemin_image(int $image_id, string $taille): ?string {
-  $src = wp_get_attachment_image_src($image_id, $taille);
-  $url = $src[0] ?? null;
-
-  if (!$url) return null;
-
-  if (str_starts_with($url, 'http')) {
-    $upload_dir = wp_get_upload_dir();
-    $path = str_replace($upload_dir['baseurl'], $upload_dir['basedir'], $url);
-  } else {
-    $path = $url;
-  }
-
-  return file_exists($path) ? $path : null;
+if (!function_exists('trouver_chemin_image')) {
+  require_once get_stylesheet_directory() . '/inc/enigme-functions.php';
 }
+
 
 // 🔎 Essai avec la taille demandée
 $path = trouver_chemin_image($image_id, $taille);
