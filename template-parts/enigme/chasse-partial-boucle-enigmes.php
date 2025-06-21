@@ -4,13 +4,9 @@ defined('ABSPATH') || exit;
 $chasse_id = $args['chasse_id'] ?? null;
 if (!$chasse_id || get_post_type($chasse_id) !== 'chasse') return;
 
-// 🔄 Relations : organisateur → utilisateurs
-$organisateur_id = get_organisateur_from_chasse($chasse_id);
-$autorisations = get_users_of_organisateur($organisateur_id);
 $utilisateur_id = get_current_user_id();
 $peut_modifier = utilisateur_est_organisateur_associe_a_chasse($utilisateur_id, $chasse_id);
 
-// 🔎 Récupération large : filtrage visuel ensuite
 $posts = get_posts([
   'post_type'      => 'enigme',
   'posts_per_page' => -1,
@@ -18,24 +14,15 @@ $posts = get_posts([
   'order'          => 'ASC',
   'post_status'    => ['publish', 'pending', 'draft'],
   'meta_query'     => [[
-    'key'     => 'chasse_associee',
-    'value'   => $chasse_id,
-    'compare' => '='
+    'key'     => 'enigme_chasse_associee',
+    'value'   => '"' . $chasse_id . '"',
+    'compare' => 'LIKE'
   ]]
 ]);
 
-$posts_visibles = [];
-
-foreach ($posts as $post) {
-  $etat = enigme_get_etat_systeme($post->ID);
-
-  // Filtrage par statut d'accès
-  if (in_array($post->post_status, ['pending', 'draft'], true) && !$peut_modifier) {
-    continue; // pas autorisé à voir une énigme en création
-  }
-
-  $posts_visibles[] = $post;
-}
+$posts_visibles = array_filter($posts, function ($post) use ($peut_modifier) {
+  return !in_array($post->post_status, ['pending', 'draft'], true) || $peut_modifier;
+});
 
 $has_enigmes = !empty($posts_visibles);
 ?>
@@ -65,7 +52,6 @@ $has_enigmes = !empty($posts_visibles);
   <?php endif; ?>
 
   <?php
-  // ➕ Carte d'ajout si autorisé
   if ($peut_modifier) {
     get_template_part('template-parts/enigme/chasse-partial-ajout-enigme', null, [
       'has_enigmes' => $has_enigmes,
