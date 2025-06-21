@@ -111,26 +111,7 @@ window.mettreAJourResumeInfos = function () {
       ligne.prepend(icone);
     });
   }
-  // 🔵 Affichage du CTA création chasse (organisateur)
-  const cta = document.getElementById('cta-creer-chasse');
-  if (cta) {
-    const champsObligatoires = [
-      '.panneau-organisateur .champ-titre',
-      '.panneau-organisateur .champ-logo',
-      '.panneau-organisateur .champ-description'
-    ];
-
-    const incomplets = champsObligatoires.filter(sel => {
-      const champ = document.querySelector(sel);
-      return champ && champ.classList.contains('champ-vide');
-    }).length;
-
-    if (incomplets === 0) {
-      cta.style.display = ''; // Affiche le CTA
-    } else {
-      cta.style.display = 'none'; // Cache le CTA
-    }
-  }
+ 
   // 🧩 ENIGME
   const panneauEnigme = document.querySelector('.edition-panel-enigme');
   if (panneauEnigme) {

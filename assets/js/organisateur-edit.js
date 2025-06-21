@@ -4,15 +4,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 🟢 Champs inline
   document.querySelectorAll('.champ-organisateur[data-champ]').forEach((bloc) => {
-  const champ = bloc.dataset.champ;
-  if (bloc.classList.contains('champ-img')) {
-    if (typeof initChampImage === 'function') initChampImage(bloc);
-  } else if (champ === 'liens_publics') {
-    if (typeof initLiensOrganisateur === 'function') initLiensOrganisateur(bloc);
-  } else {
-    if (typeof initChampTexte === 'function') initChampTexte(bloc);
-  }
-});
+    const champ = bloc.dataset.champ;
+    if (bloc.classList.contains('champ-img')) {
+      if (typeof initChampImage === 'function') initChampImage(bloc);
+    } else if (champ === 'liens_publics') {
+      if (typeof initLiensOrganisateur === 'function') initLiensOrganisateur(bloc);
+    } else {
+      if (typeof initChampTexte === 'function') initChampTexte(bloc);
+    }
+  });
 
   // 🟠 Déclencheurs de résumé
   document.querySelectorAll('.resume-infos .champ-modifier[data-champ]').forEach((btn) => {
@@ -21,24 +21,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 🔗 Panneau liens
   document.addEventListener('click', (e) => {
-  const btn = e.target.closest('.ouvrir-panneau-liens');
+    const btn = e.target.closest('.ouvrir-panneau-liens');
 
-  // ✅ Ce bouton existe ET il est contenu dans le panneau organisateur
-  if (!btn || !btn.closest('.panneau-organisateur')) return;
+    // ✅ Ce bouton existe ET il est contenu dans le panneau organisateur
+    if (!btn || !btn.closest('.panneau-organisateur')) return;
 
-  const panneau = document.getElementById('panneau-liens-publics');
-  if (!panneau) return;
+    const panneau = document.getElementById('panneau-liens-publics');
+    if (!panneau) return;
 
-  // ✅ Fermer tout autre panneau déjà ouvert
-  document.querySelectorAll('.panneau-lateral.ouvert, .panneau-lateral-liens.ouvert').forEach((p) => {
-    p.classList.remove('ouvert');
-    p.setAttribute('aria-hidden', 'true');
+    // ✅ Fermer tout autre panneau déjà ouvert
+    document.querySelectorAll('.panneau-lateral.ouvert, .panneau-lateral-liens.ouvert').forEach((p) => {
+      p.classList.remove('ouvert');
+      p.setAttribute('aria-hidden', 'true');
+    });
+
+    panneau.classList.add('ouvert');
+    panneau.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('panneau-ouvert');
   });
-
-  panneau.classList.add('ouvert');
-  panneau.setAttribute('aria-hidden', 'false');
-  document.body.classList.add('panneau-ouvert');
-});
 
 
   // ⚙️ Bouton toggle header
@@ -56,6 +56,12 @@ document.addEventListener('DOMContentLoaded', () => {
   if (typeof window.mettreAJourResumeInfos === 'function') {
     window.mettreAJourResumeInfos();
   }
+
+  // 🗺️ Carte ajout chasse
+  if (typeof window.mettreAJourCarteAjoutChasse === 'function') {
+    window.mettreAJourCarteAjoutChasse();
+  }
+  e
 
   // 🏦 Coordonnées bancaires
   const panneauCoord = document.getElementById('panneau-coordonnees');
@@ -248,14 +254,14 @@ function initLiensOrganisateur(bloc) {
 
           zoneAffichage.innerHTML = html;
           // 🔁 Ajouter le bouton ✏️ s’il a été perdu
-            if (!bloc.querySelector('.champ-modifier')) {
-              const bouton = document.createElement('button');
-              bouton.type = 'button';
-              bouton.className = 'champ-modifier ouvrir-panneau-liens';
-              bouton.setAttribute('aria-label', 'Configurer vos liens');
-              bouton.textContent = '✏️';
-              bloc.querySelector('.champ-affichage')?.appendChild(bouton);
-            }
+          if (!bloc.querySelector('.champ-modifier')) {
+            const bouton = document.createElement('button');
+            bouton.type = 'button';
+            bouton.className = 'champ-modifier ouvrir-panneau-liens';
+            bouton.setAttribute('aria-label', 'Configurer vos liens');
+            bouton.textContent = '✏️';
+            bloc.querySelector('.champ-affichage')?.appendChild(bouton);
+          }
 
           bloc.classList.toggle('champ-vide', donnees.length === 0);
           panneau.classList.remove('ouvert');
@@ -277,3 +283,46 @@ function initLiensOrganisateur(bloc) {
   });
 }
 
+// 🗺️ Met à jour la carte d'ajout de chasse en fonction des champs remplis
+window.mettreAJourCarteAjoutChasse = function () {
+  const carte = document.getElementById('carte-ajout-chasse');
+  if (!carte) return;
+
+  const champs = [
+    '.champ-organisateur.champ-titre',
+    '.champ-organisateur.champ-logo',
+    '.champ-organisateur.champ-description'
+  ];
+
+  const incomplets = champs.filter(sel => {
+    const champ = document.querySelector(sel);
+    return champ?.classList.contains('champ-vide');
+  });
+
+  let overlay = carte.querySelector('.overlay-message');
+
+  if (incomplets.length === 0) {
+    carte.classList.remove('disabled');
+    overlay?.remove();
+  } else {
+    carte.classList.add('disabled');
+
+    const texte = incomplets.map(sel => {
+      if (sel.includes('titre')) return 'titre';
+      if (sel.includes('logo')) return 'logo';
+      if (sel.includes('description')) return 'description';
+      return 'champ requis';
+    }).join(', ');
+
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.className = 'overlay-message';
+      carte.appendChild(overlay);
+    }
+
+    overlay.innerHTML = `
+      <i class="fa-solid fa-circle-info"></i>
+      <p>Complétez d’abord : ${texte}</p>
+    `;
+  }
+};
