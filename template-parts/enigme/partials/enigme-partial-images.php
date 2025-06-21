@@ -4,10 +4,11 @@ defined('ABSPATH') || exit;
 $post_id = $args['post_id'] ?? null;
 if (!$post_id) return;
 
-$images = get_field('enigme_visuel_image', $post_id);
+// Récupération brute des IDs d’images
+$images = get_field('enigme_visuel_image', $post_id, false); // bool false = IDs
 
-// Si aucune image ou si toutes sont filtrées
-$has_valid_images = is_array($images) && array_filter($images, fn($img) => (int) ($img['ID'] ?? 0) !== 3925);
+// Vérifie qu’il y a au moins une image différente du placeholder
+$has_valid_images = is_array($images) && array_filter($images, fn($id) => (int) $id !== ID_IMAGE_PLACEHOLDER_ENIGME);
 
 if ($has_valid_images && function_exists('afficher_visuels_enigme')) {
   afficher_visuels_enigme($post_id);

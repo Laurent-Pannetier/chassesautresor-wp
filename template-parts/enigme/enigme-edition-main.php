@@ -115,7 +115,7 @@ $has_variantes = ($nb_variantes > 0);
             <?php
             $has_images_utiles = enigme_a_une_image($enigme_id);
             ?>
-            <<li class="champ-enigme champ-img <?= $has_images_utiles ? 'champ-rempli' : 'champ-vide'; ?>"
+            <li class="champ-enigme champ-img <?= $has_images_utiles ? 'champ-rempli' : 'champ-vide'; ?>"
               data-champ="enigme_visuel_image"
               data-cpt="enigme"
               data-post-id="<?= esc_attr($enigme_id); ?>"
