@@ -6,7 +6,7 @@ if (!$chasse_id || get_post_type($chasse_id) !== 'chasse') return;
 
 $utilisateur_id = get_current_user_id();
 $peut_modifier = utilisateur_est_organisateur_associe_a_chasse($utilisateur_id, $chasse_id);
-
+var_dump($peut_modifier);
 $posts = get_posts([
   'post_type'      => 'enigme',
   'posts_per_page' => -1,
@@ -19,7 +19,7 @@ $posts = get_posts([
     'compare' => 'LIKE'
   ]]
 ]);
-
+var_dump($posts);
 $posts_visibles = array_filter($posts, function ($post) use ($peut_modifier) {
   return !in_array($post->post_status, ['pending', 'draft'], true) || $peut_modifier;
 });
