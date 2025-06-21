@@ -247,13 +247,16 @@ function get_chasses_de_organisateur($organisateur_id)
   ]);
 }
 
-
 /**
+ *
  * @param int $organisateur_id
  * @return WP_Post[]
  */
 function get_chasses_en_creation($organisateur_id) {
-  if (!is_numeric($organisateur_id)) return [];
+  if (!is_numeric($organisateur_id)) {
+    error_log("⛔ ID organisateur invalide : $organisateur_id");
+    return [];
+  }
 
   $args = [
     'post_type'      => 'chasse',
@@ -261,23 +264,33 @@ function get_chasses_en_creation($organisateur_id) {
     'posts_per_page' => -1,
     'orderby'        => 'date',
     'order'          => 'DESC',
-    'author'         => $organisateur_id,
     'meta_query'     => [
+      'relation' => 'AND',
       [
-        'key'     => 'champs_caches.chasse_cache_statut_validation',
+        'key'     => 'organisateur_id',
+        'value'   => $organisateur_id,
+        'compare' => '='
+      ],
+      [
+        'key'     => 'champs_caches_chasse_cache_statut_validation',
         'value'   => 'creation',
         'compare' => '='
       ],
       [
-        'key'     => 'champs_caches.chasse_cache_statut',
+        'key'     => 'champs_caches_chasse_cache_statut',
         'value'   => 'revision',
         'compare' => '='
       ]
     ]
   ];
 
-  return get_posts($args);
+  $query = new WP_Query($args);
+
+  error_log("🔍 get_chasses_en_creation($organisateur_id) → {$query->found_posts} résultat(s)");
+
+  return $query->posts;
 }
+
 
 
 
