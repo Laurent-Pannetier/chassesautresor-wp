@@ -301,12 +301,13 @@
     // ==================================================
     // 🖼️ AFFICHAGE DES VISUELS D’ÉNIGMES
     // ==================================================
-
-    /**
-     * 🔹 afficher_visuels_enigme() → Affiche la galerie visuelle de l’énigme si l’utilisateur y a droit (image principale + vignettes).
-     * 🔹 get_url_vignette_enigme() → Retourne l’URL proxy de la première vignette d’une énigme.
-     * 🔹 afficher_picture_vignette_enigme() → Affiche un bloc <picture> responsive pour une énigme.
+    /*
+        * 🔹 afficher_visuels_enigme() → Affiche la galerie visuelle de l’énigme si l’utilisateur y a droit (image principale + vignettes).
+        * 🔹 get_url_vignette_enigme() → Retourne l’URL proxy de la première vignette d’une énigme.
+        * 🔹 afficher_picture_vignette_enigme() → Affiche un bloc <picture> responsive pour une énigme.
+        * 🔹 trouver_chemin_image() → Retourne le chemin absolu et le type MIME d’une image à une taille donnée.
      */
+
 
     /**
      * Affiche une galerie d’images d’une énigme si l’utilisateur y a droit.
@@ -469,6 +470,46 @@
 
         echo '  <img src="' . $src_default . '" alt="' . esc_attr($alt) . '" loading="lazy">' . "\n";
         echo '</picture>' . "\n";
+    }
+
+
+    /**
+     * Retourne le chemin absolu (serveur) et le type MIME d’une image à une taille donnée.
+     * Si une version WebP existe pour cette taille, elle est priorisée.
+     *
+     * @param int $image_id ID de l’image WordPress
+     * @param string $taille Taille WordPress demandée (ex: 'thumbnail', 'medium', 'full')
+     * @return array|null Tableau ['path' => string, 'mime' => string] ou null si introuvable
+     */
+    function trouver_chemin_image(int $image_id, string $taille = 'full'): ?array
+    {
+        $src = wp_get_attachment_image_src($image_id, $taille);
+        $url = $src[0] ?? null;
+        if (!$url) return null;
+
+        $upload_dir = wp_get_upload_dir();
+        $path = str_replace($upload_dir['baseurl'], $upload_dir['basedir'], $url);
+
+        // 🔁 Si une version .webp existe, on la préfère
+        $webp_path = preg_replace('/\.(jpe?g|png|gif)$/i', '.webp', $path);
+        if ($webp_path !== $path && file_exists($webp_path)) {
+            return ['path' => $webp_path, 'mime' => 'image/webp'];
+        }
+
+        // 🔁 Sinon, on vérifie le fichier d’origine
+        if (file_exists($path)) {
+            $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+            $mime = match ($ext) {
+                'jpg', 'jpeg' => 'image/jpeg',
+                'png'         => 'image/png',
+                'gif'         => 'image/gif',
+                'webp'        => 'image/webp',
+                default       => 'application/octet-stream',
+            };
+            return ['path' => $path, 'mime' => $mime];
+        }
+
+        return null;
     }
 
 

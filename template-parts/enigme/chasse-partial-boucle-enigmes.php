@@ -6,6 +6,7 @@ if (!$chasse_id || get_post_type($chasse_id) !== 'chasse') return;
 
 $utilisateur_id = get_current_user_id();
 
+// 🔎 Récupération des énigmes associées à la chasse
 $posts = get_posts([
   'post_type'      => 'enigme',
   'posts_per_page' => -1,
@@ -19,10 +20,8 @@ $posts = get_posts([
   ]]
 ]);
 
-$posts_visibles = array_filter($posts, function ($post) use ($utilisateur_id) {
-  return utilisateur_peut_voir_enigme($post->ID, $utilisateur_id);
-});
-
+// 🔒 Ne garder que les énigmes visibles pour l'utilisateur courant
+$posts_visibles = array_filter($posts, fn($post) => utilisateur_peut_voir_enigme($post->ID, $utilisateur_id));
 $has_enigmes = !empty($posts_visibles);
 ?>
 
@@ -37,7 +36,7 @@ $has_enigmes = !empty($posts_visibles);
     ?>
     <article class="carte-enigme">
       <div class="carte-enigme-image">
-        <?php afficher_picture_vignette_enigme($enigme_id, "Vignette de l’énigme"); ?>
+        <?php afficher_picture_vignette_enigme($enigme_id, 'Vignette de l’énigme'); ?>
       </div>
       <h3><?= esc_html($titre); ?></h3>
       <p>État système : <strong><?= esc_html($etat_systeme); ?></strong></p>
