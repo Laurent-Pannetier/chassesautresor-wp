@@ -104,24 +104,6 @@ Réglage : ACF > Type d’image > "Retourner le format" = `ID` (recommandé)
 
 ---
 
-## ✅ Recommandé : récupération sûre de l’image
-
-```php
-$image_raw = get_field('enigme_visuel_image', $post_id);
-$image_url = '';
-
-if (is_array($image_raw) && isset($image_raw['ID'])) {
-    $image_url = wp_get_attachment_image_url($image_raw['ID'], 'large');
-} elseif (is_numeric($image_raw)) {
-    $image_url = wp_get_attachment_image_url((int)$image_raw, 'large');
-} elseif (filter_var($image_raw, FILTER_VALIDATE_URL)) {
-    $image_url = $image_raw;
-}
-
-if (!$image_url) {
-    $image_url = wp_get_attachment_image_url(3925, 'large'); // fallback
-}
-```
 
 ---
 

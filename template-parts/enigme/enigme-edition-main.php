@@ -113,11 +113,9 @@ $has_variantes = ($nb_variantes > 0);
             </li>
 
             <?php
-            $visuel_ids = is_array($visuel) ? array_map('intval', $visuel) : [];
-            $images_utiles = array_filter($visuel_ids, fn($id) => $id !== 3925);
-            $has_images_utiles = count($images_utiles) > 0;
+            $has_images_utiles = enigme_a_une_image($enigme_id);
             ?>
-            <li class="champ-enigme champ-img <?= $has_images_utiles ? 'champ-rempli' : 'champ-vide'; ?>"
+            <<li class="champ-enigme champ-img <?= $has_images_utiles ? 'champ-rempli' : 'champ-vide'; ?>"
               data-champ="enigme_visuel_image"
               data-cpt="enigme"
               data-post-id="<?= esc_attr($enigme_id); ?>"
@@ -131,8 +129,8 @@ $has_variantes = ($nb_variantes > 0);
                 data-post-id="<?= esc_attr($enigme_id); ?>">
                 ✏️
               </button>
+              </li>
 
-            </li>
 
           </ul>
         </div>

@@ -283,7 +283,7 @@
     }
 
 
-    /** *
+    /**
      * @param int $user_id
      * @param int $enigme_id
      * @return bool True si tout s’est bien passé.
@@ -303,6 +303,8 @@
     // ==================================================
     /*
         * 🔹 afficher_visuels_enigme() → Affiche la galerie visuelle de l’énigme si l’utilisateur y a droit (image principale + vignettes).
+        * 🔹 get_image_enigme() → Renvoie l’URL de l’image principale d’une énigme ou un placeholder.
+        * 🔹 enigme_a_une_image() → Vérifie si l’énigme a une image définie.
         * 🔹 get_url_vignette_enigme() → Retourne l’URL proxy de la première vignette d’une énigme.
         * 🔹 afficher_picture_vignette_enigme() → Affiche un bloc <picture> responsive pour une énigme.
         * 🔹 trouver_chemin_image() → Retourne le chemin absolu et le type MIME d’une image à une taille donnée.
@@ -404,6 +406,41 @@
      </script>
  <?php
     }
+
+
+    /**
+     * Renvoie l’URL de l’image principale d’une énigme,
+     * ou un placeholder si aucune image n’est définie.
+     *
+     * @param int $post_id
+     * @param string $size
+     * @return string|null
+     */
+    function get_image_enigme(int $post_id, string $size = 'medium'): ?string
+    {
+        $images = get_field('enigme_visuel_image', $post_id);
+
+        if (is_array($images) && !empty($images[0]['ID'])) {
+            return wp_get_attachment_image_url($images[0]['ID'], $size);
+        }
+
+        // 🧩 Placeholder image : image statique ou ID définie par toi
+        return wp_get_attachment_image_url(3925, $size);
+    }
+
+
+    /**
+     * Vérifie si l’énigme a une image définie.
+     *
+     * @param int $post_id ID du post de type énigme
+     * @return bool True si l’énigme a une image, false sinon.
+     */
+    function enigme_a_une_image(int $post_id): bool
+    {
+        $images = get_field('enigme_visuel_image', $post_id);
+        return is_array($images) && !empty($images[0]['ID']);
+    }
+
 
 
     /**
@@ -521,12 +558,11 @@
     // 🎨 AFFICHAGE STYLISÉ DES ÉNIGMES
     // ==================================================
     /**
-     * 🔹 afficher_enigme_stylisee() → Affiche l’énigme avec son style d’affichage (structure unique + blocs surchargeables).
+     * 🔹 afficher_enigme_stylisee() → Affiche l’énigme avec son style d’affichage (structure unique + blocs surchargeables)
      * 🔸 enigme_get_partial() → Charge un partiel adapté au style (ex: pirate/images.php), avec fallback global.
-     *
      */
 
-    /**
+    /**     
      * Affiche l’énigme avec son style et son état selon le contexte utilisateur.
      *
      * @param int $enigme_id ID de l’énigme à afficher.

@@ -46,19 +46,7 @@ $titre              = get_the_title($enigme_id);
 $titre_defaut       = 'nouvelle énigme';
 $isTitreParDefaut   = strtolower(trim($titre)) === strtolower($titre_defaut);
 $legende            = get_field('enigme_visuel_legende', $enigme_id);
-$images             = get_field('enigme_visuel_image', $enigme_id);
-$image_url          = '';
-$image_id           = null;
-
-if (is_array($images) && count($images) > 0) {
-  $image_id = $images[0]['ID'] ?? null;
-  if ($image_id) {
-    $image_url = add_query_arg('id', $image_id, site_url('/wp-content/themes/chassesautresor/inc/handlers/voir-image-enigme.php'));
-  }
-}
-if (!$image_url) {
-  $image_url = wp_get_attachment_image_url(3925, 'large');
-}
+$image_url = get_image_enigme($enigme_id, 'large');
 
 // 🔹 Vérifie relation chasse <-> énigme
 if (is_singular('enigme')) {

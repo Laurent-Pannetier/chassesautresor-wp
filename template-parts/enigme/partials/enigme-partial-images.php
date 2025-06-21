@@ -13,7 +13,8 @@ if ($has_valid_images && function_exists('afficher_visuels_enigme')) {
   afficher_visuels_enigme($post_id);
 } else {
   echo '<div class="image-placeholder">';
-  echo wp_get_attachment_image(3925, 'large', false, ['alt' => 'Image par défaut de l’énigme']);
+  echo wp_get_attachment_image(get_image_enigme($post_id, 'large'), 'large', false, [
+    'alt' => 'Image principale de l’énigme',
+  ]);
   echo '</div>';
 }
-?>
