@@ -100,7 +100,6 @@
             return [
                 'type'       => 'voir',
                 'label'      => '👁️ Voir l’énigme',
-                'sous_label' => 'Accès organisateur',
                 'action'     => 'link',
                 'url'        => get_permalink($enigme_id),
                 'points'     => null,
