@@ -19,8 +19,6 @@ $posts = get_posts([
     'compare' => '='
   ]]
 ]);
-
-var_dump($posts);
 $posts_visibles = array_filter($posts, function ($post) use ($peut_modifier) {
   return !in_array($post->post_status, ['pending', 'draft'], true) || $peut_modifier;
 });
