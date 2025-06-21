@@ -455,13 +455,16 @@
 
         foreach ($sizes as $taille) {
             $base_url = site_url('/voir-image-enigme');
-            $src_webp = esc_url(add_query_arg(['id' => $image_id, 'taille' => $taille . '.webp'], $base_url));
-            $src_fallback = esc_url(add_query_arg(['id' => $image_id, 'taille' => $taille], $base_url));
 
-            echo '  <source srcset="' . $src_webp . '" type="image/webp">' . "\n";
-            echo '  <source srcset="' . $src_fallback . '" type="image/png">' . "\n";
+            // 🔁 taille normale (ex: thumbnail)
+            $src = esc_url(add_query_arg([
+                'id'     => $image_id,
+                'taille' => $taille,
+            ], $base_url));
+
+            echo '  <source srcset="' . $src . '" type="image/webp">' . "\n";
+            echo '  <source srcset="' . $src . '" type="image/png">' . "\n";
         }
-
         // Dernier fallback : image medium ou full
         $src_default = esc_url(add_query_arg([
             'id'     => $image_id,
