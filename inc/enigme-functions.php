@@ -544,19 +544,21 @@
 
         $etat = get_field('enigme_cache_etat_systeme', $enigme_id) ?? 'accessible';
 
-        if ($etat !== 'accessible') {
+        if ($etat !== 'accessible' && !utilisateur_peut_modifier_enigme($enigme_id)) {
             echo '<div class="enigme-inaccessible">';
-            if (utilisateur_peut_modifier_enigme($enigme_id)) {
-                echo '<p>🛠️ Cette énigme est en cours d’édition.</p>';
-                echo '<p class="explication-organisateur">Elle ne sera visible par les joueurs qu’une fois la chasse validée.</p>';
-            } else {
-                echo '<p>🔒 Cette énigme n’est pas accessible actuellement.</p>';
-            }
-
+            echo '<p>🔒 Cette énigme n’est pas accessible actuellement.</p>';
             echo '<p><a href="' . esc_url(home_url('/')) . '" class="bouton-retour-home">← Retour à l’accueil</a></p>';
             echo '</div>';
             return;
         }
+
+        if ($etat !== 'accessible') {
+            echo '<div class="enigme-message-interne">';
+            echo '<p>🛠️ Cette énigme est en cours d’édition.</p>';
+            echo '<p class="explication-organisateur">Elle ne sera visible par les joueurs qu’une fois la chasse validée.</p>';
+            echo '</div>';
+        }
+
 
         if (!empty($statut_data['afficher_message'])) {
             echo $statut_data['message_html'];
