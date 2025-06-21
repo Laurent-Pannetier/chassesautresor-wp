@@ -248,29 +248,46 @@ function get_chasses_de_organisateur($organisateur_id)
 }
 
 /**
+ * 🔹 get_chasses_en_creation() → Récupère les chasses d’un organisateur en cours de création.
  *
  * @param int $organisateur_id
  * @return WP_Post[]
  */
 function get_chasses_en_creation($organisateur_id) {
   if (!is_numeric($organisateur_id)) {
-    error_log("⛔ ID organisateur invalide : $organisateur_id");
+    error_log("⛔ get_chasses_en_creation : ID non numérique : " . print_r($organisateur_id, true));
     return [];
   }
 
+  error_log("📥 Appel de get_chasses_en_creation($organisateur_id)");
+
+  // 🔍 Vérification brute en base pour lier à l’organisateur
+  global $wpdb;
+  $results = $wpdb->get_results($wpdb->prepare(
+    "SELECT post_id FROM {$wpdb->postmeta}
+     WHERE meta_key = 'organisateur_id'
+     AND meta_value = %d",
+    $organisateur_id
+  ));
+
+  $ids_retrouves = array_map(fn($r) => (int)$r->post_id, $results);
+  error_log("🔗 Chasses liées à l’organisateur : " . implode(', ', $ids_retrouves));
+
+  if (empty($ids_retrouves)) {
+    error_log("❌ Aucune chasse liée à l’organisateur $organisateur_id");
+    return [];
+  }
+
+  // 🔍 Construction de la requête filtrée
   $args = [
     'post_type'      => 'chasse',
     'post_status'    => 'pending',
     'posts_per_page' => -1,
     'orderby'        => 'date',
     'order'          => 'DESC',
+    'post__in'       => $ids_retrouves,
     'meta_query'     => [
       'relation' => 'AND',
-      [
-        'key'     => 'organisateur_id',
-        'value'   => $organisateur_id,
-        'compare' => '='
-      ],
       [
         'key'     => 'champs_caches_chasse_cache_statut_validation',
         'value'   => 'creation',
@@ -284,14 +301,22 @@ function get_chasses_en_creation($organisateur_id) {
     ]
   ];
 
+  error_log("🔎 Lancement WP_Query filtrée…");
   $query = new WP_Query($args);
+  error_log("📊 WP_Query → found_posts = {$query->found_posts}");
 
-  error_log("🔍 get_chasses_en_creation($organisateur_id) → {$query->found_posts} résultat(s)");
+  if ($query->found_posts === 0) {
+    error_log("⚠️ Aucun résultat. Dump des conditions :");
+    foreach ($ids_retrouves as $id) {
+      $val1 = get_field('champs_caches_chasse_cache_statut_validation', $id);
+      $val2 = get_field('champs_caches_chasse_cache_statut', $id);
+      $titre = get_the_title($id);
+      error_log("🔸 Post #$id ($titre) → validation=$val1 | statut=$val2");
+    }
+  }
 
   return $query->posts;
 }
-
-
 
 
 // ==================================================
