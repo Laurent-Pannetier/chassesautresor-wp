@@ -123,14 +123,15 @@ $has_variantes = ($nb_variantes > 0);
 
               Image(s)
 
-              <button
+              <<button
                 type="button"
                 class="champ-modifier ouvrir-panneau-images"
                 data-champ="enigme_visuel_image"
-                data-post-id="9263"
-                data-cpt="enigme">
+                data-cpt="enigme"
+                data-post-id="<?= esc_attr($enigme_id); ?>">
                 ✏️
                 </button>
+
             </li>
 
 
