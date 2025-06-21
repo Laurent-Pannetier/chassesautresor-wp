@@ -4,65 +4,69 @@ defined('ABSPATH') || exit;
 $chasse_id = $args['chasse_id'] ?? null;
 if (!$chasse_id || get_post_type($chasse_id) !== 'chasse') return;
 
-$current_user_id = get_current_user_id();
-$current_user = wp_get_current_user();
-$is_owner = get_post_field('post_author', $chasse_id) == $current_user_id;
-$is_orga_creation = in_array('organisateur_creation', $current_user->roles, true);
+// 🔄 Relations : organisateur → utilisateurs
+$organisateur_id = recuperer_organisateur_de_chasse($chasse_id);
+$autorisations = recuperer_utilisateurs_organisateur($organisateur_id);
+$utilisateur_id = get_current_user_id();
+$peut_modifier = in_array($utilisateur_id, $autorisations, true);
 
-// Statuts autorisés selon rôle
-$post_status = ['publish'];
-if ($is_orga_creation && $is_owner) {
-  $post_status = ['publish', 'pending', 'draft'];
-}
-
-// Requête WP
-$query = new WP_Query([
+// 🔎 Récupération large : filtrage visuel ensuite
+$posts = get_posts([
   'post_type'      => 'enigme',
   'posts_per_page' => -1,
   'orderby'        => 'menu_order',
   'order'          => 'ASC',
-  'post_status'    => $post_status,
+  'post_status'    => ['publish', 'pending', 'draft'],
   'meta_query'     => [[
     'key'     => 'chasse_associee',
     'value'   => $chasse_id,
     'compare' => '='
-  ]],
-  'author' => ($is_orga_creation ? $current_user_id : '')
+  ]]
 ]);
 
-$has_enigmes = $query->have_posts();
+$posts_visibles = [];
+
+foreach ($posts as $post) {
+  $etat = enigme_get_etat_systeme($post->ID);
+
+  // Filtrage par statut d'accès
+  if (in_array($post->post_status, ['pending', 'draft'], true) && !$peut_modifier) {
+    continue; // pas autorisé à voir une énigme en création
+  }
+
+  $posts_visibles[] = $post;
+}
+
+$has_enigmes = !empty($posts_visibles);
 ?>
 
 <div class="bloc-enigmes-chasse">
-  <?php if ($has_enigmes): ?>
-    <?php while ($query->have_posts()): $query->the_post(); ?>
-      <?php
-      $enigme_id = get_the_ID();
-      if (get_post_type($enigme_id) !== 'enigme') continue;
+  <?php foreach ($posts_visibles as $post): ?>
+    <?php
+    $enigme_id = $post->ID;
+    $titre = get_the_title($enigme_id);
+    $etat_systeme = enigme_get_etat_systeme($enigme_id);
+    $statut_utilisateur = enigme_get_statut_utilisateur($enigme_id, $utilisateur_id);
+    $cta = get_cta_enigme($enigme_id);
+    ?>
+    <article class="carte-enigme">
+      <div class="carte-enigme-image">
+        <?php afficher_picture_vignette_enigme($enigme_id, "Vignette de l’énigme"); ?>
+      </div>
+      <h3><?= esc_html($titre); ?></h3>
+      <p>État système : <strong><?= esc_html($etat_systeme); ?></strong></p>
+      <p>Statut joueur : <strong><?= esc_html($statut_utilisateur); ?></strong></p>
+      <?php render_cta_enigme($cta, $enigme_id); ?>
+    </article>
+  <?php endforeach; ?>
 
-      $titre = get_the_title($enigme_id);
-      $etat_systeme = enigme_get_etat_systeme($enigme_id);
-      $statut_utilisateur = enigme_get_statut_utilisateur($enigme_id, $current_user_id);
-      $cta = get_cta_enigme($enigme_id);
-      ?>
-
-      <article class="carte-enigme">
-        <div class="carte-enigme-image">
-          <?php afficher_picture_vignette_enigme($enigme_id, "Vignette de l’énigme"); ?>
-        </div>
-        <h3><?= esc_html($titre); ?></h3>
-        <p>État système : <strong><?= esc_html($etat_systeme); ?></strong></p>
-        <p>Statut joueur : <strong><?= esc_html($statut_utilisateur); ?></strong></p>
-        <?php render_cta_enigme($cta, $enigme_id); ?>
-      </article>
-    <?php endwhile; wp_reset_postdata(); ?>
-  <?php else: ?>
+  <?php if (!$has_enigmes): ?>
     <p>Aucune énigme pour cette chasse pour le moment.</p>
   <?php endif; ?>
 
   <?php
-  // Carte d’ajout si modifiable
-  if (utilisateur_peut_modifier_post($chasse_id)) {
+  // ➕ Carte d'ajout si autorisé
+  if ($peut_modifier) {
     get_template_part('template-parts/enigme/chasse-partial-ajout-enigme', null, [
       'has_enigmes' => $has_enigmes,
       'chasse_id'   => $chasse_id,
