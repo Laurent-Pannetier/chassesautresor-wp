@@ -328,15 +328,39 @@ function utilisateur_peut_voir_enigme(int $enigme_id, ?int $user_id = null): boo
  * @return bool
  */
 function utilisateur_peut_ajouter_enigme(int $chasse_id, ?int $user_id = null): bool {
-  if (get_post_type($chasse_id) !== 'chasse') return false;
-  $user_id = $user_id ?? get_current_user_id();
+  if (get_post_type($chasse_id) !== 'chasse') {
+    error_log("❌ [ajout énigme] ID $chasse_id n'est pas une chasse.");
+    return false;
+  }
 
-  if (!$user_id || !is_user_logged_in()) return false;
+  $user_id = $user_id ?? get_current_user_id();
+  if (!$user_id || !is_user_logged_in()) {
+    error_log("❌ [ajout énigme] utilisateur non connecté.");
+    return false;
+  }
 
   $statut = get_field('champs_caches_chasse_cache_statut_validation', $chasse_id);
-  if (!in_array($statut, ['creation', 'correction'], true)) return false;
+  if (!in_array($statut, ['creation', 'correction'], true)) {
+    error_log("❌ [ajout énigme] chasse #$chasse_id statut invalide : $statut");
+    return false;
+  }
 
-  return utilisateur_est_organisateur_associe_a_chasse($user_id, $chasse_id);
+  $est_associe = utilisateur_est_organisateur_associe_a_chasse($user_id, $chasse_id);
+  if (!$est_associe) {
+    error_log("❌ [ajout énigme] utilisateur #$user_id non associé à la chasse #$chasse_id");
+    return false;
+  }
+
+  $ids = recuperer_ids_enigmes_pour_chasse($chasse_id);
+  $nb = count($ids);
+
+  if ($nb >= 40) {
+    error_log("❌ [ajout énigme] chasse #$chasse_id a déjà $nb énigmes (limite 40)");
+    return false;
+  }
+
+  error_log("✅ [ajout énigme] autorisé pour user #$user_id sur chasse #$chasse_id ($nb / 40)");
+  return true;
 }
 
 
