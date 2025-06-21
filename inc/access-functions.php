@@ -2,24 +2,23 @@
 defined( 'ABSPATH' ) || exit;
 
 // ==================================================
-// 📚 SOMMAIRE DU FICHIER : access-functions.php
+// 📘 SOMMAIRE DU FICHIER : access-functions.php
 // ==================================================
-//  📦 RESTRICTIONS GLOBALES
-//  📦 RESTRICTIONS CHAMPS META
-//  📦 RESTRICTIONS POSTS
-//  🔓 CONTRÔLE D’ACCÈS AU CONTENU DES ÉNIGMES
-//  🔒 GESTION DES CONDITIONS D’ACCÈS – PRÉREQUIS
+//  🔐 CONTRÔLES GÉNÉRAUX : rôle, statut global
+//  📄 ACCÈS À UN POST (voir, modifier, créer)
+//  📌 VISIBILITÉ ET AFFICHAGE 
+//  📂 ACCÈS AUX FICHIERS PROTÉGÉS
+//  🔒 CONTRÔLES SPÉCIFIQUES : accès conditionnel, prérequis
 
 
 // ==================================================
-// 📦 RESTRICTIONS GLOBALES & ENDPOINTS SÉCURISÉS
+// 🔐 CONTRÔLES GÉNÉRAUX : rôle, statut global
 // ==================================================
 /**
  * 🔹 restreindre_media_library_tous_non_admins → Restreint l’accès à la médiathèque aux seuls fichiers de l’utilisateur connecté.
  * 🔹 disable_gutenberg_for_non_admins → Force l’éditeur classique pour tous les rôles sauf administrateur.
- * 🔹 (rewrite) /voir-fichier/ → Point d’entrée sécurisé pour servir un fichier PDF de solution via un script PHP (handlers/voir-fichier.php).
+ * 🔹 filtre_capacites_admin_user_has_cap → Bloque les capacités critiques dans l’admin pour les non-admins.
  */
-
 
 /**
  * Restreint l'accès à la médiathèque WordPress pour tous les rôles sauf administrateurs.
@@ -71,65 +70,79 @@ function disable_gutenberg_for_non_admins($use_block_editor, $post) {
 add_filter('use_block_editor_for_post', 'disable_gutenberg_for_non_admins', 10, 2);
 
 
-
 /**
- * Déclare un endpoint personnalisé `/voir-fichier/?id=1234`
- * 
- * Cet endpoint permet de sécuriser la consultation de fichiers PDF protégés
- * via un script PHP situé dans le thème (`inc/handlers/voir-fichier.php`).
- * 
- * Le fichier est servi uniquement si l’utilisateur est autorisé (admin, organisateur lié ou joueur ayant résolu).
- * 
- * 🔒 Le fichier réel n’est jamais exposé en URL publique. L’accès passe exclusivement par ce point.
+ * Filtre les capacités critiques dans l’admin pour les non-admins.
+ *
+ * Cette fonction bloque certaines actions sensibles (édition, suppression, publication)
+ * sur les types de posts personnalisés "organisateur", "chasse" et "enigme" pour tous
+ * les utilisateurs sauf les administrateurs, uniquement dans l’interface d’administration.
+ *
+ * - Autorise tout pour les administrateurs.
+ * - Cible uniquement les capacités critiques : edit_post, delete_post, publish_post.
+ * - Ne bloque que dans l’admin (is_admin()).
+ * - Autorise l’édition uniquement si l’utilisateur est l’auteur du post.
+ * - Bloque la création dans l’admin pour ces types de posts.
+ *
+ * @param array    $allcaps Capacités de l’utilisateur.
+ * @param array    $cap     Capacité demandée.
+ * @param array    $args    Arguments supplémentaires (dont post ID).
+ * @param WP_User  $user    Objet utilisateur courant.
+ * @return array   Capacités éventuellement modifiées.
  */
-add_action('init', function () {
-    add_rewrite_rule('^voir-fichier/?$', 'index.php?voir_fichier=1', 'top');
-}, 1);
+add_filter('user_has_cap', function ($allcaps, $cap, $args, $user) {
+  // ✅ Autorise tout pour les administrateurs
+  if (in_array('administrator', $user->roles, true)) {
+    return $allcaps;
+  }
 
-add_filter('query_vars', function ($vars) {
-    $vars[] = 'voir_fichier';
-    return $vars;
-});
+  // Cibler uniquement certaines capacités critiques
+  $actions_sensibles = ['edit_post', 'delete_post', 'publish_post'];
+  if (!is_array($cap) || empty($cap) || !in_array($cap[0], $actions_sensibles, true)) {
+    return $allcaps;
+  }
 
-add_action('template_redirect', function () {
-    if (get_query_var('voir_fichier') !== '1') return;
+  // ✅ Autorise les actions en front (ne bloque que l'admin)
+  if (!is_admin()) {
+    return $allcaps;
+  }
 
-    $handler = get_stylesheet_directory() . '/inc/handlers/voir-fichier.php';
-    if (file_exists($handler)) {
-        require_once $handler;
-        exit;
+  // 🔒 Si on édite un post existant dans l'admin
+  $post_id = $args[2] ?? null;
+  if ($post_id && is_numeric($post_id)) {
+    $post_type   = get_post_type($post_id);
+    $post_author = (int) get_post_field('post_author', $post_id);
+
+    if (in_array($post_type, ['organisateur', 'chasse', 'enigme'], true)) {
+      if ((int) $user->ID !== $post_author) {
+        $allcaps[$cap[0]] = false;
+      }
     }
+  }
 
-    status_header(404);
-    exit('Fichier de traitement non trouvé.');
-});
-
-add_action('init', function () {
-    if (isset($_GET['voir_fichier'])) {
-        error_log('[🔍 DEBUG] $_GET[voir_fichier] = ' . $_GET['voir_fichier']);
+  // 🔒 Création via l'admin (pas de post ID)
+  if ($post_id === null && isset($_GET['post_type'])) {
+    $pt = sanitize_text_field($_GET['post_type']);
+    if (in_array($pt, ['organisateur', 'chasse', 'enigme'], true)) {
+      $allcaps[$cap[0]] = false;
     }
-});
+  }
 
+  return $allcaps;
+}, 10, 4);
 
 
 
 // ==================================================
-// 📦 RESTRICTIONS CHAMPS META
+// 📄 ACCÈS À UN POST (voir, modifier, créer)
 // ==================================================
 /**
- * 
- * 🔹 champ_est_editable
- * 🔹 filtrer_acf_pour_non_admins_globales → Restriction d'accès aux métadonnées ACF Globales
- * 🔹 filtrer_acf_pour_non_admins_joueurs → Masquer complètement un champ ACF pour tous les rôles sauf administrateur.
- * 🔹 filtrer_acf_pour_non_admins_chasses → Restreindre l’accès aux métadonnées ACF des chasses.
- * 🔹 rendre_champs_acf_chasse_readonly → Rendre les champs ACF des chasses en lecture seule.
- * 🔹 rendre_champs_acf_joueur_readonly → Rendre certains champs ACF en lecture seule pour les joueurs.
- * 🔹 $champs_restrict_acf → Liste des clés de champs ACF à masquer pour les non-administrateurs.
- * 🔹 filtrer_acf_pour_non_admins_enigmes → Filtrer l’affichage des champs ACF des énigmes pour qu’ils soient visibles uniquement par les administrateurs.
- * 🔹 rendre_champs_acf_enigme_readonly → Rendre les champs ACF des énigmes en lecture seule pour éviter toute modification manuelle.
- * 🔹 cacher_champs_acf_enigme_non_admins → Masquer les champs ACF des énigmes pour les non-admins.
+ * 🔹 champ_est_editable → Vérifie si un champ est modifiable par l’utilisateur connecté sur un post donné.
+ * 🔹 utilisateur_peut_creer_post → Vérifie si l’utilisateur peut créer un post (organisateur, chasse, énigme).
+ * 🔹 utilisateur_peut_modifier_post → Vérifie si l’utilisateur peut modifier un post (par lien ACF).
+ * 🔹 redirection_si_acces_refuse → Redirige l’utilisateur si les conditions d’accès ne sont pas remplies.
+ * 🔹 blocage_acces_admin_non_admins (admin_init) → Empêche certains rôles d’accéder à wp-admin.
+ * 🔹 vérification load-post.php et load-post-new.php → Empêche les accès directs à l’admin via l’écran d’édition/création.
  */
-
 
 /**
  * Vérifie si un champ donné est éditable pour un utilisateur donné sur un post donné.
@@ -168,257 +181,6 @@ function champ_est_editable($champ, $post_id, $user_id = null) {
 
     return true; // Par défaut : champ éditable
 }
-
-
-
-
-/**
- * 📌 Restriction d'accès aux métadonnées ACF Globales.
- * 🔹 Seuls les administrateurs peuvent voir et modifier ces champs.
- */
-function filtrer_acf_pour_non_admins_globales($field) { 
-
-    // Vérifie si l'utilisateur N'EST PAS administrateur
-    if (!current_user_can('administrator')) {
-        return false; // 🚫 Masque complètement le champ pour tous sauf admin
-    }
-    return $field; // ✅ Affiche normalement le champ pour les administrateurs
-}
-
-// 📌 Appliquer la restriction d'accès aux méta globales
-add_filter('acf/prepare_field/key=field_prix_moyen_point_mensuel', 'filtrer_acf_pour_non_admins_globales');
-add_filter('acf/prepare_field/key=field_total_points_depenses_mois', 'filtrer_acf_pour_non_admins_globales');
-add_filter('acf/prepare_field/key=field_total_points_vendus_mensuel', 'filtrer_acf_pour_non_admins_globales');
-add_filter('acf/prepare_field/key=field_total_points_generes_mensuel', 'filtrer_acf_pour_non_admins_globales');
-add_filter('acf/prepare_field/key=field_revenu_total_site', 'filtrer_acf_pour_non_admins_globales');
-add_filter('acf/prepare_field/key=field_total_points_en_circulation', 'filtrer_acf_pour_non_admins_globales');
-add_filter('acf/prepare_field/key=field_total_paiements_effectues_mensuel', 'filtrer_acf_pour_non_admins_globales');
-
-
-/**
- * 🚫 Masquer complètement un champ ACF pour tous les rôles sauf administrateur.
- *
- * Cette fonction utilise le filtre `acf/load_field` pour **retourner `null`** si l’utilisateur
- * n’a pas le rôle `administrator`, ce qui empêche le champ de s’afficher dans l’interface ACF.
- *
- * ✔️ Usage adapté si le champ ne doit **jamais** être vu ni édité par un non-admin.
- * ⚠️ Attention :
- * - Si le champ est requis dans le groupe ACF, cela peut provoquer une erreur de validation.
- * - Si la fonction est appliquée à tous les champs via `acf/load_field` sans ciblage précis,
- *   elle peut affecter plus que prévu.
- *
- * @param array $field Le champ ACF en cours de chargement.
- * @return array|null Le champ original s’il est affiché, ou `null` pour le masquer.
- *
- * @hook acf/load_field
- */
-function filtrer_acf_pour_non_admins_joueurs($field) {
-    if (!current_user_can('administrator')) {
-        return null;
-    }
-    return $field;
-}
- 
- /**
- * 📌 Restriction d'accès aux métadonnées ACF des chasses.
- * 🔹 Seuls les administrateurs peuvent voir et modifier ces champs.
- */
-function filtrer_acf_pour_non_admins_chasses($field) { 
-
-    // Vérifie si l'utilisateur N'EST PAS administrateur
-    if (!current_user_can('administrator')) {
-        return false; // 🚫 Masque complètement le champ pour tous sauf admin
-    }
-    return $field; // ✅ Affiche normalement le champ pour les administrateurs
-}
-// 📌 Appliquer la restriction d'accès aux méta des chasses
-add_filter('acf/prepare_field/key=field_total_tentatives_chasse', 'filtrer_acf_pour_non_admins_chasses');
-add_filter('acf/prepare_field/key=field_total_indices_debloques_chasse', 'filtrer_acf_pour_non_admins_chasses');
-add_filter('acf/prepare_field/key=field_total_points_depenses_chasse', 'filtrer_acf_pour_non_admins_chasses');
-add_filter('acf/prepare_field/key=field_total_joueurs_ayant_resolu_chasse', 'filtrer_acf_pour_non_admins_chasses');
-add_filter('acf/prepare_field/key=field_total_joueurs_souscription_chasse', 'filtrer_acf_pour_non_admins_chasses');
-
-/**
- * 📌 Rend les champs ACF des chasses en lecture seule pour éviter toute modification manuelle.
- */
-function rendre_champs_acf_chasse_readonly($field) {
-    $champs_readonly = [
-        'total_tentatives_chasse',
-        'total_indices_debloques_chasse',
-        'total_points_depenses_chasse',
-        'total_points_gagnes_chasse',
-        'progression_chasse',
-        'total_joueurs_souscription_chasse'
-    ];
-
-    if (in_array($field['name'], $champs_readonly)) {
-        $field['readonly'] = 1; // 🛑 Désactive la modification dans l'admin
-    }
-
-    return $field;
-}
-// Applique la restriction de modification aux champs des chasses
-add_filter('acf/load_field', 'rendre_champs_acf_chasse_readonly');
-
-/**
- * 🔒 Rendre certains champs ACF en lecture seule pour les joueurs.
- *
- * Cette fonction rend non modifiables certains champs spécifiques liés aux statistiques
- * des joueurs en les marquant comme `readonly` et `disabled` dans l'interface ACF.
- *
- * Elle agit lors du chargement de **tous les champs** (`acf/load_field`), et cible uniquement
- * ceux dont le nom correspond à une des clés listées dans `$champs_proteges`.
- *
- * Liste des champs protégés :
- * - total_enigmes_jouees
- * - total_enigmes_trouvees
- * - total_chasses_terminees
- * - total_indices_debloques
- * - total_points_depenses
- *
- * @param array $field Le tableau de configuration du champ ACF en cours de chargement.
- * @return array Le tableau modifié avec les attributs `readonly` et `disabled` si applicable.
- *
- * @hook acf/load_field
- */
-function rendre_champs_acf_joueur_readonly($field) {
-    $champs_proteges = [
-        'total_enigmes_jouees',
-        'total_enigmes_trouvees',
-        'total_chasses_terminees',
-        'total_indices_debloques',
-        'total_points_depenses',
-    ];
-
-    if (in_array($field['name'], $champs_proteges)) {
-        $field['readonly'] = 1; // Rend le champ non modifiable
-        $field['disabled'] = 1; // Désactive aussi la modification côté HTML
-    }
-
-    return $field;
-}
-add_filter('acf/load_field', 'rendre_champs_acf_joueur_readonly');
-
-/**
- * 🔒 Masquer sélectivement certains champs ACF pour les non-administrateurs.
- *
- * Cette section permet de restreindre l'affichage de plusieurs champs ACF sensibles
- * (notamment liés aux statistiques) uniquement aux administrateurs.
- *
- * Le tableau `$champs_restrict_acf` contient une liste de clés ACF (pas les noms, mais les `field_key`)
- * pour lesquelles le filtre `acf/prepare_field` est appliqué.
- *
- * 🔁 Chaque clé du tableau est associée au filtre :
- *     acf/prepare_field/key={field_key}
- * ce qui permet de cibler précisément un champ, et de le masquer dynamiquement
- * via la fonction `filtrer_acf_pour_non_admins_joueurs()` si l’utilisateur n’est pas admin.
- *
- * 🛡️ Cela permet :
- * - d’éviter les risques de suppression de données sensibles
- * - de garder certains champs invisibles aux profils éditeurs, organisateurs, etc.
- *
- * @see filtrer_acf_pour_non_admins_joueurs()
- */
-$champs_restrict_acf = [
-    'field_total_enigmes_jouees',
-    'field_total_enigmes_trouvees',
-    'field_total_chasses_terminees',
-    'field_total_indices_debloques',
-    'field_total_points_depenses',
-    'field_67c236843d164', // total_tentatives_enigme
-    'field_67c24e7dc6463', //total_indices_debloques_enigme
-    'field_67c2557a1dc0c', //total_points_depenses_enigme
-    'field_67c259e147a06', //total_joueurs_ayant_resolu_enigme
-    'field_67c25adbf1f53', //total_joueurs_souscription_enigme
-    'field_67b58e000b389', // chasse_associee dans cpt enigme
-    'field_67da9d7167acc', //groupe cache avec shortcodes dedans
-];
-
-// 📌 Appliquer la restriction d'accès à tous les champs listés
-foreach ($champs_restrict_acf as $champ_key) {
-    add_filter("acf/prepare_field/key={$champ_key}", 'filtrer_acf_pour_non_admins_joueurs');
-}
-
-/**
- * 📌 Filtre l'affichage des champs ACF des énigmes pour qu'ils soient visibles UNIQUEMENT par les administrateurs.
- *
- * 🔹 Vérifie si l'utilisateur a le rôle "administrator".
- * 🔹 Si ce n'est pas un administrateur, il ne pourra pas voir ni modifier les champs ACF des méta d'énigmes.
- * 🔹 Seuls les administrateurs conservent l'accès.
- *
- * @param array $field Les données du champ ACF en cours d'affichage.
- * @return array|false Retourne le champ normalement pour les administrateurs, sinon false (masque le champ).
- */
-function filtrer_acf_pour_non_admins_enigmes($field) { 
-
-    // Vérifie si l'utilisateur N'EST PAS administrateur
-    if (!current_user_can('administrator')) {
-        return false; // 🚫 Masque complètement le champ pour tous sauf admin
-    }
-    return $field; // ✅ Affiche normalement le champ pour les administrateurs
-}
-
-// 📌 Applique le filtre à chaque champ méta des énigmes pour restreindre l'accès aux seuls admins
-add_filter('acf/prepare_field/key=field_total_tentatives_enigme', 'filtrer_acf_pour_non_admins_enigmes');
-add_filter('acf/prepare_field/key=field_total_indices_debloques_enigme', 'filtrer_acf_pour_non_admins_enigmes');
-add_filter('acf/prepare_field/key=field_total_points_depenses_enigme', 'filtrer_acf_pour_non_admins_enigmes');
-add_filter('acf/prepare_field/key=field_total_joueurs_ayant_resolu_enigme', 'filtrer_acf_pour_non_admins_enigmes');
-add_filter('acf/prepare_field/key=field_total_joueurs_souscription_enigme', 'filtrer_acf_pour_non_admins_enigmes');
-
-/**
- * 📌 Rend les champs ACF des énigmes en lecture seule pour éviter toute modification manuelle.
- */
-function rendre_champs_acf_enigme_readonly($field) {
-    $champs_readonly = [
-        'total_tentatives_enigme',
-        'total_indices_debloques_enigme',
-        'total_points_depenses_enigme',
-        'total_joueurs_ayant_resolu_enigme',
-        'total_joueurs_souscription_enigme'
-    ];
-
-    if (in_array($field['name'], $champs_readonly)) {
-        $field['readonly'] = 1; // 🛑 Désactive la modification dans l'admin
-    }
-
-    return $field;
-}
-// Applique la restriction de modification aux champs des énigmes
-add_filter('acf/load_field', 'rendre_champs_acf_enigme_readonly');
-
-
-/**
- * 📌 Masque les champs ACF des énigmes pour les non-admins.
- */
-function cacher_champs_acf_enigme_non_admins($field) {
-    if (!current_user_can('administrator')) {
-        return false; // 🚫 Cache le champ pour les rôles non-admin
-    }
-    return $field;
-}
-
-// Applique la restriction de visibilité aux champs ACF des énigmes
-add_filter('acf/prepare_field/key=field_total_tentatives_enigme', 'cacher_champs_acf_enigme_non_admins');
-add_filter('acf/prepare_field/key=field_total_indices_debloques_enigme', 'cacher_champs_acf_enigme_non_admins');
-add_filter('acf/prepare_field/key=field_total_points_depenses_enigme', 'cacher_champs_acf_enigme_non_admins');
-add_filter('acf/prepare_field/key=field_total_joueurs_ayant_resolu_enigme', 'cacher_champs_acf_enigme_non_admins');
-add_filter('acf/prepare_field/key=field_total_joueurs_souscription_enigme', 'cacher_champs_acf_enigme_non_admins');
-
-
-
-// ==================================================
-// 📦 RESTRICTIONS POSTS
-// ==================================================
-/**
- * 🔹 utilisateur_peut_creer_post → Vérifie si l’utilisateur peut créer un post d’un type spécifique.
- * 🔹 utilisateur_peut_modifier_post → Vérifie si un utilisateur peut modifier un post.
- * 🔹 redirection_si_acces_refuse → Redirige si l’utilisateur ne peut pas créer ou modifier un post.
- * 🔹 filtre_capacites_admin_user_has_cap → Bloque l’édition/création/suppression depuis l’admin pour les rôles non-admin.
- * 🔹 blocage_acces_admin_non_admins → Redirige les rôles organisateur/organisateur_creation hors du back-office (hors AJAX/media).
- * 🔹 load-post-new.php (hook) → Empêche les utilisateurs non autorisés d’accéder à l’écran de création d’un CPT.
- * 🔹 load-post.php (hook) → Empêche les utilisateurs non autorisés d’accéder à l’écran de modification d’un post.
- */
-
 
 /**
  * Vérifie si un utilisateur peut créer un post d'un type spécifique.
@@ -541,8 +303,6 @@ function utilisateur_peut_modifier_post($post_id) {
 }
 
 
-
-
 /**
  * Vérifie si un utilisateur peut créer ou modifier un post et redirige si l'accès est refusé.
  *
@@ -573,48 +333,6 @@ function redirection_si_acces_refuse($post_id, $post_type, $redirect_url) {
         exit;
     }
 }
-
-
-add_filter('user_has_cap', function ($allcaps, $cap, $args, $user) {
-    // ✅ Autorise tout pour les administrateurs
-    if (in_array('administrator', $user->roles, true)) {
-        return $allcaps;
-    }
-
-    // Cibler uniquement certaines capacités critiques
-    $actions_sensibles = ['edit_post', 'delete_post', 'publish_post'];
-    if (!is_array($cap) || empty($cap) || !in_array($cap[0], $actions_sensibles, true)) {
-        return $allcaps;
-    }
-
-    // ✅ Autorise les actions en front (ne bloque que l'admin)
-    if (!is_admin()) {
-        return $allcaps;
-    }
-
-    // 🔒 Si on édite un post existant dans l'admin
-    $post_id = $args[2] ?? null;
-    if ($post_id && is_numeric($post_id)) {
-        $post_type   = get_post_type($post_id);
-        $post_author = (int) get_post_field('post_author', $post_id);
-
-        if (in_array($post_type, ['organisateur', 'chasse', 'enigme'], true)) {
-            if ((int) $user->ID !== $post_author) {
-                $allcaps[$cap[0]] = false;
-            }
-        }
-    }
-
-    // 🔒 Création via l'admin (pas de post ID)
-    if ($post_id === null && isset($_GET['post_type'])) {
-        $pt = sanitize_text_field($_GET['post_type']);
-        if (in_array($pt, ['organisateur', 'chasse', 'enigme'], true)) {
-            $allcaps[$cap[0]] = false;
-        }
-    }
-
-    return $allcaps;
-}, 10, 4);
 
 
 /**
@@ -701,51 +419,10 @@ add_action('load-post.php', function () {
 
 
 // ==================================================
-// 📦 ACCÈS AUX FICHIERS PROTÉGÉS
+// 📌 VISIBILITÉ ET AFFICHAGE 
 // ==================================================
 /**
- * 🔹 utilisateur_peut_voir_solution_enigme() → Vérifie si un utilisateur peut voir le fichier PDF ou texte de solution.
- */
-
-/**
- * Vérifie si un utilisateur a le droit de consulter la solution (PDF ou texte) d'une énigme
- *
- * @param int $enigme_id ID du post énigme
- * @param int $user_id   ID de l'utilisateur connecté
- * @return bool
- */
-function utilisateur_peut_voir_solution_enigme(int $enigme_id, int $user_id): bool {
-    if (!$enigme_id || !$user_id) return false;
-
-    // 🔐 Autorisation admin
-    if (user_can($user_id, 'manage_options')) return true;
-
-    // 🔍 Récupère la chasse liée
-    $chasse_id = recuperer_id_chasse_associee($enigme_id);
-    if (!$chasse_id) return false;
-
-    // 🔒 Organisateur lié à la chasse
-    if (utilisateur_est_organisateur_associe_a_chasse($user_id, $chasse_id)) {
-        return true;
-    }
-
-    // 🧩 Joueur ayant résolu l’énigme — à adapter si tu as un suivi précis
-    // Ici, on suppose un champ utilisateur ACF du type enigme_statut_utilisateur[ID_ENIGME] = 'resolue'
-    $statuts = get_field('enigme_statut_utilisateur', 'user_' . $user_id);
-    if (is_array($statuts) && isset($statuts[$enigme_id])) {
-        return in_array($statuts[$enigme_id], ['resolue', 'terminee'], true);
-    }
-
-    return false;
-}
-
-
-// ==================================================
-// 🔓 CONTRÔLE D’ACCÈS AU CONTENU DES ÉNIGMES
-// ==================================================
-/**
- * 🔹 utilisateur_peut_voir_enigme() → Vérifie si un utilisateur a accès à l’énigme (visuels, texte, indices…).
- * 🔹 voir-image-enigme → Déclare un endpoint sécurisé pour servir les images des énigmes protégées.
+ * 🔹 utilisateur_peut_voir_enigme → Vérifie si un utilisateur peut voir le contenu d’une énigme (visuels, texte).
  */
 
 /**
@@ -796,6 +473,88 @@ function utilisateur_peut_voir_enigme(int $enigme_id, ?int $user_id = null): boo
 }
 
 
+// ==================================================
+// 📂 ACCÈS AUX FICHIERS PROTÉGÉS
+// ==================================================
+/**
+ * 🔹 (rewrite) /voir-fichier/ + handler voir-fichier.php → Point d’entrée sécurisé pour consulter les fichiers de solution.
+ * 🔹 utilisateur_peut_voir_solution_enigme → Vérifie si l’utilisateur peut consulter la solution d’une énigme (PDF ou texte).
+ * 🔹 (rewrite) /voir-image-enigme/ + handler voir-image-enigme.php → Sert les images protégées d’une énigme via proxy PHP.
+ */
+
+
+/**
+ * Déclare un endpoint personnalisé `/voir-fichier/?id=1234`
+ * 
+ * Cet endpoint permet de sécuriser la consultation de fichiers PDF protégés
+ * via un script PHP situé dans le thème (`inc/handlers/voir-fichier.php`).
+ * 
+ * Le fichier est servi uniquement si l’utilisateur est autorisé (admin, organisateur lié ou joueur ayant résolu).
+ * 
+ * 🔒 Le fichier réel n’est jamais exposé en URL publique. L’accès passe exclusivement par ce point.
+ */
+add_action('init', function () {
+    add_rewrite_rule('^voir-fichier/?$', 'index.php?voir_fichier=1', 'top');
+}, 1);
+
+add_filter('query_vars', function ($vars) {
+    $vars[] = 'voir_fichier';
+    return $vars;
+});
+
+add_action('template_redirect', function () {
+    if (get_query_var('voir_fichier') !== '1') return;
+
+    $handler = get_stylesheet_directory() . '/inc/handlers/voir-fichier.php';
+    if (file_exists($handler)) {
+        require_once $handler;
+        exit;
+    }
+
+    status_header(404);
+    exit('Fichier de traitement non trouvé.');
+});
+
+add_action('init', function () {
+    if (isset($_GET['voir_fichier'])) {
+        error_log('[🔍 DEBUG] $_GET[voir_fichier] = ' . $_GET['voir_fichier']);
+    }
+});
+
+
+/**
+ * Vérifie si un utilisateur a le droit de consulter la solution (PDF ou texte) d'une énigme
+ *
+ * @param int $enigme_id ID du post énigme
+ * @param int $user_id   ID de l'utilisateur connecté
+ * @return bool
+ */
+function utilisateur_peut_voir_solution_enigme(int $enigme_id, int $user_id): bool {
+    if (!$enigme_id || !$user_id) return false;
+
+    // 🔐 Autorisation admin
+    if (user_can($user_id, 'manage_options')) return true;
+
+    // 🔍 Récupère la chasse liée
+    $chasse_id = recuperer_id_chasse_associee($enigme_id);
+    if (!$chasse_id) return false;
+
+    // 🔒 Organisateur lié à la chasse
+    if (utilisateur_est_organisateur_associe_a_chasse($user_id, $chasse_id)) {
+        return true;
+    }
+
+    // 🧩 Joueur ayant résolu l’énigme — à adapter si tu as un suivi précis
+    // Ici, on suppose un champ utilisateur ACF du type enigme_statut_utilisateur[ID_ENIGME] = 'resolue'
+    $statuts = get_field('enigme_statut_utilisateur', 'user_' . $user_id);
+    if (is_array($statuts) && isset($statuts[$enigme_id])) {
+        return in_array($statuts[$enigme_id], ['resolue', 'terminee'], true);
+    }
+
+    return false;
+}
+
+
 /**
  * 🔹 voir-image-enigme → Déclare un endpoint `/voir-image-enigme?id=123` pour servir une image protégée d’énigme.
  *
@@ -810,8 +569,6 @@ add_action('init', function () {
         return $vars;
     });
 });
-
-
 /**
  * 🔁 Redirige les appels vers /voir-image-enigme?id=xxx vers le handler PHP sécurisé
  *
@@ -832,13 +589,14 @@ add_action('template_redirect', function () {
 });
 
 
+
 // ==================================================
-// 🔒 GESTION DES CONDITIONS D’ACCÈS – PRÉREQUIS
+// 🔒 CONTRÔLES SPÉCIFIQUES : accès conditionnel, prérequis
 // ==================================================
 /**
- * 🔹 acf/load_field/name=enigme_acces_condition → Masque l’option "pré-requis" si aucune énigme valide n’est disponible
- * 🔹 recuperer_enigmes_possibles_pre_requis → Renvoie la liste des énigmes valides pouvant être sélectionnées comme prérequis
- * 🔹 verifier_et_enregistrer_condition_pre_requis() → Endpoint AJAX sécurisé.
+ * 🔹 acf/load_field/name=enigme_acces_condition → Supprime l’option "pré-requis" si aucune énigme n’est éligible.
+ * 🔹 recuperer_enigmes_possibles_pre_requis → Liste des énigmes valides pouvant servir de prérequis.
+ * 🔹 verifier_et_enregistrer_condition_pre_requis → Endpoint AJAX pour valider l’option "pré-requis" après sélection.
  */
 
 
@@ -896,7 +654,7 @@ function recuperer_enigmes_possibles_pre_requis($enigme_id) {
 }
 
 
- /*
+/** 
  * @hook wp_ajax_verifier_et_enregistrer_condition_pre_requis
  * @return void (JSON)
  */
