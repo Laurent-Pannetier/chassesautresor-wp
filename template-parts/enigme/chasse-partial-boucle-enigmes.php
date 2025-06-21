@@ -45,10 +45,6 @@ $has_enigmes = !empty($posts_visibles);
     </article>
   <?php endforeach; ?>
 
-  <?php if (!$has_enigmes): ?>
-    <p>Aucune énigme pour cette chasse pour le moment.</p>
-  <?php endif; ?>
-
   <?php
   if (utilisateur_peut_ajouter_enigme($chasse_id, $utilisateur_id)) {
     get_template_part('template-parts/enigme/chasse-partial-ajout-enigme', null, [
