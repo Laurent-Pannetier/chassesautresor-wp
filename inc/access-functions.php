@@ -67,17 +67,23 @@ function filtrer_media_library_par_cpt($query)
     $post_type = get_post_type($post_id);
 
     if ($post_type === 'enigme') {
-        $dossier = '/_enigmes/enigme-' . $post_id . '/';
-        $query['meta_query'][] = [
-            'key'     => '_wp_attached_file',
-            'value'   => $dossier,
-            'compare' => 'LIKE',
+        $query['meta_query'] = [
+            'relation' => 'AND',
+            [
+                'key'     => '_wp_attached_file',
+                'value'   => '_enigmes/enigme-' . $post_id . '/',
+                'compare' => 'LIKE',
+            ],
         ];
     } elseif ($post_type) {
-        $query['meta_query'][] = [
-            'key'     => '_wp_attached_file',
-            'value'   => '/_enigmes/',
-            'compare' => 'NOT LIKE',
+        $query['meta_query'] = [
+            'relation' => 'AND',
+            [
+                'key'     => '_wp_attached_file',
+                'value'   => '_enigmes/',
+                'compare' => 'NOT LIKE',
+            ],
+
         ];
     }
 
