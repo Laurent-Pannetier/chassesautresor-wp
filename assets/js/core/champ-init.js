@@ -111,7 +111,7 @@ window.mettreAJourResumeInfos = function () {
       ligne.prepend(icone);
     });
   }
- 
+
   // 🧩 ENIGME
   const panneauEnigme = document.querySelector('.edition-panel-enigme');
   if (panneauEnigme) {
@@ -217,6 +217,9 @@ window.mettreAJourResumeInfos = function () {
       blocBonneReponse.classList.toggle('champ-attention', estVide);
     }
 
+  }
+  if (typeof window.mettreAJourCarteAjoutChasse === 'function') {
+    window.mettreAJourCarteAjoutChasse();
   }
 };
 

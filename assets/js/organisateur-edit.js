@@ -52,17 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.activeElement?.blur();
   });
 
-  // 💠 MAJ indicateurs
-  if (typeof window.mettreAJourResumeInfos === 'function') {
-    window.mettreAJourResumeInfos();
-  }
-
-  // 🗺️ Carte ajout chasse
-  if (typeof window.mettreAJourCarteAjoutChasse === 'function') {
-    window.mettreAJourCarteAjoutChasse();
-  }
-  e
-
+  
   // 🏦 Coordonnées bancaires
   const panneauCoord = document.getElementById('panneau-coordonnees');
   const formCoord = document.getElementById('formulaire-coordonnees');
