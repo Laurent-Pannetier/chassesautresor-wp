@@ -121,19 +121,27 @@ function initLiensPublics(bloc, { panneauId, formId, action }) {
   if (!champ || !postId || !bouton || !panneau || !formulaire) return;
 
   bouton.addEventListener('click', () => {
-    document.querySelectorAll('.panneau-lateral.ouvert, .panneau-lateral-liens.ouvert').forEach((p) => {
-      p.classList.remove('ouvert');
-      p.setAttribute('aria-hidden', 'true');
-    });
-    panneau.classList.add('ouvert');
-    document.body.classList.add('panneau-ouvert');
-    panneau.setAttribute('aria-hidden', 'false');
+    if (typeof window.openPanel === 'function') {
+      window.openPanel(panneauId);
+    } else {
+      document.querySelectorAll('.panneau-lateral.ouvert, .panneau-lateral-liens.ouvert').forEach((p) => {
+        p.classList.remove('ouvert');
+        p.setAttribute('aria-hidden', 'true');
+      });
+      panneau.classList.add('ouvert');
+      document.body.classList.add('panneau-ouvert');
+      panneau.setAttribute('aria-hidden', 'false');
+    }
   });
 
   panneau.querySelector('.panneau-fermer')?.addEventListener('click', () => {
-    panneau.classList.remove('ouvert');
-    document.body.classList.remove('panneau-ouvert');
-    panneau.setAttribute('aria-hidden', 'true');
+    if (typeof window.closePanel === 'function') {
+      window.closePanel(panneauId);
+    } else {
+      panneau.classList.remove('ouvert');
+      document.body.classList.remove('panneau-ouvert');
+      panneau.setAttribute('aria-hidden', 'true');
+    }
   });
 
   // ❌ Supprime les éventuels anciens écouteurs
@@ -205,9 +213,15 @@ function initLiensPublics(bloc, { panneauId, formId, action }) {
         bloc.classList.toggle('champ-vide', donnees.length === 0);
         bloc.classList.toggle('champ-rempli', donnees.length > 0);
 
-        panneau.classList.remove('ouvert');
-        document.body.classList.remove('panneau-ouvert');
-        panneau.setAttribute('aria-hidden', 'true');
+
+        if (typeof window.closePanel === 'function') {
+          window.closePanel(panneauId);
+        } else {
+          panneau.classList.remove('ouvert');
+          document.body.classList.remove('panneau-ouvert');
+          panneau.setAttribute('aria-hidden', 'true');
+        }
+
 
         if (typeof window.mettreAJourResumeInfos === 'function') {
           window.mettreAJourResumeInfos();
