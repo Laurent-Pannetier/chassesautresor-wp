@@ -31,6 +31,11 @@ $coordonnees = get_field('coordonnees_bancaires', $organisateur_id);
 $iban = $coordonnees['iban'] ?? '';
 $bic  = $coordonnees['bic'] ?? '';
 
+// Vérification si l'organisateur a une description publique remplie
+$description = get_field('profil_public_description', $organisateur_id);
+$description_remplie = trim(strip_tags($description)) !== '';
+
+
 get_header();
 
 ?>

@@ -283,20 +283,28 @@ window.mettreAJourCarteAjoutChasse = function () {
   const carte = document.getElementById('carte-ajout-chasse');
   if (!carte) return;
 
-  const champs = [
-    '.champ-organisateur.champ-titre',
-    '.champ-organisateur.champ-logo',
-    '.champ-organisateur.champ-description'
+  // 🔍 Statut figé côté PHP
+  const descriptionEstRemplie = carte.dataset.descriptionRemplie === '1';
+
+  // 🔍 Champs JS dynamiques
+  const champsJS = [
+    '[data-champ="post_title"]',
+    '[data-champ="profil_public_logo_organisateur"]'
   ];
 
-  const incomplets = champs.filter(sel => {
-    const champ = document.querySelector(sel);
+  // 🔁 Vérifie visuellement ceux qui sont vides
+  const incomplets = champsJS.filter(sel => {
+    const champ = document.querySelector('.panneau-organisateur .resume-infos li' + sel);
     return champ?.classList.contains('champ-vide');
   });
 
+  // ✅ Ajout manuel si description PHP non remplie
+  if (!descriptionEstRemplie) {
+    incomplets.push('[data-champ="profil_public_description"]');
+  }
+
   console.log('🧩 Vérif carte-ajout → champs vides détectés :', incomplets);
   console.log('🧩 carte actuelle :', carte);
-
 
   let overlay = carte.querySelector('.overlay-message');
 
@@ -307,7 +315,7 @@ window.mettreAJourCarteAjoutChasse = function () {
     carte.classList.add('disabled');
 
     const texte = incomplets.map(sel => {
-      if (sel.includes('titre')) return 'titre';
+      if (sel.includes('post_title')) return 'titre';
       if (sel.includes('logo')) return 'logo';
       if (sel.includes('description')) return 'description';
       return 'champ requis';
