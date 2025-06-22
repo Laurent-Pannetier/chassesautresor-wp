@@ -385,17 +385,6 @@ button,
 .badge-statut.statut-revision {
   background-color: var(--color-editor-error);
 }
-.statut-banner {
-  width: 100%;
-  padding: 8px 12px;
-  font-size: 0.85rem;
-  font-weight: bold;
-  text-align: center;
-  color: #fff;
-  background-color: var(--color-editor-error);
-  border-radius: 4px 4px 0 0;
-  margin-bottom: 0.5rem;
-}
 
 
 
