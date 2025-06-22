@@ -174,4 +174,4 @@ if (is_page('mon-compte') && current_user_can('administrator')) {
 ?>
 
 </div>
-<?php get_template_part('template-parts/modal-conversion-historique'); ?>
+<?php get_template_part('template-parts/modals/modal-conversion-historique'); ?>

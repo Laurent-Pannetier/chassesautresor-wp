@@ -166,7 +166,7 @@ function afficher_points_utilisateur_callback() {
  * Ajoute le modal des points à la fin du <body> via wp_footer.
  */
 function ajouter_modal_points() {
-    get_template_part('template-parts/modal-points');
+    get_template_part('template-parts/modals/modal-points');
 }
 add_action('wp_footer', 'ajouter_modal_points');
 
