@@ -36,11 +36,13 @@ document.addEventListener('DOMContentLoaded', () => {
   // ⚙️ Bouton toggle header
   document.getElementById('toggle-mode-edition')?.addEventListener('click', () => {
     document.body.classList.toggle('edition-active');
+    document.body.classList.toggle('panneau-ouvert');
   });
 
   // ✖ Fermeture du panneau organisateur
   document.querySelector('.panneau-organisateur .panneau-fermer')?.addEventListener('click', () => {
     document.body.classList.remove('edition-active');
+    document.body.classList.remove('panneau-ouvert');
     document.activeElement?.blur();
   });
 

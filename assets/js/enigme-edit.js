@@ -16,11 +16,13 @@ document.addEventListener('DOMContentLoaded', () => {
   // ==============================
   boutonToggle?.addEventListener('click', () => {
     document.body.classList.toggle('edition-active-enigme');
+    document.body.classList.toggle('panneau-ouvert');
   });
 
 
   panneauEdition?.querySelector('.panneau-fermer')?.addEventListener('click', () => {
     document.body.classList.remove('edition-active-enigme');
+    document.body.classList.remove('panneau-ouvert');
     document.activeElement?.blur();
   });
 

@@ -34,7 +34,7 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
 ?>
 
 <?php if ($peut_modifier) : ?>
-  <section class="edition-panel edition-panel-chasse" data-cpt="chasse" data-post-id="<?= esc_attr($chasse_id); ?>">
+  <section class="edition-panel edition-panel-chasse edition-panel-modal" data-cpt="chasse" data-post-id="<?= esc_attr($chasse_id); ?>">
     <div id="erreur-global" style="display:none; background:red; color:white; padding:5px; text-align:center; font-size:0.9em;"></div>
 
     <div class="edition-panel-header">
@@ -42,7 +42,14 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
       <button type="button" class="panneau-fermer" aria-label="Fermer les paramètres">✖</button>
     </div>
 
-    <div class="edition-panel-body">
+    <div class="edition-tabs">
+      <button class="edition-tab active" data-target="chasse-tab-param">Paramètres</button>
+      <button class="edition-tab" data-target="chasse-tab-stats">Statistiques</button>
+      <button class="edition-tab" data-target="chasse-tab-spec">Champs spécifiques</button>
+    </div>
+
+    <div id="chasse-tab-param" class="edition-tab-content active">
+      <div class="edition-panel-body">
 
       <!-- 🎯 ACCORDÉON 1 : Paramètres principaux -->
       <div class="edition-panel-section edition-panel-section-ligne accordeon-bloc" data-bloc="profil">
@@ -282,6 +289,15 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
         </div>
       </div>
 
+    </div> <!-- .edition-panel-body -->
+    </div> <!-- #chasse-tab-param -->
+
+    <div id="chasse-tab-stats" class="edition-tab-content" style="display:none;">
+      <p>Statistiques à venir.</p>
+    </div>
+
+    <div id="chasse-tab-spec" class="edition-tab-content" style="display:none;">
+      <p>Classement prochainement disponible.</p>
     </div>
 
     <div class="edition-panel-footer"></div>

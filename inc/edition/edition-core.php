@@ -88,6 +88,7 @@ function enqueue_core_edit_scripts()
     'date-fields'      => 'date-fields.js',
     'champ-init'       => 'champ-init.js',
     'champ-date-hooks' => 'champ-date-hooks.js',
+    'modal-tabs'       => 'modal-tabs.js',
   ];
 
   $previous_handle = null;

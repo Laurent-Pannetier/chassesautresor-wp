@@ -60,7 +60,7 @@ $has_variantes = ($nb_variantes > 0);
 ?>
 
 <?php if ($peut_modifier) : ?>
-  <section class="edition-panel edition-panel-enigme" data-cpt="enigme" data-post-id="<?= esc_attr($enigme_id); ?>">
+  <section class="edition-panel edition-panel-enigme edition-panel-modal" data-cpt="enigme" data-post-id="<?= esc_attr($enigme_id); ?>">
     <div id="erreur-global"
       style="display:none; background:red; color:white; padding:5px; text-align:center; font-size:0.9em;"></div>
 
@@ -79,7 +79,14 @@ $has_variantes = ($nb_variantes > 0);
       <button type="button" class="panneau-fermer" aria-label="Fermer les paramètres">✖</button>
     </div>
 
-    <div class="edition-panel-body edition-panel-section">
+    <div class="edition-tabs">
+      <button class="edition-tab active" data-target="enigme-tab-param">Paramètres</button>
+      <button class="edition-tab" data-target="enigme-tab-stats">Statistiques</button>
+      <button class="edition-tab" data-target="enigme-tab-spec">Champs spécifiques</button>
+    </div>
+
+    <div id="enigme-tab-param" class="edition-tab-content active">
+      <div class="edition-panel-body edition-panel-section">
       <div class="resume-blocs-grid deux-col-wrapper">
         <div class="resume-bloc resume-obligatoire deux-col-bloc">
 
@@ -367,6 +374,16 @@ $has_variantes = ($nb_variantes > 0);
 
             </fieldset>
 
+        </div>
+      </div>
+    </div>
+    </div> <!-- .edition-panel-body -->
+    </div> <!-- #enigme-tab-param -->
+
+<div id="enigme-tab-spec" class="edition-tab-content" style="display:none;">
+
+      <p>Soumission : fonctionnalité à venir.</p>
+      <p>Indices : fonctionnalité à venir.</p>
 
             <fieldset class="groupe-champ champ-groupe-solution">
               <legend>Publication de la solution</legend>
@@ -445,6 +462,7 @@ $has_variantes = ($nb_variantes > 0);
         </div>
       </div>
     </div>
+    </div> <!-- #enigme-tab-spec -->
     <div class="edition-panel-footer"></div>
   </section>
 <?php endif; ?>
