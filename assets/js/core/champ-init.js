@@ -240,7 +240,7 @@ window.onChampSimpleMisAJour = function (champ, postId, valeur, cpt) {
     }
     const champsResume = [
       'post_title',
-      'profil_public_description',
+      'description_longue',
       'profil_public_logo',
       'profil_public_logo_organisateur',
       'profil_public_email_contact',
