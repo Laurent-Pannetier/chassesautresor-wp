@@ -113,6 +113,29 @@
     margin-top:1rem;
 }
 
+/* ========== 📌 ICÔNES D'ACTIONS ========== */
+.header-organisateur__actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.header-organisateur__actions a,
+.header-organisateur__actions button {
+  color: var(--color-text-primary);
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.header-organisateur__actions a:hover,
+.header-organisateur__actions button:hover {
+  color: var(--color-accent);
+}
+
 /* ========== 🖼 LOGO CLIQUABLE ========== */
 
 
@@ -121,84 +144,6 @@
 }
 
 
-/* ========== 🧭 MENU DE NAVIGATION ========== */
-
-.header-organisateur__menu-bar {
-  background-color: rgba(255, 255, 255, 0.03);
-  padding: 0.4rem 1.5rem;
-  margin-top: 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-
-}
-.header-organisateur__bas {
-  display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 2rem;
-    width: 100%;
-}
-.header-organisateur__menu {
-    margin-top: 0; /* ou laisse vide si inutilisé ailleurs */
-}
-.header-organisateur__menu ul {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1.5rem;
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-.header-organisateur__menu a {
-    color: var(--color-text-primary);
-    text-decoration: none;
-    font-weight: 500;
-}
-
-.header-organisateur__menu .active a {
-    border-bottom: 2px solid var(--color-primary);
-}
-
-.header-organisateur__quitter {
-    margin-left: auto;
-}
-/* 🎯 MENU SOUS LE TITRE */
-.header-organisateur__menu--sous-titre {
-    margin-top: 0;
-}
-
-.header-organisateur__menu--sous-titre ul {
-    justify-content: center;
-    gap: 2.5rem;
-}
-
-/* 🔁 Animation de soulignement fluide au hover */
-.header-organisateur__menu--sous-titre a {
-    font-size: 1rem;
-    font-weight: 500;
-    position: relative;
-    padding-bottom: 0.2rem;
-    transition: color 0.2s ease;
-}
-
-.header-organisateur__menu--sous-titre a::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 0%;
-  height: 2px;
-  background-color: var(--color-primary);
-  transition: width 0.3s ease;
-}
-
-.header-organisateur__menu--sous-titre a:hover::after {
-  width: 100%;
-}
-
-.header-organisateur__menu--sous-titre .active a::after {
-  width: 100%;
-}
 
 /* ========== 🧭 MODAL BIENVENUE ========== */
 
@@ -368,9 +313,6 @@
         max-width: none;
         margin: 0 auto;
     }
-    .header-organisateur__menu ul {
-        justify-content: center;
-    }
 
   .colonne-texte {
     align-items: center;
@@ -496,18 +438,6 @@
     background-color: rgba(255, 255, 255, 0.04);
   }
 
-  /* 🔹 Menu navigation */
-  .header-organisateur__menu {
-    margin-top: 0;
-  }
-
-  .header-organisateur__menu ul {
-    gap: 1rem;
-  }
-
-  .header-organisateur__menu a {
-    font-size: 0.9rem;
-  }
 
   /* 🔹 Panneau latéral */
   .ligne-lien-formulaire label {

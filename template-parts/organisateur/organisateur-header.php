@@ -75,23 +75,15 @@ $url_contact = esc_url($base_url . 'contact?email_organisateur=' . urlencode($em
       </div>
 
       <div class="champ-feedback"></div>
-    </div>
 
-    <!-- Bande menu en dehors du flex principal -->
-    <div class="header-organisateur__menu-bar">
-      <nav class="header-organisateur__menu header-organisateur__menu--sous-titre">
-        <ul>
-          <li class="onglet-chasses <?= !$est_contact ? 'active' : ''; ?>">
-            <a href="<?= esc_url($est_contact ? $base_url . '#chasses' : '#chasses'); ?>">Chasses</a>
-          </li>
-          <li class="onglet-presentation <?= !$est_contact ? '' : ''; ?>">
-            <a href="<?= esc_url($est_contact ? $base_url . '#presentation' : '#presentation'); ?>">Présentation</a>
-          </li>
-          <li class="onglet-contact <?= $est_contact ? 'active' : ''; ?>">
-            <a href="<?= esc_url($url_contact); ?>" class="onglet-nav">Contact</a>
-          </li>
-        </ul>
-      </nav>
+      <div class="header-organisateur__actions">
+        <button type="button" class="bouton-toggle-description" aria-label="Voir la description">
+          <i class="fa-solid fa-circle-info"></i>
+        </button>
+        <a href="<?= esc_url($url_contact); ?>" class="lien-contact" aria-label="Contact">
+          <i class="fa-solid fa-envelope"></i>
+        </a>
+      </div>
     </div>
 
     <!-- Icône réglage (toggle panneau + stylos) -->

@@ -2,39 +2,21 @@
 // 📁 header-organisateur-ui.js
 // Gère les interactions visuelles du header organisateur :
 // - Sliders édition 
-// - Navigation à onglets (chasses / présentation / contact)
+// - Affichage/masquage de la description via l’icône info
 // - Panneau latéral ACF (présentation)
 // ========================================
 
 document.addEventListener('DOMContentLoaded', () => {
 
-  // ✅ Nav menu : clic sur #presentation => affichage section
-  document.querySelectorAll('.header-organisateur__menu a[href^="#"]').forEach((lien) => {
-    lien.addEventListener('click', () => {
-      const target = lien.getAttribute('href');
-      const presentation = document.getElementById('presentation');
-
-      // Section à afficher / cacher
-      if (target === '#presentation') {
-        presentation?.classList.remove('masque');
-      } else {
-        presentation?.classList.add('masque');
-      }
-
-      // Liens actifs
-      document.querySelectorAll('.header-organisateur__menu li').forEach((li) => li.classList.remove('active'));
-      lien.closest('li')?.classList.add('active');
-    });
+  // ✅ Icône info : affichage/masquage de la description
+  document.querySelector('.bouton-toggle-description')?.addEventListener('click', () => {
+    const presentation = document.getElementById('presentation');
+    presentation?.classList.toggle('masque');
   });
 
   // ✅ Hash auto (si présentation dans l’URL)
   if (window.location.hash === '#presentation') {
     document.getElementById('presentation')?.classList.remove('masque');
-    const liPresentation = document.querySelector('.onglet-presentation');
-    if (liPresentation) {
-      document.querySelectorAll('.header-organisateur__menu li').forEach(li => li.classList.remove('active'));
-      liPresentation.classList.add('active');
-    }
   }
 
   // ✅ Panneau latéral ACF – ouverture (bouton déclencheur)
