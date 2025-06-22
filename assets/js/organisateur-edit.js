@@ -26,18 +26,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // ✅ Ce bouton existe ET il est contenu dans le panneau organisateur
     if (!btn || !btn.closest('.panneau-organisateur')) return;
 
-    const panneau = document.getElementById('panneau-liens-publics');
-    if (!panneau) return;
-
-    // ✅ Fermer tout autre panneau déjà ouvert
-    document.querySelectorAll('.panneau-lateral.ouvert, .panneau-lateral-liens.ouvert').forEach((p) => {
-      p.classList.remove('ouvert');
-      p.setAttribute('aria-hidden', 'true');
-    });
-
-    panneau.classList.add('ouvert');
-    panneau.setAttribute('aria-hidden', 'false');
-    document.body.classList.add('panneau-ouvert');
+    if (typeof window.openPanel === 'function') {
+      window.openPanel('panneau-liens-publics');
+    }
   });
 
 
@@ -160,15 +151,15 @@ function initLiensOrganisateur(bloc) {
   if (!champ || !postId || !zoneAffichage || !formulaire || !bouton || !panneau) return;
 
   bouton.addEventListener('click', () => {
-    panneau.classList.add('ouvert');
-    document.body.classList.add('panneau-ouvert');
-    panneau.setAttribute('aria-hidden', 'false');
+    if (typeof window.openPanel === 'function') {
+      window.openPanel('panneau-liens-publics');
+    }
   });
 
   panneau.querySelector('.panneau-fermer')?.addEventListener('click', () => {
-    panneau.classList.remove('ouvert');
-    document.body.classList.remove('panneau-ouvert');
-    panneau.setAttribute('aria-hidden', 'true');
+    if (typeof window.closePanel === 'function') {
+      window.closePanel('panneau-liens-publics');
+    }
   });
 
   formulaire.addEventListener('submit', (e) => {

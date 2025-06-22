@@ -98,23 +98,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const btn = e.target.closest('.ouvrir-panneau-description');
     if (!btn || btn.dataset.cpt !== 'enigme') return;
 
-    const panneau = document.getElementById('panneau-description-enigme');
-    if (!panneau) return;
-
-    document.querySelectorAll('.panneau-lateral.ouvert, .panneau-lateral-liens.ouvert').forEach((p) => {
-      p.classList.remove('ouvert');
-      p.setAttribute('aria-hidden', 'true');
-    });
-
-    panneau.classList.add('ouvert');
-    document.body.classList.add('panneau-ouvert');
-    panneau.setAttribute('aria-hidden', 'false');
+    if (typeof window.openPanel === 'function') {
+      window.openPanel('panneau-description-enigme');
+    }
   });
   document.querySelector('#panneau-description-enigme .panneau-fermer')?.addEventListener('click', () => {
-    const panneau = document.getElementById('panneau-description-enigme');
-    panneau.classList.remove('ouvert');
-    document.body.classList.remove('panneau-ouvert');
-    panneau.setAttribute('aria-hidden', 'true');
+    if (typeof window.closePanel === 'function') {
+      window.closePanel('panneau-description-enigme');
+    }
   });
 
 
@@ -302,14 +293,9 @@ document.addEventListener('click', (e) => {
       console.log(`🔓 htaccess désactivé pour énigme ${postId}`);
 
       // ✅ Ouverture du panneau uniquement maintenant
-      document.querySelectorAll('.panneau-lateral.ouvert, .panneau-lateral-liens.ouvert').forEach((p) => {
-        p.classList.remove('ouvert');
-        p.setAttribute('aria-hidden', 'true');
-      });
-
-      panneau.classList.add('ouvert');
-      document.body.classList.add('panneau-ouvert');
-      panneau.setAttribute('aria-hidden', 'false');
+      if (typeof window.openPanel === 'function') {
+        window.openPanel('panneau-images-enigme');
+      }
     })
     .catch(err => {
       console.error('❌ Erreur réseau AJAX htaccess :', err);
@@ -322,10 +308,9 @@ document.addEventListener('click', (e) => {
 // 🔐 Restauration htaccess à la fermeture du panneau images
 // ==============================
 document.querySelector('#panneau-images-enigme .panneau-fermer')?.addEventListener('click', () => {
-  const panneau = document.getElementById('panneau-images-enigme');
-  panneau.classList.remove('ouvert');
-  document.body.classList.remove('panneau-ouvert');
-  panneau.setAttribute('aria-hidden', 'true');
+  if (typeof window.closePanel === 'function') {
+    window.closePanel('panneau-images-enigme');
+  }
 
   const postId = document.querySelector('.edition-panel-enigme')?.dataset.postId;
   if (postId) {

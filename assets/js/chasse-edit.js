@@ -58,23 +58,14 @@ document.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('click', (e) => {
     const btn = e.target.closest('.ouvrir-panneau-description');
     if (!btn || btn.dataset.cpt !== 'chasse') return;
-    const panneau = document.getElementById('panneau-description-chasse');
-    if (!panneau) return;
-
-    document.querySelectorAll('.panneau-lateral.ouvert, .panneau-lateral-liens.ouvert').forEach((p) => {
-      p.classList.remove('ouvert');
-      p.setAttribute('aria-hidden', 'true');
-    });
-
-    panneau.classList.add('ouvert');
-    document.body.classList.add('panneau-ouvert');
-    panneau.setAttribute('aria-hidden', 'false');
+    if (typeof window.openPanel === 'function') {
+      window.openPanel('panneau-description-chasse');
+    }
   });
   document.querySelector('#panneau-description-chasse .panneau-fermer')?.addEventListener('click', () => {
-    const panneau = document.getElementById('panneau-description-chasse');
-    panneau.classList.remove('ouvert');
-    document.body.classList.remove('panneau-ouvert');
-    panneau.setAttribute('aria-hidden', 'true');
+    if (typeof window.closePanel === 'function') {
+      window.closePanel('panneau-description-chasse');
+    }
   });
 
   // ==============================
@@ -83,24 +74,15 @@ document.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('click', (e) => {
     const btn = e.target.closest('.ouvrir-panneau-recompense');
     if (!btn || btn.dataset.cpt !== 'chasse') return;
-    const panneau = document.getElementById('panneau-recompense-chasse');
-    if (!panneau) return;
-
-    document.querySelectorAll('.panneau-lateral.ouvert, .panneau-lateral-liens.ouvert').forEach((p) => {
-      p.classList.remove('ouvert');
-      p.setAttribute('aria-hidden', 'true');
-    });
-
-    panneau.classList.add('ouvert');
-    document.body.classList.add('panneau-ouvert');
-    panneau.setAttribute('aria-hidden', 'false');
+    if (typeof window.openPanel === 'function') {
+      window.openPanel('panneau-recompense-chasse');
+    }
 
   });
   document.querySelector('#panneau-recompense-chasse .panneau-fermer')?.addEventListener('click', () => {
-    const panneau = document.getElementById('panneau-recompense-chasse');
-    panneau.classList.remove('ouvert');
-    document.body.classList.remove('panneau-ouvert');
-    panneau.setAttribute('aria-hidden', 'true');
+    if (typeof window.closePanel === 'function') {
+      window.closePanel('panneau-recompense-chasse');
+    }
   });
 
   // ==============================
@@ -401,19 +383,15 @@ function initLiensChasse(bloc) {
   if (!champ || !postId || !formulaire || !bouton || !panneau) return;
 
   bouton.addEventListener('click', () => {
-    document.querySelectorAll('.panneau-lateral.ouvert, .panneau-lateral-liens.ouvert').forEach((p) => {
-      p.classList.remove('ouvert');
-      p.setAttribute('aria-hidden', 'true');
-    });
-    panneau.classList.add('ouvert');
-    document.body.classList.add('panneau-ouvert');
-    panneau.setAttribute('aria-hidden', 'false');
+    if (typeof window.openPanel === 'function') {
+      window.openPanel('panneau-liens-chasse');
+    }
   });
 
   panneau.querySelector('.panneau-fermer')?.addEventListener('click', () => {
-    panneau.classList.remove('ouvert');
-    document.body.classList.remove('panneau-ouvert');
-    panneau.setAttribute('aria-hidden', 'true');
+    if (typeof window.closePanel === 'function') {
+      window.closePanel('panneau-liens-chasse');
+    }
   });
 
   const clone = formulaire.cloneNode(true);
