@@ -885,10 +885,12 @@ page enigme
 
 🏷️ Badges, statuts, affichages conditionnels
 
-L’affichage dynamique des boutons, statuts ou badges (sur les énigmes notamment) dépend de deux champs ACF distincts :
+L’affichage dynamique des boutons, statuts ou badges (sur les énigmes notamment)
+dépend du champ ACF `enigme_cache_etat_systeme` et du suivi individuel stocké
+dans la table `wp_enigme_statuts_utilisateur` :
 
-- enigme_cache_etat_systeme → etat logique global, calcule automatiquement
-- enigme_statut_utilisateur → etat individuel de progression du joueur
+- `enigme_cache_etat_systeme` → état logique global, calculé automatiquement
+- `wp_enigme_statuts_utilisateur` → statut individuel du joueur
 
 Ces deux champs combines determinent :
 - le bouton visible (CTA)
@@ -908,8 +910,8 @@ Definit si l enigme est techniquement disponible ou non.
 | invalide           | Donnees manquantes ou mal configurees            |
 | cache_invalide     | Erreur technique, logique ACF cassee             |
 
-👤 enigme_statut_utilisateur – etat individuel du joueur
-Definit le niveau de progression du joueur sur une enigme donnee (stocke individuellement).
+👤 Statut individuel du joueur (table `wp_enigme_statuts_utilisateur`)
+Definit le niveau de progression du joueur sur une enigme donnee.
 
 | Valeur        | Description                                         |
 |---------------|-----------------------------------------------------|

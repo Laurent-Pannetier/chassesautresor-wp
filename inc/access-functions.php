@@ -669,11 +669,10 @@ function utilisateur_peut_voir_solution_enigme(int $enigme_id, int $user_id): bo
         return true;
     }
 
-    // 🧩 Joueur ayant résolu l’énigme — à adapter si tu as un suivi précis
-    // Ici, on suppose un champ utilisateur ACF du type enigme_statut_utilisateur[ID_ENIGME] = 'resolue'
-    $statuts = get_field('enigme_statut_utilisateur', 'user_' . $user_id);
-    if (is_array($statuts) && isset($statuts[$enigme_id])) {
-        return in_array($statuts[$enigme_id], ['resolue', 'terminee'], true);
+    // 🧩 Joueur ayant résolu l’énigme (statut stocké en base)
+    $statut = get_statut_utilisateur_enigme($user_id, $enigme_id);
+    if ($statut) {
+        return in_array($statut, ['resolue', 'terminee'], true);
     }
 
     return false;
