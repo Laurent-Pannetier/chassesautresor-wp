@@ -213,6 +213,7 @@ function initLiensPublics(bloc, { panneauId, formId, action }) {
         bloc.classList.toggle('champ-vide', donnees.length === 0);
         bloc.classList.toggle('champ-rempli', donnees.length > 0);
 
+
         if (typeof window.closePanel === 'function') {
           window.closePanel(panneauId);
         } else {
@@ -220,6 +221,7 @@ function initLiensPublics(bloc, { panneauId, formId, action }) {
           document.body.classList.remove('panneau-ouvert');
           panneau.setAttribute('aria-hidden', 'true');
         }
+
 
         if (typeof window.mettreAJourResumeInfos === 'function') {
           window.mettreAJourResumeInfos();
