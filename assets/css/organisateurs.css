@@ -126,9 +126,13 @@
   color: var(--color-text-primary);
   background: none;
   border: none;
-  font-size: 1.2rem;
+  font-size: 1.4rem;
   cursor: pointer;
   transition: color 0.2s ease;
+}
+
+.header-organisateur__actions .bouton-edition-toggle {
+  font-size: 1.2rem;
 }
 
 .header-organisateur__actions a:hover,
