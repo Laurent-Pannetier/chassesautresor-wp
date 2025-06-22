@@ -26,6 +26,7 @@ $has_enigmes = !empty($posts_visibles);
 ?>
 
 <div class="bloc-enigmes-chasse">
+  <div class="grille-3">
   <?php foreach ($posts_visibles as $post): ?>
     <?php
     $enigme_id = $post->ID;
@@ -35,12 +36,14 @@ $has_enigmes = !empty($posts_visibles);
     $cta = get_cta_enigme($enigme_id);
     ?>
     <article class="carte-enigme">
-      <div class="carte-enigme-image">
-        <?php afficher_picture_vignette_enigme($enigme_id, 'Vignette de l’énigme'); ?>
-      </div>
-      <h3><?= esc_html($titre); ?></h3>
+      <div class="carte-core">
+        <div class="carte-enigme-image">
+          <?php afficher_picture_vignette_enigme($enigme_id, 'Vignette de l’énigme'); ?>
+        </div>
+        <h3><?= esc_html($titre); ?></h3>
 
-      <?php render_cta_enigme($cta, $enigme_id); ?>
+        <?php render_cta_enigme($cta, $enigme_id); ?>
+      </div>
     </article>
 
   <?php endforeach; ?>
@@ -54,3 +57,4 @@ $has_enigmes = !empty($posts_visibles);
   }
   ?>
 </div>
+  </div>
