@@ -294,6 +294,10 @@ window.mettreAJourCarteAjoutChasse = function () {
     return champ?.classList.contains('champ-vide');
   });
 
+  console.log('🧩 Vérif carte-ajout → champs vides détectés :', incomplets);
+  console.log('🧩 carte actuelle :', carte);
+
+
   let overlay = carte.querySelector('.overlay-message');
 
   if (incomplets.length === 0) {
