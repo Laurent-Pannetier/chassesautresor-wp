@@ -166,6 +166,60 @@ document.addEventListener('DOMContentLoaded', () => {
         mettreAJourAffichageDateFin();
       });
     }
+    inputDateFin.addEventListener('change', function () {
+      const sauvegardeAvantChangement = this.value;
+
+      const valid = validerDatesAvantEnvoi('fin');
+      if (!valid) {
+        this.value = ancienneValeurFin;
+        return;
+      }
+
+      const nouvelleDateFin = this.value;
+      const regexDate = /^\d{4}-\d{2}-\d{2}$/;
+
+      if (!regexDate.test(nouvelleDateFin)) {
+        console.error('❌ Format de date fin invalide:', nouvelleDateFin);
+        this.value = ancienneValeurFin;
+        return;
+      }
+
+      const postId = this.closest('.champ-chasse')?.dataset.postId;
+      modifierChampSimple('caracteristiques.chasse_infos_date_fin', nouvelleDateFin, postId);
+      rafraichirStatutChasse(postId);
+
+      mettreAJourAffichageDateFin();
+
+      ancienneValeurFin = nouvelleDateFin;
+    });
+  }
+  if (inputDateDebut) {
+    ancienneValeurDebut = inputDateDebut.value;
+
+    inputDateDebut.addEventListener('change', function () {
+      const sauvegardeAvantChangement = this.value;
+
+      const valid = validerDatesAvantEnvoi('debut');
+      if (!valid) {
+        this.value = ancienneValeurDebut;
+        return;
+      }
+
+      const nouvelleDateDebut = this.value;
+      const regexDate = /^\d{4}-\d{2}-\d{2}$/;
+
+      if (!regexDate.test(nouvelleDateDebut)) {
+        console.error('❌ Format de date début invalide:', nouvelleDateDebut);
+        this.value = ancienneValeurDebut;
+        return;
+      }
+
+      const postId = this.closest('.champ-chasse')?.dataset.postId;
+      modifierChampSimple('caracteristiques.chasse_infos_date_debut', nouvelleDateDebut, postId);
+      rafraichirStatutChasse(postId);
+
+      ancienneValeurDebut = nouvelleDateDebut;
+    });
 
   }
 
