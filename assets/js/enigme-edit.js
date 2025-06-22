@@ -212,8 +212,8 @@ document.addEventListener('DOMContentLoaded', () => {
   initChampSolution();
   initSolutionInline();
   initChampConditionnel('enigme_acces_condition', {
-    'date_programmee': '#bloc-champ-enigme_acces_date',
-    'pre_requis': '#bloc-champ-enigme_acces_pre_requis'
+    'date_programmee': ['#bloc-champ-enigme_acces_date'],
+    'pre_requis': ['#bloc-champ-enigme_acces_pre_requis']
   });
   initChampRadioAjax('acf[enigme_acces_condition]');
   appliquerEtatGratuitEnLive(); // ✅ Synchronise état initial de "Gratuit"
@@ -989,70 +989,6 @@ document.querySelector('#panneau-solution-enigme .panneau-fermer')?.addEventList
   panneau.setAttribute('aria-hidden', 'true');
 });
 
-
-// ==============================
-// 🧩 Initialisation des champs conditionnels (radio)
-// ==============================
-function initChampConditionnel(nomChamp, correspondance = {}) {
-  const radios = document.querySelectorAll(`input[type=radio][name="${nomChamp}"]`);
-  if (!radios.length) return;
-
-  function mettreAJourAffichage(valeurActive) {
-    // Cacher tous les blocs
-    Object.values(correspondance).forEach(cibles => {
-      if (!Array.isArray(cibles)) return;
-      cibles.forEach(cible => {
-        const bloc = document.querySelector(cible);
-        if (bloc) bloc.style.display = 'none';
-      });
-    });
-
-    // Afficher ceux correspondant à la valeur sélectionnée
-    const ciblesActives = correspondance[valeurActive];
-    if (Array.isArray(ciblesActives)) {
-      ciblesActives.forEach(cible => {
-        const bloc = document.querySelector(cible);
-        if (bloc) bloc.style.display = 'block';
-      });
-    }
-  }
-
-  radios.forEach(radio => {
-    radio.addEventListener('change', () => {
-      if (radio.checked) {
-        mettreAJourAffichage(radio.value);
-      }
-    });
-
-    if (radio.checked) {
-      mettreAJourAffichage(radio.value);
-    }
-  });
-
-  // 🔐 Supprimer visuellement l’option "pré-requis" si vide
-  if (nomChamp === 'enigme_acces_condition') {
-    const blocPreRequis = document.querySelector('[data-champ="enigme_acces_pre_requis"]');
-    if (blocPreRequis) {
-      const lignes = blocPreRequis.querySelectorAll('.liste-pre-requis input[type="checkbox"]');
-      if (lignes.length === 0) {
-        const radio = document.querySelector('input[type="radio"][value="pre_requis"]');
-        if (radio) {
-          const label = radio.closest('label');
-          if (label) label.style.display = 'none';
-        }
-      }
-    }
-
-    const bloc = document.querySelector('[data-champ="enigme_acces_pre_requis"]');
-    if (bloc && bloc.dataset.vide === '1') {
-      const radio = document.querySelector('input[type="radio"][value="pre_requis"]');
-      if (radio) {
-        const label = radio.closest('label');
-        if (label) label.style.display = 'none';
-      }
-    }
-  }
-}
 
 
 // ==============================

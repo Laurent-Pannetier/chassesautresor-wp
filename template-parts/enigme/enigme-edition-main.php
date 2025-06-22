@@ -222,7 +222,7 @@ $has_variantes = ($nb_variantes > 0);
                 <div class="champ-feedback"></div>
               </div>
 
-              <div class="champ-enigme champ-date" data-champ="enigme_acces_date" data-cpt="enigme" data-post-id="<?= esc_attr($enigme_id); ?>" id="champ-enigme-date" style="display: none;">
+              <div class="champ-enigme champ-date cache" data-champ="enigme_acces_date" data-cpt="enigme" data-post-id="<?= esc_attr($enigme_id); ?>" id="champ-enigme-date">
                 <label for="enigme-date-deblocage">Date de déblocage</label>
                 <input type="date"
                   id="enigme-date-deblocage"
@@ -232,13 +232,12 @@ $has_variantes = ($nb_variantes > 0);
                 <div class="champ-feedback champ-date-feedback" style="display:none;"></div>
               </div>
 
-              <div class="champ-enigme champ-pre-requis"
+              <div class="champ-enigme champ-pre-requis cache"
                 data-champ="enigme_acces_pre_requis"
                 data-cpt="enigme"
                 data-post-id="<?= esc_attr($enigme_id); ?>"
                 id="champ-enigme-pre-requis"
-                data-vide="<?= empty($enigmes_possibles) ? '1' : '0'; ?>"
-                style="display: none;">
+                data-vide="<?= empty($enigmes_possibles) ? '1' : '0'; ?>">
 
                 <label>Pré-requis</label>
 
