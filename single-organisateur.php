@@ -66,30 +66,34 @@ get_header();
                 <div class="titre-chasses-wrapper">
                     <div class="ligne-chasses"></div>
                     <div class="liste-chasses">
-                        <?php
-                        $organisateur_id = get_the_ID();
-                        $chasses = get_chasses_en_creation($organisateur_id);
-                        $peut_ajouter = utilisateur_peut_ajouter_chasse($organisateur_id);
-                        $has_chasses = !empty($chasses);
+                        <div class="grille-3">
+                            <?php
+                            $organisateur_id = get_the_ID();
+                            $chasses = get_chasses_en_creation($organisateur_id);
+                            $peut_ajouter = utilisateur_peut_ajouter_chasse($organisateur_id);
+                            $has_chasses = !empty($chasses);
 
-                        foreach ($chasses as $post) :
-                            $chasse_id = $post->ID;
-                            $image = get_field('chasse_principale_image', $chasse_id);
-                            $image_url = is_array($image) ? $image['sizes']['large'] ?? $image['url'] : '';
+                            foreach ($chasses as $post) :
+                                $chasse_id = $post->ID;
+                                $image = get_field('chasse_principale_image', $chasse_id);
+                                $image_url = is_array($image) ? $image['sizes']['large'] ?? $image['url'] : '';
 
-                        ?>
-                            <article class="carte-chasse" data-post-id="<?= esc_attr($chasse_id); ?>">
-                                <?php afficher_picture_vignette_chasse($chasse_id); ?>
-                                <h2><?= esc_html(get_the_title($chasse_id)); ?></h2>
-                            </article>
-                        <?php endforeach; ?>
+                            ?>
+                                <article class="carte-chasse" data-post-id="<?= esc_attr($chasse_id); ?>">
+                                    <div class="carte-core">
+                                        <?php afficher_picture_vignette_chasse($chasse_id); ?>
+                                        <h2><?= esc_html(get_the_title($chasse_id)); ?></h2>
+                                    </div>
+                                </article>
+                            <?php endforeach; ?>
 
-                        <?php if ($peut_ajouter) :
-                            get_template_part('template-parts/chasse/chasse-partial-ajout-chasse', null, [
-                                'has_chasses' => $has_chasses,
-                                'organisateur_id' => $organisateur_id,
-                            ]);
-                        endif; ?>
+                            <?php if ($peut_ajouter) :
+                                get_template_part('template-parts/chasse/chasse-partial-ajout-chasse', null, [
+                                    'has_chasses' => $has_chasses,
+                                    'organisateur_id' => $organisateur_id,
+                                ]);
+                            endif; ?>
+                        </div>
                     </div>
                 </div>
         </section>
