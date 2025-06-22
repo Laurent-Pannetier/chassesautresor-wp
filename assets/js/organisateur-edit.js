@@ -283,8 +283,9 @@ window.mettreAJourCarteAjoutChasse = function () {
   const carte = document.getElementById('carte-ajout-chasse');
   if (!carte) return;
 
-  // 🔍 Statut figé côté PHP
-  const descriptionEstRemplie = carte.dataset.descriptionRemplie === '1';
+  // 🔍 État du champ "Présentation"
+  const champDesc = document.querySelector('.panneau-organisateur .resume-infos li[data-champ="description_longue"]');
+  const descriptionEstRemplie = champDesc && !champDesc.classList.contains('champ-vide');
 
   // 🔍 Champs JS dynamiques
   const champsJS = [
@@ -298,9 +299,9 @@ window.mettreAJourCarteAjoutChasse = function () {
     return champ?.classList.contains('champ-vide');
   });
 
-  // ✅ Ajout manuel si description PHP non remplie
+  // ✅ Ajout manuel si la présentation est vide
   if (!descriptionEstRemplie) {
-    incomplets.push('[data-champ="profil_public_description"]');
+    incomplets.push('[data-champ="description_longue"]');
   }
 
   console.log('🧩 Vérif carte-ajout → champs vides détectés :', incomplets);
