@@ -1,4 +1,5 @@
-console.log('✅ organisateur-edit.js chargé');
+var DEBUG = window.DEBUG || false;
+DEBUG && console.log('✅ organisateur-edit.js chargé');
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -184,8 +185,8 @@ window.mettreAJourCarteAjoutChasse = function () {
     incomplets.push('[data-champ="description_longue"]');
   }
 
-  console.log('🧩 Vérif carte-ajout → champs vides détectés :', incomplets);
-  console.log('🧩 carte actuelle :', carte);
+  DEBUG && console.log('🧩 Vérif carte-ajout → champs vides détectés :', incomplets);
+  DEBUG && console.log('🧩 carte actuelle :', carte);
 
   let overlay = carte.querySelector('.overlay-message');
 

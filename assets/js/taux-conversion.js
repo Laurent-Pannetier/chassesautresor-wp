@@ -1,11 +1,12 @@
 document.addEventListener("DOMContentLoaded", function () {
+    var DEBUG = window.DEBUG || false;
 
     /** 🔹 Gestion de l'affichage du formulaire d'édition */
     let editerBtn = document.getElementById("editer-taux");
     let formEdition = document.getElementById("form-edition-taux");
     let enregistrerBtn = document.getElementById("enregistrer-taux");
 
-    console.log("🔎 Bouton 'Mettre à jour' détecté :", enregistrerBtn);
+    DEBUG && console.log("🔎 Bouton 'Mettre à jour' détecté :", enregistrerBtn);
 
     if (editerBtn && formEdition && enregistrerBtn) {
         editerBtn.addEventListener("click", function () {
@@ -24,7 +25,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 return;
             }
 
-            console.log("📤 Envoi du formulaire...");
+            DEBUG && console.log("📤 Envoi du formulaire...");
             formEdition.submit(); // 🚀 Soumission classique du formulaire
         });
     }
@@ -64,7 +65,7 @@ document.addEventListener("DOMContentLoaded", function () {
     activerModal(); // 🔹 Réactiver la gestion du modal
 });
 document.addEventListener("DOMContentLoaded", function () {
-    console.log("🔄 Script taux-conversion.js chargé");
+    DEBUG && console.log("🔄 Script taux-conversion.js chargé");
 
     /** 🔹 Gestion de l'affichage du formulaire d'édition */
     let modifierBtn = document.getElementById("modifier-taux");
@@ -73,7 +74,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (modifierBtn && overlay && formTaux) {
         modifierBtn.addEventListener("click", function () {
-            console.log("✅ Affichage du formulaire de taux.");
+            DEBUG && console.log("✅ Affichage du formulaire de taux.");
             overlay.style.display = "none"; // Retirer l’overlay
             formTaux.style.display = "block"; // Afficher le formulaire
         });
