@@ -33,7 +33,7 @@ defined( 'ABSPATH' ) || exit;
  * @return void
  */
 function enqueue_script_header_organisateur_ui() {
-    if (is_singular(['organisateur', 'chasse'])) {
+    if (is_singular(['organisateur', 'chasse', 'enigme'])) {
         $path = '/assets/js/header-organisateur-ui.js';
         wp_enqueue_script(
             'header-organisateur-ui',
