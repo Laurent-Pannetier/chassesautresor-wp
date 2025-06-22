@@ -83,14 +83,10 @@ $url_contact = esc_url($base_url . 'contact?email_organisateur=' . urlencode($em
         <a href="<?= esc_url($url_contact); ?>" class="lien-contact" aria-label="Contact">
           <i class="fa-solid fa-envelope"></i>
         </a>
+        <button id="toggle-mode-edition" class="bouton-edition-toggle" aria-label="Paramètres organisateur">
+          <i class="fa-solid fa-sliders"></i>
+        </button>
       </div>
-    </div>
-
-    <!-- Icône réglage (toggle panneau + stylos) -->
-    <div class="header-actions-droite">
-      <button id="toggle-mode-edition" class="bouton-edition-toggle" aria-label="Paramètres organisateur">
-        <i class="fa-solid fa-sliders"></i>
-      </button>
     </div>
 
   </header>
