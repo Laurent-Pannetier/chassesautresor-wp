@@ -14,7 +14,7 @@ $posts = is_a($query, 'WP_Query') ? $query->posts : (array) $query;
   <?php foreach ($posts as $post) : ?>
     <?php
     $chasse_id = $post->ID;
-    get_template_part('template-parts/organisateur-partial-chasse-card', null, [
+    get_template_part('template-parts/organisateur/organisateur-partial-chasse-card', null, [
       'chasse_id' => $chasse_id,
     ]);
     ?>
