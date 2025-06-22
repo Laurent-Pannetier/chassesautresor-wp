@@ -7,8 +7,6 @@ let inputDateFin;
 let erreurDebut;
 let erreurFin;
 let checkboxIllimitee;
-let ancienneValeurDebut = '';
-let ancienneValeurFin = '';
 
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -96,9 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // ==============================
   // 📅 Gestion Date de fin + Durée illimitée
   // ==============================
-  let ancienneValeurFin = '';
   if (inputDateFin) {
-    let ancienneValeurFin = inputDateFin.value;
 
     if (checkboxIllimitee) {
       inputDateFin.disabled = checkboxIllimitee.checked;
@@ -170,7 +166,6 @@ document.addEventListener('DOMContentLoaded', () => {
         mettreAJourAffichageDateFin();
       });
     }
-
     inputDateFin.addEventListener('change', function () {
       const sauvegardeAvantChangement = this.value;
 
@@ -225,6 +220,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       ancienneValeurDebut = nouvelleDateDebut;
     });
+
   }
 
 
