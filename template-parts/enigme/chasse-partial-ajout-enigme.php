@@ -23,4 +23,3 @@ $ajout_url = esc_url(add_query_arg('chasse_id', $chasse_id, home_url('/creer-eni
   </div>
 </div>
 
-</div>
