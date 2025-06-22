@@ -89,3 +89,49 @@
   padding: 1rem;
   flex: 1;
 }
+
+/* ========== ➕ Cartes d'ajout d'énigme et de chasse ========== */
+.carte-ajout-enigme,
+.carte-ajout-chasse {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1.5rem;
+  min-height: 140px;
+  text-align: center;
+  border: 2px dashed var(--color-editor-border);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  position: relative;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.carte-ajout-chasse .carte-chasse-contenu,
+.carte-ajout-enigme .contenu-carte {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.carte-ajout-chasse .icone-ajout i {
+  color: var(--color-secondary);
+}
+
+.carte-ajout-chasse .overlay-message {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-primary);
+  text-align: center;
+  gap: 0.5rem;
+  padding: 0 1rem;
+}
