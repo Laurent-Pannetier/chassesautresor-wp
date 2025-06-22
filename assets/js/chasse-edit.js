@@ -391,111 +391,13 @@ document.addEventListener('DOMContentLoaded', () => {
 // 🔗 Initialisation des liens chasse
 // ==============================
 function initLiensChasse(bloc) {
-  const champ = bloc.dataset.champ;
-  const postId = bloc.dataset.postId;
-  const bouton = bloc.querySelector('.champ-modifier.ouvrir-panneau-liens');
-  const panneau = document.getElementById('panneau-liens-chasse');
-  let formulaire = document.getElementById('formulaire-liens-chasse');
-  const feedback = bloc.querySelector('.champ-feedback');
-
-  if (!champ || !postId || !formulaire || !bouton || !panneau) return;
-
-  bouton.addEventListener('click', () => {
-    document.querySelectorAll('.panneau-lateral.ouvert, .panneau-lateral-liens.ouvert').forEach((p) => {
-      p.classList.remove('ouvert');
-      p.setAttribute('aria-hidden', 'true');
+  if (typeof window.initLiensPublics === 'function') {
+    initLiensPublics(bloc, {
+      panneauId: 'panneau-liens-chasse',
+      formId: 'formulaire-liens-chasse',
+      action: 'modifier_champ_chasse'
     });
-    panneau.classList.add('ouvert');
-    document.body.classList.add('panneau-ouvert');
-    panneau.setAttribute('aria-hidden', 'false');
-  });
-
-  panneau.querySelector('.panneau-fermer')?.addEventListener('click', () => {
-    panneau.classList.remove('ouvert');
-    document.body.classList.remove('panneau-ouvert');
-    panneau.setAttribute('aria-hidden', 'true');
-  });
-
-  const clone = formulaire.cloneNode(true);
-  formulaire.replaceWith(clone);
-  formulaire = clone;
-
-  formulaire.addEventListener('submit', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    const lignes = formulaire.querySelectorAll('.ligne-lien-formulaire');
-    const donnees = [];
-
-    lignes.forEach((ligne) => {
-      const type = ligne.dataset.type;
-      const input = ligne.querySelector('input[type="url"]');
-      const url = input?.value.trim();
-      if (type && url) {
-        try {
-          new URL(url);
-          donnees.push({ type_de_lien: type, url_lien: url });
-        } catch (_) {
-          input.classList.add('champ-erreur');
-        }
-      }
-    });
-
-    fetch('/wp-admin/admin-ajax.php', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        action: 'modifier_champ_chasse',
-        champ,
-        post_id: postId,
-        valeur: JSON.stringify(donnees)
-      })
-    })
-      .then(res => res.json())
-      .then((res) => {
-        if (!res.success) throw new Error(res.data || 'Erreur AJAX');
-
-        // Met à jour les données en local dans le panneau
-        const champDonnees = bloc.querySelector('.champ-donnees');
-        if (champDonnees) {
-          champDonnees.dataset.valeurs = JSON.stringify(donnees);
-        }
-
-        // Met à jour l'affichage dans la fiche publique (pas le panneau)
-        const blocFiche = document.querySelector(
-          `.champ-chasse.champ-fiche-publication[data-champ="${champ}"][data-post-id="${postId}"]`
-        );
-        const affichageFiche = blocFiche?.querySelector('.champ-affichage');
-        if (affichageFiche && typeof renderLiensPublicsJS === 'function') {
-          affichageFiche.innerHTML = renderLiensPublicsJS(donnees);
-
-
-          // 🔁 Relance la détection de complétion (liens détectés après rendu)
-          if (typeof window.mettreAJourResumeInfos === 'function') {
-            window.mettreAJourResumeInfos();
-          }
-        }
-
-        // Classe remplie/vide
-        bloc.classList.toggle('champ-vide', donnees.length === 0);
-        bloc.classList.toggle('champ-rempli', donnees.length > 0);
-
-        panneau.classList.remove('ouvert');
-        document.body.classList.remove('panneau-ouvert');
-        panneau.setAttribute('aria-hidden', 'true');
-
-        if (typeof window.mettreAJourResumeInfos === 'function') {
-          window.mettreAJourResumeInfos();
-        }
-      })
-      .catch((err) => {
-        console.error('❌ AJAX fail', err.message || err);
-        if (feedback) {
-          feedback.textContent = 'Erreur : ' + (err.message || 'Serveur ou réseau.');
-          feedback.className = 'champ-feedback champ-error';
-        }
-      });
-  });
+  }
 }
 
 
