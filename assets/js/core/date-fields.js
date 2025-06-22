@@ -57,42 +57,30 @@ function initChampDate(input) {
     console.log('[🧪 initChampDate]', champ, '| valeur saisie :', valeur);
     if (!/^\d{4}-\d{2}-\d{2}$/.test(valeur)) {
       console.warn(`❌ Date invalide (${champ}) :`, valeur);
+      input.value = input.dataset.previous || '';
       return;
     }
 
-    const action = (cpt === 'chasse') ? 'modifier_champ_chasse' :
-      (cpt === 'enigme') ? 'modifier_champ_enigme' :
-        'modifier_champ_organisateur';
+    if (cpt === 'chasse' && typeof window.validerDatesAvantEnvoi === 'function') {
+      let type = '';
+      if (champ.endsWith('_date_debut')) type = 'debut';
+      if (champ.endsWith('_date_fin')) type = 'fin';
+      if (type && !window.validerDatesAvantEnvoi(type)) {
+        input.value = input.dataset.previous || '';
+        return;
+      }
+    }
 
-    console.log('📤 Envoi AJAX date', { champ, valeur, postId });
-
-    fetch(ajaxurl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        action,
-        champ,
-        valeur,
-        post_id: postId
-      })
-    })
-      .then(r => r.json())
-      .then(res => {
-        if (res.success) {
-          console.log('[initChampDate] Hook onDateFieldUpdated =', typeof window.onDateFieldUpdated);
-
-          if (typeof window.onDateFieldUpdated === 'function') {
-            console.log('[initChampDate] Appel de onDateFieldUpdated() avec valeur =', valeur);
-
-            window.onDateFieldUpdated(input, valeur);
-          }
-        } else {
-          console.warn('❌ Erreur serveur (date)', res.data || res);
+    modifierChampSimple(champ, valeur, postId, cpt).then(success => {
+      if (success) {
+        input.dataset.previous = valeur;
+        if (typeof window.onDateFieldUpdated === 'function') {
+          window.onDateFieldUpdated(input, valeur);
         }
-      })
-      .catch(err => {
-        console.error('❌ Erreur réseau (date)', err);
-      });
+      } else {
+        input.value = input.dataset.previous || '';
+      }
+    });
   });
   if (typeof window.onDateFieldUpdated === 'function') {
     const valeurInit = input.value?.trim() || ''; // 🔹 protection + fallback vide
