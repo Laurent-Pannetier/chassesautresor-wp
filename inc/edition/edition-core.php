@@ -80,11 +80,14 @@ function enqueue_core_edit_scripts()
 
   // Déclare les fichiers dans l’ordre des dépendances internes
   $core_scripts = [
-    'helpers'            => 'helpers.js',
-    'ajax'               => 'ajax.js',
-    'ui'                 => 'ui.js',
-    'champ-init'         => 'champ-init.js',
-    'champ-date-hooks'   => 'champ-date-hooks.js', // 🆕 nouveau fichier
+    'helpers'          => 'helpers.js',
+    'ajax'             => 'ajax.js',
+    'ui'               => 'ui.js',
+    'resume'           => 'resume.js',
+    'image-utils'      => 'image-utils.js',
+    'date-fields'      => 'date-fields.js',
+    'champ-init'       => 'champ-init.js',
+    'champ-date-hooks' => 'champ-date-hooks.js',
   ];
 
   $previous_handle = null;
