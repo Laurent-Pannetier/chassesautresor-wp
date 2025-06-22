@@ -203,7 +203,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initChampPreRequis();
   initChampSolution();
   initSolutionInline();
-  initChampConditionnel('enigme_acces_condition', {
+  initChampConditionnel('acf[enigme_acces_condition]', {
     'date_programmee': ['#bloc-champ-enigme_acces_date'],
     'pre_requis': ['#bloc-champ-enigme_acces_pre_requis']
   });
