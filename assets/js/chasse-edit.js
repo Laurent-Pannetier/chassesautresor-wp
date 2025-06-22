@@ -45,9 +45,11 @@ document.addEventListener('DOMContentLoaded', () => {
   // ==============================
   document.getElementById('toggle-mode-edition-chasse')?.addEventListener('click', () => {
     document.body.classList.toggle('edition-active-chasse');
+    document.body.classList.toggle('panneau-ouvert');
   });
   document.querySelector('.edition-panel-chasse .panneau-fermer')?.addEventListener('click', () => {
     document.body.classList.remove('edition-active-chasse');
+    document.body.classList.remove('panneau-ouvert');
     document.activeElement?.blur();
   });
 

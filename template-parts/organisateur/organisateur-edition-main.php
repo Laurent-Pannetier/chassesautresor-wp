@@ -38,7 +38,7 @@ $classe_vide_coordonnees = ($iban_vide || $bic_vide) ? 'champ-vide' : '';
 ?>
 
 <?php if ($edition_active && $peut_modifier) : ?>
-  <section class="panneau-organisateur edition-panel edition-panel-organisateur edition-active" aria-hidden="false">
+  <section class="panneau-organisateur edition-panel edition-panel-organisateur edition-panel-modal edition-active" aria-hidden="false">
 
     <div class="edition-panel-header">
       <h2><i class="fa-solid fa-sliders"></i> Paramètres organisateur</h2>
@@ -47,8 +47,14 @@ $classe_vide_coordonnees = ($iban_vide || $bic_vide) ? 'champ-vide' : '';
       </button>
     </div>
 
+    <div class="edition-tabs">
+      <button class="edition-tab active" data-target="organisateur-tab-param">Paramètres</button>
+      <button class="edition-tab" data-target="organisateur-tab-stats">Statistiques</button>
+      <button class="edition-tab" data-target="organisateur-tab-spec">Champs spécifiques</button>
+    </div>
 
-    <div class="edition-panel-body">
+    <div id="organisateur-tab-param" class="edition-tab-content active">
+      <div class="edition-panel-body">
       <div class="edition-panel-section edition-panel-section-ligne accordeon-bloc" data-bloc="profil">
         <button class="accordeon-toggle" aria-expanded="true">
           <span class="label">
@@ -221,7 +227,17 @@ $classe_vide_coordonnees = ($iban_vide || $bic_vide) ? 'champ-vide' : '';
           <p class="info-a-suivre">Rendez-vous prochainement pour plus de fonctionnalités !</p>
         </div>
       </div>
+    </div> <!-- .edition-panel-body -->
+    </div> <!-- #organisateur-tab-param -->
+
+    <div id="organisateur-tab-stats" class="edition-tab-content" style="display:none;">
+      <p>Statistiques en cours de développement.</p>
     </div>
+
+    <div id="organisateur-tab-spec" class="edition-tab-content" style="display:none;">
+      <p>Actualités bientôt disponibles.</p>
+    </div>
+
     <div class="edition-panel-footer"></div>
   </section>
 <?php endif; ?>

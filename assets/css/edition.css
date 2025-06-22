@@ -470,6 +470,19 @@ body.edition-active-enigme .edition-panel-enigme {
   overflow-y: auto;
 }
 
+body.edition-active .panneau-organisateur.edition-panel-modal,
+body.edition-active-chasse .edition-panel-chasse.edition-panel-modal,
+body.edition-active-enigme .edition-panel-enigme.edition-panel-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 95%;
+  max-height: 90vh;
+  border-radius: 8px;
+  z-index: 10000;
+}
+
 .edition-panel-header {
   display: flex;
   justify-content: space-between;
@@ -841,4 +854,36 @@ body.panneau-ouvert::before {
   pointer-events: none;
   opacity: 0.5;
   filter: grayscale(100%);
+}
+
+/* ==================================================
+   🗂️ ONGLET MODAL D'ÉDITION
+   ================================================== */
+
+.edition-tabs {
+  display: flex;
+  gap: 0.5rem;
+  border-bottom: 1px solid var(--color-editor-border);
+  margin-bottom: 1rem;
+}
+
+.edition-tab {
+  background: none;
+  border: none;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--color-editor-text);
+}
+
+.edition-tab.active {
+  border-bottom: 3px solid var(--color-primary);
+}
+
+.edition-tab-content {
+  display: none;
+}
+
+.edition-tab-content.active {
+  display: block;
 }
