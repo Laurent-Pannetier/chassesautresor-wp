@@ -840,4 +840,5 @@ body.panneau-ouvert::before {
 .carte-ajout-chasse.disabled {
   pointer-events: none;
   opacity: 0.5;
+  filter: grayscale(100%);
 }
