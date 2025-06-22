@@ -202,6 +202,14 @@ document.addEventListener('DOMContentLoaded', () => {
     ancienneValeurDebut = inputDateDebut.value;
 
     inputDateDebut.addEventListener('change', function () {
+      const sauvegardeAvantChangement = this.value;
+
+      const valid = validerDatesAvantEnvoi('debut');
+      if (!valid) {
+        this.value = ancienneValeurDebut;
+        return;
+      }
+
       const nouvelleDateDebut = this.value;
       const regexDate = /^\d{4}-\d{2}-\d{2}$/;
 
