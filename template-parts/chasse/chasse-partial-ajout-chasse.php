@@ -9,7 +9,11 @@ if (!$organisateur_id || get_post_type($organisateur_id) !== 'organisateur') {
 }
 ?>
 
-<article id="carte-ajout-chasse" class="carte-chasse carte-ajout-chasse disabled" data-post-id="0">
+<a href="<?= esc_url(site_url('/creer-chasse/')); ?>"
+   id="carte-ajout-chasse"
+   class="carte-chasse carte-ajout-chasse disabled"
+   data-post-id="0">
+
   <div class="carte-chasse-contenu">
     <div class="icone-ajout">
       <i class="fa-solid fa-circle-plus fa-3x"></i>
@@ -21,4 +25,5 @@ if (!$organisateur_id || get_post_type($organisateur_id) !== 'organisateur') {
     <i class="fa-solid fa-circle-info"></i>
     <p>Complétez d’abord : titre, logo, description</p>
   </div>
-</article>
+</a>
+
