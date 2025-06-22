@@ -81,7 +81,7 @@ if ($peut_ajouter_enigme) {
 $classe_verrouillee = ($statut === 'Verrouillée') ? 'statut-verrouille' : '';
 ?>
 
-<div class="carte-ligne carte-chasse <?php echo esc_attr($classe_statut . ' ' . $classe_verrouillee); ?>">
+<div class="carte carte-ligne carte-chasse <?php echo esc_attr($classe_statut . ' ' . $classe_verrouillee); ?>">
     <?php // ✅ Afficher le menu uniquement s'il y a des actions
     if (!empty($menu_items)) : ?>
         <div class="menu-actions">
