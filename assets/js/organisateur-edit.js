@@ -52,7 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.activeElement?.blur();
   });
 
-  
+
   // 🏦 Coordonnées bancaires
   const panneauCoord = document.getElementById('panneau-coordonnees');
   const formCoord = document.getElementById('formulaire-coordonnees');
@@ -140,6 +140,11 @@ document.addEventListener('DOMContentLoaded', () => {
         feedbackIban.classList.add('champ-error');
       });
   });
+
+  if (typeof window.mettreAJourResumeInfos === 'function') {
+    window.mettreAJourResumeInfos();
+  }
+
 });
 
 
