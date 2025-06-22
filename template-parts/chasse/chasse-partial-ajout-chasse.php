@@ -3,6 +3,8 @@ defined('ABSPATH') || exit;
 
 $organisateur_id = $args['organisateur_id'] ?? null;
 $has_chasses = $args['has_chasses'] ?? false;
+$description_remplie = $args['description_remplie'] ?? false;
+
 
 if (!$organisateur_id || get_post_type($organisateur_id) !== 'organisateur') {
   return;
