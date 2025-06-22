@@ -1,15 +1,16 @@
 document.addEventListener("DOMContentLoaded", function () {
-    console.log("✅ gestion-points.js chargé");
+    var DEBUG = window.DEBUG || false;
+    DEBUG && console.log("✅ gestion-points.js chargé");
 
     setTimeout(function() {
         const userInput = document.getElementById("utilisateur-points");
 
         if (!userInput) {
-            console.log("❌ Élément introuvable : Vérifie l'ID du champ input.");
+            DEBUG && console.log("❌ Élément introuvable : Vérifie l'ID du champ input.");
             return;
         }
 
-        console.log("✅ Élément trouvé : utilisateur-points");
+        DEBUG && console.log("✅ Élément trouvé : utilisateur-points");
 
         // ✅ Vérifier si #suggestions-list existe, sinon le créer dynamiquement
         let suggestionsList = document.getElementById("suggestions-list");
@@ -25,24 +26,24 @@ document.addEventListener("DOMContentLoaded", function () {
             suggestionsList.style.display = "none";
             suggestionsList.style.zIndex = "1000";
             userInput.parentNode.insertBefore(suggestionsList, userInput.nextSibling);
-            console.log("✅ Élément #suggestions-list ajouté au DOM.");
+            DEBUG && console.log("✅ Élément #suggestions-list ajouté au DOM.");
         }
 
         userInput.addEventListener("input", function () {
             let searchTerm = userInput.value.trim();
             if (searchTerm.length < 2) {
-                console.log("❌ Trop court, pas de requête AJAX");
+                DEBUG && console.log("❌ Trop court, pas de requête AJAX");
                 suggestionsList.innerHTML = ""; // Effacer la liste si trop court
                 suggestionsList.style.display = "none"; // Cacher la liste
                 return;
             }
 
-            console.log("🔍 Recherche AJAX envoyée :", searchTerm);
+            DEBUG && console.log("🔍 Recherche AJAX envoyée :", searchTerm);
 
             fetch(ajax_object.ajax_url + "?action=rechercher_utilisateur&term=" + encodeURIComponent(searchTerm))
                 .then(response => response.json())
                 .then(data => {
-                    console.log("✅ Réponse AJAX reçue :", data);
+                    DEBUG && console.log("✅ Réponse AJAX reçue :", data);
 
                     suggestionsList.innerHTML = ""; // Réinitialiser la liste
                     suggestionsList.style.display = "block"; // Afficher la liste
@@ -65,9 +66,9 @@ document.addEventListener("DOMContentLoaded", function () {
                             suggestionsList.appendChild(listItem);
                         });
 
-                        console.log("✅ Suggestions mises à jour.");
+                        DEBUG && console.log("✅ Suggestions mises à jour.");
                     } else {
-                        console.log("❌ Aucune donnée reçue.");
+                        DEBUG && console.log("❌ Aucune donnée reçue.");
                         suggestionsList.style.display = "none"; // Cacher la liste si vide
                     }
                 })

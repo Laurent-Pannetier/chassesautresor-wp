@@ -1,4 +1,5 @@
-console.log('✅ organisateur-edit.js chargé');
+var DEBUG = window.DEBUG || false;
+DEBUG && console.log('✅ organisateur-edit.js chargé');
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -26,18 +27,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // ✅ Ce bouton existe ET il est contenu dans le panneau organisateur
     if (!btn || !btn.closest('.panneau-organisateur')) return;
 
-    const panneau = document.getElementById('panneau-liens-publics');
-    if (!panneau) return;
-
-    // ✅ Fermer tout autre panneau déjà ouvert
-    document.querySelectorAll('.panneau-lateral.ouvert, .panneau-lateral-liens.ouvert').forEach((p) => {
-      p.classList.remove('ouvert');
-      p.setAttribute('aria-hidden', 'true');
-    });
-
-    panneau.classList.add('ouvert');
-    panneau.setAttribute('aria-hidden', 'false');
-    document.body.classList.add('panneau-ouvert');
+    if (typeof window.openPanel === 'function') {
+      window.openPanel('panneau-liens-publics');
+    }
   });
 
 
@@ -67,15 +59,23 @@ document.addEventListener('DOMContentLoaded', () => {
   const validerBic = (bic) => /^[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/.test(bic.toUpperCase());
 
   boutonOuvrirCoord?.addEventListener('click', () => {
-    panneauCoord?.classList.add('ouvert');
-    document.body.classList.add('panneau-ouvert');
-    panneauCoord?.setAttribute('aria-hidden', 'false');
+    if (typeof window.openPanel === 'function') {
+      window.openPanel('panneau-coordonnees');
+    } else {
+      panneauCoord?.classList.add('ouvert');
+      document.body.classList.add('panneau-ouvert');
+      panneauCoord?.setAttribute('aria-hidden', 'false');
+    }
   });
 
   boutonFermerCoord?.addEventListener('click', () => {
-    panneauCoord?.classList.remove('ouvert');
-    document.body.classList.remove('panneau-ouvert');
-    panneauCoord?.setAttribute('aria-hidden', 'true');
+    if (typeof window.closePanel === 'function') {
+      window.closePanel('panneau-coordonnees');
+    } else {
+      panneauCoord?.classList.remove('ouvert');
+      document.body.classList.remove('panneau-ouvert');
+      panneauCoord?.setAttribute('aria-hidden', 'true');
+    }
   });
 
   formCoord?.addEventListener('submit', (e) => {
@@ -123,9 +123,13 @@ document.addEventListener('DOMContentLoaded', () => {
           feedbackIban.textContent = '✔️ Coordonnées enregistrées.';
           feedbackIban.classList.add('champ-confirmation');
           setTimeout(() => {
-            panneauCoord?.classList.remove('ouvert');
-            document.body.classList.remove('panneau-ouvert');
-            panneauCoord?.setAttribute('aria-hidden', 'true');
+            if (typeof window.closePanel === 'function') {
+              window.closePanel('panneau-coordonnees');
+            } else {
+              panneauCoord?.classList.remove('ouvert');
+              document.body.classList.remove('panneau-ouvert');
+              panneauCoord?.setAttribute('aria-hidden', 'true');
+            }
             feedbackIban.textContent = '';
             feedbackIban.className = 'champ-feedback';
             if (typeof window.mettreAJourResumeInfos === 'function') window.mettreAJourResumeInfos();
@@ -149,133 +153,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 function initLiensOrganisateur(bloc) {
-  const champ = bloc.dataset.champ;
-  const postId = bloc.dataset.postId;
-  const zoneAffichage = bloc.querySelector('.champ-affichage');
-  const bouton = bloc.querySelector('.champ-modifier');
-  const panneau = document.getElementById('panneau-liens-publics');
-  const formulaire = document.getElementById('formulaire-liens-publics');
-  const feedback = bloc.querySelector('.champ-feedback');
-
-  if (!champ || !postId || !zoneAffichage || !formulaire || !bouton || !panneau) return;
-
-  bouton.addEventListener('click', () => {
-    panneau.classList.add('ouvert');
-    document.body.classList.add('panneau-ouvert');
-    panneau.setAttribute('aria-hidden', 'false');
-  });
-
-  panneau.querySelector('.panneau-fermer')?.addEventListener('click', () => {
-    panneau.classList.remove('ouvert');
-    document.body.classList.remove('panneau-ouvert');
-    panneau.setAttribute('aria-hidden', 'true');
-  });
-
-  formulaire.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const lignes = formulaire.querySelectorAll('.ligne-lien-formulaire');
-    const donnees = [];
-
-    lignes.forEach((ligne) => {
-      const type = ligne.dataset.type;
-      const input = ligne.querySelector('input[type="url"]');
-      const url = input?.value.trim();
-      if (type && url) {
-        try {
-          new URL(url);
-          donnees.push({ type_de_lien: type, url_lien: url });
-        } catch (_) {
-          input.classList.add('champ-erreur');
-        }
-      }
+  if (typeof window.initLiensPublics === 'function') {
+    initLiensPublics(bloc, {
+      panneauId: 'panneau-liens-publics',
+      formId: 'formulaire-liens-publics',
+      action: 'modifier_champ_organisateur'
     });
-
-    fetch('/wp-admin/admin-ajax.php', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        action: 'modifier_champ_organisateur',
-        champ,
-        post_id: postId,
-        valeur: JSON.stringify(donnees)
-      })
-    })
-      .then(res => res.json())
-      .then((res) => {
-        if (res.success) {
-          const icones = {
-            site_web: 'fa-solid fa-globe',
-            discord: 'fa-brands fa-discord',
-            facebook: 'fa-brands fa-facebook-f',
-            twitter: 'fa-brands fa-x-twitter',
-            instagram: 'fa-brands fa-instagram'
-          };
-
-          const labels = {
-            site_web: 'Site Web',
-            discord: 'Discord',
-            facebook: 'Facebook',
-            twitter: 'Twitter/X',
-            instagram: 'Instagram'
-          };
-
-          let html = '';
-          if (donnees.length > 0) {
-            html = '<ul class="liste-liens-publics">' + donnees.map(item => {
-              const type = item.type_de_lien;
-              const url = item.url_lien;
-              const icone = icones[type] || 'fa-link';
-              const label = labels[type] || type;
-              return `
-                <li class="item-lien-public">
-                  <a href="${url}" class="lien-public lien-${type}" target="_blank" rel="noopener">
-                    <i class="fa ${icone}"></i>
-                    <span class="texte-lien">${label}</span>
-                  </a>
-                </li>`;
-            }).join('') + '</ul>';
-          } else {
-            html = `
-              <div class="liens-placeholder">
-                <p class="liens-placeholder-message">Aucun lien ajouté pour le moment.</p>
-                <i class="fa fa-solid fa-globe icone-grisee" title="Site Web"></i>
-                <i class="fa fa-brands fa-discord icone-grisee" title="Discord"></i>
-                <i class="fa fa-brands fa-facebook-f icone-grisee" title="Facebook"></i>
-                <i class="fa fa-brands fa-x-twitter icone-grisee" title="Twitter/X"></i>
-                <i class="fa fa-brands fa-instagram icone-grisee" title="Instagram"></i>
-              </div>`;
-
-          }
-
-          zoneAffichage.innerHTML = html;
-          // 🔁 Ajouter le bouton ✏️ s’il a été perdu
-          if (!bloc.querySelector('.champ-modifier')) {
-            const bouton = document.createElement('button');
-            bouton.type = 'button';
-            bouton.className = 'champ-modifier ouvrir-panneau-liens';
-            bouton.setAttribute('aria-label', 'Configurer vos liens');
-            bouton.textContent = '✏️';
-            bloc.querySelector('.champ-affichage')?.appendChild(bouton);
-          }
-
-          bloc.classList.toggle('champ-vide', donnees.length === 0);
-          panneau.classList.remove('ouvert');
-          document.body.classList.remove('panneau-ouvert');
-          panneau.setAttribute('aria-hidden', 'true');
-
-          if (typeof window.mettreAJourResumeInfos === 'function') {
-            window.mettreAJourResumeInfos();
-          }
-        } else {
-          feedback.textContent = 'Erreur : ' + (res.data || 'mise à jour échouée');
-          feedback.className = 'champ-feedback champ-error';
-        }
-      })
-      .catch(() => {
-        feedback.textContent = 'Erreur réseau.';
-        feedback.className = 'champ-feedback champ-error';
-      });
-  });
+  }
 }
 
 // 🗺️ Met à jour la carte d'ajout de chasse en fonction des champs remplis
@@ -304,8 +188,8 @@ window.mettreAJourCarteAjoutChasse = function () {
     incomplets.push('[data-champ="description_longue"]');
   }
 
-  console.log('🧩 Vérif carte-ajout → champs vides détectés :', incomplets);
-  console.log('🧩 carte actuelle :', carte);
+  DEBUG && console.log('🧩 Vérif carte-ajout → champs vides détectés :', incomplets);
+  DEBUG && console.log('🧩 carte actuelle :', carte);
 
   let overlay = carte.querySelector('.overlay-message');
 

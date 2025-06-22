@@ -3,7 +3,8 @@
  * - Vérifie la taille et le format du fichier
  * - Envoie l'image en AJAX
  * - Met à jour dynamiquement l'avatar après l'upload
- */
+*/
+var DEBUG = window.DEBUG || false;
 
 document.addEventListener("DOMContentLoaded", function () {
     // 🔹 Vérification de l'URL avant d'exécuter le script
@@ -55,7 +56,7 @@ document.addEventListener("DOMContentLoaded", function () {
             formData.append("action", "upload_user_avatar");
             formData.append("avatar", file);
 
-            console.log("📤 Envoi de la requête AJAX...");
+            DEBUG && console.log("📤 Envoi de la requête AJAX...");
             
             fetch(ajaxurl, {
                 method: "POST",
@@ -64,10 +65,10 @@ document.addEventListener("DOMContentLoaded", function () {
             })
             .then(response => response.json())
             .then(data => {
-                console.log("🔍 Réponse complète du serveur :", data);
+                DEBUG && console.log("🔍 Réponse complète du serveur :", data);
 
                 if (data.success && data.data.new_avatar_url) {
-                    console.log("✅ Nouvelle URL de l'avatar :", data.data.new_avatar_url);
+                    DEBUG && console.log("✅ Nouvelle URL de l'avatar :", data.data.new_avatar_url);
 
                     // ✅ Vérifier que l'image est bien trouvée avant de modifier `src`
                     avatarImg.src = data.data.new_avatar_url;

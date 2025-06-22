@@ -1,5 +1,6 @@
 // ✅ enigme-edit.js
-console.log('✅ enigme-edit.js chargé');
+var DEBUG = window.DEBUG || false;
+DEBUG && console.log('✅ enigme-edit.js chargé');
 
 let boutonToggle;
 let panneauEdition;
@@ -31,7 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const doitOuvrir = params.get('edition') === 'open';
   if (doitOuvrir && boutonToggle) {
     boutonToggle.click();
-    console.log('🔧 Ouverture auto du panneau édition énigme via ?edition=open');
+    DEBUG && console.log('🔧 Ouverture auto du panneau édition énigme via ?edition=open');
   }
 
 
@@ -73,7 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('input[name="acf[enigme_mode_validation]"]').forEach((radio) => {
       radio.addEventListener('change', () => {
         const val = radio.value;
-        console.log(val)
+        DEBUG && console.log(val)
         zoneExplication.textContent = explicationValidation[val] || '';
       });
       if (radio.checked) {
@@ -98,23 +99,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const btn = e.target.closest('.ouvrir-panneau-description');
     if (!btn || btn.dataset.cpt !== 'enigme') return;
 
-    const panneau = document.getElementById('panneau-description-enigme');
-    if (!panneau) return;
-
-    document.querySelectorAll('.panneau-lateral.ouvert, .panneau-lateral-liens.ouvert').forEach((p) => {
-      p.classList.remove('ouvert');
-      p.setAttribute('aria-hidden', 'true');
-    });
-
-    panneau.classList.add('ouvert');
-    document.body.classList.add('panneau-ouvert');
-    panneau.setAttribute('aria-hidden', 'false');
+    if (typeof window.openPanel === 'function') {
+      window.openPanel('panneau-description-enigme');
+    }
   });
   document.querySelector('#panneau-description-enigme .panneau-fermer')?.addEventListener('click', () => {
-    const panneau = document.getElementById('panneau-description-enigme');
-    panneau.classList.remove('ouvert');
-    document.body.classList.remove('panneau-ouvert');
-    panneau.setAttribute('aria-hidden', 'true');
+    if (typeof window.closePanel === 'function') {
+      window.closePanel('panneau-description-enigme');
+    }
   });
 
 
@@ -212,8 +204,8 @@ document.addEventListener('DOMContentLoaded', () => {
   initChampSolution();
   initSolutionInline();
   initChampConditionnel('enigme_acces_condition', {
-    'date_programmee': '#bloc-champ-enigme_acces_date',
-    'pre_requis': '#bloc-champ-enigme_acces_pre_requis'
+    'date_programmee': ['#bloc-champ-enigme_acces_date'],
+    'pre_requis': ['#bloc-champ-enigme_acces_pre_requis']
   });
   initChampRadioAjax('acf[enigme_acces_condition]');
   appliquerEtatGratuitEnLive(); // ✅ Synchronise état initial de "Gratuit"
@@ -240,7 +232,7 @@ document.addEventListener('DOMContentLoaded', () => {
       .then(r => r.json())
       .then(res => {
         if (res.success) {
-          console.log('🔄 Statut système de l’énigme recalculé');
+          DEBUG && console.log('🔄 Statut système de l’énigme recalculé');
         } else {
           console.warn('⚠️ Échec recalcul statut énigme :', res.data);
         }
@@ -258,7 +250,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const trimmed = raw.trim();
     const valeur = trimmed === '' ? null : parseInt(trimmed, 10);
 
-    console.log('[INIT GRATUIT] valeur brute =', raw, '| valeur interprétée =', valeur);
+    DEBUG && console.log('[INIT GRATUIT] valeur brute =', raw, '| valeur interprétée =', valeur);
 
     const estGratuit = valeur === 0;
 
@@ -299,17 +291,12 @@ document.addEventListener('click', (e) => {
         return;
       }
 
-      console.log(`🔓 htaccess désactivé pour énigme ${postId}`);
+      DEBUG && console.log(`🔓 htaccess désactivé pour énigme ${postId}`);
 
       // ✅ Ouverture du panneau uniquement maintenant
-      document.querySelectorAll('.panneau-lateral.ouvert, .panneau-lateral-liens.ouvert').forEach((p) => {
-        p.classList.remove('ouvert');
-        p.setAttribute('aria-hidden', 'true');
-      });
-
-      panneau.classList.add('ouvert');
-      document.body.classList.add('panneau-ouvert');
-      panneau.setAttribute('aria-hidden', 'false');
+      if (typeof window.openPanel === 'function') {
+        window.openPanel('panneau-images-enigme');
+      }
     })
     .catch(err => {
       console.error('❌ Erreur réseau AJAX htaccess :', err);
@@ -322,10 +309,9 @@ document.addEventListener('click', (e) => {
 // 🔐 Restauration htaccess à la fermeture du panneau images
 // ==============================
 document.querySelector('#panneau-images-enigme .panneau-fermer')?.addEventListener('click', () => {
-  const panneau = document.getElementById('panneau-images-enigme');
-  panneau.classList.remove('ouvert');
-  document.body.classList.remove('panneau-ouvert');
-  panneau.setAttribute('aria-hidden', 'true');
+  if (typeof window.closePanel === 'function') {
+    window.closePanel('panneau-images-enigme');
+  }
 
   const postId = document.querySelector('.edition-panel-enigme')?.dataset.postId;
   if (postId) {
@@ -339,7 +325,7 @@ document.querySelector('#panneau-images-enigme .panneau-fermer')?.addEventListen
     }).then(r => r.json())
       .then(res => {
         if (res.success) {
-          console.log(`🔒 htaccess restauré immédiatement pour énigme ${postId}`);
+          DEBUG && console.log(`🔒 htaccess restauré immédiatement pour énigme ${postId}`);
         } else {
           console.warn('⚠️ Erreur restauration htaccess immédiate :', res.data);
         }
@@ -796,7 +782,7 @@ function initChampPreRequis() {
               .then(r => r.json())
               .then(res => {
                 if (res.success) {
-                  console.log('✅ Condition "pré-requis" bien enregistrée après mise à jour des cases');
+                  DEBUG && console.log('✅ Condition "pré-requis" bien enregistrée après mise à jour des cases');
                 } else {
                   console.warn('⚠️ Échec condition pré-requis :', res.data);
                 }
@@ -990,70 +976,6 @@ document.querySelector('#panneau-solution-enigme .panneau-fermer')?.addEventList
 });
 
 
-// ==============================
-// 🧩 Initialisation des champs conditionnels (radio)
-// ==============================
-function initChampConditionnel(nomChamp, correspondance = {}) {
-  const radios = document.querySelectorAll(`input[type=radio][name="${nomChamp}"]`);
-  if (!radios.length) return;
-
-  function mettreAJourAffichage(valeurActive) {
-    // Cacher tous les blocs
-    Object.values(correspondance).forEach(cibles => {
-      if (!Array.isArray(cibles)) return;
-      cibles.forEach(cible => {
-        const bloc = document.querySelector(cible);
-        if (bloc) bloc.style.display = 'none';
-      });
-    });
-
-    // Afficher ceux correspondant à la valeur sélectionnée
-    const ciblesActives = correspondance[valeurActive];
-    if (Array.isArray(ciblesActives)) {
-      ciblesActives.forEach(cible => {
-        const bloc = document.querySelector(cible);
-        if (bloc) bloc.style.display = 'block';
-      });
-    }
-  }
-
-  radios.forEach(radio => {
-    radio.addEventListener('change', () => {
-      if (radio.checked) {
-        mettreAJourAffichage(radio.value);
-      }
-    });
-
-    if (radio.checked) {
-      mettreAJourAffichage(radio.value);
-    }
-  });
-
-  // 🔐 Supprimer visuellement l’option "pré-requis" si vide
-  if (nomChamp === 'enigme_acces_condition') {
-    const blocPreRequis = document.querySelector('[data-champ="enigme_acces_pre_requis"]');
-    if (blocPreRequis) {
-      const lignes = blocPreRequis.querySelectorAll('.liste-pre-requis input[type="checkbox"]');
-      if (lignes.length === 0) {
-        const radio = document.querySelector('input[type="radio"][value="pre_requis"]');
-        if (radio) {
-          const label = radio.closest('label');
-          if (label) label.style.display = 'none';
-        }
-      }
-    }
-
-    const bloc = document.querySelector('[data-champ="enigme_acces_pre_requis"]');
-    if (bloc && bloc.dataset.vide === '1') {
-      const radio = document.querySelector('input[type="radio"][value="pre_requis"]');
-      if (radio) {
-        const label = radio.closest('label');
-        if (label) label.style.display = 'none';
-      }
-    }
-  }
-}
-
 
 // ==============================
 // ✅ Enregistrement condition "pré-requis" à la sélection du radio
@@ -1085,7 +1007,7 @@ document.addEventListener('DOMContentLoaded', () => {
       .then(r => r.json())
       .then(res => {
         if (res.success) {
-          console.log('✅ Condition "pré-requis" enregistrée côté serveur');
+          DEBUG && console.log('✅ Condition "pré-requis" enregistrée côté serveur');
         } else {
           console.warn('⚠️ Échec enregistrement condition pré-requis :', res.data);
         }
@@ -1097,7 +1019,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function appliquerEtatGratuitEnLive() {
-  console.log('✅ enappliquerEtatGratuit() chargé');
+  DEBUG && console.log('✅ enappliquerEtatGratuit() chargé');
   const $cout = document.querySelector('.champ-cout');
   const $checkbox = document.getElementById('cout-gratuit-enigme');
   if (!$cout || !$checkbox) return;
@@ -1106,7 +1028,7 @@ function appliquerEtatGratuitEnLive() {
     const val = parseInt($cout.value.trim(), 10);
     const estGratuit = val === 0;
 
-    console.log('[🎯 syncGratuit] coût =', $cout.value, '| gratuit ?', estGratuit);
+    DEBUG && console.log('[🎯 syncGratuit] coût =', $cout.value, '| gratuit ?', estGratuit);
     $checkbox.checked = estGratuit;
     $cout.disabled = estGratuit;
   }

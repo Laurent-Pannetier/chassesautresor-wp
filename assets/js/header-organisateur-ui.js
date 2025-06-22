@@ -42,21 +42,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const btn = e.target.closest('.ouvrir-panneau-description');
     if (!btn) return;
 
-    const panneau = document.getElementById('panneau-description');
-    if (panneau) {
-      panneau.classList.add('ouvert');
-      document.body.classList.add('panneau-ouvert');
-      panneau.setAttribute('aria-hidden', 'false');
+    if (typeof window.openPanel === 'function') {
+      window.openPanel('panneau-description');
     }
   });
 
   // ❌ Panneau latéral ACF – fermeture (croix)
   document.querySelector('#panneau-description .panneau-fermer')?.addEventListener('click', () => {
-    const panneau = document.getElementById('panneau-description');
-    if (panneau) {
-      panneau.classList.remove('ouvert');
-      document.body.classList.remove('panneau-ouvert');
-      panneau.setAttribute('aria-hidden', 'true');
+    if (typeof window.closePanel === 'function') {
+      window.closePanel('panneau-description');
       document.activeElement?.blur();
     }
   });

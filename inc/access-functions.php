@@ -423,20 +423,35 @@ function utilisateur_peut_modifier_enigme(int $enigme_id, ?int $user_id = null):
  */
 function utilisateur_peut_ajouter_chasse(int $organisateur_id): bool
 {
-    if (!is_user_logged_in()) return false;
+    if (!is_user_logged_in()) {
+        return false;
+    }
 
-    $user_id = get_current_user_id();
+    $user       = wp_get_current_user();
+    $roles      = (array) $user->roles;
+    $user_id    = (int) $user->ID;
+
+    // Administrateur → accès total
+    if (in_array('administrator', $roles, true)) {
+        return true;
+    }
 
     // L'utilisateur doit être lié à l'organisateur
     if (!utilisateur_peut_modifier_post($organisateur_id)) {
         return false;
     }
 
-    // ⚠️ Optionnel : nombre max de chasses (exemple : 5)
-    // $chasses = get_posts([...]);
-    // if (count($chasses) >= 5) return false;
+    // Organisateur : aucune limite
+    if (in_array('organisateur', $roles, true)) {
+        return true;
+    }
 
-    return true;
+    // Organisateur en cours de création : uniquement si aucune chasse existante
+    if (in_array('organisateur_creation', $roles, true)) {
+        return !organisateur_a_des_chasses($organisateur_id);
+    }
+
+    return false;
 }
 
 

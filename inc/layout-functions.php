@@ -238,7 +238,7 @@ function get_header_fallback($args = []) {
     ];
     $args = wp_parse_args($args, $defaults);
 
-    get_template_part('template-parts/fallback-header', null, [
+    get_template_part('template-parts/headers/fallback-header', null, [
         'titre'      => $args['titre'],
         'sous_titre' => $args['sous_titre'],
         'image_fond' => esc_url( $args['image_fond'] ),
