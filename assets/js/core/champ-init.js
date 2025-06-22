@@ -758,57 +758,6 @@ function initChampDate(input) {
 
 
 
-// ================================
-// 💰 Initialisation affichage coût en points (Gratuit / Payant) — multi-CPT
-// ================================
-function initChampCoutPoints() {
-  document.querySelectorAll('.champ-cout-points').forEach(bloc => {
-    const input = bloc.querySelector('.champ-input.champ-cout[type="number"]');
-    const checkbox = bloc.querySelector('input[type="checkbox"]');
-    if (!input || !checkbox) return;
-
-    const postId = bloc.dataset.postId;
-    const champ = bloc.dataset.champ;
-    const cpt = bloc.dataset.cpt;
-    if (!postId || !champ || !cpt) return;
-
-    let timerDebounce;
-    let ancienneValeur = input.value.trim();
-
-    // ✅ Initialisation checkbox (mais on ne désactive rien ici)
-    const valeurInitiale = parseInt(input.value.trim(), 10);
-    checkbox.checked = valeurInitiale === 0;
-
-    const enregistrerCout = () => {
-      clearTimeout(timerDebounce);
-      timerDebounce = setTimeout(() => {
-        let valeur = parseInt(input.value.trim(), 10);
-        if (isNaN(valeur) || valeur < 0) valeur = 0;
-        input.value = valeur;
-        modifierChampSimple(champ, valeur, postId, cpt);
-
-        if (typeof window.onCoutPointsUpdated === 'function') {
-          window.onCoutPointsUpdated(bloc, champ, valeur, postId, cpt);
-        }
-      }, 500);
-    };
-
-    input.addEventListener('input', enregistrerCout);
-
-    checkbox.addEventListener('change', () => {
-      if (checkbox.checked) {
-        ancienneValeur = input.value.trim();
-        input.value = 0;
-      } else {
-        const valeur = parseInt(ancienneValeur, 10);
-        input.value = valeur > 0 ? valeur : 10;
-      }
-      enregistrerCout();
-    });
-  });
-}
-
-document.addEventListener('DOMContentLoaded', initChampCoutPoints);
 
 
 
@@ -870,7 +819,8 @@ function initChampCoutPoints() {
 
     const postId = bloc.dataset.postId;
     const champ = bloc.dataset.champ;
-    if (!postId || !champ) return;
+    const cpt = bloc.dataset.cpt;
+    if (!postId || !champ || !cpt) return;
 
     let timerDebounce;
     let ancienneValeur = input.value.trim();
@@ -881,7 +831,7 @@ function initChampCoutPoints() {
         let valeur = parseInt(input.value.trim(), 10);
         if (isNaN(valeur) || valeur < 0) valeur = 0;
         input.value = valeur;
-        modifierChampSimple(champ, valeur, postId, bloc.dataset.cpt);
+        modifierChampSimple(champ, valeur, postId, cpt);
 
         // ✅ Mise à jour visuelle du badge coût pour la chasse
         if (
@@ -889,6 +839,10 @@ function initChampCoutPoints() {
           typeof mettreAJourAffichageCout === 'function'
         ) {
           mettreAJourAffichageCout(postId, valeur);
+        }
+
+        if (typeof window.onCoutPointsUpdated === 'function') {
+          window.onCoutPointsUpdated(bloc, champ, valeur, postId, cpt);
         }
       }, 500);
     };
