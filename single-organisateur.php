@@ -14,8 +14,6 @@ if (preg_match('#/contact($|[/?])#', $_SERVER['REQUEST_URI'])) {
     return;
 }
 
-
-
 acf_form_head(); // <-- doit être ici, AVANT get_header() !
 
 global $post;
@@ -32,11 +30,8 @@ $bic  = $coordonnees['bic'] ?? '';
 
 // Vérification si l'organisateur a une description publique remplie
 $description = get_field('description_longue', $organisateur_id);
-$description_remplie = trim(strip_tags($description)) !== '';
-
 
 get_header();
-
 ?>
 
 <div id="primary" class="content-area">
@@ -52,24 +47,12 @@ get_header();
             ?>
         <?php endif; ?>
 
-
-
-
-
         <!-- Présentation -->
         <section class="presentation">
             <div class="conteneur">
                 <div id="alerte-incomplete" class="alerte-discret" style="display: none;">
                     ⚠️ test
                 </div>
-                <?php if (utilisateur_peut_creer_post('chasse')) : ?>
-
-                    <div id="cta-creer-chasse" class="cta-chasse" style="display: none;">
-                        <p>✅ Tous les champs obligatoires sont remplis.</p>
-                        <a href="<?= esc_url(site_url('/creer-chasse/')); ?>" class="bouton-cta">Créer ma première chasse</a>
-                    </div>
-                <?php endif; ?>
-
 
                 <?php if ($description) : ?>
                     <?php echo limiter_texte_avec_toggle($description, 300); ?>
@@ -82,42 +65,37 @@ get_header();
             <div class="conteneur">
                 <div class="titre-chasses-wrapper">
                     <div class="ligne-chasses"></div>
-                    <div class="ligne-chasses"></div>
+                    <div class="liste-chasses">
+                        <?php
+                        $organisateur_id = get_the_ID();
+                        $chasses = get_chasses_en_creation($organisateur_id);
+                        $peut_ajouter = utilisateur_peut_ajouter_chasse($organisateur_id);
+                        $has_chasses = !empty($chasses);
+
+                        foreach ($chasses as $post) :
+                            $chasse_id = $post->ID;
+                            $image = get_field('chasse_principale_image', $chasse_id);
+                            $image_url = is_array($image) ? $image['sizes']['large'] ?? $image['url'] : '';
+
+                        ?>
+                            <article class="carte-chasse" data-post-id="<?= esc_attr($chasse_id); ?>">
+                                <?php afficher_picture_vignette_chasse($chasse_id); ?>
+                                <h2><?= esc_html(get_the_title($chasse_id)); ?></h2>
+                            </article>
+                        <?php endforeach; ?>
+
+                        <?php if ($peut_ajouter) :
+                            get_template_part('template-parts/chasse/chasse-partial-ajout-chasse', null, [
+                                'has_chasses' => $has_chasses,
+                                'organisateur_id' => $organisateur_id,
+                            ]);
+                        endif; ?>
+                    </div>
                 </div>
-
-                <div class="liste-chasses">
-                    <?php
-                    $organisateur_id = get_the_ID();
-                    $chasses = get_chasses_en_creation($organisateur_id);
-                    $peut_ajouter = utilisateur_peut_ajouter_chasse($organisateur_id);
-                    $has_chasses = !empty($chasses);
-
-                    foreach ($chasses as $post) :
-                        $chasse_id = $post->ID;
-                        $image = get_field('chasse_principale_image', $chasse_id);
-                        $image_url = is_array($image) ? $image['sizes']['large'] ?? $image['url'] : '';
-
-                    ?>
-                        <article class="carte-chasse" data-post-id="<?= esc_attr($chasse_id); ?>">
-                            <?php afficher_picture_vignette_chasse($chasse_id); ?>
-                            <h2><?= esc_html(get_the_title($chasse_id)); ?></h2>
-                        </article>
-                    <?php endforeach; ?>
-
-                    <?php if ($peut_ajouter) :
-                        get_template_part('template-parts/chasse/chasse-partial-ajout-chasse', null, [
-                            'has_chasses' => $has_chasses,
-                            'organisateur_id' => $organisateur_id,
-                        ]);
-                    endif; ?>
-                </div>
-            </div>
         </section>
 
     </main>
 </div>
-
-
 
 <?php
 if (

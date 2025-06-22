@@ -106,7 +106,8 @@ $classe_vide_coordonnees = ($iban_vide || $bic_vide) ? 'champ-vide' : '';
                 <input type="hidden" class="champ-input" value="<?= esc_attr($logo_id ?? '') ?>">
                 <div class="champ-feedback"></div>
               </li>
-              <li class="ligne-description champ-rempli champ-description" data-champ="description_longue">
+              <?php $class_description = empty($description) ? 'champ-vide' : 'champ-rempli'; ?>
+              <li class="champ-organisateur champ-description ligne-description <?= $class_description; ?>" data-champ="description_longue">
                 Une présentation
                 <?php if ($peut_modifier) : ?>
                   <button type="button"
