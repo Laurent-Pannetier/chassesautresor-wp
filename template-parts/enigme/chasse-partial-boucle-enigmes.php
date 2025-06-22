@@ -35,7 +35,7 @@ $has_enigmes = !empty($posts_visibles);
     $statut_utilisateur = enigme_get_statut_utilisateur($enigme_id, $utilisateur_id);
     $cta = get_cta_enigme($enigme_id);
     ?>
-    <article class="carte-enigme">
+    <article class="carte carte-enigme">
       <div class="carte-core">
         <div class="carte-enigme-image">
           <?php afficher_picture_vignette_enigme($enigme_id, 'Vignette de l’énigme'); ?>
