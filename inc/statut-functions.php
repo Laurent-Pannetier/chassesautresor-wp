@@ -523,6 +523,102 @@ function utilisateur_peut_engager_enigme(int $enigme_id, ?int $user_id = null): 
     return $etat_systeme === 'accessible' && in_array($statut, $statuts_autorises, true);
 }
 
+// ==================================================
+// ✅ GESTION DE LA COMPLÉTION DES CPT
+// ==================================================
+
+function organisateur_est_complet(int $organisateur_id): bool
+{
+    if (get_post_type($organisateur_id) !== 'organisateur') {
+        return false;
+    }
+
+    $titre = trim(get_post_field('post_title', $organisateur_id));
+    $titre_ok = $titre !== '' && strtolower($titre) !== strtolower('Votre nom d\'organisateur');
+
+    $logo = get_field('profil_public_logo_organisateur', $organisateur_id);
+    $logo_ok = !empty($logo);
+
+    $description = trim(get_field('description_longue', $organisateur_id));
+    $desc_ok = $description !== '';
+
+    return $titre_ok && $logo_ok && $desc_ok;
+}
+
+function organisateur_mettre_a_jour_complet(int $organisateur_id): bool
+{
+    $complet = organisateur_est_complet($organisateur_id);
+    update_field('organisateur_cache_complet', $complet ? 1 : 0, $organisateur_id);
+    return $complet;
+}
+
+function chasse_est_complet(int $chasse_id): bool
+{
+    if (get_post_type($chasse_id) !== 'chasse') {
+        return false;
+    }
+
+    $titre = trim(get_post_field('post_title', $chasse_id));
+    $titre_ok = $titre !== '' && strtolower($titre) !== strtolower('Nouvelle chasse');
+
+    $desc = trim(get_field('chasse_principale_description', $chasse_id));
+    $desc_ok = $desc !== '';
+
+    $image = get_field('chasse_principale_image', $chasse_id);
+    $image_id = is_array($image) ? ($image['ID'] ?? 0) : (int) $image;
+    $image_ok = !empty($image_id) && $image_id !== 3902;
+
+    return $titre_ok && $desc_ok && $image_ok;
+}
+
+function chasse_mettre_a_jour_complet(int $chasse_id): bool
+{
+    $complet = chasse_est_complet($chasse_id);
+    update_field('chasse_cache_complet', $complet ? 1 : 0, $chasse_id);
+    return $complet;
+}
+
+function enigme_est_complet(int $enigme_id): bool
+{
+    if (get_post_type($enigme_id) !== 'enigme') {
+        return false;
+    }
+
+    $titre = trim(get_post_field('post_title', $enigme_id));
+    $titre_ok = $titre !== '' && strtolower($titre) !== strtolower('Nouvelle enigme');
+
+    $images = get_field('enigme_visuel_image', $enigme_id);
+    $placeholder = defined('ID_IMAGE_PLACEHOLDER_ENIGME') ? ID_IMAGE_PLACEHOLDER_ENIGME : 3925;
+    $first_id = (is_array($images) && !empty($images[0]['ID'])) ? (int) $images[0]['ID'] : 0;
+    $image_ok = $first_id && $first_id !== $placeholder;
+
+    return $titre_ok && $image_ok;
+}
+
+function enigme_mettre_a_jour_complet(int $enigme_id): bool
+{
+    $complet = enigme_est_complet($enigme_id);
+    update_field('enigme_cache_complet', $complet ? 1 : 0, $enigme_id);
+    return $complet;
+}
+
+function mettre_a_jour_cache_complet_automatiquement($post_id): void
+{
+    if (!is_numeric($post_id)) {
+        return;
+    }
+
+    $type = get_post_type($post_id);
+    if ($type === 'organisateur') {
+        organisateur_mettre_a_jour_complet((int) $post_id);
+    } elseif ($type === 'chasse') {
+        chasse_mettre_a_jour_complet((int) $post_id);
+    } elseif ($type === 'enigme') {
+        enigme_mettre_a_jour_complet((int) $post_id);
+    }
+}
+add_action('acf/save_post', 'mettre_a_jour_cache_complet_automatiquement', 20);
+
 
 
 
