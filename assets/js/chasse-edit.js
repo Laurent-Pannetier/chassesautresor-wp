@@ -1,5 +1,6 @@
 // ✅ chasse-edit.js
-console.log('✅ chasse-edit.js chargé');
+var DEBUG = window.DEBUG || false;
+DEBUG && console.log('✅ chasse-edit.js chargé');
 
 let inputDateDebut;
 let inputDateFin;
@@ -306,7 +307,7 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(r => r.json())
         .then(res => {
           if (res.success) {
-            console.log('✅ Titre récompense enregistré.');
+            DEBUG && console.log('✅ Titre récompense enregistré.');
 
             // 🔵 Ensuite, envoi texte récompense
             return fetch('/wp-admin/admin-ajax.php', {
@@ -326,7 +327,7 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(r => r.json())
         .then(res => {
           if (res.success) {
-            console.log('✅ Texte récompense enregistré.');
+            DEBUG && console.log('✅ Texte récompense enregistré.');
 
             // 🔵 Ensuite, envoi valeur récompense
             return fetch('/wp-admin/admin-ajax.php', {
@@ -373,107 +374,13 @@ document.addEventListener('DOMContentLoaded', () => {
 // 🔗 Initialisation des liens chasse
 // ==============================
 function initLiensChasse(bloc) {
-  const champ = bloc.dataset.champ;
-  const postId = bloc.dataset.postId;
-  const bouton = bloc.querySelector('.champ-modifier.ouvrir-panneau-liens');
-  const panneau = document.getElementById('panneau-liens-chasse');
-  let formulaire = document.getElementById('formulaire-liens-chasse');
-  const feedback = bloc.querySelector('.champ-feedback');
-
-  if (!champ || !postId || !formulaire || !bouton || !panneau) return;
-
-  bouton.addEventListener('click', () => {
-    if (typeof window.openPanel === 'function') {
-      window.openPanel('panneau-liens-chasse');
-    }
-  });
-
-  panneau.querySelector('.panneau-fermer')?.addEventListener('click', () => {
-    if (typeof window.closePanel === 'function') {
-      window.closePanel('panneau-liens-chasse');
-    }
-  });
-
-  const clone = formulaire.cloneNode(true);
-  formulaire.replaceWith(clone);
-  formulaire = clone;
-
-  formulaire.addEventListener('submit', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    const lignes = formulaire.querySelectorAll('.ligne-lien-formulaire');
-    const donnees = [];
-
-    lignes.forEach((ligne) => {
-      const type = ligne.dataset.type;
-      const input = ligne.querySelector('input[type="url"]');
-      const url = input?.value.trim();
-      if (type && url) {
-        try {
-          new URL(url);
-          donnees.push({ type_de_lien: type, url_lien: url });
-        } catch (_) {
-          input.classList.add('champ-erreur');
-        }
-      }
+  if (typeof window.initLiensPublics === 'function') {
+    initLiensPublics(bloc, {
+      panneauId: 'panneau-liens-chasse',
+      formId: 'formulaire-liens-chasse',
+      action: 'modifier_champ_chasse'
     });
-
-    fetch('/wp-admin/admin-ajax.php', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        action: 'modifier_champ_chasse',
-        champ,
-        post_id: postId,
-        valeur: JSON.stringify(donnees)
-      })
-    })
-      .then(res => res.json())
-      .then((res) => {
-        if (!res.success) throw new Error(res.data || 'Erreur AJAX');
-
-        // Met à jour les données en local dans le panneau
-        const champDonnees = bloc.querySelector('.champ-donnees');
-        if (champDonnees) {
-          champDonnees.dataset.valeurs = JSON.stringify(donnees);
-        }
-
-        // Met à jour l'affichage dans la fiche publique (pas le panneau)
-        const blocFiche = document.querySelector(
-          `.champ-chasse.champ-fiche-publication[data-champ="${champ}"][data-post-id="${postId}"]`
-        );
-        const affichageFiche = blocFiche?.querySelector('.champ-affichage');
-        if (affichageFiche && typeof renderLiensPublicsJS === 'function') {
-          affichageFiche.innerHTML = renderLiensPublicsJS(donnees);
-
-
-          // 🔁 Relance la détection de complétion (liens détectés après rendu)
-          if (typeof window.mettreAJourResumeInfos === 'function') {
-            window.mettreAJourResumeInfos();
-          }
-        }
-
-        // Classe remplie/vide
-        bloc.classList.toggle('champ-vide', donnees.length === 0);
-        bloc.classList.toggle('champ-rempli', donnees.length > 0);
-
-        panneau.classList.remove('ouvert');
-        document.body.classList.remove('panneau-ouvert');
-        panneau.setAttribute('aria-hidden', 'true');
-
-        if (typeof window.mettreAJourResumeInfos === 'function') {
-          window.mettreAJourResumeInfos();
-        }
-      })
-      .catch((err) => {
-        console.error('❌ AJAX fail', err.message || err);
-        if (feedback) {
-          feedback.textContent = 'Erreur : ' + (err.message || 'Serveur ou réseau.');
-          feedback.className = 'champ-feedback champ-error';
-        }
-      });
-  });
+  }
 }
 
 
@@ -721,7 +628,7 @@ function mettreAJourAffichageNbGagnants(postId, nb) {
 
 
 document.addEventListener('acf/submit_success', function (e) {
-  console.log('✅ Formulaire ACF soumis avec succès', e);
+  DEBUG && console.log('✅ Formulaire ACF soumis avec succès', e);
   if (typeof window.mettreAJourResumeInfos === 'function') {
     window.mettreAJourResumeInfos();
   }
@@ -763,7 +670,7 @@ function rafraichirStatutChasse(postId) {
             const statut = data.data.statut;
             const label = data.data.statut_label;
             const badge = document.querySelector(`.badge-statut[data-post-id="${postId}"]`);
-            console.log('🔎 Badge trouvé :', badge);
+            DEBUG && console.log('🔎 Badge trouvé :', badge);
 
             if (badge) {
               badge.textContent = label;

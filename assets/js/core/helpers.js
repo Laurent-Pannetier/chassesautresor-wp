@@ -98,3 +98,140 @@ function mettreAJourVisuelCPT(cpt, postId, nouvelleUrl) {
       img.src = nouvelleUrl;
     });
 }
+
+/**
+ * Initialise la logique d'édition des liens publics pour un bloc donné.
+ * Regroupe l'ouverture/fermeture du panneau, la collecte des données et
+ * l'envoi AJAX.
+ *
+ * @param {HTMLElement} bloc - Le bloc contenant les métadonnées (data-champ, data-post-id)
+ * @param {Object} params - Identifiants et action AJAX
+ * @param {string} params.panneauId - ID du panneau latéral contenant le formulaire
+ * @param {string} params.formId - ID du formulaire de liens
+ * @param {string} params.action - Action AJAX à appeler
+ */
+function initLiensPublics(bloc, { panneauId, formId, action }) {
+  const champ = bloc.dataset.champ;
+  const postId = bloc.dataset.postId;
+  const bouton = bloc.querySelector('.champ-modifier');
+  const panneau = document.getElementById(panneauId);
+  let formulaire = document.getElementById(formId);
+  const feedback = bloc.querySelector('.champ-feedback');
+
+  if (!champ || !postId || !bouton || !panneau || !formulaire) return;
+
+  bouton.addEventListener('click', () => {
+    if (typeof window.openPanel === 'function') {
+      window.openPanel(panneauId);
+    } else {
+      document.querySelectorAll('.panneau-lateral.ouvert, .panneau-lateral-liens.ouvert').forEach((p) => {
+        p.classList.remove('ouvert');
+        p.setAttribute('aria-hidden', 'true');
+      });
+      panneau.classList.add('ouvert');
+      document.body.classList.add('panneau-ouvert');
+      panneau.setAttribute('aria-hidden', 'false');
+    }
+  });
+
+  panneau.querySelector('.panneau-fermer')?.addEventListener('click', () => {
+    if (typeof window.closePanel === 'function') {
+      window.closePanel(panneauId);
+    } else {
+      panneau.classList.remove('ouvert');
+      document.body.classList.remove('panneau-ouvert');
+      panneau.setAttribute('aria-hidden', 'true');
+    }
+  });
+
+  // ❌ Supprime les éventuels anciens écouteurs
+  const clone = formulaire.cloneNode(true);
+  formulaire.replaceWith(clone);
+  formulaire = clone;
+
+  formulaire.addEventListener('submit', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const lignes = formulaire.querySelectorAll('.ligne-lien-formulaire');
+    const donnees = [];
+
+    lignes.forEach((ligne) => {
+      const type = ligne.dataset.type;
+      const input = ligne.querySelector('input[type="url"]');
+      const url = input?.value.trim();
+      if (type && url) {
+        try {
+          new URL(url);
+          donnees.push({ type_de_lien: type, url_lien: url });
+        } catch (_) {
+          input.classList.add('champ-erreur');
+        }
+      }
+    });
+
+    fetch('/wp-admin/admin-ajax.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        action,
+        champ,
+        post_id: postId,
+        valeur: JSON.stringify(donnees)
+      })
+    })
+      .then(res => res.json())
+      .then((res) => {
+        if (!res.success) throw new Error(res.data || 'Erreur AJAX');
+
+        const champDonnees = bloc.querySelector('.champ-donnees');
+        if (champDonnees) {
+          champDonnees.dataset.valeurs = JSON.stringify(donnees);
+        }
+
+        let zoneAffichage = bloc.querySelector('.champ-affichage');
+        if (!zoneAffichage) {
+          const fiche = document.querySelector(
+            `.champ-chasse.champ-fiche-publication[data-champ="${champ}"][data-post-id="${postId}"]`
+          );
+          zoneAffichage = fiche?.querySelector('.champ-affichage');
+        }
+
+        if (zoneAffichage && typeof renderLiensPublicsJS === 'function') {
+          zoneAffichage.innerHTML = renderLiensPublicsJS(donnees);
+
+          if (!bloc.querySelector('.champ-modifier')) {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'champ-modifier ouvrir-panneau-liens';
+            btn.setAttribute('aria-label', 'Configurer vos liens');
+            btn.textContent = '✏️';
+            zoneAffichage.appendChild(btn);
+          }
+        }
+
+        bloc.classList.toggle('champ-vide', donnees.length === 0);
+        bloc.classList.toggle('champ-rempli', donnees.length > 0);
+
+        if (typeof window.closePanel === 'function') {
+          window.closePanel(panneauId);
+        } else {
+          panneau.classList.remove('ouvert');
+          document.body.classList.remove('panneau-ouvert');
+          panneau.setAttribute('aria-hidden', 'true');
+        }
+
+        if (typeof window.mettreAJourResumeInfos === 'function') {
+          window.mettreAJourResumeInfos();
+        }
+      })
+      .catch((err) => {
+        console.error('❌ AJAX fail', err.message || err);
+        if (feedback) {
+          feedback.textContent = 'Erreur : ' + (err.message || 'Serveur ou réseau.');
+          feedback.className = 'champ-feedback champ-error';
+        }
+      });
+  });
+}
+window.initLiensPublics = initLiensPublics;
