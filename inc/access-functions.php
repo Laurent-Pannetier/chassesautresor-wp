@@ -83,6 +83,7 @@ function filtrer_media_library_par_cpt($query)
                 'value'   => '_enigmes/',
                 'compare' => 'NOT LIKE',
             ],
+
         ];
     }
 
