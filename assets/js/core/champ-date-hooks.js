@@ -1,5 +1,6 @@
 // ✅ Hook JS global pour l'affichage dynamique des champs date
 // À inclure après champ-init.js et avant les fichiers CPT (enigme-edit.js, chasse-edit.js...)
+var DEBUG = window.DEBUG || false;
 
 window.onDateFieldUpdated = function(input, valeur) {
   const champ = input.closest('[data-champ]')?.dataset.champ;
@@ -24,6 +25,6 @@ window.onDateFieldUpdated = function(input, valeur) {
   if (handlers[champ]) {
     handlers[champ](valeur);
   } else {
-    console.log(`[onDateFieldUpdated] Aucun handler défini pour : ${champ}`);
+    DEBUG && console.log(`[onDateFieldUpdated] Aucun handler défini pour : ${champ}`);
   }
 };

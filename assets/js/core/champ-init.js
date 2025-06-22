@@ -1,5 +1,6 @@
 // ✅ champ-init.js bien chargé
-console.log('✅ champ-init.js bien chargé');
+var DEBUG = window.DEBUG || false;
+DEBUG && console.log('✅ champ-init.js bien chargé');
 
 // ==============================
 // 🔄 MAJ dynamique des classes champ-vide / champ-rempli
@@ -391,7 +392,7 @@ function mettreAJourAffichageDateFin() {
 // 🛠️ Envoi AJAX d'un champ simple (texte, number, boolean)
 // ================================
 function modifierChampSimple(champ, valeur, postId, cpt = 'enigme') {
-  console.log('📤 modifierChampSimple()', { champ, valeur, postId, cpt }); // ⬅️ test
+  DEBUG && console.log('📤 modifierChampSimple()', { champ, valeur, postId, cpt }); // ⬅️ test
 
   const action = (cpt === 'enigme') ? 'modifier_champ_enigme' :
     (cpt === 'organisateur') ? 'modifier_champ_organisateur' :
@@ -410,7 +411,7 @@ function modifierChampSimple(champ, valeur, postId, cpt = 'enigme') {
     .then(r => r.json())
     .then(res => {
       if (res.success) {
-        console.log(`✅ Champ ${champ} enregistré`);
+        DEBUG && console.log(`✅ Champ ${champ} enregistré`);
         if (typeof window.onChampSimpleMisAJour === 'function') {
           window.onChampSimpleMisAJour(champ, postId, valeur, cpt);
         }
@@ -689,7 +690,7 @@ function initChampImage(bloc) {
 // 📅 initChampDate
 // ==============================
 function initChampDate(input) {
-  console.log('⏱️ Attachement initChampDate à', input, '→ ID:', input.id);
+  DEBUG && console.log('⏱️ Attachement initChampDate à', input, '→ ID:', input.id);
 
   const bloc = input.closest('[data-champ]');
   const champ = bloc?.dataset.champ;
@@ -708,7 +709,7 @@ function initChampDate(input) {
 
   input.addEventListener('change', () => {
     const valeur = input.value.trim();
-    console.log('[🧪 initChampDate]', champ, '| valeur saisie :', valeur);
+    DEBUG && console.log('[🧪 initChampDate]', champ, '| valeur saisie :', valeur);
     if (!/^\d{4}-\d{2}-\d{2}$/.test(valeur)) {
       console.warn(`❌ Date invalide (${champ}) :`, valeur);
       return;
@@ -718,7 +719,7 @@ function initChampDate(input) {
       (cpt === 'enigme') ? 'modifier_champ_enigme' :
         'modifier_champ_organisateur';
 
-    console.log('📤 Envoi AJAX date', { champ, valeur, postId });
+    DEBUG && console.log('📤 Envoi AJAX date', { champ, valeur, postId });
 
     fetch(ajaxurl, {
       method: 'POST',
@@ -733,10 +734,10 @@ function initChampDate(input) {
       .then(r => r.json())
       .then(res => {
         if (res.success) {
-          console.log('[initChampDate] Hook onDateFieldUpdated =', typeof window.onDateFieldUpdated);
+          DEBUG && console.log('[initChampDate] Hook onDateFieldUpdated =', typeof window.onDateFieldUpdated);
 
           if (typeof window.onDateFieldUpdated === 'function') {
-            console.log('[initChampDate] Appel de onDateFieldUpdated() avec valeur =', valeur);
+            DEBUG && console.log('[initChampDate] Appel de onDateFieldUpdated() avec valeur =', valeur);
 
             window.onDateFieldUpdated(input, valeur);
           }
@@ -944,13 +945,13 @@ function initChampConditionnel(nomChamp, correspondance) {
 
   function mettreAJourAffichageCondition() {
     const valeur = [...radios].find(r => r.checked)?.value;
-    console.log(`🔁 ${nomChamp} → valeur sélectionnée :`, valeur);
+    DEBUG && console.log(`🔁 ${nomChamp} → valeur sélectionnée :`, valeur);
 
     toutMasquer();
 
     const selectorsAAfficher = correspondance[valeur];
     if (selectorsAAfficher) {
-      console.log(`✅ Affiche :`, selectorsAAfficher);
+      DEBUG && console.log(`✅ Affiche :`, selectorsAAfficher);
       selectorsAAfficher.forEach(sel => {
         document.querySelectorAll(sel).forEach(el => el.classList.remove('cache'));
       });
@@ -961,7 +962,7 @@ function initChampConditionnel(nomChamp, correspondance) {
 
   radios.forEach(r =>
     r.addEventListener('change', () => {
-      console.log('🖱️ Changement détecté →', r.value);
+      DEBUG && console.log('🖱️ Changement détecté →', r.value);
       mettreAJourAffichageCondition();
     })
   );

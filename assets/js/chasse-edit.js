@@ -1,5 +1,6 @@
 // ✅ chasse-edit.js
-console.log('✅ chasse-edit.js chargé');
+var DEBUG = window.DEBUG || false;
+DEBUG && console.log('✅ chasse-edit.js chargé');
 
 let inputDateDebut;
 let inputDateFin;
@@ -324,7 +325,7 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(r => r.json())
         .then(res => {
           if (res.success) {
-            console.log('✅ Titre récompense enregistré.');
+            DEBUG && console.log('✅ Titre récompense enregistré.');
 
             // 🔵 Ensuite, envoi texte récompense
             return fetch('/wp-admin/admin-ajax.php', {
@@ -344,7 +345,7 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(r => r.json())
         .then(res => {
           if (res.success) {
-            console.log('✅ Texte récompense enregistré.');
+            DEBUG && console.log('✅ Texte récompense enregistré.');
 
             // 🔵 Ensuite, envoi valeur récompense
             return fetch('/wp-admin/admin-ajax.php', {
@@ -743,7 +744,7 @@ function mettreAJourAffichageNbGagnants(postId, nb) {
 
 
 document.addEventListener('acf/submit_success', function (e) {
-  console.log('✅ Formulaire ACF soumis avec succès', e);
+  DEBUG && console.log('✅ Formulaire ACF soumis avec succès', e);
   if (typeof window.mettreAJourResumeInfos === 'function') {
     window.mettreAJourResumeInfos();
   }
@@ -785,7 +786,7 @@ function rafraichirStatutChasse(postId) {
             const statut = data.data.statut;
             const label = data.data.statut_label;
             const badge = document.querySelector(`.badge-statut[data-post-id="${postId}"]`);
-            console.log('🔎 Badge trouvé :', badge);
+            DEBUG && console.log('🔎 Badge trouvé :', badge);
 
             if (badge) {
               badge.textContent = label;
