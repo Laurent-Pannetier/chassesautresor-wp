@@ -46,6 +46,50 @@ function restreindre_media_library_tous_non_admins($query)
 }
 add_filter('ajax_query_attachments_args', 'restreindre_media_library_tous_non_admins');
 
+/**
+ * Filtre les fichiers visibles dans la médiathèque selon le post en cours.
+ *
+ * - Pour un post de type "enigme", seuls les fichiers du dossier
+ *   `/uploads/_enigmes/enigme-{ID}/` sont listés.
+ * - Pour tous les autres posts, les fichiers issus de `/uploads/_enigmes/`
+ *   sont exclus pour éviter leur sélection.
+ *
+ * @param array $query Arguments de la requête AJAX.
+ * @return array Arguments éventuellement modifiés.
+ */
+function filtrer_media_library_par_cpt($query)
+{
+    if (!isset($_REQUEST['post_id'])) {
+        return $query;
+    }
+
+    $post_id   = (int) $_REQUEST['post_id'];
+    $post_type = get_post_type($post_id);
+
+    if ($post_type === 'enigme') {
+        $query['meta_query'] = [
+            'relation' => 'AND',
+            [
+                'key'     => '_wp_attached_file',
+                'value'   => '_enigmes/enigme-' . $post_id . '/',
+                'compare' => 'LIKE',
+            ],
+        ];
+    } elseif ($post_type) {
+        $query['meta_query'] = [
+            'relation' => 'AND',
+            [
+                'key'     => '_wp_attached_file',
+                'value'   => '_enigmes/',
+                'compare' => 'NOT LIKE',
+            ],
+        ];
+    }
+
+    return $query;
+}
+add_filter('ajax_query_attachments_args', 'filtrer_media_library_par_cpt', 15);
+
 
 /**
  * Désactive l'éditeur Gutenberg pour tous les rôles sauf l'administrateur.
