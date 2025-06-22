@@ -195,7 +195,6 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('[data-champ="enigme_reponse_casse"]').forEach(bloc => {
     if (typeof initChampBooleen === 'function') initChampBooleen(bloc);
   });
-  initConditionAcces();
   initChampNbTentatives();
   initChampRadioAjax('acf[enigme_mode_validation]');
   const enigmeId = panneauEdition?.dataset.postId;
@@ -204,8 +203,8 @@ document.addEventListener('DOMContentLoaded', () => {
   initChampSolution();
   initSolutionInline();
   initChampConditionnel('acf[enigme_acces_condition]', {
-    'date_programmee': ['#bloc-champ-enigme_acces_date'],
-    'pre_requis': ['#bloc-champ-enigme_acces_pre_requis']
+    'date_programmee': ['#champ-enigme-date'],
+    'pre_requis': ['#champ-enigme-pre-requis']
   });
   initChampRadioAjax('acf[enigme_acces_condition]');
   appliquerEtatGratuitEnLive(); // ✅ Synchronise état initial de "Gratuit"
@@ -332,34 +331,6 @@ document.querySelector('#panneau-images-enigme .panneau-fermer')?.addEventListen
       });
   }
 });
-
-
-// ================================
-// 🧭 Affichage conditionnel – Champ d'accès à l'énigme
-// ================================
-function initConditionAcces() {
-  const radios = document.querySelectorAll('input[name="acf[enigme_acces_condition]"]');
-  const champDate = document.getElementById('champ-enigme-date');
-  const champPreRequis = document.getElementById('champ-enigme-pre-requis');
-
-  if (!radios.length || !champDate || !champPreRequis) return;
-
-  function mettreAJourAffichageCondition() {
-    const valeur = [...radios].find(r => r.checked)?.value;
-
-    champDate.style.display = (valeur === 'date_programmee') ? '' : 'none';
-    champPreRequis.style.display = (valeur === 'pre_requis') ? '' : 'none';
-  }
-
-  radios.forEach(radio => {
-    radio.addEventListener('change', mettreAJourAffichageCondition);
-  });
-
-  mettreAJourAffichageCondition(); // au chargement
-}
-
-
-
 // ================================
 // 🔢 Initialisation champ enigme_tentative_max (tentatives/jour)
 // ================================
