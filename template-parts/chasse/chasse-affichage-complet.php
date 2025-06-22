@@ -74,22 +74,6 @@ if (current_user_can('administrator')) {
 
 
 <section class="chasse-section-intro">
-  <?php
-  $validation = get_field('champs_caches')['chasse_cache_statut_validation'] ?? 'creation';
-
-  $messages = [
-    'creation'   => "Visibilité confidentielle. Cette chasse est en cours de création.",
-    'en_attente' => "Visibilité confidentielle. Cette chasse a été soumise à validation.",
-    'correction' => "Visibilité confidentielle. Cette chasse nécessite des ajustements.",
-    'banni'      => "Non publiée. Cette chasse a été refusée par l’équipe."
-  ];
-
-  if ($validation !== 'valide' && isset($messages[$validation])) :
-  ?>
-    <div class="statut-banner">
-      <?= esc_html($messages[$validation]); ?>
-    </div>
-  <?php endif; ?>
 
   <div class="chasse-fiche-container flex-row">
     <?php
