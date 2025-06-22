@@ -23,7 +23,6 @@ $organisateur_id = $post->ID;
 $peut_modifier = utilisateur_peut_modifier_post($organisateur_id);
 $image_logo = get_the_post_thumbnail_url($organisateur_id, 'medium_large');
 $nom_organisateur = get_the_title($organisateur_id);
-$description = get_field('parlez_de_vous_presentation', $organisateur_id);
 $site_internet = get_field('communication_site_internet', $organisateur_id);
 $reseaux_sociaux = get_field('communication_reseaux_sociaux', $organisateur_id);
 $statut_organisateur = get_post_status($organisateur_id);
@@ -32,7 +31,7 @@ $iban = $coordonnees['iban'] ?? '';
 $bic  = $coordonnees['bic'] ?? '';
 
 // Vérification si l'organisateur a une description publique remplie
-$description = get_field('profil_public_description', $organisateur_id);
+$description = get_field('description_longue', $organisateur_id);
 $description_remplie = trim(strip_tags($description)) !== '';
 
 
