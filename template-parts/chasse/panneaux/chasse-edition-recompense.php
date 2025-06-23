@@ -9,13 +9,13 @@ $valeur_recompense = $caracteristiques['chasse_infos_recompense_valeur'] ?? '';
 ?>
 
 
-<div id="panneau-recompense-chasse" class="panneau-lateral-liens panneau-lateral-large" aria-hidden="true">
+<div id="panneau-recompense-chasse" class="panneau-lateral-liens panneau-lateral-large" aria-hidden="true" role="dialog">
   <div class="panneau-lateral__contenu">
 
-    <div class="panneau-lateral__header">
-      <button type="button" class="panneau-fermer" aria-label="Fermer le panneau">✖</button>
+    <header class="panneau-lateral__header">
       <h2>Configurer la récompense</h2>
-    </div>
+      <button type="button" class="panneau-fermer" aria-label="Fermer le panneau">✖</button>
+    </header>
 
     <div class="champ-wrapper" style="display: flex; flex-direction: column; gap: 20px;">
         

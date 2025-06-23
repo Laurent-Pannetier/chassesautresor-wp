@@ -11,12 +11,12 @@ $iban = $coordonnees['iban'] ?? '';
 $bic  = $coordonnees['bic'] ?? '';
 ?>
 
-<div id="panneau-coordonnees" class="panneau-lateral-liens" aria-hidden="true">
+<div id="panneau-coordonnees" class="panneau-lateral-liens" aria-hidden="true" role="dialog">
     <div class="panneau-lateral__contenu">
-        <div class="panneau-lateral__header">
+        <header class="panneau-lateral__header">
             <h2>Modifier vos coordonnées bancaires</h2>
             <button type="button" class="panneau-fermer" aria-label="Fermer le panneau">✖</button>
-        </div>
+        </header>
     
         <form id="formulaire-coordonnees" data-post-id="<?= esc_attr($organisateur_id); ?>">
             <div class="champ-wrapper">

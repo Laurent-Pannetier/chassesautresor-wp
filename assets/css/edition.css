@@ -746,8 +746,18 @@ body.panneau-ouvert::before {
   z-index: 9998;
 }
 
+
 .panneau-lateral__contenu {
   padding: 2rem 2rem 2rem 2.5rem;
+}
+
+/* Alignement commun des headers dans les panneaux */
+.panneau-lateral__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--color-editor-border);
 }
 
 .panneau-lateral__header h2 {
@@ -763,7 +773,19 @@ body.panneau-ouvert::before {
 
 /* 🧭 Bouton de fermeture */
 .panneau-fermer {
-  margin-bottom: 0.5rem;
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  color: var(--color-editor-text-muted);
+  cursor: pointer;
+  padding: 0.25rem;
+  line-height: 1;
+  transition: color 0.2s ease;
+  opacity: 0.75;
+}
+
+.panneau-fermer:hover {
+  opacity: 1;
 }
 
 /* 🧭 Liste sans puces */
@@ -841,7 +863,7 @@ body.panneau-ouvert::before {
 
 .panneau-lateral-large {
   width: 100%;
-  max-width: 900px;
+  max-width: 1000px;
 }
 
 .zone-chasses.masque,

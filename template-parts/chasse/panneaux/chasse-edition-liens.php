@@ -47,14 +47,13 @@ foreach ($liens as $entree) {
 }
 ?>
 
-<div id="panneau-liens-chasse" class="panneau-lateral-liens" aria-hidden="true">
+<div id="panneau-liens-chasse" class="panneau-lateral-liens" aria-hidden="true" role="dialog">
   <div class="panneau-lateral__contenu">
 
-    <div class="panneau-lateral__header">
-        <button type="button" class="panneau-fermer" aria-label="Fermer le panneau">✖</button>
+    <header class="panneau-lateral__header">
       <h2>Configurer les liens de cette chasse</h2>
-      
-    </div>
+      <button type="button" class="panneau-fermer" aria-label="Fermer le panneau">✖</button>
+    </header>
 
     <form id="formulaire-liens-chasse"
           data-post-id="<?= esc_attr($chasse_id); ?>"
