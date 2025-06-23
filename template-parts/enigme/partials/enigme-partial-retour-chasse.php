@@ -13,5 +13,5 @@ $titre = get_the_title($chasse_id);
 ?>
 
 <div class="retour-chasse">
-  <a href="<?= esc_url($url); ?>" class="bouton-retour-chasse">← Retour à la chasse : <?= esc_html($titre); ?></a>
+  <a href="<?= esc_url($url); ?>" class="bouton-retour bouton-retour-chasse">← Retour à la chasse : <?= esc_html($titre); ?></a>
 </div>
