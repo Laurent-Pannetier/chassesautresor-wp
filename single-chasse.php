@@ -14,6 +14,7 @@ if (!$chasse_id) {
 
 verifier_ou_recalculer_statut_chasse($chasse_id);
 verifier_et_synchroniser_cache_enigmes_si_autorise($chasse_id);
+verifier_ou_mettre_a_jour_cache_complet($chasse_id);
 
 $edition_active = utilisateur_peut_modifier_post($chasse_id);
 $user_id = get_current_user_id();
