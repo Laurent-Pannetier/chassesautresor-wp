@@ -183,6 +183,7 @@ if (!$modal_deja_vue) :
         <?= $contenu; ?>
       </div>
     </div>
+
     <script>
       window.addEventListener('DOMContentLoaded', () => {
         document.querySelector('.modal-close-top')?.addEventListener('click', () => {
@@ -192,5 +193,6 @@ if (!$modal_deja_vue) :
     </script>
   <?php endif; ?>
 <?php endif; ?>
+
 
 <?php get_footer(); ?>
