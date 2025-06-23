@@ -619,6 +619,59 @@ function mettre_a_jour_cache_complet_automatiquement($post_id): void
 }
 add_action('acf/save_post', 'mettre_a_jour_cache_complet_automatiquement', 20);
 
+/**
+ * Vérifie la valeur du champ `_cache_complet` d'un post et la
+ * synchronise si elle ne correspond pas à la réalité.
+ *
+ * Cette vérification est légère et peut être appelée à chaque
+ * affichage d'un post (ex : pages single) pour s'assurer que les
+ * panneaux d'édition ne s'ouvrent pas inutilement.
+ *
+ * @param int $post_id ID du post à contrôler.
+ * @return void
+ */
+function verifier_ou_mettre_a_jour_cache_complet(int $post_id): void
+{
+    if (!is_numeric($post_id)) {
+        return;
+    }
+
+    static $deja = [];
+    if (in_array($post_id, $deja, true)) {
+        return;
+    }
+    $deja[] = $post_id;
+
+    $type = get_post_type($post_id);
+
+    switch ($type) {
+        case 'organisateur':
+            $cache = (bool) get_field('organisateur_cache_complet', $post_id);
+            $reel  = organisateur_est_complet($post_id);
+            if ($cache !== $reel) {
+                update_field('organisateur_cache_complet', $reel ? 1 : 0, $post_id);
+            }
+            break;
+
+        case 'chasse':
+            $cache = (bool) get_field('chasse_cache_complet', $post_id);
+            $reel  = chasse_est_complet($post_id);
+            if ($cache !== $reel) {
+                update_field('chasse_cache_complet', $reel ? 1 : 0, $post_id);
+            }
+            break;
+
+        case 'enigme':
+            $cache = (bool) get_field('enigme_cache_complet', $post_id);
+            $reel  = enigme_est_complet($post_id);
+            if ($cache !== $reel) {
+                update_field('enigme_cache_complet', $reel ? 1 : 0, $post_id);
+            }
+            break;
+    }
+}
+
+
 
 
 

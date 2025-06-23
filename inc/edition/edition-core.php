@@ -413,17 +413,22 @@ function injection_classe_edition_active(array $classes): array
   // === ORGANISATEUR ===
   if (
     $post->post_type === 'organisateur' &&
-    get_post_status($post) === 'pending' &&
     (int) get_post_field('post_author', $post->ID) === $user_id &&
     in_array('organisateur_creation', $roles, true)
   ) {
-    $classes[] = 'edition-active';
+    verifier_ou_mettre_a_jour_cache_complet($post->ID);
+
+    if (
+      get_post_status($post) === 'pending' &&
+      !get_field('organisateur_cache_complet', $post->ID)
+    ) {
+      $classes[] = 'edition-active';
+    }
   }
 
   // === CHASSE ===
   if (
     $post->post_type === 'chasse' &&
-    get_post_status($post) === 'pending' &&
     in_array('organisateur_creation', $roles, true)
   ) {
     $organisateur_id = get_organisateur_from_chasse($post->ID);
@@ -431,7 +436,14 @@ function injection_classe_edition_active(array $classes): array
     $associes = is_array($associes) ? array_map('strval', $associes) : [];
 
     if (in_array((string) $user_id, $associes, true)) {
-      $classes[] = 'edition-active-chasse';
+      verifier_ou_mettre_a_jour_cache_complet($post->ID);
+
+      if (
+        get_post_status($post) === 'pending' &&
+        !get_field('chasse_cache_complet', $post->ID)
+      ) {
+        $classes[] = 'edition-active-chasse';
+      }
     }
   }
 

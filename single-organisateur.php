@@ -18,6 +18,12 @@ acf_form_head(); // <-- doit être ici, AVANT get_header() !
 
 global $post;
 $organisateur_id = $post->ID;
+$user_id = get_current_user_id();
+$roles = (array) wp_get_current_user()->roles;
+$is_owner = $user_id && (int) get_post_field('post_author', $organisateur_id) === $user_id;
+if ($is_owner && in_array('organisateur_creation', $roles, true)) {
+    verifier_ou_mettre_a_jour_cache_complet($organisateur_id);
+}
 $peut_modifier = utilisateur_peut_modifier_post($organisateur_id);
 $image_logo = get_the_post_thumbnail_url($organisateur_id, 'medium_large');
 $nom_organisateur = get_the_title($organisateur_id);

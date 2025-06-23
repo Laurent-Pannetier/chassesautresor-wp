@@ -12,7 +12,8 @@ $roles = (array) $current_user->roles;
 $profil_expanded = array_intersect($roles, ['organisateur_creation', 'abonne']);
 $profil_expanded = !empty($profil_expanded);
 $infos_expanded = !$profil_expanded;
-$edition_active = in_array('organisateur_creation', $roles);
+$cache_complet  = get_field('organisateur_cache_complet', $organisateur_id);
+$edition_active = in_array('organisateur_creation', $roles) && !$cache_complet;
 
 // Post
 $titre        = get_post_field('post_title', $organisateur_id);
@@ -37,8 +38,8 @@ $bic_vide  = empty($coordonnees['bic']);
 $classe_vide_coordonnees = ($iban_vide || $bic_vide) ? 'champ-vide' : '';
 ?>
 
-<?php if ($edition_active && $peut_modifier) : ?>
-  <section class="panneau-organisateur edition-panel edition-panel-organisateur edition-panel-modal edition-active" aria-hidden="false">
+<?php if ($peut_modifier) : ?>
+  <section class="panneau-organisateur edition-panel edition-panel-organisateur edition-panel-modal<?php echo $edition_active ? ' edition-active' : ''; ?>" aria-hidden="<?php echo $edition_active ? 'false' : 'true'; ?>">
 
     <div class="edition-panel-header">
       <h2><i class="fa-solid fa-sliders"></i> Paramètres organisateur</h2>
