@@ -25,15 +25,16 @@ function ouvrirModalConfirmation(form) {
   modal.innerHTML = `
     <div class="modal-contenu">
       <button class="modal-close-top" aria-label="Fermer">&times;</button>
+      <h2>Valider votre chasse au trésor</h2>
       <p>
-        ⚠️ <strong>En cochant cette case, je certifie avoir finalisé la création de cette chasse et de toutes ses énigmes.</strong><br>
-        📌 <strong>Une fois la demande envoyée, aucune modification ne sera possible.</strong>
+        ⚠️ Avant d\u2019envoyer votre demande de validation, assurez-vous que votre chasse est complète et prête à être publiée.<br>
+        📌 Après validation, vous ne pourrez plus modifier ses paramètres.
       </p>
       <label>
-        <input type="checkbox" id="confirm-validation"> Je certifie avoir finalisé la création de cette chasse et de toutes ses énigmes.
+        <input type="checkbox" id="confirm-validation"> Je certifie que ma chasse et toutes ses énigmes sont finalisées.
       </label>
       <div class="boutons-modal">
-        <button class="bouton-cta confirmer-envoi" disabled>Confirmer l'envoi de la demande</button>
+        <button class="bouton-cta confirmer-envoi" disabled>Envoyer la demande de validation</button>
       </div>
     </div>`;
 
