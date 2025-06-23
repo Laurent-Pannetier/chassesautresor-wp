@@ -166,3 +166,12 @@
   gap: 0.5rem;
   padding: 0 1rem;
 }
+
+/* ========== ✅ Indicateurs de complétion ========== */
+.carte-complete {
+  border: 2px solid var(--color-editor-success);
+}
+
+.carte-incomplete {
+  border: 2px solid var(--color-editor-error);
+}
