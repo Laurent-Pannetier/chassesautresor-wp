@@ -1,9 +1,4 @@
-<?
-/**
- * Template Name: devenir organisateur
- * Description: Page publique devenir organisateur
- */
-
+<?php
 defined('ABSPATH') || exit;
 
 
