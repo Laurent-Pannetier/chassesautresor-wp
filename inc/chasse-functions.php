@@ -275,3 +275,122 @@ function afficher_chasse_associee_callback() {
     return ob_get_clean();
 }
 
+/**
+ * Détermine si l'organisateur peut demander la validation d'une chasse.
+ *
+ * @param int $chasse_id ID de la chasse.
+ * @param int $user_id   ID de l'utilisateur.
+ * @return bool
+ */
+function peut_valider_chasse(int $chasse_id, int $user_id): bool
+{
+    if (!$chasse_id || !$user_id) {
+        return false;
+    }
+
+    if (get_post_type($chasse_id) !== 'chasse') {
+        return false;
+    }
+
+    $user = get_user_by('id', $user_id);
+    if (!$user) {
+        return false;
+    }
+
+    $roles = (array) $user->roles;
+    if (!array_intersect($roles, ['organisateur', 'organisateur_creation'])) {
+        return false;
+    }
+
+    if (!utilisateur_est_organisateur_associe_a_chasse($user_id, $chasse_id)) {
+        return false;
+    }
+
+    $organisateur_id = get_organisateur_from_chasse($chasse_id);
+    if (!$organisateur_id || !get_field('organisateur_cache_complet', $organisateur_id)) {
+        return false;
+    }
+
+    if (!get_field('chasse_cache_complet', $chasse_id)) {
+        return false;
+    }
+
+    if (get_post_status($chasse_id) !== 'pending') {
+        return false;
+    }
+
+    $cache = get_field('champs_caches', $chasse_id);
+    if (!$cache) {
+        return false;
+    }
+
+    if (!in_array($cache['chasse_cache_statut_validation'] ?? '', ['creation', 'correction'], true)) {
+        return false;
+    }
+
+    if (($cache['chasse_cache_statut'] ?? '') !== 'revision') {
+        return false;
+    }
+
+    $enigmes = recuperer_enigmes_associees($chasse_id);
+    if (empty($enigmes)) {
+        return false;
+    }
+
+    foreach ($enigmes as $eid) {
+        $etat = get_field('enigme_cache_etat_systeme', $eid);
+        $complet = get_field('enigme_cache_complet', $eid);
+        if ($etat !== 'bloquee_chasse' || !$complet) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+/**
+ * Retourne la première chasse pouvant être soumise à validation pour un utilisateur.
+ *
+ * @param int $user_id ID utilisateur.
+ * @return int|null ID de la chasse ou null.
+ */
+function trouver_chasse_a_valider(int $user_id): ?int
+{
+    $organisateur_id = get_organisateur_from_user($user_id);
+    if (!$organisateur_id) {
+        return null;
+    }
+
+    $query = get_chasses_de_organisateur($organisateur_id);
+    $chasses = is_a($query, 'WP_Query') ? $query->posts : (array) $query;
+
+    foreach ($chasses as $post) {
+        if (peut_valider_chasse($post->ID, $user_id)) {
+            return $post->ID;
+        }
+    }
+
+    return null;
+}
+
+/**
+ * Génère le formulaire de demande de validation pour une chasse.
+ *
+ * @param int $chasse_id ID de la chasse.
+ * @return string HTML du formulaire.
+ */
+function render_form_validation_chasse(int $chasse_id): string
+{
+    $nonce = wp_create_nonce('validation_chasse_' . $chasse_id);
+    ob_start();
+    ?>
+    <form method="post" action="<?= esc_url(site_url('/traitement-validation-chasse')); ?>" class="form-validation-chasse">
+        <input type="hidden" name="chasse_id" value="<?= esc_attr($chasse_id); ?>">
+        <input type="hidden" name="validation_chasse_nonce" value="<?= esc_attr($nonce); ?>">
+        <input type="hidden" name="demande_validation_chasse" value="1">
+        <button type="submit" class="bouton-cta bouton-validation-chasse">VALIDATION</button>
+    </form>
+    <?php
+    return ob_get_clean();
+}
+

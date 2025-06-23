@@ -476,3 +476,14 @@ footer .ast-footer-widget a {
     padding-inline: 10px;
   }
 }
+.bandeau-info-chasse {
+  background: var(--color-secondary);
+  color: var(--color-text-fond-clair);
+  text-align: center;
+  padding: 0.25rem 1rem;
+  font-size: 0.9rem;
+}
+.bandeau-info-chasse form {
+  display: inline-block;
+  margin-left: 1rem;
+}
