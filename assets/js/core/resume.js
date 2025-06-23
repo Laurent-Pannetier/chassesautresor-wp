@@ -29,18 +29,8 @@ window.mettreAJourResumeInfos = function () {
         estRempli = ul && ul.children.length > 0;
       }
 
-      // Mise à jour visuelle
-      ligne.classList.toggle('champ-rempli', estRempli);
-      ligne.classList.toggle('champ-vide', !estRempli);
-
-      ligne.querySelectorAll('.icone-check, .icon-attente').forEach(i => i.remove());
-
-      const icone = document.createElement('i');
-      icone.className = estRempli
-        ? 'fa-solid fa-circle-check icone-check'
-        : 'fa-regular fa-circle icon-attente';
-      icone.setAttribute('aria-hidden', 'true');
-      ligne.prepend(icone);
+      // Mise à jour visuelle + marquage obligatoire
+      mettreAJourLigneResume(ligne, champ, estRempli, 'organisateur');
     });
   }
 
@@ -94,18 +84,8 @@ window.mettreAJourResumeInfos = function () {
         estRempli = (titre.length > 0) && (texte.length > 0) && (valeur > 0);
       }
 
-      // Mise à jour visuelle
-      ligne.classList.toggle('champ-rempli', estRempli);
-      ligne.classList.toggle('champ-vide', !estRempli);
-
-      ligne.querySelectorAll('.icone-check, .icon-attente').forEach(i => i.remove());
-
-      const icone = document.createElement('i');
-      icone.className = estRempli
-        ? 'fa-solid fa-circle-check icone-check'
-        : 'fa-regular fa-circle icon-attente';
-      icone.setAttribute('aria-hidden', 'true');
-      ligne.prepend(icone);
+      // Mise à jour visuelle + marquage obligatoire
+      mettreAJourLigneResume(ligne, champ, estRempli, 'chasse');
     });
   }
 
