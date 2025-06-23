@@ -514,8 +514,8 @@ body.edition-active-enigme .edition-panel-enigme.edition-panel-modal {
   flex: 1 1 auto;
   overflow-y: auto;
   padding: 1rem 2rem;
-  height: calc(100vh - 120px);
-  /* ajuste selon la hauteur estimée du header + header du panneau */
+  height: auto;
+  min-height: 300px;
   box-sizing: border-box;
 }
 
