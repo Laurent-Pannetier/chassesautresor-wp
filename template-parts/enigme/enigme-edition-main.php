@@ -385,6 +385,11 @@ $has_variantes = ($nb_variantes > 0);
     </div>
 
     </div> <!-- .edition-panel-body -->
+    <?php if (utilisateur_peut_supprimer_enigme($enigme_id)) : ?>
+      <div class="edition-panel-footer">
+        <button type="button" id="bouton-supprimer-enigme" class="bouton-texte secondaire">❌ Suppression énigme</button>
+      </div>
+    <?php endif; ?>
     </div> <!-- #enigme-tab-param -->
 
     <div id="enigme-tab-stats" class="edition-tab-content" style="display:none;">
@@ -530,6 +535,5 @@ $has_variantes = ($nb_variantes > 0);
       </div>
     </div>
     </div> <!-- #enigme-tab-solution -->
-    <div class="edition-panel-footer"></div>
   </section>
 <?php endif; ?>

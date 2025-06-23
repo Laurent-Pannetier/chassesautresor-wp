@@ -265,12 +265,39 @@ document.addEventListener('DOMContentLoaded', () => {
 
     DEBUG && console.log('[INIT GRATUIT] valeur brute =', raw, '| valeur interprétée =', valeur);
 
-    const estGratuit = valeur === 0;
+  const estGratuit = valeur === 0;
 
-    $checkbox.checked = estGratuit;
-    $cout.disabled = estGratuit;
+  $checkbox.checked = estGratuit;
+  $cout.disabled = estGratuit;
   })();
 
+  const boutonSupprimer = document.getElementById('bouton-supprimer-enigme');
+  if (boutonSupprimer) {
+    boutonSupprimer.addEventListener('click', () => {
+      const postId = panneauEdition?.dataset.postId;
+      if (!postId) return;
+
+      if (!confirm('Voulez-vous vraiment supprimer cette énigme ?')) return;
+
+      fetch(ajaxurl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          action: 'supprimer_enigme',
+          post_id: postId
+        })
+      })
+        .then(r => r.json())
+        .then(res => {
+          if (res.success && res.data?.redirect) {
+            window.location.href = res.data.redirect;
+          } else {
+            alert('Échec suppression : ' + (res.data || 'inconnue'));
+          }
+        })
+        .catch(() => alert('Erreur réseau'));
+    });
+  }
 
 });
 

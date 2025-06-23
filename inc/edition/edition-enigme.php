@@ -526,6 +526,73 @@ function planifier_ou_deplacer_pdf_solution_immediatement($enigme_id)
   wp_schedule_single_event($timestamp, 'publier_solution_enigme', [$enigme_id]);
 }
 
+/**
+ * Supprime récursivement le dossier dédié à une énigme dans /uploads/_enigmes/.
+ *
+ * @param int $post_id ID de l'énigme.
+ * @return void
+ */
+function supprimer_dossier_enigme($post_id)
+{
+  $upload_dir = wp_upload_dir();
+  $dir = $upload_dir['basedir'] . '/_enigmes/enigme-' . $post_id;
+
+  if (!is_dir($dir)) {
+    return;
+  }
+
+  $iterator = new RecursiveIteratorIterator(
+    new RecursiveDirectoryIterator($dir, RecursiveDirectoryIterator::SKIP_DOTS),
+    RecursiveIteratorIterator::CHILD_FIRST
+  );
+
+  foreach ($iterator as $file) {
+    if ($file->isDir()) {
+      @rmdir($file->getPathname());
+    } else {
+      @unlink($file->getPathname());
+    }
+  }
+
+  @rmdir($dir);
+}
+
+/**
+ * Gère la suppression d'une énigme via AJAX.
+ *
+ * @hook wp_ajax_supprimer_enigme
+ * @return void
+ */
+function supprimer_enigme_ajax()
+{
+  if (!is_user_logged_in()) {
+    wp_send_json_error('non_connecte');
+  }
+
+  $post_id = isset($_POST['post_id']) ? (int) $_POST['post_id'] : 0;
+  if (!$post_id || get_post_type($post_id) !== 'enigme') {
+    wp_send_json_error('id_invalide');
+  }
+
+  $user_id = get_current_user_id();
+  if (!utilisateur_peut_supprimer_enigme($post_id, $user_id)) {
+    wp_send_json_error('acces_refuse');
+  }
+
+  $chasse_id = recuperer_id_chasse_associee($post_id);
+  $redirect  = $chasse_id ? get_permalink($chasse_id) : home_url('/');
+
+  $deleted = wp_delete_post($post_id, true);
+  if (!$deleted) {
+    wp_send_json_error('echec_suppression');
+  }
+
+  supprimer_dossier_enigme($post_id);
+
+  wp_send_json_success(['redirect' => $redirect]);
+}
+add_action('wp_ajax_supprimer_enigme', 'supprimer_enigme_ajax');
+
 
 
 // ==================================================
