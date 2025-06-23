@@ -21,6 +21,9 @@ $nombre_chasses = 0;
 if ($organisateur_id) {
     $chasses = get_chasses_de_organisateur($organisateur_id);
     $nombre_chasses = $chasses->found_posts ?? 0;
+    $liste_chasses_organisateur = generer_liste_chasses_hierarchique($organisateur_id);
+} else {
+    $liste_chasses_organisateur = '';
 }
 
 // récupération stats du joueur
@@ -136,7 +139,7 @@ $tableau_contenu = ob_get_clean(); // Récupérer la sortie et l'effacer du buff
         <hr class="separator-line">
     </div>
     <div class="dashboard-grid">
-        <a href="<?php echo esc_url(get_permalink($organisateur_id)); ?>" class="dashboard-card">
+        <div class="dashboard-card">
             <div class="dashboard-card-header">
                 <i class="fas fa-landmark"></i>
                 <h3><?php echo esc_html($organisateur_titre); ?></h3>
@@ -147,7 +150,10 @@ $tableau_contenu = ob_get_clean(); // Récupérer la sortie et l'effacer du buff
                     <?php echo sprintf(_n('%d chasse', '%d chasses', $nombre_chasses, 'text-domain'), $nombre_chasses); ?>
                 </div>
             </div>
-        </a>
+            <div class="stats-content">
+                <?php echo $liste_chasses_organisateur; ?>
+            </div>
+        </div>
         
         <div class="dashboard-card points-card">
             <div class="dashboard-card-header">
