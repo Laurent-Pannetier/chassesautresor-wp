@@ -48,8 +48,16 @@ get_header(); ?>
     <div class="contenu-hero">
       <h1><?php the_title(); ?></h1>
       <p class="sous-titre">Créez, publiez et partagez vos aventures interactives.</p>
-      <a href="/creer-mon-profil/" class="bouton-cta" id="creer-profil-btn" data-event="clic_creer_profil">
-        Créer mon profil
+      <?php
+        $cta_url  = '/creer-mon-profil/';
+        $cta_text = 'Créer mon profil';
+        if (is_user_logged_in() && get_user_meta($user_id, 'organisateur_demande_token', true)) {
+          $cta_url  = '/creer-mon-profil/?resend=1';
+          $cta_text = "Renvoyer l'email de confirmation";
+        }
+      ?>
+      <a href="<?php echo esc_url($cta_url); ?>" class="bouton-cta" id="creer-profil-btn" data-event="clic_creer_profil">
+        <?php echo esc_html($cta_text); ?>
       </a>
     </div>
   </div>

@@ -1,7 +1,7 @@
 <?php
 /**
  * Template Name: Créer mon profil
- * Description: Redirige l’utilisateur selon l’état de son profil organisateur.
+ * Description: Démarre ou renvoie la demande de création d'un profil organisateur.
  */
 
 defined('ABSPATH') || exit;
@@ -12,22 +12,26 @@ if (!is_user_logged_in()) {
     exit;
 }
 
-// 2. Création si aucun CPT n’existe
 $current_user_id = get_current_user_id();
-$organisateur_id = get_organisateur_from_user($current_user_id);
 
-if (!$organisateur_id) {
-    $nouvel_id = creer_organisateur_pour_utilisateur($current_user_id);
+// 2. Si un profil existe déjà, redirection automatique
+rediriger_selon_etat_organisateur();
 
-    if (!$nouvel_id) {
-        wp_redirect(home_url('/erreur-creation-organisateur/'));
-        exit;
-    }
-
-    // Rechargement pour prise en compte du rôle attribué par le hook
-    wp_get_current_user();
+// 3. Gestion de la demande en cours
+if (isset($_GET['resend'])) {
+    renvoyer_email_confirmation_organisateur($current_user_id);
+    echo '<p>✉️ Un nouvel email de confirmation a été envoyé.</p>';
+    exit;
 }
 
-// 3. Redirection automatique selon état (draft / pending / publish)
-rediriger_selon_etat_organisateur();
+$token = get_user_meta($current_user_id, 'organisateur_demande_token', true);
+if ($token) {
+    echo '<p>⚠️ Une demande de création de profil organisateur est déjà en cours pour ce compte.</p>';
+    echo '<p><a href="?resend=1">Renvoyer l\'email de confirmation</a></p>';
+    exit;
+}
+
+// 4. Nouvelle demande
+lancer_demande_organisateur($current_user_id);
+echo '<p>✉️ Un email de vérification vous a été envoyé. Veuillez cliquer sur le lien pour confirmer votre demande.</p>';
 exit;
