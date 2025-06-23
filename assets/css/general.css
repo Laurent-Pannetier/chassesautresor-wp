@@ -243,6 +243,7 @@ span.champ-obligatoire {
 
   --color-editor-error:            #D93025;   /* ⚠️ Message d’erreur */
   --color-editor-success:          #188038;   /* ✅ Message de validation */
+  --color-editor-success-hover:    #0F5E2C;   /* ✅ Hover validation */
 
   --color-editor-field-hover:      #E8F0FE;   /* 💠 Fond des champs actifs / survolés */
   --color-editor-placeholder:      #9AA0A6;   /* 💬 Placeholder ou aide contextuelle */

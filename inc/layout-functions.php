@@ -132,8 +132,6 @@ function charger_scripts_personnalises() {
     wp_enqueue_script('toggle-text', $theme_dir . 'toggle-text.js', ['jquery'], null, true);
     wp_enqueue_script('toggle-tooltip', $theme_dir . 'toggle-tooltip.js', [], null, true);
     
-    // 📦 Accordéon générique
-    wp_enqueue_script('accordeon-js', $theme_dir . 'accordeon.js', [], filemtime(get_stylesheet_directory() . '/assets/js/accordeon.js'), true);
     wp_enqueue_script(
       'encodage-morse',
       $theme_dir . 'encodage-morse.js',

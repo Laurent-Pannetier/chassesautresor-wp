@@ -91,17 +91,17 @@ body.edition-active .champ-organisateur.champ-vide:hover {
 }
 
 .champ-organisateur.champ-vide-obligatoire {
-  border: 2px dashed #ff0000;
+  border: 2px dashed var(--color-editor-error);
   animation: clignoteTitre 1s infinite alternate;
 }
 
 @keyframes clignoteTitre {
   0% {
-    box-shadow: 0 0 0px #ff0000;
+    box-shadow: 0 0 0px var(--color-editor-error);
   }
 
   100% {
-    box-shadow: 0 0 8px #ff0000;
+    box-shadow: 0 0 8px var(--color-editor-error);
   }
 }
 
@@ -337,7 +337,7 @@ body.edition-active .header-organisateur-wrapper .champ-modifier:focus {
 /* ========== ✔️ ANIMATION DE CONFIRMATION ========== */
 
 .champ-feedback.champ-confirmation {
-  color: var(--color-editor-success, #00cc66);
+  color: var(--color-editor-success);
   opacity: 1;
   transition: opacity 0.5s ease;
   font-size: 1.1rem;
@@ -613,7 +613,7 @@ body.edition-active .edition-panel {
 
 .edition-placeholder {
   border: 1px dashed var(--color-editor-border);
-  background-color: #f9f9f9;
+  background-color: var(--color-editor-background);
   font-size: 0.95rem;
   color: var(--color-editor-text-muted);
 }
@@ -818,7 +818,7 @@ body.panneau-ouvert::before {
 }
 
 .bouton-enregistrer-liens {
-  background-color: var(--color-success, #00cc66);
+  background-color: var(--color-editor-success);
   color: white;
   padding: 0.5rem 1rem;
   border: none;
@@ -829,7 +829,7 @@ body.panneau-ouvert::before {
 }
 
 .bouton-enregistrer-liens:hover {
-  background-color: #00b358;
+  background-color: var(--color-editor-success-hover);
 }
 
 .zone-chasses,
@@ -907,8 +907,28 @@ body.panneau-ouvert::before {
 .edition-tab-content {
   display: none;
   min-height: 180px;
+  padding: 1rem;
+  background-color: var(--color-editor-background);
+  position: relative;
 }
 
 .edition-tab-content.active {
   display: block;
+}
+
+.edition-tab-content .tab-watermark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 10rem;
+  color: var(--color-editor-border);
+  opacity: 0.08;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.edition-tab-content > :not(.tab-watermark) {
+  position: relative;
+  z-index: 1;
 }

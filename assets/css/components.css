@@ -648,52 +648,6 @@ body.single-organisateur .formulaire-contact-wrapper .wpforms-field-label {
 
 /* ========== 🧩 ACCORDÉON GÉNÉRIQUE – OUVERTURE / FERMETURE DYNAMIQUE ========== */
 
-/* Comportement glissant de l’accordéon */
-.accordeon-contenu {
-  overflow: hidden;
-  max-height: 0;
-  transition: max-height 0.4s ease;
-}
-
-/* Ouverture basée sur aria-expanded */
-.accordeon-toggle[aria-expanded="true"] + .accordeon-contenu {
-  max-height: 1000px; /* valeur arbitrairement grande */
-}
-
-/* Bouton déclencheur */
-.accordeon-toggle {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.5rem;
-  font-weight: 600;
-  background: none;
-  border: none;
-  font-size: 1rem;
-  padding: 0.5rem 1rem;
-  cursor: pointer;
-  color: var(--color-editor-heading);
-  transition: color 0.2s ease;
-}
-
-/* Hover/focus pour accessibilité */
-.accordeon-toggle:hover,
-.accordeon-toggle:focus {
-  color: var(--color-editor-accent);
-}
-
-/* Animation de l’icône chevron */
-.accordeon-toggle i.fa-chevron-down {
-  transition: transform 0.3s ease;
-}
-
-.accordeon-toggle[aria-expanded="false"] i.fa-chevron-down {
-  transform: rotate(0deg);
-}
-
-.accordeon-toggle[aria-expanded="true"] i.fa-chevron-down {
-  transform: rotate(180deg);
-}
 
 
 /* ========== 🔘 EFFET PULSATION ========== */
