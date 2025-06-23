@@ -26,9 +26,11 @@ if (!enigme_est_visible_pour($user_id, $enigme_id)) {
 
 // 🔹 Mode édition auto
 $edition_active = utilisateur_peut_modifier_post($enigme_id);
+$enigme_complete = (bool) get_field('enigme_cache_complet', $enigme_id);
 if (
   $edition_active &&
   current_user_can('organisateur_creation') &&
+  !$enigme_complete &&
   !isset($_GET['edition'])
 ) {
   wp_redirect(add_query_arg('edition', 'open', get_permalink()));
