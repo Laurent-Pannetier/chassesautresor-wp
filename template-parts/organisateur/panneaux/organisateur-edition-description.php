@@ -5,14 +5,14 @@ $organisateur_id = $args['organisateur_id'] ?? null;
 
 ?>
 
-<div id="panneau-description" class="panneau-lateral-liens panneau-lateral-large" aria-hidden="true">
+<div id="panneau-description" class="panneau-lateral-liens panneau-lateral-large" aria-hidden="true" role="dialog">
     <div class="panneau-lateral__contenu">
 
-        <div class="panneau-lateral__header">
-            <button type="button" class="panneau-fermer" aria-label="Fermer le panneau">✖</button>
+        <header class="panneau-lateral__header">
             <h2>Modifier votre présentation</h2>
-            
-        </div>
+            <button type="button" class="panneau-fermer" aria-label="Fermer le panneau">✖</button>
+
+        </header>
         <?php
         acf_form([
             'post_id'             => $organisateur_id,

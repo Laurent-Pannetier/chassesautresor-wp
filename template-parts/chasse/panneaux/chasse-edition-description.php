@@ -12,13 +12,13 @@ $chasse_id = $args['chasse_id'] ?? null;
 if (!$chasse_id || get_post_type($chasse_id) !== 'chasse') return;
 ?>
 
-<div id="panneau-description-chasse" class="panneau-lateral-liens panneau-lateral-large" aria-hidden="true">
+<div id="panneau-description-chasse" class="panneau-lateral-liens panneau-lateral-large" aria-hidden="true" role="dialog">
   <div class="panneau-lateral__contenu">
 
-    <div class="panneau-lateral__header">
-      <button type="button" class="panneau-fermer" aria-label="Fermer le panneau">✖</button>
+    <header class="panneau-lateral__header">
       <h2>Modifier la description de la chasse</h2>
-    </div>
+      <button type="button" class="panneau-fermer" aria-label="Fermer le panneau">✖</button>
+    </header>
 
     <?php
     acf_form([

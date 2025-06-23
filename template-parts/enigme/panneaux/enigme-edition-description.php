@@ -11,13 +11,13 @@ $enigme_id = $args['enigme_id'] ?? null;
 if (!$enigme_id || get_post_type($enigme_id) !== 'enigme') return;
 ?>
 
-<div id="panneau-description-enigme" class="panneau-lateral-liens panneau-lateral-large" aria-hidden="true">
+<div id="panneau-description-enigme" class="panneau-lateral-liens panneau-lateral-large" aria-hidden="true" role="dialog">
   <div class="panneau-lateral__contenu">
 
-    <div class="panneau-lateral__header">
-      <button type="button" class="panneau-fermer" aria-label="Fermer le panneau">✖</button>
+    <header class="panneau-lateral__header">
       <h2>Modifier le texte de l’énigme</h2>
-    </div>
+      <button type="button" class="panneau-fermer" aria-label="Fermer le panneau">✖</button>
+    </header>
 
     <?php
     acf_form([

@@ -23,13 +23,13 @@ if (is_array($liens_publics)) {
 }
 
     if (!empty($types_disponibles)) : ?>
-        <div id="panneau-liens-publics" class="panneau-lateral-liens" aria-hidden="true">
+        <div id="panneau-liens-publics" class="panneau-lateral-liens" aria-hidden="true" role="dialog">
             <div class="panneau-lateral__contenu">
 
-                <div class="panneau-lateral__header">
+                <header class="panneau-lateral__header">
                     <h2>Configurer vos liens publics</h2>
                     <button type="button" class="panneau-fermer" aria-label="Fermer le panneau">✖</button>
-                </div>
+                </header>
 
                 <form id="formulaire-liens-publics"
                       data-post-id="<?= esc_attr($organisateur_id); ?>"

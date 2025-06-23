@@ -7,13 +7,13 @@ if (!$enigme_id || get_post_type($enigme_id) !== 'enigme') return;
 $variantes = get_field('enigme_reponse_variantes', $enigme_id) ?? [];
 ?>
 
-<div id="panneau-variantes-enigme" class="panneau-lateral-liens panneau-lateral-large" aria-hidden="true">
+<div id="panneau-variantes-enigme" class="panneau-lateral-liens panneau-lateral-large" aria-hidden="true" role="dialog">
   <div class="panneau-lateral__contenu">
 
-    <div class="panneau-lateral__header">
-      <button type="button" class="panneau-fermer" aria-label="Fermer les variantes">✖</button>
+    <header class="panneau-lateral__header">
       <h2>Configurer les variantes de réponse</h2>
-    </div>
+      <button type="button" class="panneau-fermer" aria-label="Fermer les variantes">✖</button>
+    </header>
 
     <?php if (empty($variantes)) : ?>
       <p class="champ-aide champ-variantes-aucune">Aucune variante définie pour l’instant. Commencez à saisir votre première variante ci-dessous.</p>
