@@ -63,7 +63,7 @@ function enqueue_script_enigme_edit()
 
   // Localisation JS si besoin (ex : valeurs par défaut)
   wp_localize_script('champ-init', 'CHP_ENIGME_DEFAUT', [
-    'titre' => 'nouvelle énigme',
+    'titre' => strtolower(TITRE_DEFAUT_ENIGME),
     'image_slug' => 'defaut-enigme',
   ]);
 
@@ -101,7 +101,7 @@ function creer_enigme_pour_chasse($chasse_id, $user_id = null)
   $enigme_id = wp_insert_post([
     'post_type'   => 'enigme',
     'post_status' => 'pending',
-    'post_title'  => 'Nouvelle énigme',
+    'post_title'  => TITRE_DEFAUT_ENIGME,
     'post_author' => $user_id,
   ]);
 

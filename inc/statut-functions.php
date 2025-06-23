@@ -533,8 +533,7 @@ function organisateur_est_complet(int $organisateur_id): bool
         return false;
     }
 
-    $titre = trim(get_post_field('post_title', $organisateur_id));
-    $titre_ok = $titre !== '' && strtolower($titre) !== strtolower('Votre nom d\'organisateur');
+    $titre_ok = titre_est_valide($organisateur_id);
 
     $logo = get_field('profil_public_logo_organisateur', $organisateur_id);
     $logo_ok = !empty($logo);
@@ -558,8 +557,7 @@ function chasse_est_complet(int $chasse_id): bool
         return false;
     }
 
-    $titre = trim(get_post_field('post_title', $chasse_id));
-    $titre_ok = $titre !== '' && strtolower($titre) !== strtolower('Nouvelle chasse');
+    $titre_ok = titre_est_valide($chasse_id);
 
     $desc = trim(get_field('chasse_principale_description', $chasse_id));
     $desc_ok = $desc !== '';
@@ -584,8 +582,7 @@ function enigme_est_complet(int $enigme_id): bool
         return false;
     }
 
-    $titre = trim(get_post_field('post_title', $enigme_id));
-    $titre_ok = $titre !== '' && strtolower($titre) !== strtolower('Nouvelle enigme');
+    $titre_ok = titre_est_valide($enigme_id);
 
     $images = get_field('enigme_visuel_image', $enigme_id);
     $placeholder = defined('ID_IMAGE_PLACEHOLDER_ENIGME') ? ID_IMAGE_PLACEHOLDER_ENIGME : 3925;
