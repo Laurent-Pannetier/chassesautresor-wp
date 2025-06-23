@@ -183,6 +183,7 @@ if (!$modal_deja_vue) :
         <?= $contenu; ?>
       </div>
     </div>
+
     <script>
       window.addEventListener('DOMContentLoaded', () => {
         const wrapper = document.querySelector('.modal-bienvenue-wrapper');
@@ -238,5 +239,6 @@ if (!$modal_deja_vue) :
     </style>
   <?php endif; ?>
 <?php endif; ?>
+
 
 <?php get_footer(); ?>
