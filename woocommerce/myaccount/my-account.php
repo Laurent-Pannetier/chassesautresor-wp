@@ -6,6 +6,10 @@ defined( 'ABSPATH' ) || exit;
 $current_user = wp_get_current_user();
 $roles_utilisateur = $current_user->roles;
 
+if (isset($_GET['notice']) && $_GET['notice'] === 'profil_verification') {
+    echo '<div class="woocommerce-message" role="alert">✉️ Un email de vérification vous a été envoyé. Veuillez cliquer sur le lien pour confirmer votre demande.</div>';
+}
+
 if ( in_array('administrator', $roles_utilisateur) ) {
     require 'admin.php';
 } elseif ( array_intersect(['organisateur', 'organisateur_creation'], $roles_utilisateur) ) {
