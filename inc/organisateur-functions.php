@@ -270,3 +270,121 @@ function ajouter_query_var_contact($vars) {
     return $vars;
 }
 add_filter('query_vars', 'ajouter_query_var_contact');
+
+// ==================================================
+// ✉️ CONFIRMATION ORGANISATEUR PAR EMAIL
+// ==================================================
+/**
+ * Crée une demande de profil organisateur et envoie un email de confirmation.
+ *
+ * @param int $user_id
+ * @return bool True si l'email est envoyé.
+ */
+function lancer_demande_organisateur($user_id) {
+    $token_meta = get_user_meta($user_id, 'organisateur_demande_token', true);
+    if ($token_meta) {
+        return false; // Demande déjà en attente
+    }
+    $token = wp_create_nonce('confirmation_organisateur_' . $user_id);
+    update_user_meta($user_id, 'organisateur_demande_token', $token);
+    update_user_meta($user_id, 'organisateur_demande_time', time());
+    envoyer_email_confirmation_organisateur($user_id, $token);
+    return true;
+}
+
+/**
+ * Réexpédie l'email de confirmation si une demande existe.
+ *
+ * @param int $user_id
+ * @return bool
+ */
+function renvoyer_email_confirmation_organisateur($user_id) {
+    $token = get_user_meta($user_id, 'organisateur_demande_token', true);
+    if (!$token) {
+        return false;
+    }
+    envoyer_email_confirmation_organisateur($user_id, $token);
+    return true;
+}
+
+/**
+ * Envoie un email de confirmation avec un lien sécurisé.
+ *
+ * @param int    $user_id
+ * @param string $token
+ * @return void
+ */
+function envoyer_email_confirmation_organisateur($user_id, $token) {
+    $user = get_userdata($user_id);
+    if (!$user || !is_email($user->user_email)) {
+        return;
+    }
+    $lien = add_query_arg([
+        'token' => $token,
+        'user'  => $user_id,
+    ], home_url('/confirmation-organisateur/'));
+
+    $subject = '[Chasses au Trésor] Confirmation organisateur';
+    $message  = '<p>Bonjour ' . esc_html($user->display_name) . ',</p>';
+    $message .= '<p>Veuillez confirmer la création de votre profil organisateur en cliquant sur le lien suivant :</p>';
+    $message .= '<p><a href="' . esc_url($lien) . '">Confirmer mon inscription</a></p>';
+    $message .= '<p>Ce lien est valable 24h.</p>';
+
+    $headers = ['Content-Type: text/html; charset=UTF-8'];
+    add_filter('wp_mail_from_name', function () { return 'Chasses au Trésor'; });
+    wp_mail($user->user_email, $subject, $message, $headers);
+    remove_filter('wp_mail_from_name', '__return_false');
+}
+
+/**
+ * Valide la demande via le token et crée le CPT organisateur.
+ *
+ * @param int    $user_id
+ * @param string $token
+ * @return int|false ID du CPT ou false.
+ */
+function confirmer_demande_organisateur($user_id, $token) {
+    $en_attente = get_user_meta($user_id, 'organisateur_demande_token', true);
+    $time       = (int) get_user_meta($user_id, 'organisateur_demande_time', true);
+
+    if (!$en_attente || $en_attente !== $token) {
+        return false;
+    }
+    if (!wp_verify_nonce($token, 'confirmation_organisateur_' . $user_id)) {
+        return false;
+    }
+    if ($time < time() - DAY_IN_SECONDS) {
+        delete_user_meta($user_id, 'organisateur_demande_token');
+        delete_user_meta($user_id, 'organisateur_demande_time');
+        return false;
+    }
+    delete_user_meta($user_id, 'organisateur_demande_token');
+    delete_user_meta($user_id, 'organisateur_demande_time');
+    return creer_organisateur_pour_utilisateur($user_id);
+}
+
+/**
+ * Endpoint /confirmation-organisateur
+ */
+function ajouter_endpoint_confirmation_organisateur() {
+    add_rewrite_rule('^confirmation-organisateur/?$', 'index.php?confirmation_organisateur=1', 'top');
+}
+add_action('init', 'ajouter_endpoint_confirmation_organisateur');
+
+function ajouter_query_var_confirmation_organisateur($vars) {
+    $vars[] = 'confirmation_organisateur';
+    return $vars;
+}
+add_filter('query_vars', 'ajouter_query_var_confirmation_organisateur');
+
+function charger_template_confirmation_organisateur($template) {
+    if (get_query_var('confirmation_organisateur')) {
+        $custom = get_stylesheet_directory() . '/templates/page-confirmation-organisateur.php';
+        if (file_exists($custom)) {
+            return $custom;
+        }
+    }
+    return $template;
+}
+add_filter('template_include', 'charger_template_confirmation_organisateur');
+
