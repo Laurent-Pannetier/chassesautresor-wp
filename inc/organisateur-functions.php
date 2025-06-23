@@ -403,7 +403,9 @@ add_action('init', 'register_endpoint_confirmation_organisateur');
  * l'utilisateur puis redirige vers son espace organisateur.
  */
 function traiter_confirmation_organisateur() {
-    if (get_query_var('confirmation_organisateur') !== '1') {
+    $is_endpoint = get_query_var('confirmation_organisateur') === '1';
+    $is_page     = is_page('confirmation-organisateur');
+    if (!$is_endpoint && !$is_page) {
         return;
     }
 
@@ -426,3 +428,5 @@ function traiter_confirmation_organisateur() {
     exit;
 }
 add_action('template_redirect', 'traiter_confirmation_organisateur');
+
+
