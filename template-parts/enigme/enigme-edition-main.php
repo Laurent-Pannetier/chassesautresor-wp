@@ -87,7 +87,8 @@ $has_variantes = ($nb_variantes > 0);
       <button class="edition-tab" data-target="enigme-tab-solution">Solution</button>
     </div>
 
-    <div id="enigme-tab-param" class="edition-tab-content active">
+<div id="enigme-tab-param" class="edition-tab-content active">
+      <i class="fa-solid fa-sliders tab-watermark" aria-hidden="true"></i>
       <div class="edition-panel-body edition-panel-section">
       <div class="resume-blocs-grid deux-col-wrapper">
         <div class="resume-bloc resume-obligatoire deux-col-bloc">
@@ -379,10 +380,17 @@ $has_variantes = ($nb_variantes > 0);
         </div>
       </div>
     </div>
+
     </div> <!-- .edition-panel-body -->
     </div> <!-- #enigme-tab-param -->
 
+    <div id="enigme-tab-stats" class="edition-tab-content" style="display:none;">
+      <i class="fa-solid fa-chart-column tab-watermark" aria-hidden="true"></i>
+      <p class="edition-placeholder">La section « Statistiques » sera bientôt disponible.</p>
+    </div>
+
 <div id="enigme-tab-soumission" class="edition-tab-content" style="display:none;">
+  <i class="fa-solid fa-paper-plane tab-watermark" aria-hidden="true"></i>
 <?php
   $page_tentatives = max(1, intval($_GET['page_tentatives'] ?? 1));
   $par_page = 25;
@@ -422,10 +430,12 @@ $has_variantes = ($nb_variantes > 0);
 </div>
 
 <div id="enigme-tab-indices" class="edition-tab-content" style="display:none;">
+  <i class="fa-regular fa-lightbulb tab-watermark" aria-hidden="true"></i>
   <p class="edition-placeholder">La section « Indices » sera bientôt disponible.</p>
 </div>
 
 <div id="enigme-tab-solution" class="edition-tab-content" style="display:none;">
+  <i class="fa-solid fa-key tab-watermark" aria-hidden="true"></i>
 
             <fieldset class="groupe-champ champ-groupe-solution">
               <legend>Publication de la solution</legend>
