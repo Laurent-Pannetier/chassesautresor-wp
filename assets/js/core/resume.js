@@ -315,6 +315,8 @@ window.onChampSimpleMisAJour = function (champ, postId, valeur, cpt) {
 function mettreAJourLigneResume(ligne, champ, estRempli, type) {
   ligne.classList.toggle('champ-rempli', estRempli);
   ligne.classList.toggle('champ-vide', !estRempli);
+  const estObligatoire = ligne.closest('.resume-bloc')?.classList.contains('resume-obligatoire');
+  ligne.classList.toggle('champ-attention', estObligatoire && !estRempli);
 
   // Nettoyer anciennes icônes
   ligne.querySelectorAll(':scope > .icone-check, :scope > .icon-attente').forEach((i) => i.remove());
