@@ -1255,10 +1255,17 @@ function recuperer_details_acf() {
         wp_send_json_error('Non autorisé');
     }
 
-    $ids = [27, 9, 657];
+    // Utilisation des "keys" ACF directement car les IDs ne sont pas fiables
+    // lorsque les groupes sont chargés via JSON local.
+    $group_keys = [
+        'group_67b58c51b9a49', // Paramètre de la chasse (ID 27)
+        'group_67b58134d7647', // Paramètres de l’énigme (ID 9)
+        'group_67c7dbfea4a39', // Paramètres organisateur (ID 657)
+    ];
+
     ob_start();
-    foreach ($ids as $id) {
-        acf_inspect_field_group($id);
+    foreach ($group_keys as $key) {
+        acf_inspect_field_group($key);
         echo "\n";
     }
     $output = ob_get_clean();
