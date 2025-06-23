@@ -720,16 +720,17 @@ li.ligne-email .champ-organisateur .champ-affichage {
   height: 100%;
   width: 100%;
   max-width: 420px;
-  background-color: var(--color-background-panel, #0b132b);
-  /* fallback si variable absente */
+  background-color: var(--color-editor-background);
   z-index: 10000;
-  box-shadow: -3px 0 12px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
   overflow-y: auto;
   transform: translateX(100%);
   opacity: 0;
   pointer-events: none;
   transition: transform 0.4s ease, opacity 0.4s ease;
-  border-left: 1px solid var(--color-border-header-organisateur);
+  border: 1px solid var(--color-editor-border);
+  border-radius: 8px;
+  color: var(--color-editor-text);
 }
 
 .panneau-lateral-liens.ouvert {
@@ -761,6 +762,13 @@ body.panneau-ouvert::before {
 }
 
 .panneau-lateral__header h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--color-editor-heading);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   opacity: 0;
   transform: translateY(-10px);
   transition: opacity 0.5s ease, transform 0.5s ease;
@@ -802,6 +810,7 @@ body.panneau-ouvert::before {
 
 .panneau-lateral__contenu label {
   font-size: unset;
+  color: var(--color-editor-text-muted);
 }
 
 .ligne-lien-formulaire label {
@@ -810,7 +819,7 @@ body.panneau-ouvert::before {
   gap: 0.5rem;
   font-weight: 500;
   margin-bottom: 0.4rem;
-  color: var(--color-text-primary);
+  color: var(--color-editor-text);
 }
 
 .ligne-lien-formulaire label::before {
@@ -830,7 +839,7 @@ body.panneau-ouvert::before {
   padding: 0.5rem 0.75rem;
   border-radius: 0.5rem;
   background-color: white;
-  color: var(--color-text-fond-clair);
+  color: var(--color-editor-text);
   box-sizing: border-box;
 }
 
