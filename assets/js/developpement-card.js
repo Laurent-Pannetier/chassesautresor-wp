@@ -1,6 +1,9 @@
 document.addEventListener("DOMContentLoaded", function() {
     const btn = document.getElementById("afficher-champs-acf");
-    if (!btn) return;
+    const container = document.getElementById("acf-fields-container");
+    const output = document.getElementById("acf-fields-output");
+
+    if (!btn || !container || !output) return;
 
     btn.addEventListener("click", function(e) {
         e.preventDefault();
@@ -14,7 +17,8 @@ document.addEventListener("DOMContentLoaded", function() {
         .then(resp => resp.json())
         .then(data => {
             if (data.success) {
-                alert(data.data);
+                output.value = data.data;
+                container.style.display = "block";
             } else {
                 alert("Erreur : " + data.data);
             }
