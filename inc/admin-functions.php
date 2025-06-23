@@ -1351,8 +1351,8 @@ function afficher_tableau_organisateurs_en_creation() {
         return;
     }
 
-    echo '<table class="stats-table">';
-    echo '<thead><tr><th>Organisateur</th><th>Chasse associée</th><th>Nombre d\'énigmes</th></tr></thead><tbody>';
+    echo '<table class="stats-table"><tbody>';
+
     foreach ($liste as $entry) {
         echo '<tr>';
         echo '<td>' . esc_html($entry['organisateur_titre']) . '</td>';
