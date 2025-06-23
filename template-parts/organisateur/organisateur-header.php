@@ -31,12 +31,17 @@ if (!$email_contact || !is_email($email_contact)) {
 
 $base_url = trailingslashit(get_permalink($organisateur_id));
 $url_contact = esc_url($base_url . 'contact?email_organisateur=' . urlencode($email_contact));
+$est_complet = organisateur_est_complet($organisateur_id);
+$classes_header = 'header-organisateur';
+if ($peut_modifier && !$est_complet) {
+  $classes_header .= ' champ-organisateur champ-vide-obligatoire';
+}
 ?>
 <div class="header-organisateur-wrapper">
   <div class="ligne-morse" aria-hidden="true">
     <div class="morse-wrapper" data-morse="<?= esc_attr($titre_organisateur); ?>"></div>
   </div>
-  <header class="header-organisateur">
+  <header class="<?= esc_attr($classes_header); ?>">
     <div class="conteneur-organisateur">
 
       <!-- Colonne gauche : logo -->
