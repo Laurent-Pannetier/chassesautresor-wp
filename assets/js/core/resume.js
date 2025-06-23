@@ -218,6 +218,9 @@ window.mettreAJourResumeInfos = function () {
   if (typeof window.mettreAJourCarteAjoutChasse === 'function') {
     window.mettreAJourCarteAjoutChasse();
   }
+  if (typeof window.mettreAJourCarteAjoutEnigme === 'function') {
+    window.mettreAJourCarteAjoutEnigme();
+  }
 };
 
 // ==============================

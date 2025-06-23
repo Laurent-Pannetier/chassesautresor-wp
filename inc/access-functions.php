@@ -406,9 +406,24 @@ function utilisateur_peut_ajouter_enigme(int $chasse_id, ?int $user_id = null): 
         return false;
     }
 
-    $statut = get_field('champs_caches_chasse_cache_statut_validation', $chasse_id);
-    if (!in_array($statut, ['creation', 'correction'], true)) {
-        error_log("❌ [ajout énigme] chasse #$chasse_id statut invalide : $statut");
+    $user  = get_user_by('id', $user_id);
+    $roles = (array) ($user->roles ?? []);
+    if (!array_intersect($roles, ['organisateur', 'organisateur_creation'])) {
+        error_log("❌ [ajout énigme] rôle utilisateur #$user_id invalide");
+        return false;
+    }
+
+    $cache = get_field('champs_caches', $chasse_id);
+    $statut_validation = $cache['chasse_cache_statut_validation'] ?? null;
+    $statut_metier     = $cache['chasse_cache_statut'] ?? null;
+
+    if ($statut_metier !== 'revision') {
+        error_log("❌ [ajout énigme] chasse #$chasse_id statut metier : $statut_metier");
+        return false;
+    }
+
+    if (!in_array($statut_validation, ['creation', 'correction'], true)) {
+        error_log("❌ [ajout énigme] chasse #$chasse_id statut validation : $statut_validation");
         return false;
     }
 

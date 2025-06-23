@@ -92,6 +92,9 @@ document.addEventListener('DOMContentLoaded', () => {
   if (typeof window.mettreAJourResumeInfos === 'function') {
     window.mettreAJourResumeInfos();
   }
+  if (typeof window.mettreAJourCarteAjoutEnigme === 'function') {
+    window.mettreAJourCarteAjoutEnigme();
+  }
 
   // ==============================
   // 📅 Gestion Date de fin + Durée illimitée
@@ -615,6 +618,54 @@ function initChampNbGagnants() {
 
 // À appeler :
 initChampNbGagnants();
+
+// ==============================
+// ➕ Mise à jour de la carte d'ajout d'énigme
+// ==============================
+window.mettreAJourCarteAjoutEnigme = function () {
+  const carte = document.getElementById('carte-ajout-enigme');
+  if (!carte) return;
+
+  const panel = document.querySelector('.edition-panel-chasse');
+  if (!panel) return;
+
+  const selectors = [
+    '[data-champ="post_title"]',
+    '[data-champ="chasse_principale_image"]',
+    '[data-champ="chasse_principale_description"]'
+  ];
+
+  const incomplets = selectors.filter(sel => {
+    const li = panel.querySelector('.resume-infos ' + sel);
+    return li && li.classList.contains('champ-vide');
+  });
+
+  let overlay = carte.querySelector('.overlay-message');
+
+  if (incomplets.length === 0) {
+    carte.classList.remove('disabled');
+    overlay?.remove();
+  } else {
+    carte.classList.add('disabled');
+    const texte = incomplets.map(sel => {
+      if (sel.includes('post_title')) return 'titre';
+      if (sel.includes('image')) return 'image';
+      if (sel.includes('description')) return 'description';
+      return 'champ requis';
+    }).join(', ');
+
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.className = 'overlay-message';
+      carte.appendChild(overlay);
+    }
+
+    overlay.innerHTML = `
+      <i class="fa-solid fa-circle-info"></i>
+      <p>Complétez d’abord : ${texte}</p>
+    `;
+  }
+};
 
 
 // ================================

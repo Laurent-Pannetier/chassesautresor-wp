@@ -61,9 +61,12 @@ $has_enigmes = !empty($posts_visibles);
 
   <?php
   if (utilisateur_peut_ajouter_enigme($chasse_id, $utilisateur_id)) {
+    verifier_ou_mettre_a_jour_cache_complet($chasse_id);
+    $complete = (bool) get_field('chasse_cache_complet', $chasse_id);
     get_template_part('template-parts/enigme/chasse-partial-ajout-enigme', null, [
       'has_enigmes' => $has_enigmes,
       'chasse_id'   => $chasse_id,
+      'disabled'    => !$complete,
     ]);
   }
   ?>
