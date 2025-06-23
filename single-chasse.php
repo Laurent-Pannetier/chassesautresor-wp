@@ -199,7 +199,8 @@ if (!$modal_deja_vue) :
         display: flex;
         justify-content: center;
         align-items: center;
-        z-index: 9999;
+        /* S'assure de passer au-dessus du panneau d'édition (z-index 10000) */
+        z-index: 11001;
       }
       .modal-bienvenue-inner {
         background: #fff;
