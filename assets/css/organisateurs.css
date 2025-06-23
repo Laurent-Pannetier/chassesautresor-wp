@@ -187,6 +187,7 @@
   align-items: flex-start;
   gap: 8px;
   margin-top: 1rem;
+  color: var(--color-text-fond-clair);
 }
 .modal-confirmation-validation-chasse input[type="checkbox"] {
   transform: scale(1.2);
