@@ -34,8 +34,17 @@ $has_enigmes = !empty($posts_visibles);
     $etat_systeme = enigme_get_etat_systeme($enigme_id);
     $statut_utilisateur = enigme_get_statut_utilisateur($enigme_id, $utilisateur_id);
     $cta = get_cta_enigme($enigme_id);
+
+    $roles = wp_get_current_user()->roles;
+    $est_orga = array_intersect($roles, ['organisateur', 'organisateur_creation']);
+    $voir_bordure = !empty($est_orga) && utilisateur_est_organisateur_associe_a_chasse($utilisateur_id, $chasse_id);
+    $classe_completion = '';
+    if ($voir_bordure) {
+      $complet = (bool) get_field('enigme_cache_complet', $enigme_id);
+      $classe_completion = $complet ? 'carte-complete' : 'carte-incomplete';
+    }
     ?>
-    <article class="carte carte-enigme">
+    <article class="carte carte-enigme <?= esc_attr($classe_completion); ?>">
       <div class="carte-core">
         <div class="carte-enigme-image">
           <?php afficher_picture_vignette_enigme($enigme_id, 'Vignette de l’énigme'); ?>

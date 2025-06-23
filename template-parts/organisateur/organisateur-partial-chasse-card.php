@@ -11,6 +11,7 @@ if (!isset($args['chasse_id']) || empty($args['chasse_id'])) {
 }
 
 $chasse_id = $args['chasse_id'];
+$completion_class = $args['completion_class'] ?? '';
 
 // 🔹 Récupération des données de la chasse
 $titre = get_the_title($chasse_id);
@@ -81,7 +82,7 @@ if ($peut_ajouter_enigme) {
 $classe_verrouillee = ($statut === 'Verrouillée') ? 'statut-verrouille' : '';
 ?>
 
-<div class="carte carte-ligne carte-chasse <?php echo esc_attr($classe_statut . ' ' . $classe_verrouillee); ?>">
+<div class="carte carte-ligne carte-chasse <?php echo esc_attr(trim($classe_statut . ' ' . $classe_verrouillee . ' ' . $completion_class)); ?>">
     <?php // ✅ Afficher le menu uniquement s'il y a des actions
     if (!empty($menu_items)) : ?>
         <div class="menu-actions">
