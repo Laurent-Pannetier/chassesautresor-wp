@@ -270,3 +270,47 @@ function ajouter_query_var_contact($vars) {
     return $vars;
 }
 add_filter('query_vars', 'ajouter_query_var_contact');
+
+/**
+ * Génére une liste hiérarchique des chasses d'un organisateur.
+ *
+ * Exemple de sortie :
+ * - Organisateur (3 chasses)
+ *   - Chasse 1 (4 énigmes)
+ *   - Chasse 2 (2 énigmes)
+ *
+ * @param int $organisateur_id ID de l'organisateur.
+ * @return string HTML contenant la liste ou chaîne vide si non valide.
+ */
+function generer_liste_chasses_hierarchique($organisateur_id) {
+    if (!$organisateur_id || get_post_type($organisateur_id) !== 'organisateur') {
+        return '';
+    }
+
+    $query = get_chasses_de_organisateur($organisateur_id);
+    $nombre_chasses = $query->found_posts ?? 0;
+
+    $out  = '<ul class="liste-chasses-hierarchique">';
+    $out .= '<li>';
+    $out .= '<a href="' . esc_url(get_permalink($organisateur_id)) . '">' . esc_html(get_the_title($organisateur_id)) . '</a> ';
+    $out .= '(' . sprintf(_n('%d chasse', '%d chasses', $nombre_chasses, 'text-domain'), $nombre_chasses) . ')';
+
+    if ($nombre_chasses > 0) {
+        $out .= '<ul>';
+        foreach ($query->posts as $post) {
+            $chasse_id = $post->ID;
+            $chasse_titre = get_the_title($chasse_id);
+            $nb_enigmes = count(recuperer_enigmes_associees($chasse_id));
+            $out .= '<li>';
+            $out .= '<a href="' . esc_url(get_permalink($chasse_id)) . '">' . esc_html($chasse_titre) . '</a> ';
+            $out .= '(' . sprintf(_n('%d énigme', '%d énigmes', $nb_enigmes, 'text-domain'), $nb_enigmes) . ')';
+            $out .= '</li>';
+        }
+        $out .= '</ul>';
+    }
+
+    $out .= '</li></ul>';
+
+    return $out;
+}
+
