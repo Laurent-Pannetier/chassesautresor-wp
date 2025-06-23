@@ -474,6 +474,54 @@ function utilisateur_peut_modifier_enigme(int $enigme_id, ?int $user_id = null):
     return utilisateur_est_organisateur_associe_a_chasse($user_id, $chasse_id);
 }
 
+/**
+ * Détermine si un utilisateur peut supprimer une énigme.
+ *
+ * L'utilisateur doit être organisateur ou organisateur en cours de création
+ * et lié à la chasse parente. La chasse doit être en statut « revision » et
+ * son état de validation doit être « creation » ou « correction ».
+ *
+ * @param int      $enigme_id ID de l'énigme à supprimer.
+ * @param int|null $user_id   ID utilisateur (optionnel, courant par défaut).
+ * @return bool True si la suppression est autorisée.
+ */
+function utilisateur_peut_supprimer_enigme(int $enigme_id, ?int $user_id = null): bool
+{
+    if (get_post_type($enigme_id) !== 'enigme') {
+        return false;
+    }
+
+    $user_id = $user_id ?? get_current_user_id();
+    if (!$user_id) {
+        return false;
+    }
+
+    $user  = get_user_by('id', $user_id);
+    $roles = (array) ($user->roles ?? []);
+    if (!array_intersect($roles, ['organisateur', 'organisateur_creation'])) {
+        return false;
+    }
+
+    $chasse_id = recuperer_id_chasse_associee($enigme_id);
+    if (!$chasse_id || get_post_type($chasse_id) !== 'chasse') {
+        return false;
+    }
+
+    $cache = get_field('champs_caches', $chasse_id);
+    $statut_validation = $cache['chasse_cache_statut_validation'] ?? null;
+    $statut_metier     = $cache['chasse_cache_statut'] ?? null;
+
+    if ($statut_metier !== 'revision') {
+        return false;
+    }
+
+    if (!in_array($statut_validation, ['creation', 'correction'], true)) {
+        return false;
+    }
+
+    return utilisateur_est_organisateur_associe_a_chasse($user_id, $chasse_id);
+}
+
 
 /**
  * Vérifie si un utilisateur peut ajouter une nouvelle chasse à un organisateur donné.
