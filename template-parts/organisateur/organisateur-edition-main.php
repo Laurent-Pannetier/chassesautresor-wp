@@ -55,17 +55,15 @@ $classe_vide_coordonnees = ($iban_vide || $bic_vide) ? 'champ-vide' : '';
     </div>
 
     <div id="organisateur-tab-param" class="edition-tab-content active">
+      <i class="fa-solid fa-sliders tab-watermark" aria-hidden="true"></i>
       <div class="edition-panel-body">
-      <div class="edition-panel-section edition-panel-section-ligne accordeon-bloc" data-bloc="profil">
-        <button class="accordeon-toggle" aria-expanded="true">
-          <span class="label">
-            <i class="fa-solid fa-file-lines" aria-hidden="true"></i>
-            Profil organisateur
-          </span>
-          <i class="fa-solid fa-chevron-down chevron" aria-hidden="true"></i>
-        </button>
+      <div class="edition-panel-section edition-panel-section-ligne">
+        <h3 class="section-title">
+          <i class="fa-solid fa-file-lines" aria-hidden="true"></i>
+          Profil organisateur
+        </h3>
 
-        <div class="accordeon-contenu deux-col-wrapper">
+        <div class="section-content deux-col-wrapper">
           <!-- 📌 Édition du profil -->
           <div class="resume-bloc resume-obligatoire deux-col-bloc">
             <h3>Champs obligatoires</h3>
@@ -207,35 +205,16 @@ $classe_vide_coordonnees = ($iban_vide || $bic_vide) ? 'champ-vide' : '';
           </div>
         </div>
       </div>
-      <div class="edition-panel-section edition-placeholder accordeon-bloc" data-bloc="informations">
-        <button class="accordeon-toggle" aria-expanded="false">
-          <span class="label">
-            <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
-            Informations organisateur
-          </span>
-          <i class="fa-solid fa-chevron-down chevron" aria-hidden="true"></i>
-        </button>
-
-        <div class="placeholder-contenu accordeon-contenu">
-          <p>🚧 Cette section affichera bientôt vos données organisateurs :</p>
-          <ul class="liste-placeholder">
-            <li>📈 <strong>Nombre de chasses créées</strong></li>
-            <li>👥 <strong>Nombre de joueurs participants</strong></li>
-            <li>🏆 <strong>Trophées créés</strong></li>
-            <li>📅 <strong>Historique de vos publications</strong></li>
-            <li>💰 <strong>Revenus ou conversions en attente</strong></li>
-          </ul>
-          <p class="info-a-suivre">Rendez-vous prochainement pour plus de fonctionnalités !</p>
-        </div>
-      </div>
     </div> <!-- .edition-panel-body -->
     </div> <!-- #organisateur-tab-param -->
 
       <div id="organisateur-tab-stats" class="edition-tab-content" style="display:none;">
+        <i class="fa-solid fa-chart-column tab-watermark" aria-hidden="true"></i>
         <p class="edition-placeholder">La section « Statistiques » sera bientôt disponible.</p>
       </div>
 
       <div id="organisateur-tab-revenus" class="edition-tab-content" style="display:none;">
+        <i class="fa-solid fa-coins tab-watermark" aria-hidden="true"></i>
         <p class="edition-placeholder">La section « Revenus » sera bientôt disponible.</p>
       </div>
 

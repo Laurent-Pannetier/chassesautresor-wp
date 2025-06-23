@@ -50,19 +50,16 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
     </div>
 
     <div id="chasse-tab-param" class="edition-tab-content active">
+      <i class="fa-solid fa-sliders tab-watermark" aria-hidden="true"></i>
       <div class="edition-panel-body">
 
-      <!-- 🎯 ACCORDÉON 1 : Paramètres principaux -->
-      <div class="edition-panel-section edition-panel-section-ligne accordeon-bloc" data-bloc="profil">
-        <button class="accordeon-toggle" aria-expanded="true">
-          <span class="label">
-            <i class="fa-solid fa-gear" aria-hidden="true"></i>
-            Paramètres de la chasse
-          </span>
-          <i class="fa-solid fa-chevron-down chevron" aria-hidden="true"></i>
-        </button>
+      <div class="edition-panel-section edition-panel-section-ligne">
+        <h3 class="section-title">
+          <i class="fa-solid fa-gear" aria-hidden="true"></i>
+          Paramètres de la chasse
+        </h3>
 
-        <div class="accordeon-contenu">
+        <div class="section-content">
           <div class="resume-blocs-grid deux-col-wrapper">
 
             <!-- SECTION 1 : Champs obligatoires -->
@@ -267,41 +264,22 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
         </div>
       </div>
 
-      <!-- ℹ️ ACCORDÉON 2 : Informations chasse -->
-      <div class="edition-panel-section edition-placeholder accordeon-bloc" data-bloc="informations">
-        <button class="accordeon-toggle" aria-expanded="false">
-          <span class="label">
-            <i class="fa-solid fa-chart-line" aria-hidden="true"></i>
-
-            Informations chasse
-          </span>
-          <i class="fa-solid fa-chevron-down chevron" aria-hidden="true"></i>
-        </button>
-
-        <div class="placeholder-contenu accordeon-contenu">
-          <p>🚧 Cette section affichera bientôt les statistiques de votre chasse :</p>
-          <ul class="liste-placeholder">
-            <li><i class="fa-solid fa-users" aria-hidden="true"></i> <strong>Nombre de participants</strong></li>
-            <li><i class="fa-solid fa-chart-line" aria-hidden="true"></i> <strong>Progression des joueurs</strong></li>
-            <li><i class="fa-solid fa-coins" aria-hidden="true"></i> <strong>Nombre de points collectés</strong></li>
-            <li><i class="fa-solid fa-puzzle-piece" aria-hidden="true"></i> <strong>Statistiques par énigme</strong></li>
-          </ul>
-          <p class="info-a-suivre">Ces données apparaitront une fois la création de votre chasse terminée</p>
-        </div>
-      </div>
 
     </div> <!-- .edition-panel-body -->
     </div> <!-- #chasse-tab-param -->
 
     <div id="chasse-tab-stats" class="edition-tab-content" style="display:none;">
+      <i class="fa-solid fa-chart-column tab-watermark" aria-hidden="true"></i>
       <p class="edition-placeholder">La section « Statistiques » sera bientôt disponible.</p>
     </div>
 
     <div id="chasse-tab-classement" class="edition-tab-content" style="display:none;">
+      <i class="fa-solid fa-ranking-star tab-watermark" aria-hidden="true"></i>
       <p class="edition-placeholder">La section « Classement » sera bientôt disponible.</p>
     </div>
 
     <div id="chasse-tab-indices" class="edition-tab-content" style="display:none;">
+      <i class="fa-regular fa-lightbulb tab-watermark" aria-hidden="true"></i>
       <p class="edition-placeholder">La section « Indices » sera bientôt disponible.</p>
     </div>
 
