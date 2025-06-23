@@ -61,6 +61,14 @@ $statut = get_field('champs_caches')['chasse_cache_statut'] ?? 'revision';
 $nb_joueurs = 0;
 
 get_header();
+
+$can_validate = peut_valider_chasse($chasse_id, $user_id);
+if ($can_validate) {
+    echo '<div class="cta-chasse">';
+    echo '<p>Lorsque vous avez finalisé votre chasse, demandez sa validation :</p>';
+    echo render_form_validation_chasse($chasse_id);
+    echo '</div>';
+}
 ?>
 
 <div class="ast-container">

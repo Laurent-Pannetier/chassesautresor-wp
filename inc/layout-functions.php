@@ -139,6 +139,14 @@ function charger_scripts_personnalises() {
       filemtime(get_stylesheet_directory() . '/assets/js/encodage-morse.js'),
       true
     );
+
+    wp_enqueue_script(
+      'validation-chasse',
+      $theme_dir . 'validation-chasse.js',
+      [],
+      filemtime(get_stylesheet_directory() . '/assets/js/validation-chasse.js'),
+      true
+    );
 }
 // ✅ Ajout des scripts au chargement de WordPress
 add_action('wp_enqueue_scripts', 'charger_scripts_personnalises');
@@ -331,3 +339,35 @@ function limiter_texte_avec_toggle($texte, $limite = 200, $label_plus = 'Lire la
     <?php
     return ob_get_clean();
 }
+/**
+ * Affiche un bandeau d'information global invitant l'organisateur
+ * à valider sa chasse lorsque toutes les conditions sont réunies.
+ *
+ * @hook astra_header_after
+ */
+function afficher_bandeau_validation_chasse_global() {
+    if (!is_user_logged_in()) {
+        return;
+    }
+
+    $user_id = get_current_user_id();
+    if (!$user_id) {
+        return;
+    }
+
+    if (!function_exists('trouver_chasse_a_valider')) {
+        return;
+    }
+
+    $chasse_id = trouver_chasse_a_valider($user_id);
+    if (!$chasse_id) {
+        return;
+    }
+
+    $titre = get_the_title($chasse_id);
+    echo '<div class="bandeau-info-chasse">';
+    echo '<span>Votre chasse : ' . esc_html($titre) . '</span>';
+    echo render_form_validation_chasse($chasse_id);
+    echo '</div>';
+}
+add_action('astra_header_after', 'afficher_bandeau_validation_chasse_global');
