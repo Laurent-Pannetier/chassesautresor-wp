@@ -64,15 +64,6 @@ get_header();
 
 $can_validate = peut_valider_chasse($chasse_id, $user_id);
 $validation_envoyee = !empty($_GET['validation_demandee']);
-if ($can_validate) {
-    echo '<div class="cta-chasse">';
-    echo '<p>Lorsque vous avez finalisé votre chasse, demandez sa validation :</p>';
-    echo render_form_validation_chasse($chasse_id);
-    echo '</div>';
-}
-if ($validation_envoyee) {
-    echo '<p class="message-succes">✅ Votre demande de validation a bien été envoyée. Elle sera traitée par l’équipe.</p>';
-}
 ?>
 
 <div class="ast-container">
@@ -85,6 +76,18 @@ if ($validation_envoyee) {
         get_template_part('template-parts/organisateur/organisateur-header', null, [
           'organisateur_id' => $organisateur_id
         ]);
+      }
+      ?>
+
+      <?php
+      if ($can_validate) {
+        echo '<div class="cta-chasse">';
+        echo '<p>Lorsque vous avez finalisé votre chasse, demandez sa validation :</p>';
+        echo render_form_validation_chasse($chasse_id);
+        echo '</div>';
+      }
+      if ($validation_envoyee) {
+        echo '<p class="message-succes">✅ Votre demande de validation a bien été envoyée. Elle sera traitée par l’équipe.</p>';
       }
       ?>
 
