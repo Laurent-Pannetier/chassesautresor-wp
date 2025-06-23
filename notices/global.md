@@ -1,27 +1,25 @@
-📘 Notice technique globale – chassesautresor.com
+# Notice technique globale – chassesautresor.com
 
+## Sommaire
 
-
-📑 Sommaire
-
-0. Préambule : méthode de travail
-1. Structure du site
-2. Modèle de développement
-3. ACF – Champs personnalisés
-4. Édition frontale
-5. JavaScript modulaire
-6. Affichages publics
-7. Accès & autorisations
-8. Comportements spéciaux
-9. Performances et bonnes pratiques
-10. Appendices
+- 0. Préambule : méthode de travail
+- 1. Structure du site
+- 2. Modèle de développement
+- 3. ACF – Champs personnalisés
+- 4. Édition frontale
+- 5. JavaScript modulaire
+- 6. Affichages publics
+- 7. Accès & autorisations
+- 8. Comportements spéciaux
+- 9. Performances et bonnes pratiques
+- 10. Appendices
 
 ---
 
-📘 Préambule : méthode de travail
+## Préambule : méthode de travail
 
 url du site : https://chassesautresor.com
-c est une plateforme de création de chasses au trésor en ligne, avec des énigmes et des organisateurs, à but lucratif.
+c'est une plateforme de création de chasses au trésor en ligne, avec des énigmes et des organisateurs, à but lucratif.
 Chaque utilisateur dispose d un solde de points, qu il peut utiliser pour débloquer des énigmes ou des chasses.
 les organisateurs peuvent créer des chasses et des énigmes gratuites ou payantes en points, et récolter des points en retour.
 La gestion des points est effectuée en direct par le thème (pas de mycred ou autre extension de gamification).
@@ -55,14 +53,14 @@ extensions actives :
 - Réponses courtes et fonctionnelles : éviter les formules, les paraphrases, les répétitions.
 - Historique de développement : le développement initial a largement été modifié. Quasiment tout a été revu, mais il se peut qu’on rencontre des résidus dans le code, il faut en avoir conscience.
 
-🚫 Suppressions obligatoires
+### 🚫 Suppressions obligatoires
 Toute évolution ou migration de logique (ex. déplacement d’un champ vers champ-init.js) doit impérativement inclure l’identification et la suppression des doublons ou fonctions redondantes (dans les fichiers JS ou PHP concernés).
 Le code ancien ne doit jamais rester actif ou latent, même s’il n’est “plus appelé”.
 → Il est interdit de laisser du code mort, duplicatif ou non utilisé sans lister explicitement ce qu’il faut supprimer.
 
 
 
-1. Structure du site
+## 1. Structure du site
 
 on est dans un sous-thème d astra appelé chassesautresor
 
@@ -121,7 +119,7 @@ Le dossier `notices/` contient la documentation technique et fonctionnelle du th
 utilisation de l extension Members pour gérer les rôles et les accès. Cette extension permet de créer, modifier et attribuer des rôles personnalisés, ainsi que de contrôler les permissions des utilisateurs.
 
 
-2. Modèle de développement
+## 2. Modèle de développement
 
 🧱 Organisation des fichiers (JS/CSS/PHP)
 Dossier assets
@@ -302,7 +300,7 @@ Chaque fichier est organisé en sections bien identifiées :
 function initChampConditionnel(nomChamp, correspondance) {
   ...
 }
-📌 Résumé des règles
+### 📌 Résumé des règles
 Élément	Attendu
 Commentaire de section	// === TITRE === avec 3 sauts avant
 Fonction	Nom explicite, sans doc
@@ -312,7 +310,7 @@ PHPDoc (@param)	❌ Réservé à PHP (inc/)
 
 
 
-3. ACF – Champs personnalisés
+## 3. ACF – Champs personnalisés
 
 🏗️ Groupes globaux 
 
@@ -518,7 +516,7 @@ enigme_acces_date (date_picker)
 
 enigme_acces_pre_requis (relationship)
 
-📌 Pourquoi : pour éviter les erreurs d’enregistrement et simplifier la logique d’édition JS/PHP.
+### 📌 Pourquoi : pour éviter les erreurs d’enregistrement et simplifier la logique d’édition JS/PHP.
 
 
 ### 🔁 Champs liés et logique conditionnelle
@@ -532,22 +530,22 @@ Cette logique est centralisée **dans la fonction PHP `modifier_champ_enigme()`*
 
 👉 Le champ `enigme_acces_condition` **ne doit plus être modifié manuellement** dans ce contexte.
 
-📌 Objectif : éviter tout décalage d’état lié à des requêtes AJAX arrivant dans un ordre non contrôlé.
+### 📌 Objectif : éviter tout décalage d’état lié à des requêtes AJAX arrivant dans un ordre non contrôlé.
 
 
 
 
-🔄 Champs de cache, logique, calcul (ex. chasse_cache_statut, enigme_cache_etat_systeme)
+### 🔄 Champs de cache, logique, calcul (ex. chasse_cache_statut, enigme_cache_etat_systeme)
 pas mis en place
 
-📌 Bonnes pratiques (racine, retour ID, structure des groupes)
+### 📌 Bonnes pratiques (racine, retour ID, structure des groupes)
 problème récurrent et prioritaire : la gestion des champs imbriqués
 - mal documentés par ACF
 - organisation initiale avec champ dans des groupes. retour à la racine dans les cas critiques
 - fonctions créées dans relations-functions.php pour gérer des aspects critique acf, demander le contenu du fichier si besoin
 
 
-4. Édition frontale
+## 4. Édition frontale
 les rôles organisateur et organisateur_creation peuvent avoir la permission d editer leur contenu en le visionnant. un bouton toggle seulement visible après contrôle d accès déclenche l ouverture d un panneau d édition.
 
 🌐 GLOBAL
@@ -609,7 +607,7 @@ Si date_programmee est activée avec une date dans le passé, la condition est a
 
 La suppression de la valeur est interdite (champ non effaçable)
 
-📌 À noter : le recalcul du statut logique (enigme_cache_etat_systeme) est automatiquement déclenché lors de toute mise à jour de la condition d'accès ou de la date.
+### 📌 À noter : le recalcul du statut logique (enigme_cache_etat_systeme) est automatiquement déclenché lors de toute mise à jour de la condition d'accès ou de la date.
 
 
 
@@ -666,7 +664,7 @@ $valeur_recompense = $caracteristiques['chasse_infos_recompense_valeur'] ?? '';
 
 
 
-📍 Inline editing (post_title, texte, booleens, etc.)
+### 📍 Inline editing (post_title, texte, booleens, etc.)
 
 Certains champs sont édités directement dans le panneau, sans passer par un acf_form(), via un système inline AJAX (modification immédiate).  
 Le JS utilisé repose sur `modifierChampSimple()` (texte, nombre, booléen) ou sur un module personnalisé (`initChampTexte`, `initChampImage`, etc.).
@@ -678,7 +676,7 @@ Le JS utilisé repose sur `modifierChampSimple()` (texte, nombre, booléen) ou s
 - Mise à jour immédiate du DOM
 - Rétroaction par champ-feedback (chargement, succès, erreur)
 
-📌 Champs concernés :
+### 📌 Champs concernés :
 - post_title (via `initChampTexte`)
 - texte court (text, email, etc.)
 - true_false via checkbox directe
@@ -691,7 +689,7 @@ Le JS utilisé repose sur `modifierChampSimple()` (texte, nombre, booléen) ou s
 
 ---
 
-⚙️ acf_form() – usage et rechargement
+### ⚙️ acf_form() – usage et rechargement
 
 L’utilisation de `acf_form()` est réservée aux champs nécessitant :
 - Un affichage natif ACF (WYSIWYG, galerie, repeater…)
@@ -707,7 +705,7 @@ L’utilisation de `acf_form()` est réservée aux champs nécessitant :
 - Le bouton d’enregistrement est personnalisé
 - Aucun AJAX ici : rechargement de la page après validation
 
-📌 Champs concernés :
+### 📌 Champs concernés :
 - wysiwyg (`description_longue`, texte énigme, récompense)
 - gallery (`enigme_visuel_image`)
 - repeater (`liens_publics`, `chasse_principale_liens`)
@@ -732,7 +730,7 @@ L’utilisation de `acf_form()` est réservée aux champs nécessitant :
 ♻️ Sauvegardes AJAX : logique centrale et spécialisations par CPT
 dans edition-functions.php, des fonctions telles que modifier_champ_organisateur(), modifier_champ_chasse(), modifier_champ_enigme() sont appelées par ajax
 
-5. JavaScript modulaire
+## 5. JavaScript modulaire
 🧠 JS global : champ-init.js (règles transversales)
 
 🧩 JS par CPT : organisateur-edit.js, chasse-edit.js, enigme-edit.js
@@ -813,7 +811,7 @@ initChampDate() gère automatiquement l’initialisation du champ + AJAX + fallb
 onDateFieldUpdated() est appelé automatiquement dès la réponse AJAX (pas besoin de le rappeler manuellement)
 
 
-6. Affichages publics
+## 6. Affichages publics
 
 🎨 NUANCIER UTILISÉ
 
@@ -854,7 +852,7 @@ onDateFieldUpdated() est appelé automatiquement dès la réponse AJAX (pas beso
 }
 
 
-🧾 Pages publiques des CPT (organisateur, chasse, énigme) 
+### 🧾 Pages publiques des CPT (organisateur, chasse, énigme)
 
 principe général : le site est une plateforme de création de chasses, ce sont les organisateur qui sont mis en avant :
 - le header du site est dynamique = organisateur lié (à une chasse ou une énigme)
@@ -877,13 +875,13 @@ page enigme
 
 
 
-🎯 CTAs dynamiques selon rôle et statut 
+### 🎯 CTAs dynamiques selon rôle et statut
 - organisateur : bouton de création de chasse et énigme, bouton enregistrement panneau latéral, bouton de soumission de chasse (non créé)
 - abonné : bouton de création d organisateur, bouton d accès à une énigme (non créé), bouton de soumission de solution (non créé)
 
 
 
-🏷️ Badges, statuts, affichages conditionnels
+### 🏷️ Badges, statuts, affichages conditionnels
 
 L’affichage dynamique des boutons, statuts ou badges (sur les énigmes notamment)
 dépend du champ ACF `enigme_cache_etat_systeme` et du suivi individuel stocké
@@ -898,7 +896,7 @@ Ces deux champs combines determinent :
 - les messages d aide ou de verrouillage
 - le badge d etat
 
-🔄 enigme_cache_etat_systeme – statut logique global
+### 🔄 enigme_cache_etat_systeme – statut logique global
 Definit si l enigme est techniquement disponible ou non.
 
 | Valeur             | Description                                      |
@@ -946,7 +944,7 @@ Une enigme est dite « payante » si elle est :
 👉 Dans ce cas, un bouton specifique « Debloquer pour X points » est affiche (CTA conditionnel).
 
 
-7. Accès & autorisations
+## 7. Accès & autorisations
 
 🔐 Création automatique (profil organisateur, chasse, énigme)
 sur la page /devenir-organisateur quand un abonné clique sur le cta "devenir organisateur" :
@@ -974,7 +972,7 @@ pas encore créé : un bouton de soumission de validation de la chasse par l adm
 → complète → futur : bouton de demande de validation
 
 
-🚦 Redirections et filtrages (edition=open, accès par rôle)
+### 🚦 Redirections et filtrages (edition=open, accès par rôle)
 
 aucun accès à l interface admin wp (réservé au seul admin), sinon redirection vers la page d accueil, toute édition est en front.
 la création du html des panneaux d édition est conditionnée par le rôle de l utilisateur et le statut de la chasse ou de l énigme, de même que le toggle régissant l affichage du panneau.
@@ -988,11 +986,11 @@ grandes règles :
 - un user avec rôle organisateur ne peut plus modifier une chasse ou énigme publiée
 - un user avec rôle organisateur peut visualiser le panneau statistique de  enigme ou chasse (non créé)
 
-8. Comportements spéciaux
+## 8. Comportements spéciaux
 
 la plupart sont documentés en notices, rubrique à enrichir
 
-⚠️ Zones critiques
+### ⚠️ Zones critiques
 
 - Champs imbriqués ACF : manipulations complexes → toujours passer par les helpers du fichier `relations-functions.php`
 - Statuts calculés : ne pas modifier manuellement les champs `cache_` sans déclencher leur recalcul
@@ -1049,7 +1047,7 @@ invalide	(tout)	Si date_programmee sans date OU pre_requis sans valeur
 → Cela permettra de clarifier ce qui est bloqué, ce qui est invalide, et ce qui est accessible.
 
 
-9. Performances et bonnes pratiques
+## 9. Performances et bonnes pratiques
 🧹 Optimisation images (Imagify)
 
 
@@ -1112,11 +1110,11 @@ Le fichier est injecté ou mis à jour par la fonction `injecter_htaccess_protec
 
 ⚠️ Fallbacks / protections (HTML, JS, PHP)
 
-🎯 Cache, pré-remplissage, chargements conditionnels
+### 🎯 Cache, pré-remplissage, chargements conditionnels
 aucun système de cache sofware, serveur mis en place durant le développement
 
 
-10. Appendices
+## 10. Appendices
 
 📌 Champs déclencheurs de statut (chasse / énigme)
 
@@ -1129,7 +1127,7 @@ aucun système de cache sofware, serveur mis en place durant le développement
 → Ces champs doivent être surveillés côté JS pour déclencher : recalcul, badge dynamique, MAJ résumé, ou état utilisateur.
 
 
-⚙️ Résumé des hooks JS / PHP utiles
+### ⚙️ Résumé des hooks JS / PHP utiles
 Fichier JS	Rôle principal	Fonctions clés
 champ-init.js	JS global transverse	initChampTexte, modifierChampSimple
 enigme-edit.js	Edition front énigme	initChampNbTentatives, initChampRadioAjax
@@ -1137,7 +1135,7 @@ chasse-edit.js	Edition front chasse	validerDatesAvantEnvoi, initLiensChasse
 organisateur-edit.js	Edition front organisateur (header + liens)	initLiensOrganisateur
 
 
-📋 Formulaires avec comportement critique (AJAX ou rechargement)
+### 📋 Formulaires avec comportement critique (AJAX ou rechargement)
 
 | Formulaire                                | JS déclencheur                 | Particularité                     |
 |-------------------------------------------|-------------------------------|-----------------------------------|
@@ -1147,7 +1145,7 @@ organisateur-edit.js	Edition front organisateur (header + liens)	initLiensOrgani
 | `champ-recompense-*` (champ libre, chasse)| JS personnalisé (saisie + fetch séquencé) | ⚠️ Validation manuelle + reload |
 
 
-🚫 Champs ACF désactivés ou ignorés
+### 🚫 Champs ACF désactivés ou ignorés
 
 - enigme_reponse_texte_manuelle → champ abandonné (soumission manuelle = email, non stockée)
 - [placeholder éventuel pour futurs abandons]
@@ -1170,9 +1168,9 @@ Cas particulier : les boutons déclencheurs de panneau doivent en plus avoir `.c
 
 
 
-📂 Références internes utiles (template-parts/, data-champ, etc.)
+### 📂 Références internes utiles (template-parts/, data-champ, etc.)
 
-💡 À venir :
+### 💡 À venir :
 
 Liste complète des hooks JS centralisés (modifierChampSimple, initChampTexte, initChampRadioAjax, etc.)
 
@@ -1182,7 +1180,7 @@ Dépendances entre champs ACF imbriqués et triggers de statut
 
 Diagrammes de propagation des statuts (chasse ↔︎ énigme)
 
-🔄 Dépendances dynamiques entre champs
+### 🔄 Dépendances dynamiques entre champs
 
 Certains champs déclenchent une mise à jour automatique d’un autre champ lorsqu’ils sont modifiés.
 
@@ -1193,8 +1191,3 @@ Exemples :
 Ces mises à jour sont gérées exclusivement côté PHP (dans `modifier_champ_enigme()`), et ne doivent pas être traitées côté JS de manière directe ou forcée.
 
 👉 L’objectif est de rendre le système résilient, même si plusieurs champs sont modifiés en parallèle (ex. : via AJAX).
-
-
-
-
-
