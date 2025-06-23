@@ -150,7 +150,8 @@
   color: var(--color-secondary);
 }
 
-.carte-ajout-chasse .overlay-message {
+.carte-ajout-chasse .overlay-message,
+.carte-ajout-enigme .overlay-message {
   position: absolute;
   top: 0;
   left: 0;

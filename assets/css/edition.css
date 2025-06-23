@@ -911,6 +911,12 @@ body.panneau-ouvert::before {
   filter: grayscale(100%);
 }
 
+.carte-ajout-enigme.disabled {
+  pointer-events: none;
+  opacity: 0.5;
+  filter: grayscale(100%);
+}
+
 /* ==================================================
    🗂️ ONGLET MODAL D'ÉDITION
    ================================================== */
