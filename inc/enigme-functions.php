@@ -1151,7 +1151,7 @@
      * @param string $uid
      * @return string 'attente' | 'validee' | 'refusee' | 'invalide' | 'inexistante'
      */
-    function get_etat_tentative(string $uid): string
+function get_etat_tentative(string $uid): string
     {
         global $wpdb;
         $table = $wpdb->prefix . 'enigme_tentatives';
@@ -1163,4 +1163,39 @@
         if ($resultat === 'faux') return 'refusee';
 
         return 'invalide';
-    }
+}
+
+/**
+ * Récupère les tentatives enregistrées pour une énigme.
+ *
+ * @param int $enigme_id ID de l'énigme.
+ * @param int $limit     Nombre de résultats à retourner.
+ * @param int $offset    Décalage pour la pagination.
+ * @return array         Liste des tentatives.
+ */
+function recuperer_tentatives_enigme(int $enigme_id, int $limit = 25, int $offset = 0): array
+{
+    global $wpdb;
+    $table = $wpdb->prefix . 'enigme_tentatives';
+    $query = $wpdb->prepare(
+        "SELECT * FROM $table WHERE enigme_id = %d ORDER BY tentative_uid DESC LIMIT %d OFFSET %d",
+        $enigme_id,
+        $limit,
+        $offset
+    );
+    $res = $wpdb->get_results($query);
+    return $res ?: [];
+}
+
+/**
+ * Compte le nombre total de tentatives pour une énigme.
+ *
+ * @param int $enigme_id ID de l'énigme.
+ * @return int Nombre de tentatives.
+ */
+function compter_tentatives_enigme(int $enigme_id): int
+{
+    global $wpdb;
+    $table = $wpdb->prefix . 'enigme_tentatives';
+    return (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $table WHERE enigme_id = %d", $enigme_id));
+}
