@@ -591,7 +591,12 @@ function enigme_est_complet(int $enigme_id): bool
     $first_id = (is_array($images) && !empty($images[0]['ID'])) ? (int) $images[0]['ID'] : 0;
     $image_ok = $first_id && $first_id !== $placeholder;
 
-    return $titre_ok && $image_ok;
+    // 🔄 [NOVELTY] Require an expected answer if validation is automatic
+    $mode = get_field('enigme_mode_validation', $enigme_id);
+    $reponse = trim((string) get_field('enigme_reponse_bonne', $enigme_id));
+    $reponse_ok = $mode !== 'automatique' || $reponse !== '';
+
+    return $titre_ok && $image_ok && $reponse_ok;
 }
 
 function enigme_mettre_a_jour_complet(int $enigme_id): bool
