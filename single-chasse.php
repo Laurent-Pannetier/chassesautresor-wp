@@ -185,10 +185,23 @@ if (!$modal_deja_vue) :
     </div>
     <script>
       window.addEventListener('DOMContentLoaded', () => {
-        document.querySelector('.modal-bienvenue-wrapper')?.classList.add('visible');
-      });
-      document.querySelector('.modal-close-top')?.addEventListener('click', () => {
-        document.querySelector('.modal-bienvenue-wrapper')?.remove();
+        const wrapper = document.querySelector('.modal-bienvenue-wrapper');
+        if (!wrapper) return;
+        wrapper.classList.add('visible');
+
+        const fermer = () => wrapper.remove();
+
+        wrapper.querySelectorAll('.modal-close-top').forEach(btn => {
+          btn.addEventListener('click', fermer);
+        });
+
+        wrapper.addEventListener('click', e => {
+          if (e.target === wrapper) fermer();
+        });
+
+        document.addEventListener('keydown', e => {
+          if (e.key === 'Escape') fermer();
+        });
       });
     </script>
     <style>
