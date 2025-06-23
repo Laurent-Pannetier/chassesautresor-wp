@@ -185,43 +185,11 @@ if (!$modal_deja_vue) :
     </div>
     <script>
       window.addEventListener('DOMContentLoaded', () => {
-        document.querySelector('.modal-bienvenue-wrapper')?.classList.add('visible');
-      });
-      document.querySelector('.modal-close-top')?.addEventListener('click', () => {
-        document.querySelector('.modal-bienvenue-wrapper')?.remove();
+        document.querySelector('.modal-close-top')?.addEventListener('click', () => {
+          document.querySelector('.modal-bienvenue-wrapper')?.remove();
+        });
       });
     </script>
-    <style>
-      .modal-bienvenue-wrapper {
-        position: fixed;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.75);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 9999;
-      }
-      .modal-bienvenue-inner {
-        background: #fff;
-        padding: 2rem;
-        border-radius: 1rem;
-        max-width: 600px;
-        width: 90%;
-        max-height: 90vh;
-        overflow-y: auto;
-        position: relative;
-      }
-      .modal-close-top {
-        position: absolute;
-        top: 1rem;
-        right: 1rem;
-        font-size: 1.5rem;
-        background: none;
-        border: none;
-        cursor: pointer;
-        color: #000;
-      }
-    </style>
   <?php endif; ?>
 <?php endif; ?>
 

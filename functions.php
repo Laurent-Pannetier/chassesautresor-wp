@@ -28,6 +28,7 @@ add_action('wp_enqueue_scripts', function () {
     $styles = [
         'layout'             => 'layout.css',
         'components'         => 'components.css',
+        'modal-bienvenue'    => 'modal-bienvenue.css',
         'general-style'      => 'general.css',
         'chasse-style'       => 'chasse.css',
         'enigme-style'       => 'enigme.css',

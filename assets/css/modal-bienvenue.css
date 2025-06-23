@@ -1,0 +1,119 @@
+/* ========== 🧭 MODAL BIENVENUE COMMUN ========== */
+
+.modal-bienvenue-wrapper,
+.modal-bienvenue {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.65);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10001;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal-bienvenue-inner,
+.modal-contenu {
+  position: relative;
+  background: #fff;
+  color: var(--color-text-fond-clair);
+  padding: 2.5rem 2rem;
+  border-radius: 12px;
+  max-width: 600px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.modal-close-top {
+  position: absolute;
+  top: 0.8rem;
+  right: 0.8rem;
+  font-size: 1.2rem;
+  background: none;
+  border: none;
+  color: var(--color-text-fond-clair);
+  cursor: pointer;
+  width: 2rem;
+  height: 2rem;
+  line-height: 2rem;
+  text-align: center;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.modal-close-top:hover {
+  color: #fff;
+  background: var(--color-accent, #ffc400);
+  border-color: var(--color-accent, #ffc400);
+}
+
+.modal-bienvenue-inner h1,
+.modal-contenu h1 {
+  text-align: center;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--color-accent, #ffc400);
+  margin-bottom: 0.5rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.modal-bienvenue-inner h2,
+.modal-contenu h2 {
+  text-align: center;
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--color-text-fond-clair);
+  margin-bottom: 1.2rem;
+}
+
+.modal-bienvenue-inner p,
+.modal-contenu p {
+  margin: 1rem 0;
+}
+
+.modal-bienvenue-inner strong,
+.modal-contenu strong {
+  font-weight: 600;
+}
+
+.modal-bienvenue-inner svg,
+.modal-bienvenue-inner button.header-bouton-edition,
+.modal-contenu svg,
+.modal-contenu button.header-bouton-edition {
+  vertical-align: middle;
+  margin-right: 0.4em;
+  margin-top: -0.15em;
+}
+
+@media screen and (max-width: 480px) {
+  .modal-bienvenue-inner,
+  .modal-contenu {
+    padding: 1.5rem;
+    font-size: 0.95rem;
+  }
+
+  .modal-bienvenue-inner h1,
+  .modal-contenu h1 {
+    font-size: 1.2rem;
+  }
+
+  .modal-bienvenue-inner h2,
+  .modal-contenu h2 {
+    font-size: 1.1rem;
+  }
+}
