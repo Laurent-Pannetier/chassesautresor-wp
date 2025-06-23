@@ -166,6 +166,15 @@ $taux_conversion = get_taux_conversion_actuel();
                 <?php endif; ?>
             </div>
         </div>
+    <div class="dashboard-card">
+        <div class="dashboard-card-header">
+            <i class="fas fa-tools"></i>
+            <h3>Développement</h3>
+        </div>
+        <div class="stats-content">
+            <button id="afficher-champs-acf" class="bouton-secondaire">Afficher les champs ACF</button>
+        </div>
+    </div>
     </div>
 <?php
 if (is_page('mon-compte') && current_user_can('administrator')) {
