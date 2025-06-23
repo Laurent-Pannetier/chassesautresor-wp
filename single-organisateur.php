@@ -53,6 +53,15 @@ get_header();
             ?>
         <?php endif; ?>
 
+        <?php
+        $afficher_bienvenue =
+            !empty($_GET['confirmation']) &&
+            is_user_logged_in() &&
+            get_current_user_id() === (int) get_post_field('post_author', $organisateur_id) &&
+            $statut_organisateur === 'pending' &&
+            !organisateur_a_des_chasses($organisateur_id);
+        ?>
+
         <!-- Présentation -->
         <section class="presentation">
             <div class="conteneur">
@@ -108,12 +117,7 @@ get_header();
 </div>
 
 <?php
-if (
-    is_user_logged_in() &&
-    get_current_user_id() === (int) get_post_field('post_author', $organisateur_id) &&
-    $statut_organisateur === 'pending' &&
-    !organisateur_a_des_chasses($organisateur_id)
-) :
+if ($afficher_bienvenue) :
 
     $bienvenue_post = get_page_by_path('bienvenue-page-organisateur', OBJECT, 'section_editoriale');
     if ($bienvenue_post) :
@@ -132,29 +136,21 @@ if (
             document.addEventListener('DOMContentLoaded', function() {
                 const modal = document.getElementById('modal-bienvenue');
                 const fermer = document.getElementById('fermer-modal-bienvenue');
-
-                if (!localStorage.getItem('modalBienvenueAffiche')) {
-                    modal.style.display = 'flex';
-                }
+                modal.style.display = 'flex';
 
                 fermer.addEventListener('click', function() {
-                    modal.style.display = 'none';
-                    localStorage.setItem('modalBienvenueAffiche', 'true');
+                    modal.remove();
                 });
 
-                // Ne pas permettre la fermeture en cliquant à l'extérieur
                 modal.addEventListener('click', function(e) {
                     if (e.target === modal) {
                         e.stopPropagation();
                     }
                 });
                 const fermerHaut = document.querySelector('.modal-close-top');
-
-                fermerHaut.addEventListener('click', function() {
-                    modal.style.display = 'none';
-                    localStorage.setItem('modalBienvenueAffiche', 'true');
+                fermerHaut?.addEventListener('click', function() {
+                    modal.remove();
                 });
-
             });
         </script>
 <?php
