@@ -230,13 +230,13 @@ $classe_vide_coordonnees = ($iban_vide || $bic_vide) ? 'champ-vide' : '';
     </div> <!-- .edition-panel-body -->
     </div> <!-- #organisateur-tab-param -->
 
-    <div id="organisateur-tab-stats" class="edition-tab-content" style="display:none;">
-      <p>Statistiques en cours de développement.</p>
-    </div>
+      <div id="organisateur-tab-stats" class="edition-tab-content" style="display:none;">
+        <p class="edition-placeholder">xx à venir</p>
+      </div>
 
-    <div id="organisateur-tab-revenus" class="edition-tab-content" style="display:none;">
-      <p>Gestion des revenus en cours de développement.</p>
-    </div>
+      <div id="organisateur-tab-revenus" class="edition-tab-content" style="display:none;">
+        <p class="edition-placeholder">xx à venir</p>
+      </div>
 
     <div class="edition-panel-footer"></div>
   </section>
