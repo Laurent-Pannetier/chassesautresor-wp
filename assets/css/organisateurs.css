@@ -258,6 +258,28 @@
   border-color: var(--color-accent, #ffc400);
   color: #fff;
 }
+
+/* ========== 🟢 MODAL CONFIRMATION VALIDATION CHASSE ========== */
+.modal-confirmation-validation-chasse {
+  position: fixed;
+  z-index: 9999;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  animation: fadeIn 0.3s ease-in-out;
+}
+.modal-confirmation-validation-chasse label {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 1rem;
+}
+.modal-confirmation-validation-chasse input[type="checkbox"] {
+  transform: scale(1.2);
+  margin-top: 2px;
+}
 .modal-contenu button.header-bouton-edition {
     color: #ffffff;
     background-color: var(--color-background, #ffc400);;
