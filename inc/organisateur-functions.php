@@ -419,7 +419,10 @@ function traiter_confirmation_organisateur() {
     if ($organisateur_id) {
         wp_set_current_user($user_id);
         wp_set_auth_cookie($user_id);
-        wp_safe_redirect(get_permalink($organisateur_id));
+
+        $redirect = add_query_arg('confirmation', '1', get_permalink($organisateur_id));
+        wp_safe_redirect($redirect);
+
     } else {
         wp_safe_redirect(home_url('/devenir-organisateur'));
     }
