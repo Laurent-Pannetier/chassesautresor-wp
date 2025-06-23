@@ -89,10 +89,15 @@ $taux_conversion = get_taux_conversion_actuel();
 
     <!-- 📌 Tuiles en Bas (Accès Rapides) -->
     <div class="dashboard-grid">
-        <a href="<?php echo esc_url(wc_get_account_endpoint_url('orders')); ?>" class="dashboard-card">
-            <span class="icon">📦</span>
-            <h3>Organisateurs</h3>
-        </a>
+        <div class="dashboard-card">
+            <div class="dashboard-card-header">
+                <span class="icon">📦</span>
+                <h3>Organisateurs en création</h3>
+            </div>
+            <div class="stats-content">
+                <?php afficher_tableau_organisateurs_en_creation(); ?>
+            </div>
+        </div>
         <?php if (current_user_can('administrator')) : ?>
             <div class="dashboard-card">
                 <div class="dashboard-card-header">

@@ -1293,3 +1293,81 @@ function charger_script_developpement_card() {
     }
 }
 add_action('wp_enqueue_scripts', 'charger_script_developpement_card');
+
+// ==================================================
+// 📦 TABLEAU ORGANISATEURS EN CRÉATION
+// ==================================================
+/**
+ * Récupère la liste des organisateurs en cours de création.
+ *
+ * @return array[] Tableau des données trié du plus récent au plus ancien.
+ */
+function recuperer_organisateurs_en_creation() {
+    if (!current_user_can('administrator')) {
+        return [];
+    }
+
+    $users   = get_users(['role' => 'organisateur_creation']);
+    $entries = [];
+
+    foreach ($users as $user) {
+        $organisateur_id = get_organisateur_from_user($user->ID);
+        if (!$organisateur_id) {
+            continue;
+        }
+
+        $date_creation = get_post_field('post_date', $organisateur_id);
+        $chasses       = get_chasses_en_creation($organisateur_id);
+        if (empty($chasses)) {
+            continue;
+        }
+
+        $chasse     = $chasses[0];
+        $nb_enigmes = count(recuperer_enigmes_associees($chasse->ID));
+
+        $entries[] = [
+            'date_creation'      => $date_creation,
+            'organisateur_titre' => get_the_title($organisateur_id),
+            'chasse_id'          => $chasse->ID,
+            'chasse_titre'       => get_the_title($chasse->ID),
+            'nb_enigmes'         => $nb_enigmes,
+        ];
+    }
+
+    usort($entries, function ($a, $b) {
+        return strtotime($b['date_creation']) <=> strtotime($a['date_creation']);
+    });
+
+    return $entries;
+}
+
+/**
+ * Affiche les tableaux des organisateurs en création.
+ */
+function afficher_tableau_organisateurs_en_creation() {
+    $liste = recuperer_organisateurs_en_creation();
+    if (empty($liste)) {
+        echo '<p>Aucun organisateur en création.</p>';
+        return;
+    }
+
+    echo '<table class="stats-table">';
+    echo '<thead><tr><th>Organisateur</th><th>Chasse associée</th><th>Nombre d\'énigmes</th></tr></thead><tbody>';
+    foreach ($liste as $entry) {
+        echo '<tr>';
+        echo '<td>' . esc_html($entry['organisateur_titre']) . '</td>';
+        echo '<td><a href="' . esc_url(get_permalink($entry['chasse_id'])) . '">' . esc_html($entry['chasse_titre']) . '</a></td>';
+        echo '<td>' . intval($entry['nb_enigmes']) . ' énigmes</td>';
+        echo '</tr>';
+    }
+    echo '</tbody></table>';
+
+    $oldest = end($liste);
+    echo '<table class="stats-table">';
+    echo '<caption>+ Ancienne création</caption><tbody>';
+    echo '<tr>';
+    echo '<td>' . esc_html($oldest['organisateur_titre']) . '</td>';
+    echo '<td><a href="' . esc_url(get_permalink($oldest['chasse_id'])) . '">' . esc_html($oldest['chasse_titre']) . '</a></td>';
+    echo '<td>' . intval($oldest['nb_enigmes']) . ' énigmes</td>';
+    echo '</tr></tbody></table>';
+}
