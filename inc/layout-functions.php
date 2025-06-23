@@ -365,9 +365,13 @@ function afficher_bandeau_validation_chasse_global() {
     }
 
     $titre = get_the_title($chasse_id);
+    $lien  = get_permalink($chasse_id);
     echo '<div class="bandeau-info-chasse">';
-    echo '<span>Votre chasse : ' . esc_html($titre) . '</span>';
-    echo render_form_validation_chasse($chasse_id);
+    printf(
+        '<span>Votre chasse : <a href="%s">%s</a> est en cours d\'édition</span>',
+        esc_url($lien),
+        esc_html($titre)
+    );
     echo '</div>';
 }
 add_action('astra_header_after', 'afficher_bandeau_validation_chasse_global');
