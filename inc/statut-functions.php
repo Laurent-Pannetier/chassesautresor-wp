@@ -538,7 +538,8 @@ function organisateur_est_complet(int $organisateur_id): bool
     $logo = get_field('profil_public_logo_organisateur', $organisateur_id);
     $logo_ok = !empty($logo);
 
-    $description = trim(get_field('description_longue', $organisateur_id));
+    $description_field = get_field('description_longue', $organisateur_id);
+    $description = trim((string) $description_field);
     $desc_ok = $description !== '';
 
     return $titre_ok && $logo_ok && $desc_ok;
@@ -559,7 +560,8 @@ function chasse_est_complet(int $chasse_id): bool
 
     $titre_ok = titre_est_valide($chasse_id);
 
-    $desc = trim(get_field('chasse_principale_description', $chasse_id));
+    $desc_field = get_field('chasse_principale_description', $chasse_id);
+    $desc = trim((string) $desc_field);
     $desc_ok = $desc !== '';
 
     $image = get_field('chasse_principale_image', $chasse_id);
