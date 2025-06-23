@@ -33,11 +33,15 @@ function get_organisateur_from_user($user_id)
 {
   global $wpdb;
 
-  // Rechercher l'ID du post organisateur lié à l'utilisateur
+  // Recherche l'ID du post organisateur actif lié à l'utilisateur
   $post_id = $wpdb->get_var($wpdb->prepare(
-    "SELECT post_id FROM $wpdb->postmeta 
-        WHERE meta_key = 'utilisateurs_associes' 
-        AND meta_value LIKE %s LIMIT 1",
+    "SELECT p.ID FROM $wpdb->posts p
+      INNER JOIN $wpdb->postmeta pm ON p.ID = pm.post_id
+      WHERE pm.meta_key = 'utilisateurs_associes'
+        AND pm.meta_value LIKE %s
+        AND p.post_type = 'organisateur'
+        AND p.post_status IN ('publish','pending','draft')
+      LIMIT 1",
     '%"' . esc_sql($user_id) . '"%'
   ));
 
