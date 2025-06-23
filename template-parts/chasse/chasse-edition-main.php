@@ -38,7 +38,7 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
     <div id="erreur-global" style="display:none; background:red; color:white; padding:5px; text-align:center; font-size:0.9em;"></div>
 
     <div class="edition-panel-header">
-      <h2><i class="fa-solid fa-sliders"></i> Paramètres de la chasse</h2>
+      <h2><i class="fa-solid fa-sliders"></i> Paramètres</h2>
       <button type="button" class="panneau-fermer" aria-label="Fermer les paramètres">✖</button>
     </div>
 
@@ -51,6 +51,9 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
 
     <div id="chasse-tab-param" class="edition-tab-content active">
       <i class="fa-solid fa-sliders tab-watermark" aria-hidden="true"></i>
+      <div class="edition-panel-header">
+        <h2><i class="fa-solid fa-sliders"></i> Paramètres</h2>
+      </div>
       <div class="edition-panel-body">
 
       <div class="edition-panel-section edition-panel-section-ligne">
@@ -270,16 +273,25 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
 
     <div id="chasse-tab-stats" class="edition-tab-content" style="display:none;">
       <i class="fa-solid fa-chart-column tab-watermark" aria-hidden="true"></i>
+      <div class="edition-panel-header">
+        <h2><i class="fa-solid fa-chart-column"></i> Statistiques</h2>
+      </div>
       <p class="edition-placeholder">La section « Statistiques » sera bientôt disponible.</p>
     </div>
 
     <div id="chasse-tab-classement" class="edition-tab-content" style="display:none;">
       <i class="fa-solid fa-ranking-star tab-watermark" aria-hidden="true"></i>
+      <div class="edition-panel-header">
+        <h2><i class="fa-solid fa-ranking-star"></i> Classement</h2>
+      </div>
       <p class="edition-placeholder">La section « Classement » sera bientôt disponible.</p>
     </div>
 
     <div id="chasse-tab-indices" class="edition-tab-content" style="display:none;">
       <i class="fa-regular fa-lightbulb tab-watermark" aria-hidden="true"></i>
+      <div class="edition-panel-header">
+        <h2><i class="fa-regular fa-lightbulb"></i> Indices</h2>
+      </div>
       <p class="edition-placeholder">La section « Indices » sera bientôt disponible.</p>
     </div>
 
