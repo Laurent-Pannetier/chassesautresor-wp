@@ -77,6 +77,13 @@
     margin-bottom: 0;
 }
 
+.chasse-section-intro.champ-vide-obligatoire {
+    border: 2px dashed var(--color-editor-error);
+    animation: clignoteTitre 1s infinite alternate;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+}
+
 
 
 /* ========== 🧾 BLOC PRÉSENTATION DE LA CHASSE ========== */

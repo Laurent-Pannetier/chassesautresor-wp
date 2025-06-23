@@ -174,5 +174,6 @@
 }
 
 .carte-incomplete {
-  border: 2px solid var(--color-editor-error);
+  border: 2px dashed var(--color-editor-error);
+  animation: clignoteTitre 1s infinite alternate;
 }
