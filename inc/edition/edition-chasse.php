@@ -50,7 +50,7 @@ function enqueue_script_chasse_edit()
 
   // Injecte les valeurs par défaut pour JS
   wp_localize_script('champ-init', 'CHP_CHASSE_DEFAUT', [
-    'titre' => 'nouvelle chasse',
+    'titre' => strtolower(TITRE_DEFAUT_CHASSE),
     'image_slug' => 'defaut-chasse-2',
   ]);
 
@@ -130,7 +130,7 @@ function creer_chasse_et_rediriger_si_appel()
   $post_id = wp_insert_post([
     'post_type'   => 'chasse',
     'post_status' => 'pending',
-    'post_title'  => 'Nouvelle chasse',
+    'post_title'  => TITRE_DEFAUT_CHASSE,
     'post_author' => $user_id,
   ]);
 
