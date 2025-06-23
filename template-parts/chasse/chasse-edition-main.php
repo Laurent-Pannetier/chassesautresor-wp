@@ -45,7 +45,8 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
     <div class="edition-tabs">
       <button class="edition-tab active" data-target="chasse-tab-param">Paramètres</button>
       <button class="edition-tab" data-target="chasse-tab-stats">Statistiques</button>
-      <button class="edition-tab" data-target="chasse-tab-spec">Champs spécifiques</button>
+      <button class="edition-tab" data-target="chasse-tab-classement">Classement</button>
+      <button class="edition-tab" data-target="chasse-tab-indices">Indices</button>
     </div>
 
     <div id="chasse-tab-param" class="edition-tab-content active">
@@ -296,8 +297,12 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
       <p>Statistiques à venir.</p>
     </div>
 
-    <div id="chasse-tab-spec" class="edition-tab-content" style="display:none;">
+    <div id="chasse-tab-classement" class="edition-tab-content" style="display:none;">
       <p>Classement prochainement disponible.</p>
+    </div>
+
+    <div id="chasse-tab-indices" class="edition-tab-content" style="display:none;">
+      <p>Gestion des indices à venir.</p>
     </div>
 
     <div class="edition-panel-footer"></div>

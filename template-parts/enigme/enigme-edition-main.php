@@ -82,7 +82,9 @@ $has_variantes = ($nb_variantes > 0);
     <div class="edition-tabs">
       <button class="edition-tab active" data-target="enigme-tab-param">Paramètres</button>
       <button class="edition-tab" data-target="enigme-tab-stats">Statistiques</button>
-      <button class="edition-tab" data-target="enigme-tab-spec">Champs spécifiques</button>
+      <button class="edition-tab" data-target="enigme-tab-soumission">Soumission</button>
+      <button class="edition-tab" data-target="enigme-tab-indices">Indices</button>
+      <button class="edition-tab" data-target="enigme-tab-solution">Solution</button>
     </div>
 
     <div id="enigme-tab-param" class="edition-tab-content active">
@@ -380,10 +382,50 @@ $has_variantes = ($nb_variantes > 0);
     </div> <!-- .edition-panel-body -->
     </div> <!-- #enigme-tab-param -->
 
-<div id="enigme-tab-spec" class="edition-tab-content" style="display:none;">
+<div id="enigme-tab-soumission" class="edition-tab-content" style="display:none;">
+<?php
+  $page_tentatives = max(1, intval($_GET['page_tentatives'] ?? 1));
+  $par_page = 25;
+  $offset = ($page_tentatives - 1) * $par_page;
+  $tentatives = recuperer_tentatives_enigme($enigme_id, $par_page, $offset);
+  $total_tentatives = compter_tentatives_enigme($enigme_id);
+  if (empty($tentatives)) : ?>
+  <p>Aucune tentative de soumission.</p>
+<?php else : ?>
+  <table class="table-tentatives">
+    <thead>
+      <tr>
+        <th>Utilisateur</th>
+        <th>Réponse</th>
+        <th>Résultat</th>
+      </tr>
+    </thead>
+    <tbody>
+      <?php foreach ($tentatives as $tent) : ?>
+        <tr>
+          <td><?= esc_html(get_userdata($tent->user_id)?->display_name ?? 'Inconnu'); ?></td>
+          <td><?= esc_html($tent->reponse_saisie); ?></td>
+          <td><?= esc_html($tent->resultat); ?></td>
+        </tr>
+      <?php endforeach; ?>
+    </tbody>
+  </table>
+  <div class="pager" style="margin-top:10px;">
+    <?php if ($page_tentatives > 1) : ?>
+      <a href="<?= esc_url(add_query_arg('page_tentatives', $page_tentatives - 1)); ?>">&laquo; Préc.</a>
+    <?php endif; ?>
+    <?php if ($offset + $par_page < $total_tentatives) : ?>
+      <a href="<?= esc_url(add_query_arg('page_tentatives', $page_tentatives + 1)); ?>" style="margin-left:10px;">Suiv. &raquo;</a>
+    <?php endif; ?>
+  </div>
+<?php endif; ?>
+</div>
 
-      <p>Soumission : fonctionnalité à venir.</p>
-      <p>Indices : fonctionnalité à venir.</p>
+<div id="enigme-tab-indices" class="edition-tab-content" style="display:none;">
+  <p>Indices : fonctionnalité à venir.</p>
+</div>
+
+<div id="enigme-tab-solution" class="edition-tab-content" style="display:none;">
 
             <fieldset class="groupe-champ champ-groupe-solution">
               <legend>Publication de la solution</legend>
@@ -462,7 +504,7 @@ $has_variantes = ($nb_variantes > 0);
         </div>
       </div>
     </div>
-    </div> <!-- #enigme-tab-spec -->
+    </div> <!-- #enigme-tab-solution -->
     <div class="edition-panel-footer"></div>
   </section>
 <?php endif; ?>

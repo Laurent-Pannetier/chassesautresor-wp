@@ -50,7 +50,7 @@ $classe_vide_coordonnees = ($iban_vide || $bic_vide) ? 'champ-vide' : '';
     <div class="edition-tabs">
       <button class="edition-tab active" data-target="organisateur-tab-param">Paramètres</button>
       <button class="edition-tab" data-target="organisateur-tab-stats">Statistiques</button>
-      <button class="edition-tab" data-target="organisateur-tab-spec">Champs spécifiques</button>
+      <button class="edition-tab" data-target="organisateur-tab-revenus">Revenus</button>
     </div>
 
     <div id="organisateur-tab-param" class="edition-tab-content active">
@@ -234,8 +234,8 @@ $classe_vide_coordonnees = ($iban_vide || $bic_vide) ? 'champ-vide' : '';
       <p>Statistiques en cours de développement.</p>
     </div>
 
-    <div id="organisateur-tab-spec" class="edition-tab-content" style="display:none;">
-      <p>Actualités bientôt disponibles.</p>
+    <div id="organisateur-tab-revenus" class="edition-tab-content" style="display:none;">
+      <p>Gestion des revenus en cours de développement.</p>
     </div>
 
     <div class="edition-panel-footer"></div>
