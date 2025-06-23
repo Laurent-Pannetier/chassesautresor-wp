@@ -186,11 +186,57 @@ if (!$modal_deja_vue) :
 
     <script>
       window.addEventListener('DOMContentLoaded', () => {
-        document.querySelector('.modal-close-top')?.addEventListener('click', () => {
-          document.querySelector('.modal-bienvenue-wrapper')?.remove();
+        const wrapper = document.querySelector('.modal-bienvenue-wrapper');
+        if (!wrapper) return;
+        wrapper.classList.add('visible');
+
+        const fermer = () => wrapper.remove();
+
+        wrapper.querySelectorAll('.modal-close-top').forEach(btn => {
+          btn.addEventListener('click', fermer);
+        });
+
+        wrapper.addEventListener('click', e => {
+          if (e.target === wrapper) fermer();
+        });
+
+        document.addEventListener('keydown', e => {
+          if (e.key === 'Escape') fermer();
         });
       });
     </script>
+    <style>
+      .modal-bienvenue-wrapper {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.75);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        /* S'assure de passer au-dessus du panneau d'édition (z-index 10000) */
+        z-index: 11001;
+      }
+      .modal-bienvenue-inner {
+        background: #fff;
+        padding: 2rem;
+        border-radius: 1rem;
+        max-width: 600px;
+        width: 90%;
+        max-height: 90vh;
+        overflow-y: auto;
+        position: relative;
+      }
+      .modal-close-top {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        font-size: 1.5rem;
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: #000;
+      }
+    </style>
   <?php endif; ?>
 <?php endif; ?>
 
