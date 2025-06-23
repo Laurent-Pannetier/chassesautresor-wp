@@ -316,7 +316,6 @@ function generer_liste_chasses_hierarchique($organisateur_id) {
 }
 
 
-
 // ==================================================
 // 📩 DEMANDE DE CRÉATION DE PROFIL ORGANISATEUR
 // ==================================================
@@ -427,4 +426,3 @@ function traiter_confirmation_organisateur() {
     exit;
 }
 add_action('template_redirect', 'traiter_confirmation_organisateur');
-
