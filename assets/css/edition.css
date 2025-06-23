@@ -264,12 +264,13 @@ body.edition-active-enigme .single-enigme-main .champ-modifier {
   display: inline-flex;
 }
 
-body.edition-active-enigme .single-enigme-main [data-champ="enigme_visuel_legende"] {
+/* Harmonisation de l'alignement pour le champ sous-titre dans le panneau Énigme */
+.single-enigme-main [data-champ="enigme_visuel_legende"] {
   display: inline-flex;
   align-items: center;
 }
 
-body.edition-active-enigme .single-enigme-main [data-champ="enigme_visuel_legende"] .champ-affichage {
+.single-enigme-main [data-champ="enigme_visuel_legende"] .champ-affichage {
   padding-left: 5px;
 }
 
