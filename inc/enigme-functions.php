@@ -99,7 +99,7 @@
         ) {
             return [
                 'type'       => 'voir',
-                'label'      => '👁️ Voir l’énigme',
+                'label'      => 'Voir l’énigme',
                 'action'     => 'link',
                 'url'        => get_permalink($enigme_id),
                 'points'     => null,
@@ -211,7 +211,7 @@
              <form method="post" action="<?= esc_url($cta['url']); ?>" class="cta-enigme-form">
                  <input type="hidden" name="enigme_id" value="<?= esc_attr($enigme_id); ?>">
                  <?php wp_nonce_field('engager_enigme_' . $enigme_id, 'engager_enigme_nonce'); ?>
-                 <button type="submit"><?= esc_html($cta['label']); ?></button>
+                 <button type="submit" class="bouton bouton-secondaire"><?= esc_html($cta['label']); ?></button>
                  <?php if (!empty($cta['sous_label'])): ?>
                      <div class="cta-sous-label"><?= esc_html($cta['sous_label']); ?></div>
                  <?php endif; ?>
@@ -221,7 +221,7 @@
 
             case 'link':
             ?>
-             <a href="<?= esc_url($cta['url']); ?>" class="cta-enigme-lien">
+             <a href="<?= esc_url($cta['url']); ?>" class="cta-enigme-lien bouton bouton-secondaire">
                  <?= esc_html($cta['label']); ?>
              </a>
              <?php if (!empty($cta['sous_label'])): ?>
@@ -233,7 +233,7 @@
             case 'disabled':
             default:
             ?>
-             <p class="cta-enigme-desactive"><?= esc_html($cta['label']); ?></p>
+             <p class="cta-enigme-desactive bouton-secondaire no-click"><?= esc_html($cta['label']); ?></p>
              <?php if (!empty($cta['sous_label'])): ?>
                  <div class="cta-sous-label"><?= esc_html($cta['sous_label']); ?></div>
              <?php endif; ?>
