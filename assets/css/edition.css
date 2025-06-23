@@ -678,6 +678,7 @@ li.ligne-email .champ-organisateur .champ-affichage {
 
 .champ-solution-timing span {
   white-space: nowrap;
+  color: var(--color-editor-text-muted);
 }
 
 .edition-panel-section .champ-badge-cout {
