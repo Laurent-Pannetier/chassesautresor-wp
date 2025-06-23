@@ -659,6 +659,28 @@ li.ligne-email .champ-organisateur .champ-affichage {
   text-align: unset;
 }
 
+/* Champs délai et heure de solution en ligne */
+.champ-solution-timing {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.champ-solution-timing .champ-delai-inline {
+  width: 60px;
+  text-align: center;
+}
+
+.champ-solution-timing .champ-select-heure {
+  width: auto;
+}
+
+.champ-solution-timing span {
+  white-space: nowrap;
+  color: var(--color-editor-text-muted);
+}
+
 .edition-panel-section .champ-badge-cout {
   margin: 0 1rem;
 }
