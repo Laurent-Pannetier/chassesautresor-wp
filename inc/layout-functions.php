@@ -364,6 +364,10 @@ function afficher_bandeau_validation_chasse_global() {
         return;
     }
 
+    if (is_singular('chasse') && get_the_ID() === $chasse_id) {
+        return;
+    }
+
     $titre = get_the_title($chasse_id);
     $lien  = get_permalink($chasse_id);
     echo '<div class="bandeau-info-chasse">';

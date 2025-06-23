@@ -483,6 +483,11 @@ footer .ast-footer-widget a {
   padding: 0.25rem 1rem;
   font-size: 0.9rem;
 }
+.bandeau-info-chasse a {
+  color: var(--color-text-fond-clair);
+  font-weight: 600;
+  text-decoration: underline;
+}
 .bandeau-info-chasse form {
   display: inline-block;
   margin-left: 1rem;
