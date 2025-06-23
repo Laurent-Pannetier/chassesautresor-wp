@@ -37,6 +37,7 @@ add_action('wp_enqueue_scripts', function () {
         'edition'            => 'edition.css',
         'mon compte'         => 'mon-compte.css',
         'commerce-style'     => 'commerce.css',
+        'home'               => 'home.css',
     ];
 
     // 🚀 Chargement dynamique des styles avec gestion du cache
