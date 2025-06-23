@@ -35,6 +35,9 @@ $organisateur_id = get_organisateur_from_user($user_id);
 // 👉 maintenant que le CPT existe (ou pas), on peut rediriger
 rediriger_selon_etat_organisateur();
 
+// Image par défaut au cas où aucune miniature n'est définie
+$image_url = '';
+
 if (has_post_thumbnail()) {
   $image_url = get_the_post_thumbnail_url(null, 'full'); // ou 'large' si besoin
 }
