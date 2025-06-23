@@ -485,13 +485,17 @@ body.edition-active-enigme .edition-panel-enigme.edition-panel-modal {
   z-index: 10000;
 }
 
-.edition-panel-header {
+.edition-panel > .edition-panel-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 0.5rem 0;
   border-bottom: 1px solid var(--color-editor-border);
   margin-bottom: 1rem;
+  position: sticky;
+  top: 0;
+  background-color: var(--color-editor-background);
+  z-index: 10;
 }
 
 .edition-panel .panneau-fermer {
@@ -760,6 +764,10 @@ body.panneau-ouvert::before {
   align-items: center;
   margin-bottom: 1rem;
   border-bottom: 1px solid var(--color-editor-border);
+  position: sticky;
+  top: 0;
+  background-color: var(--color-editor-background);
+  z-index: 10;
 }
 
 .panneau-lateral__header h2 {
