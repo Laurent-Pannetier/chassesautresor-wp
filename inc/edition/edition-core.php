@@ -414,7 +414,8 @@ function injection_classe_edition_active(array $classes): array
   if (
     $post->post_type === 'organisateur' &&
     (int) get_post_field('post_author', $post->ID) === $user_id &&
-    in_array('organisateur_creation', $roles, true)
+    in_array('organisateur_creation', $roles, true) &&
+    !get_field('organisateur_cache_complet', $post->ID)
   ) {
     verifier_ou_mettre_a_jour_cache_complet($post->ID);
 
@@ -429,8 +430,9 @@ function injection_classe_edition_active(array $classes): array
   // === CHASSE ===
   if (
     $post->post_type === 'chasse' &&
+
     in_array('organisateur_creation', $roles, true)
-  ) {
+
     $organisateur_id = get_organisateur_from_chasse($post->ID);
     $associes = get_field('utilisateurs_associes', $organisateur_id, false);
     $associes = is_array($associes) ? array_map('strval', $associes) : [];

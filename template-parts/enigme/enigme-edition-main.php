@@ -422,7 +422,7 @@ $has_variantes = ($nb_variantes > 0);
 </div>
 
 <div id="enigme-tab-indices" class="edition-tab-content" style="display:none;">
-  <p>Indices : fonctionnalité à venir.</p>
+  <p class="edition-placeholder">La section « Indices » sera bientôt disponible.</p>
 </div>
 
 <div id="enigme-tab-solution" class="edition-tab-content" style="display:none;">
@@ -475,7 +475,7 @@ $has_variantes = ($nb_variantes > 0);
                 </div>
 
                 <!-- ✅ Ligne publication -->
-                <div class="champ-solution-timing" style="margin-top: 15px; display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem;">
+                <div class="champ-solution-timing" style="margin-top: 15px;">
                   <label for="solution-delai" style="margin-right: 8px;">Publication :</label>
 
                   <input type="number"
@@ -484,8 +484,7 @@ $has_variantes = ($nb_variantes > 0);
                     step="1"
                     value="<?= esc_attr($delai); ?>"
                     id="solution-delai"
-                    class="champ-input champ-delai-inline"
-                    style="width: 60px; text-align: center;">
+                    class="champ-input champ-delai-inline">
 
                   <span>jours après la fin de la chasse, à</span>
 
@@ -495,6 +494,7 @@ $has_variantes = ($nb_variantes > 0);
                       <option value="<?= $formatted; ?>" <?= $formatted === $heure ? 'selected' : ''; ?>><?= $formatted; ?></option>
                     <?php endforeach; ?>
                   </select>
+                  <span>heure.</span>
                 </div>
 
               </div>

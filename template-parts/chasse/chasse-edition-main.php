@@ -294,15 +294,15 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
     </div> <!-- #chasse-tab-param -->
 
     <div id="chasse-tab-stats" class="edition-tab-content" style="display:none;">
-      <p>Statistiques à venir.</p>
+      <p class="edition-placeholder">La section « Statistiques » sera bientôt disponible.</p>
     </div>
 
     <div id="chasse-tab-classement" class="edition-tab-content" style="display:none;">
-      <p>Classement prochainement disponible.</p>
+      <p class="edition-placeholder">La section « Classement » sera bientôt disponible.</p>
     </div>
 
     <div id="chasse-tab-indices" class="edition-tab-content" style="display:none;">
-      <p>Gestion des indices à venir.</p>
+      <p class="edition-placeholder">La section « Indices » sera bientôt disponible.</p>
     </div>
 
     <div class="edition-panel-footer"></div>

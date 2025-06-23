@@ -27,6 +27,7 @@ if (!enigme_est_visible_pour($user_id, $enigme_id)) {
 // 🔹 Mode édition auto
 $edition_active = utilisateur_peut_modifier_post($enigme_id);
 verifier_ou_mettre_a_jour_cache_complet($enigme_id);
+
 $enigme_complete = (bool) get_field('enigme_cache_complet', $enigme_id);
 if (
   $edition_active &&
