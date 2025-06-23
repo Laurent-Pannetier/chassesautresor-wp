@@ -70,10 +70,15 @@ if (current_user_can('administrator')) {
 }
 
 
+$classe_intro = 'chasse-section-intro';
+$est_complet = chasse_est_complet($chasse_id);
+if ($edition_active && !$est_complet) {
+  $classe_intro .= ' champ-vide-obligatoire';
+}
 ?>
 
 
-<section class="chasse-section-intro">
+<section class="<?= esc_attr($classe_intro); ?>">
 
   <div class="chasse-fiche-container flex-row">
     <?php

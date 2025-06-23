@@ -19,6 +19,7 @@ $posts = is_a($query, 'WP_Query') ? $query->posts : (array) $query;
     $voir_bordure = !empty($est_orga) && utilisateur_est_organisateur_associe_a_chasse(get_current_user_id(), $chasse_id);
     $classe_completion = '';
     if ($voir_bordure) {
+      verifier_ou_mettre_a_jour_cache_complet($chasse_id);
       $complet = (bool) get_field('chasse_cache_complet', $chasse_id);
       $classe_completion = $complet ? 'carte-complete' : 'carte-incomplete';
     }

@@ -90,7 +90,7 @@ body.edition-active .champ-organisateur.champ-vide:hover {
   cursor: pointer;
 }
 
-.champ-organisateur.champ-vide-obligatoire {
+.champ-vide-obligatoire {
   border: 2px dashed var(--color-editor-error);
   animation: clignoteTitre 1s infinite alternate;
 }
