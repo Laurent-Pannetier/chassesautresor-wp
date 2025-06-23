@@ -422,7 +422,7 @@ $has_variantes = ($nb_variantes > 0);
 </div>
 
 <div id="enigme-tab-indices" class="edition-tab-content" style="display:none;">
-  <p>Indices : fonctionnalité à venir.</p>
+  <p class="edition-placeholder">xx à venir</p>
 </div>
 
 <div id="enigme-tab-solution" class="edition-tab-content" style="display:none;">
