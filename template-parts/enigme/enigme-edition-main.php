@@ -530,6 +530,10 @@ $has_variantes = ($nb_variantes > 0);
       </div>
     </div>
     </div> <!-- #enigme-tab-solution -->
-    <div class="edition-panel-footer"></div>
+    <div class="edition-panel-footer">
+      <?php if (utilisateur_peut_supprimer_enigme($enigme_id)) : ?>
+        <button type="button" id="bouton-supprimer-enigme" class="bouton-texte secondaire">❌ Suppression énigme</button>
+      <?php endif; ?>
+    </div>
   </section>
 <?php endif; ?>
