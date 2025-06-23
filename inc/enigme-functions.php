@@ -603,14 +603,6 @@
             return;
         }
 
-        if ($etat !== 'accessible') {
-            echo '<div class="enigme-message-interne">';
-            echo '<p>🛠️ Cette énigme est en cours d’édition.</p>';
-            echo '<p class="explication-organisateur">Elle ne sera visible par les joueurs qu’une fois la chasse validée.</p>';
-            echo '</div>';
-        }
-
-
         if (!empty($statut_data['afficher_message'])) {
             echo $statut_data['message_html'];
         }
