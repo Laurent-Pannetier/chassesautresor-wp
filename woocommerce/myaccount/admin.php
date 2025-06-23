@@ -173,6 +173,9 @@ $taux_conversion = get_taux_conversion_actuel();
         </div>
         <div class="stats-content">
             <button id="afficher-champs-acf" class="bouton-secondaire">Afficher les champs ACF</button>
+            <div id="acf-fields-container" style="display:none;margin-top:10px;">
+                <textarea id="acf-fields-output" style="width:100%;height:300px;" readonly></textarea>
+            </div>
         </div>
     </div>
     </div>
