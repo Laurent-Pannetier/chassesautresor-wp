@@ -292,7 +292,7 @@ function generer_liste_chasses_hierarchique($organisateur_id) {
 
     $out  = '<ul class="liste-chasses-hierarchique">';
     $out .= '<li>';
-    $out .= '<a href="' . esc_url(get_permalink($organisateur_id)) . '">' . esc_html(get_the_title($organisateur_id)) . '</a> ';
+    $out .= 'Organisateur : <a href="' . esc_url(get_permalink($organisateur_id)) . '">' . esc_html(get_the_title($organisateur_id)) . '</a> ';
     $out .= '(' . sprintf(_n('%d chasse', '%d chasses', $nombre_chasses, 'text-domain'), $nombre_chasses) . ')';
 
     if ($nombre_chasses > 0) {
@@ -302,7 +302,7 @@ function generer_liste_chasses_hierarchique($organisateur_id) {
             $chasse_titre = get_the_title($chasse_id);
             $nb_enigmes = count(recuperer_enigmes_associees($chasse_id));
             $out .= '<li>';
-            $out .= '<a href="' . esc_url(get_permalink($chasse_id)) . '">' . esc_html($chasse_titre) . '</a> ';
+            $out .= 'Chasse : <a href="' . esc_url(get_permalink($chasse_id)) . '">' . esc_html($chasse_titre) . '</a> ';
             $out .= '(' . sprintf(_n('%d énigme', '%d énigmes', $nb_enigmes, 'text-domain'), $nb_enigmes) . ')';
             $out .= '</li>';
         }
