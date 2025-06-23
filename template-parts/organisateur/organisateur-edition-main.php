@@ -59,8 +59,8 @@ $classe_vide_coordonnees = ($iban_vide || $bic_vide) ? 'champ-vide' : '';
       <div class="edition-panel-body">
       <div class="edition-panel-section edition-panel-section-ligne">
         <h3 class="section-title">
-          <i class="fa-solid fa-file-lines" aria-hidden="true"></i>
-          Profil organisateur
+          <i class="fa-solid fa-sliders" aria-hidden="true"></i>
+          Paramètres
         </h3>
 
         <div class="section-content deux-col-wrapper">
