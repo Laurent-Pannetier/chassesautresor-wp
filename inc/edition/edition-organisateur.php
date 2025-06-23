@@ -69,7 +69,7 @@ function creer_organisateur_pour_utilisateur($user_id)
   $post_id = wp_insert_post([
     'post_type'   => 'organisateur',
     'post_status' => 'pending',
-    'post_title'  => 'Votre nom d’organisateur',
+    'post_title'  => TITRE_DEFAUT_ORGANISATEUR,
     'post_author' => $user_id,
   ]);
 

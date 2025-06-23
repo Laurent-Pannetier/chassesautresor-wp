@@ -40,6 +40,7 @@ $has_enigmes = !empty($posts_visibles);
     $voir_bordure = !empty($est_orga) && utilisateur_est_organisateur_associe_a_chasse($utilisateur_id, $chasse_id);
     $classe_completion = '';
     if ($voir_bordure) {
+      verifier_ou_mettre_a_jour_cache_complet($enigme_id);
       $complet = (bool) get_field('enigme_cache_complet', $enigme_id);
       $classe_completion = $complet ? 'carte-complete' : 'carte-incomplete';
     }

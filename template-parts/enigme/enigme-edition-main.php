@@ -14,7 +14,7 @@ if (!$enigme_id || get_post_type($enigme_id) !== 'enigme') {
 
 $peut_modifier = utilisateur_peut_modifier_post($enigme_id);
 $titre = get_the_title($enigme_id);
-$titre_defaut = 'Nouvelle énigme';
+$titre_defaut = TITRE_DEFAUT_ENIGME;
 $isTitreParDefaut = strtolower(trim($titre)) === strtolower($titre_defaut);
 
 $visuel = get_field('enigme_visuel_image', $enigme_id); // champ "gallery" → tableau d’IDs
