@@ -62,7 +62,8 @@ function creer_organisateur_pour_utilisateur($user_id)
   $existant = get_organisateur_from_user($user_id);
   if ($existant) {
     error_log("ℹ️ Un organisateur existe déjà pour l'utilisateur $user_id (ID : $existant)");
-    return null;
+    // Renvoie simplement l'ID existant pour éviter un échec de confirmation
+    return (int) $existant;
   }
 
   // Crée le post "organisateur" avec statut pending

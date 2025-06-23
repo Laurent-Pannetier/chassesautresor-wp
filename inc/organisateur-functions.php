@@ -382,3 +382,51 @@ function confirmer_demande_organisateur(int $user_id, string $token): ?int {
     return $organisateur_id;
 }
 
+// ==================================================
+// 🌐 ENDPOINT CONFIRMATION ORGANISATEUR
+// ==================================================
+/**
+ * Enregistre l'endpoint /confirmation-organisateur
+ *
+ * Permet d'accéder à l'URL https://exemple.com/confirmation-organisateur/
+ * même si aucune page WordPress n'existe.
+ */
+function register_endpoint_confirmation_organisateur() {
+    add_rewrite_rule('^confirmation-organisateur/?$', 'index.php?confirmation_organisateur=1', 'top');
+    add_rewrite_tag('%confirmation_organisateur%', '1');
+}
+add_action('init', 'register_endpoint_confirmation_organisateur');
+
+/**
+ * Traite la confirmation d'inscription organisateur et redirige.
+ *
+ * Vérifie le token, crée le CPT "organisateur" si nécessaire, connecte
+ * l'utilisateur puis redirige vers son espace organisateur.
+ */
+function traiter_confirmation_organisateur() {
+    $is_endpoint = get_query_var('confirmation_organisateur') === '1';
+    $is_page     = is_page('confirmation-organisateur');
+    if (!$is_endpoint && !$is_page) {
+        return;
+    }
+
+    $user_id = isset($_GET['user']) ? intval($_GET['user']) : 0;
+    $token   = isset($_GET['token']) ? sanitize_text_field($_GET['token']) : '';
+
+    $organisateur_id = 0;
+    if ($user_id && $token) {
+        $organisateur_id = confirmer_demande_organisateur($user_id, $token);
+    }
+
+    if ($organisateur_id) {
+        wp_set_current_user($user_id);
+        wp_set_auth_cookie($user_id);
+        $redirect = add_query_arg('confirmation', '1', get_permalink($organisateur_id));
+        wp_safe_redirect($redirect);
+    } else {
+        wp_safe_redirect(home_url('/devenir-organisateur'));
+    }
+    exit;
+}
+add_action('template_redirect', 'traiter_confirmation_organisateur');
+
