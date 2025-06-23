@@ -42,7 +42,7 @@ $classe_vide_coordonnees = ($iban_vide || $bic_vide) ? 'champ-vide' : '';
   <section class="panneau-organisateur edition-panel edition-panel-organisateur edition-panel-modal<?php echo $edition_active ? ' edition-active' : ''; ?>" aria-hidden="<?php echo $edition_active ? 'false' : 'true'; ?>">
 
     <div class="edition-panel-header">
-      <h2><i class="fa-solid fa-sliders"></i> Paramètres organisateur</h2>
+      <h2><i class="fa-solid fa-sliders"></i> Paramètres</h2>
       <button type="button" class="panneau-fermer" aria-label="Fermer les paramètres organisateur">
         ✖
       </button>
@@ -56,6 +56,9 @@ $classe_vide_coordonnees = ($iban_vide || $bic_vide) ? 'champ-vide' : '';
 
     <div id="organisateur-tab-param" class="edition-tab-content active">
       <i class="fa-solid fa-sliders tab-watermark" aria-hidden="true"></i>
+      <div class="edition-panel-header">
+        <h2><i class="fa-solid fa-sliders"></i> Paramètres</h2>
+      </div>
       <div class="edition-panel-body">
       <div class="edition-panel-section edition-panel-section-ligne">
         <h3 class="section-title">
@@ -210,11 +213,17 @@ $classe_vide_coordonnees = ($iban_vide || $bic_vide) ? 'champ-vide' : '';
 
       <div id="organisateur-tab-stats" class="edition-tab-content" style="display:none;">
         <i class="fa-solid fa-chart-column tab-watermark" aria-hidden="true"></i>
+        <div class="edition-panel-header">
+          <h2><i class="fa-solid fa-chart-column"></i> Statistiques</h2>
+        </div>
         <p class="edition-placeholder">La section « Statistiques » sera bientôt disponible.</p>
       </div>
 
       <div id="organisateur-tab-revenus" class="edition-tab-content" style="display:none;">
         <i class="fa-solid fa-coins tab-watermark" aria-hidden="true"></i>
+        <div class="edition-panel-header">
+          <h2><i class="fa-solid fa-coins"></i> Revenus</h2>
+        </div>
         <p class="edition-placeholder">La section « Revenus » sera bientôt disponible.</p>
       </div>
 

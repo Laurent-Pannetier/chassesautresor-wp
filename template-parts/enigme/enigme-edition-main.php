@@ -65,7 +65,7 @@ $has_variantes = ($nb_variantes > 0);
       style="display:none; background:red; color:white; padding:5px; text-align:center; font-size:0.9em;"></div>
 
     <div class="edition-panel-header">
-      <h2><i class="fa-solid fa-sliders"></i> Paramètres de l'énigme</h2>
+      <h2><i class="fa-solid fa-sliders"></i> Paramètres</h2>
 
       <!-- ✅ Ajout du champ Style ici -->
       <div class="champ-enigme champ-style" data-champ="enigme_style_affichage" data-cpt="enigme" data-post-id="<?= esc_attr($enigme_id); ?>" style="margin-top: 8px;">
@@ -89,6 +89,9 @@ $has_variantes = ($nb_variantes > 0);
 
 <div id="enigme-tab-param" class="edition-tab-content active">
       <i class="fa-solid fa-sliders tab-watermark" aria-hidden="true"></i>
+      <div class="edition-panel-header">
+        <h2><i class="fa-solid fa-sliders"></i> Paramètres</h2>
+      </div>
       <div class="edition-panel-body edition-panel-section">
       <div class="resume-blocs-grid deux-col-wrapper">
         <div class="resume-bloc resume-obligatoire deux-col-bloc">
@@ -386,11 +389,17 @@ $has_variantes = ($nb_variantes > 0);
 
     <div id="enigme-tab-stats" class="edition-tab-content" style="display:none;">
       <i class="fa-solid fa-chart-column tab-watermark" aria-hidden="true"></i>
+      <div class="edition-panel-header">
+        <h2><i class="fa-solid fa-chart-column"></i> Statistiques</h2>
+      </div>
       <p class="edition-placeholder">La section « Statistiques » sera bientôt disponible.</p>
     </div>
 
 <div id="enigme-tab-soumission" class="edition-tab-content" style="display:none;">
   <i class="fa-solid fa-paper-plane tab-watermark" aria-hidden="true"></i>
+  <div class="edition-panel-header">
+    <h2><i class="fa-solid fa-paper-plane"></i> Soumission</h2>
+  </div>
 <?php
   $page_tentatives = max(1, intval($_GET['page_tentatives'] ?? 1));
   $par_page = 25;
@@ -431,11 +440,17 @@ $has_variantes = ($nb_variantes > 0);
 
 <div id="enigme-tab-indices" class="edition-tab-content" style="display:none;">
   <i class="fa-regular fa-lightbulb tab-watermark" aria-hidden="true"></i>
+  <div class="edition-panel-header">
+    <h2><i class="fa-regular fa-lightbulb"></i> Indices</h2>
+  </div>
   <p class="edition-placeholder">La section « Indices » sera bientôt disponible.</p>
 </div>
 
 <div id="enigme-tab-solution" class="edition-tab-content" style="display:none;">
   <i class="fa-solid fa-key tab-watermark" aria-hidden="true"></i>
+  <div class="edition-panel-header">
+    <h2><i class="fa-solid fa-key"></i> Solution</h2>
+  </div>
 
             <fieldset class="groupe-champ champ-groupe-solution">
               <legend>Publication de la solution</legend>
