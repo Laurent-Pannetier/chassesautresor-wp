@@ -316,3 +316,69 @@ function generer_liste_chasses_hierarchique($organisateur_id) {
 }
 
 
+
+// ==================================================
+// 📩 DEMANDE DE CRÉATION DE PROFIL ORGANISATEUR
+// ==================================================
+/**
+ * 🔹 lancer_demande_organisateur() → Génère un token et envoie l'email de confirmation.
+ * 🔹 renvoyer_email_confirmation_organisateur() → Réutilise le token existant.
+ * 🔹 confirmer_demande_organisateur() → Valide la demande et crée le CPT.
+ */
+
+function envoyer_email_confirmation_organisateur(int $user_id, string $token): bool {
+    $user = get_userdata($user_id);
+    if (!$user || !is_email($user->user_email)) return false;
+
+    $confirmation_url = add_query_arg([
+        'user'  => $user_id,
+        'token' => $token,
+    ], site_url('/confirmation-organisateur/'));
+
+    $subject  = '[Chasses au Trésor] Confirmez votre inscription organisateur';
+    $message  = '<div style="font-family:Arial,sans-serif;font-size:14px;">';
+    $message .= '<p>Bonjour <strong>' . esc_html($user->display_name) . '</strong>,</p>';
+    $message .= '<p>Pour finaliser la création de votre profil organisateur, veuillez cliquer sur le bouton ci-dessous :</p>';
+    $message .= '<p style="text-align:center;"><a href="' . esc_url($confirmation_url) . '" style="background:#0073aa;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold;display:inline-block;">Confirmer mon inscription</a></p>';
+    $message .= '<p style="margin-top:2em;">Merci et à très bientôt !<br>L’équipe chassesautresor.com</p>';
+    $message .= '</div>';
+
+    $headers = ['Content-Type: text/html; charset=UTF-8'];
+    add_filter('wp_mail_from_name', function () { return 'Chasses au Trésor'; });
+    wp_mail($user->user_email, $subject, $message, $headers);
+    remove_filter('wp_mail_from_name', '__return_false');
+    return true;
+}
+
+function lancer_demande_organisateur(int $user_id): bool {
+    if ($user_id <= 0) return false;
+    $token = wp_generate_password(20, false);
+    update_user_meta($user_id, 'organisateur_demande_token', $token);
+    update_user_meta($user_id, 'organisateur_demande_date', current_time('mysql'));
+    return envoyer_email_confirmation_organisateur($user_id, $token);
+}
+
+function renvoyer_email_confirmation_organisateur(int $user_id): bool {
+    if ($user_id <= 0) return false;
+    $token = get_user_meta($user_id, 'organisateur_demande_token', true);
+    if (!$token) {
+        return lancer_demande_organisateur($user_id);
+    }
+    return envoyer_email_confirmation_organisateur($user_id, (string) $token);
+}
+
+function confirmer_demande_organisateur(int $user_id, string $token): ?int {
+    $saved = get_user_meta($user_id, 'organisateur_demande_token', true);
+    if (!$saved || $token !== $saved) return null;
+
+    delete_user_meta($user_id, 'organisateur_demande_token');
+    delete_user_meta($user_id, 'organisateur_demande_date');
+
+    $organisateur_id = creer_organisateur_pour_utilisateur($user_id);
+    if ($organisateur_id) {
+        $user = new WP_User($user_id);
+        $user->add_role('organisateur_creation');
+    }
+    return $organisateur_id;
+}
+
