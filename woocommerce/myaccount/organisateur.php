@@ -116,18 +116,6 @@ $tableau_contenu = ob_get_clean(); // Récupérer la sortie et l'effacer du buff
     <!-- 📌 Contenu Principal -->
     <div class="dashboard-content">
         <div class="woocommerce-account-content">
-            
-            <!-- Cartes Organisateur en Création / ne s'affiche que sur la page mon-compte-->
-            <?php 
-            if (
-                in_array('organisateur_creation', $current_user->roles) &&  // Vérifie le rôle
-                is_page(77) && // Vérifie que nous sommes bien sur la page de compte (ID 77)
-                empty(WC()->query->get_current_endpoint()) // Vérifie qu'aucun endpoint WooCommerce n'est actif
-            ) : ?>
-                <?php get_template_part('template-parts/organisateur/organisateur-partial-cards'); ?>
-            <?php endif; ?>
-
-    
             <!-- Demande paiement en attente -->
             <?php if (!empty(trim($tableau_contenu))) : ?>
                 <h3>Demande de conversion en attente</h3>
