@@ -430,9 +430,8 @@ function injection_classe_edition_active(array $classes): array
   // === CHASSE ===
   if (
     $post->post_type === 'chasse' &&
-
     in_array('organisateur_creation', $roles, true)
-
+  ) {
     $organisateur_id = get_organisateur_from_chasse($post->ID);
     $associes = get_field('utilisateurs_associes', $organisateur_id, false);
     $associes = is_array($associes) ? array_map('strval', $associes) : [];
