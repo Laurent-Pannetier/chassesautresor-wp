@@ -53,6 +53,10 @@ get_header();
             ?>
         <?php endif; ?>
 
+        <?php if (!empty($_GET['confirmation'])) : ?>
+            <p class="message-succes">Votre inscription est confirmée. Vous pouvez maintenant vous connecter.</p>
+        <?php endif; ?>
+
         <!-- Présentation -->
         <section class="presentation">
             <div class="conteneur">
