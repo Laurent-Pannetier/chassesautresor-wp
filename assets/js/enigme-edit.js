@@ -159,6 +159,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const bloc = document.querySelector('[data-champ="enigme_reponse_bonne"]');
   if (bloc) {
     const input = bloc.querySelector('.champ-input');
+    const champ = bloc.dataset.champ;
+    const postId = bloc.dataset.postId;
+    const cptChamp = bloc.dataset.cpt || 'enigme';
+    let timerSauvegarde;
+
     if (input) {
       let alerte = bloc.querySelector('.message-limite');
       if (!alerte) {
@@ -184,6 +189,13 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
           alerte.textContent = '';
           alerte.style.display = 'none';
+        }
+
+        if (champ && postId) {
+          clearTimeout(timerSauvegarde);
+          timerSauvegarde = setTimeout(() => {
+            modifierChampSimple(champ, input.value.trim(), postId, cptChamp);
+          }, 400);
         }
       });
       const enigmeId = panneauEdition?.dataset.postId;
@@ -456,6 +468,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const input = bloc.querySelector('.champ-input');
   if (!input) return;
 
+  const champ = bloc.dataset.champ;
+  const postId = bloc.dataset.postId;
+  const cptChamp = bloc.dataset.cpt || 'enigme';
+  let timerSauvegarde;
+
   // Crée ou récupère l’alerte si déjà existante
   let alerte = bloc.querySelector('.message-limite');
   if (!alerte) {
@@ -483,6 +500,13 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       alerte.textContent = '';
       alerte.style.display = 'none';
+    }
+
+    if (champ && postId) {
+      clearTimeout(timerSauvegarde);
+      timerSauvegarde = setTimeout(() => {
+        modifierChampSimple(champ, input.value.trim(), postId, cptChamp);
+      }, 400);
     }
   });
 });
