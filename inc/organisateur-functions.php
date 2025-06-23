@@ -269,6 +269,7 @@ function ajouter_query_var_contact($vars) {
     $vars[] = 'contact';
     return $vars;
 }
+
 add_filter('query_vars', 'ajouter_query_var_contact');
 
 /**
@@ -313,4 +314,5 @@ function generer_liste_chasses_hierarchique($organisateur_id) {
 
     return $out;
 }
+
 
