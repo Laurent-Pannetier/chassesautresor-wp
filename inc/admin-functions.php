@@ -1352,6 +1352,7 @@ function afficher_tableau_organisateurs_en_creation() {
     }
 
     echo '<table class="stats-table"><tbody>';
+
     foreach ($liste as $entry) {
         echo '<tr>';
         echo '<td>' . esc_html($entry['organisateur_titre']) . '</td>';
