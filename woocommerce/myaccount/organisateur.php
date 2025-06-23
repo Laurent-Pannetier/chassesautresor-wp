@@ -142,13 +142,7 @@ $tableau_contenu = ob_get_clean(); // Récupérer la sortie et l'effacer du buff
         <div class="dashboard-card">
             <div class="dashboard-card-header">
                 <i class="fas fa-landmark"></i>
-                <h3><?php echo esc_html($organisateur_titre); ?></h3>
-            </div>
-            <div class="image-container">
-                <img src="<?php echo esc_url($organisateur_logo); ?>" alt="Logo <?php echo esc_attr($organisateur_titre); ?>" class="dashboard-logo">
-                <div class="nb-chasses-overlay">
-                    <?php echo sprintf(_n('%d chasse', '%d chasses', $nombre_chasses, 'text-domain'), $nombre_chasses); ?>
-                </div>
+                <h3>Vos entités</h3>
             </div>
             <div class="stats-content">
                 <?php echo $liste_chasses_organisateur; ?>
