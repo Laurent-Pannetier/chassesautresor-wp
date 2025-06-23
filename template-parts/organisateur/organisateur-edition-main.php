@@ -232,11 +232,11 @@ $classe_vide_coordonnees = ($iban_vide || $bic_vide) ? 'champ-vide' : '';
     </div> <!-- #organisateur-tab-param -->
 
       <div id="organisateur-tab-stats" class="edition-tab-content" style="display:none;">
-        <p class="edition-placeholder">xx à venir</p>
+        <p class="edition-placeholder">La section « Statistiques » sera bientôt disponible.</p>
       </div>
 
       <div id="organisateur-tab-revenus" class="edition-tab-content" style="display:none;">
-        <p class="edition-placeholder">xx à venir</p>
+        <p class="edition-placeholder">La section « Revenus » sera bientôt disponible.</p>
       </div>
 
     <div class="edition-panel-footer"></div>
