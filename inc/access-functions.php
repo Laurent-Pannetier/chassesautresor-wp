@@ -1073,7 +1073,6 @@ function chasse_est_visible_pour_utilisateur(int $chasse_id, int $user_id): bool
     $cache      = get_field('champs_caches', $chasse_id) ?: [];
     $validation = $cache['chasse_cache_statut_validation'] ?? '';
 
-
     if ($status === 'pending') {
         $user  = get_userdata($user_id);
         $roles = $user ? (array) $user->roles : [];
