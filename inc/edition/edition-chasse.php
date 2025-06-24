@@ -217,6 +217,10 @@ function modifier_champ_chasse()
     wp_send_json_error('⚠️ acces_refuse');
   }
 
+  if (!utilisateur_peut_editer_champs($post_id)) {
+    wp_send_json_error('⚠️ acces_refuse');
+  }
+
   $doit_recalculer_statut = false;
   $champ_valide = false;
   $reponse = ['champ' => $champ, 'valeur' => $valeur];

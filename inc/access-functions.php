@@ -300,7 +300,10 @@ function utilisateur_peut_modifier_post($post_id)
 
             $match = in_array((string) $user_id, $associes, true);
 
-            return $match;
+            // Autoriser également l'auteur du post à modifier
+            $auteur = (int) get_post_field('post_author', $post_id);
+
+            return $match || $auteur === $user_id;
 
         case 'chasse':
             $organisateur_id = get_organisateur_from_chasse($post_id);
@@ -557,6 +560,109 @@ function utilisateur_peut_ajouter_chasse(int $organisateur_id): bool
     // Organisateur en cours de création : uniquement si aucune chasse existante
     if (in_array('organisateur_creation', $roles, true)) {
         return !organisateur_a_des_chasses($organisateur_id);
+    }
+
+    return false;
+}
+
+/**
+ * Détermine si l'utilisateur peut afficher le panneau d'édition d'un post.
+ *
+ * Cette vérification repose sur la relation organisateur ↔ utilisateur et
+ * sur différents statuts des CPT.
+ *
+ * @param int $post_id ID du post concerné.
+ * @return bool True si le panneau peut être affiché.
+ */
+function utilisateur_peut_voir_panneau(int $post_id): bool
+{
+    if (!is_user_logged_in()) {
+        return false;
+    }
+
+    $user  = wp_get_current_user();
+    $roles = (array) $user->roles;
+
+    if (!array_intersect($roles, ['organisateur', 'organisateur_creation'])) {
+        return false;
+    }
+
+    if (!utilisateur_peut_modifier_post($post_id)) {
+        return false; // Vérifie la liaison utilisateur ↔ CPT
+    }
+
+    $type   = get_post_type($post_id);
+    $status = get_post_status($post_id);
+
+    switch ($type) {
+        case 'organisateur':
+            return in_array($status, ['publish', 'pending'], true);
+
+        case 'chasse':
+            $cache = get_field('champs_caches', $post_id);
+            $val   = $cache['chasse_cache_statut_validation'] ?? '';
+
+            return in_array($status, ['publish', 'pending'], true) && $val !== 'banni';
+
+        case 'enigme':
+            $etat = get_field('enigme_cache_etat_systeme', $post_id);
+
+            return in_array($status, ['publish', 'pending'], true) && $etat !== 'cache_invalide';
+    }
+
+    return false;
+}
+
+/**
+ * Détermine si l'utilisateur peut éditer les champs désactivés d'un post.
+ *
+ * Les conditions incluent celles de `utilisateur_peut_voir_panneau()` et des
+ * statuts métiers plus stricts selon le type de contenu.
+ *
+ * @param int $post_id ID du post concerné.
+ * @return bool True si l'édition avancée est autorisée.
+ */
+function utilisateur_peut_editer_champs(int $post_id): bool
+{
+    if (!utilisateur_peut_voir_panneau($post_id)) {
+        return false;
+    }
+
+    $type   = get_post_type($post_id);
+    $status = get_post_status($post_id);
+
+    $user  = wp_get_current_user();
+    $roles = (array) $user->roles;
+
+    switch ($type) {
+        case 'organisateur':
+            return in_array('organisateur_creation', $roles, true) && $status === 'pending';
+
+        case 'chasse':
+            $cache = get_field('champs_caches', $post_id);
+            $val   = $cache['chasse_cache_statut_validation'] ?? '';
+            $stat  = $cache['chasse_cache_statut'] ?? '';
+
+            return $status === 'pending'
+                && $stat === 'revision'
+                && in_array($val, ['creation', 'correction'], true);
+
+        case 'enigme':
+            $chasse_id = recuperer_id_chasse_associee($post_id);
+            if (!$chasse_id) {
+                return false;
+            }
+
+            $chasse_status = get_post_status($chasse_id);
+            $cache         = get_field('champs_caches', $chasse_id);
+            $val           = $cache['chasse_cache_statut_validation'] ?? '';
+            $stat          = $cache['chasse_cache_statut'] ?? '';
+            $etat          = get_field('enigme_cache_etat_systeme', $post_id);
+
+            return $chasse_status === 'pending'
+                && $stat === 'revision'
+                && in_array($val, ['creation', 'correction'], true)
+                && $etat === 'bloquee_chasse';
     }
 
     return false;
@@ -948,3 +1054,25 @@ add_action('wp_ajax_verifier_et_enregistrer_condition_pre_requis', 'verifier_et_
 enigme_est_affichable_pour_joueur() (à venir)
 get_cta_enigme() (à déplacer ici si elle migre du fichier visuel)
 tout helper type est_cliquable, affiche_indice, etc. */
+
+/**
+ * Autorise la consultation des énigmes non publiées pour les organisateurs
+ * associés.
+ *
+ * Les rôles "organisateur" et "organisateur_creation" peuvent voir les
+ * énigmes en statut "pending" ou "draft" sans disposer du lien de prévisualisation.
+ *
+ * @hook pre_get_posts
+ */
+add_action('pre_get_posts', function ($query) {
+    if (is_admin() || !$query->is_main_query()) {
+        return;
+    }
+
+    if ($query->is_singular('enigme') && is_user_logged_in()) {
+        $roles = (array) wp_get_current_user()->roles;
+        if (array_intersect($roles, ['organisateur', 'organisateur_creation'])) {
+            $query->set('post_status', ['publish', 'pending', 'draft']);
+        }
+    }
+});
