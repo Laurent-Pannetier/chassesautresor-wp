@@ -8,6 +8,28 @@ if (!$organisateur_id || get_post_type($organisateur_id) !== 'organisateur') {
 
 $query = get_chasses_de_organisateur($organisateur_id);
 $posts = is_a($query, 'WP_Query') ? $query->posts : (array) $query;
+
+// 🔒 Filtrer les chasses visibles selon leur statut et l'utilisateur courant
+$posts = array_filter($posts, function ($post) {
+  $chasse_id = $post->ID;
+  $statut_wp = get_post_status($chasse_id);
+  $cache = get_field('champs_caches', $chasse_id) ?? [];
+  $validation = $cache['chasse_cache_statut_validation'] ?? '';
+
+  if (!in_array($statut_wp, ['pending', 'publish'], true)) {
+    return false;
+  }
+
+  if ($statut_wp === 'pending') {
+    $roles = wp_get_current_user()->roles;
+    $autorise = array_intersect($roles, ['organisateur', 'organisateur_creation'])
+      && utilisateur_est_organisateur_associe_a_chasse(get_current_user_id(), $chasse_id)
+      && $validation !== 'banni';
+    return $autorise;
+  }
+
+  return $validation !== 'banni';
+});
 ?>
 
 <div class="grille-liste">

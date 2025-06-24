@@ -6,6 +6,29 @@ if (!$chasse_id || get_post_type($chasse_id) !== 'chasse') return;
 
 $utilisateur_id = get_current_user_id();
 
+// 🔒 Vérification de la visibilité de la boucle selon le statut de la chasse
+$statut_wp = get_post_status($chasse_id);
+$cache = get_field('champs_caches', $chasse_id) ?? [];
+$statut_validation = $cache['chasse_cache_statut_validation'] ?? '';
+
+if (!in_array($statut_wp, ['pending', 'publish'], true)) {
+  return;
+}
+
+if ($statut_wp === 'pending') {
+  $roles = wp_get_current_user()->roles;
+  $autorise = array_intersect($roles, ['organisateur', 'organisateur_creation'])
+    && utilisateur_est_organisateur_associe_a_chasse($utilisateur_id, $chasse_id)
+    && $statut_validation !== 'banni';
+  if (!$autorise) {
+    return;
+  }
+} else {
+  if ($statut_validation === 'banni') {
+    return;
+  }
+}
+
 // 🔎 Récupération des énigmes associées à la chasse
 $posts = get_posts([
   'post_type'      => 'enigme',
