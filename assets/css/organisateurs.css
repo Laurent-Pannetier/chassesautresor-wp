@@ -434,6 +434,7 @@ body:not(.edition-active) #presentation .champ-liens.champ-vide {
 
 section#presentation {
     margin-top:1rem;
+    position: relative;
 }
 section#presentation.masque {
     margin: 0;
@@ -452,6 +453,12 @@ section#presentation .titre-presentation {
   font-size: 1.8rem;
   margin-bottom: 1.5rem;
   position: relative;
+}
+
+section#presentation .presentation-fermer {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
 }
 
 

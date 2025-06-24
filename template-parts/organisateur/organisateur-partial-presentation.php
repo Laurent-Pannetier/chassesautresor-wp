@@ -30,6 +30,7 @@ if (!empty($liens_publics) && is_array($liens_publics)) {
 ?>
 
 <section id="presentation" class="bloc-presentation-organisateur bloc-toggle masque bloc-discret">
+    <button type="button" class="panneau-fermer presentation-fermer" aria-label="Fermer les informations">✖</button>
     <!-- Liens publics -->
     <?php $champ_vide_liens = count($liens_actifs) === 0;    ?>
     <?php $classe_liens = count($liens_actifs) >= 3 ? 'liens-compacts' : ''; ?>
