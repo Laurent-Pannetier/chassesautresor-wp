@@ -197,6 +197,10 @@ function ajax_modifier_champ_organisateur()
     wp_send_json_error('⚠️ acces_refuse');
   }
 
+  if (!utilisateur_peut_editer_champs($post_id)) {
+    wp_send_json_error('⚠️ acces_refuse');
+  }
+
   // 🗺️ Table de correspondance si champ dans un groupe ACF
   $champ_correspondances = [
     'email_contact'                     => 'profil_public_email_contact',
@@ -378,6 +382,10 @@ function modifier_titre_organisateur()
 
   $auteur = (int) get_post_field('post_author', $organisateur_id);
   if ($auteur !== $user_id) {
+    wp_send_json_error('acces_refuse');
+  }
+
+  if (!utilisateur_peut_editer_champs($organisateur_id)) {
     wp_send_json_error('acces_refuse');
   }
 

@@ -12,7 +12,8 @@ if (!$chasse_id || get_post_type($chasse_id) !== 'chasse') {
   return;
 }
 
-$peut_modifier = utilisateur_peut_modifier_post($chasse_id);
+$peut_modifier = utilisateur_peut_voir_panneau($chasse_id);
+$peut_editer   = utilisateur_peut_editer_champs($chasse_id);
 
 $image = get_field('chasse_principale_image', $chasse_id);
 $description = get_field('chasse_principale_description', $chasse_id);
@@ -78,13 +79,15 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
 
                   <div class="champ-affichage">
                     <label for="champ-titre-chasse">Titre de la chasse</label>
-                    <button type="button" class="champ-modifier" aria-label="Modifier le titre">
-                      ✏️
-                    </button>
+                    <?php if ($peut_editer) : ?>
+                      <button type="button" class="champ-modifier" aria-label="Modifier le titre">
+                        ✏️
+                      </button>
+                    <?php endif; ?>
                   </div>
 
                   <div class="champ-edition" style="display: none;">
-                    <input type="text" class="champ-input" maxlength="70" value="<?= esc_attr($titre); ?>" id="champ-titre-chasse">
+                    <input type="text" class="champ-input" maxlength="70" value="<?= esc_attr($titre); ?>" id="champ-titre-chasse" <?= $peut_editer ? '' : 'disabled'; ?>>
                     <button type="button" class="champ-enregistrer">✓</button>
                     <button type="button" class="champ-annuler">✖</button>
                   </div>
@@ -98,12 +101,14 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
                   data-cpt="chasse"
                   data-post-id="<?= esc_attr($chasse_id); ?>">
                   Une description
-                  <button type="button"
-                    class="champ-modifier ouvrir-panneau-description"
-                    data-cpt="chasse"
-                    data-champ="chasse_principale_description"
-                    data-post-id="<?= esc_attr($chasse_id); ?>"
-                    aria-label="Modifier la description">✏️</button>
+                  <?php if ($peut_editer) : ?>
+                    <button type="button"
+                      class="champ-modifier ouvrir-panneau-description"
+                      data-cpt="chasse"
+                      data-champ="chasse_principale_description"
+                      data-post-id="<?= esc_attr($chasse_id); ?>"
+                      aria-label="Modifier la description">✏️</button>
+                  <?php endif; ?>
                 </li>
 
                 <!-- Image -->
@@ -112,12 +117,14 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
                   data-cpt="chasse"
                   data-post-id="<?= esc_attr($chasse_id); ?>">
                   Une image principale
-                  <button type="button"
-                    class="champ-modifier"
-                    data-champ="chasse_principale_image"
-                    data-cpt="chasse"
-                    data-post-id="<?= esc_attr($chasse_id); ?>"
-                    aria-label="Modifier l’image">✏️</button>
+                  <?php if ($peut_editer) : ?>
+                    <button type="button"
+                      class="champ-modifier"
+                      data-champ="chasse_principale_image"
+                      data-cpt="chasse"
+                      data-post-id="<?= esc_attr($chasse_id); ?>"
+                      aria-label="Modifier l’image">✏️</button>
+                  <?php endif; ?>
                 </li>
 
               </ul>
@@ -131,7 +138,9 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
                 <!-- Récompense -->
                 <li class="champ-chasse champ-rempli" data-champ="caracteristiques_chasse_infos_recompense_valeur" data-cpt="chasse" data-post-id="8991">
                   Récompense
-                  <button type="button" class="champ-modifier ouvrir-panneau-recompense" data-champ="caracteristiques_chasse_infos_recompense_valeur" data-cpt="chasse" data-post-id="8991" aria-label="Modifier la récompense">✏️</button>
+                  <?php if ($peut_editer) : ?>
+                    <button type="button" class="champ-modifier ouvrir-panneau-recompense" data-champ="caracteristiques_chasse_infos_recompense_valeur" data-cpt="chasse" data-post-id="8991" aria-label="Modifier la récompense">✏️</button>
+                  <?php endif; ?>
                 </li>
 
                 <!-- Liens -->
@@ -142,12 +151,14 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
 
                   <span class="champ-label">Sites et réseaux dédiés à cette chasse</span>
 
-                  <button type="button"
-                    class="champ-modifier ouvrir-panneau-liens"
-                    data-champ="chasse_principale_liens"
-                    data-cpt="chasse"
-                    data-post-id="<?= esc_attr($chasse_id); ?>"
-                    aria-label="Configurer les liens publics">✏️</button>
+                  <?php if ($peut_editer) : ?>
+                    <button type="button"
+                      class="champ-modifier ouvrir-panneau-liens"
+                      data-champ="chasse_principale_liens"
+                      data-cpt="chasse"
+                      data-post-id="<?= esc_attr($chasse_id); ?>"
+                      aria-label="Configurer les liens publics">✏️</button>
+                  <?php endif; ?>
 
                   <div class="champ-feedback"></div>
                 </li>
@@ -170,7 +181,7 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
                     id="chasse-date-debut"
                     name="chasse-date-debut"
                     value="<?= esc_attr($date_debut); ?>"
-                    class="champ-inline-date champ-date-edit" required />
+                    class="champ-inline-date champ-date-edit" <?= $peut_editer ? '' : 'disabled'; ?> required />
                   <div id="erreur-date-debut" class="message-erreur" style="display:none; color:red; font-size:0.9em; margin-top:5px;"></div>
 
                 </li>
@@ -186,7 +197,7 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
                     id="chasse-date-fin"
                     name="chasse-date-fin"
                     value="<?= esc_attr($date_fin); ?>"
-                    class="champ-inline-date champ-date-edit" />
+                    class="champ-inline-date champ-date-edit" <?= $peut_editer ? '' : 'disabled'; ?> />
                   <div id="erreur-date-fin" class="message-erreur" style="display:none; color:red; font-size:0.9em; margin-top:5px;"></div>
 
                   <div class="champ-option-illimitee">
@@ -194,7 +205,7 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
                       id="duree-illimitee"
                       name="duree-illimitee"
                       data-champ="caracteristiques.chasse_infos_duree_illimitee"
-                      <?= ($illimitee ? 'checked' : ''); ?>>
+                      <?= ($illimitee ? 'checked' : ''); ?> <?= $peut_editer ? '' : 'disabled'; ?>>
                     <label for="duree-illimitee">Durée illimitée</label>
                   </div>
 
@@ -217,13 +228,13 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
                       min="0"
                       step="1"
                       value="<?= esc_attr($cout); ?>"
-                      placeholder="0" />
+                      placeholder="0" <?= $peut_editer ? '' : 'disabled'; ?> />
 
                     <div class="champ-option-gratuit" style="margin-left: 15px;">
                       <input type="checkbox"
                         id="cout-gratuit"
                         name="cout-gratuit"
-                        <?= ((int)$cout === 0) ? 'checked' : ''; ?>>
+                        <?= ((int)$cout === 0) ? 'checked' : ''; ?> <?= $peut_editer ? '' : 'disabled'; ?>>
                       <label for="cout-gratuit">Gratuit</label>
                     </div>
                   </div>
@@ -246,13 +257,13 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
                     value="<?= esc_attr($nb_max); ?>"
                     min="1"
                     class="champ-inline-nb champ-nb-edit"
-                    <?= ($nb_max == 0 ? 'disabled' : ''); ?> />
+                    <?= ($peut_editer && $nb_max != 0) ? '' : 'disabled'; ?> />
 
                   <div class="champ-option-illimitee ">
                     <input type="checkbox"
                       id="nb-gagnants-illimite"
                       name="nb-gagnants-illimite"
-                      <?= ($nb_max == 0 ? 'checked' : ''); ?>
+                      <?= ($nb_max == 0 ? 'checked' : ''); ?> <?= $peut_editer ? '' : 'disabled'; ?>
                       data-champ="caracteristiques.chasse_infos_nb_max_gagants">
                     <label for="nb-gagnants-illimite">Illimité</label>
                   </div>

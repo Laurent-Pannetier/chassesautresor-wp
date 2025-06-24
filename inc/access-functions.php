@@ -562,6 +562,109 @@ function utilisateur_peut_ajouter_chasse(int $organisateur_id): bool
     return false;
 }
 
+/**
+ * Détermine si l'utilisateur peut afficher le panneau d'édition d'un post.
+ *
+ * Cette vérification repose sur la relation organisateur ↔ utilisateur et
+ * sur différents statuts des CPT.
+ *
+ * @param int $post_id ID du post concerné.
+ * @return bool True si le panneau peut être affiché.
+ */
+function utilisateur_peut_voir_panneau(int $post_id): bool
+{
+    if (!is_user_logged_in()) {
+        return false;
+    }
+
+    $user  = wp_get_current_user();
+    $roles = (array) $user->roles;
+
+    if (!array_intersect($roles, ['organisateur', 'organisateur_creation'])) {
+        return false;
+    }
+
+    if (!utilisateur_peut_modifier_post($post_id)) {
+        return false; // Vérifie la liaison utilisateur ↔ CPT
+    }
+
+    $type   = get_post_type($post_id);
+    $status = get_post_status($post_id);
+
+    switch ($type) {
+        case 'organisateur':
+            return in_array($status, ['publish', 'pending'], true);
+
+        case 'chasse':
+            $cache = get_field('champs_caches', $post_id);
+            $val   = $cache['chasse_cache_statut_validation'] ?? '';
+
+            return in_array($status, ['publish', 'pending'], true) && $val !== 'banni';
+
+        case 'enigme':
+            $etat = get_field('enigme_cache_etat_systeme', $post_id);
+
+            return in_array($status, ['publish', 'pending'], true) && $etat !== 'cache_invalide';
+    }
+
+    return false;
+}
+
+/**
+ * Détermine si l'utilisateur peut éditer les champs désactivés d'un post.
+ *
+ * Les conditions incluent celles de `utilisateur_peut_voir_panneau()` et des
+ * statuts métiers plus stricts selon le type de contenu.
+ *
+ * @param int $post_id ID du post concerné.
+ * @return bool True si l'édition avancée est autorisée.
+ */
+function utilisateur_peut_editer_champs(int $post_id): bool
+{
+    if (!utilisateur_peut_voir_panneau($post_id)) {
+        return false;
+    }
+
+    $type   = get_post_type($post_id);
+    $status = get_post_status($post_id);
+
+    $user  = wp_get_current_user();
+    $roles = (array) $user->roles;
+
+    switch ($type) {
+        case 'organisateur':
+            return in_array('organisateur_creation', $roles, true) && $status === 'pending';
+
+        case 'chasse':
+            $cache = get_field('champs_caches', $post_id);
+            $val   = $cache['chasse_cache_statut_validation'] ?? '';
+            $stat  = $cache['chasse_cache_statut'] ?? '';
+
+            return $status === 'pending'
+                && $stat === 'revision'
+                && in_array($val, ['creation', 'correction'], true);
+
+        case 'enigme':
+            $chasse_id = recuperer_id_chasse_associee($post_id);
+            if (!$chasse_id) {
+                return false;
+            }
+
+            $chasse_status = get_post_status($chasse_id);
+            $cache         = get_field('champs_caches', $chasse_id);
+            $val           = $cache['chasse_cache_statut_validation'] ?? '';
+            $stat          = $cache['chasse_cache_statut'] ?? '';
+            $etat          = get_field('enigme_cache_etat_systeme', $post_id);
+
+            return $chasse_status === 'pending'
+                && $stat === 'revision'
+                && in_array($val, ['creation', 'correction'], true)
+                && $etat === 'bloquee_chasse';
+    }
+
+    return false;
+}
+
 
 /**
  * Vérifie si un champ donné est éditable pour un utilisateur donné sur un post donné.
