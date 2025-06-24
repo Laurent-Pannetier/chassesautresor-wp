@@ -75,6 +75,45 @@ if (!function_exists('current_time')) {
     }
 }
 
+// Minimal WP_User class for tests
+if (!class_exists('WP_User')) {
+    class WP_User {
+        public $ID;
+        public $roles = [];
+
+        public function __construct($id) {
+            global $mock_users;
+            $this->ID = $id;
+            $user = $mock_users[$id] ?? null;
+            if ($user) {
+                $this->roles = is_object($user) ? (array) $user->roles : ($user['roles'] ?? []);
+            }
+        }
+
+        protected function sync() {
+            global $mock_users;
+            $mock_users[$this->ID] = (object) ['ID' => $this->ID, 'roles' => $this->roles];
+        }
+
+        public function set_role($role) {
+            $this->roles = [$role];
+            $this->sync();
+        }
+
+        public function add_role($role) {
+            if (!in_array($role, $this->roles, true)) {
+                $this->roles[] = $role;
+                $this->sync();
+            }
+        }
+
+        public function remove_role($role) {
+            $this->roles = array_values(array_diff($this->roles, [$role]));
+            $this->sync();
+        }
+    }
+}
+
 require_once __DIR__ . '/../inc/constants.php';
 require_once __DIR__ . '/../inc/access-functions.php';
 require_once __DIR__ . '/../inc/chasse-functions.php';
