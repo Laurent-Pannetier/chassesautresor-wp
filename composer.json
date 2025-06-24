@@ -1,9 +1,29 @@
 {
     "autoload": {
         "psr-4": {
-            "Chasses\\Enigme\\": "inc/enigme/"
+            "Chasses\\": "inc/"
         },
         "files": [
+            "inc/constants.php",
+            "inc/utils.php",
+            "inc/shortcodes-init.php",
+            "inc/enigme-functions.php",
+            "inc/user-functions.php",
+            "inc/chasse-functions.php",
+            "inc/gamify-functions.php",
+            "inc/utils/titres.php",
+            "inc/statut-functions.php",
+            "inc/admin-functions.php",
+            "inc/organisateur-functions.php",
+            "inc/access-functions.php",
+            "inc/relations-functions.php",
+            "inc/layout-functions.php",
+            "inc/utils/liens.php",
+            "inc/edition/edition-core.php",
+            "inc/edition/edition-organisateur.php",
+            "inc/edition/edition-chasse.php",
+            "inc/edition/edition-enigme.php",
+            "inc/edition/edition-securite.php",
             "inc/enigme/Cta.php",
             "inc/enigme/ManualResponse.php",
             "inc/enigme/Tentatives.php"
