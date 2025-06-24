@@ -19,6 +19,12 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('presentation')?.classList.remove('masque');
   }
 
+  // ❌ Bouton de fermeture de la présentation
+  document.querySelector('#presentation .presentation-fermer')?.addEventListener('click', () => {
+    document.getElementById('presentation')?.classList.add('masque');
+    document.activeElement?.blur();
+  });
+
   // ✅ Panneau latéral ACF – ouverture (bouton déclencheur)
   document.addEventListener('click', (e) => {
     const btn = e.target.closest('.ouvrir-panneau-description');
