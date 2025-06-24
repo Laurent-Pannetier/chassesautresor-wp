@@ -34,5 +34,13 @@ if (!peut_valider_chasse($chasse_id, $user_id)) {
 
 forcer_statut_apres_acf($chasse_id, 'en_attente');
 
+// Met à jour le statut métier pour refléter l'attente de validation
+mettre_a_jour_sous_champ_group(
+    $chasse_id,
+    'champs_caches',
+    'chasse_cache_statut',
+    'en_attente'
+);
+
 wp_redirect(add_query_arg('validation_demandee', '1', get_permalink($chasse_id)));
 exit;

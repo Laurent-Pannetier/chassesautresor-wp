@@ -14,6 +14,7 @@ if (!$enigme_id || get_post_type($enigme_id) !== 'enigme') {
 
 $peut_modifier = utilisateur_peut_voir_panneau($enigme_id);
 $peut_editer   = utilisateur_peut_editer_champs($enigme_id);
+$peut_editer_titre = champ_est_editable('post_title', $enigme_id);
 
 $titre = get_the_title($enigme_id);
 $titre_defaut = TITRE_DEFAUT_ENIGME;
@@ -100,14 +101,14 @@ $has_variantes = ($nb_variantes > 0);
 
           <h3>Champs obligatoires</h3>
           <ul class="resume-infos">
-            <li class="champ-enigme champ-titre <?= ($isTitreParDefaut ? 'champ-vide' : 'champ-rempli'); ?>"
+            <li class="champ-enigme champ-titre <?= ($isTitreParDefaut ? 'champ-vide' : 'champ-rempli'); ?><?= $peut_editer_titre ? '' : ' champ-desactive'; ?>"
               data-champ="post_title"
               data-cpt="enigme"
               data-post-id="<?= esc_attr($enigme_id); ?>">
 
               <div class="champ-affichage">
                 <label for="champ-titre-enigme">Titre de l’énigme</label>
-                <?php if ($peut_editer) : ?>
+                <?php if ($peut_editer_titre) : ?>
                   <button type="button"
                     class="champ-modifier"
                     aria-label="Modifier le titre">
@@ -121,7 +122,7 @@ $has_variantes = ($nb_variantes > 0);
                   class="champ-input"
                   maxlength="80"
                   value="<?= esc_attr($titre); ?>"
-                  id="champ-titre-enigme" <?= $peut_editer ? '' : 'disabled'; ?> >
+                  id="champ-titre-enigme" <?= $peut_editer_titre ? '' : 'disabled'; ?> >
                 <button type="button" class="champ-enregistrer">✓</button>
                 <button type="button" class="champ-annuler">✖</button>
               </div>

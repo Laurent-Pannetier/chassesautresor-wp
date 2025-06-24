@@ -27,6 +27,8 @@ $coordonnees  = get_field('coordonnees_bancaires', $organisateur_id);
 $liens_actifs = organisateur_get_liens_actifs($organisateur_id);
 $nb_liens = count($liens_actifs);
 
+$peut_editer_titre = champ_est_editable('post_title', $organisateur_id);
+
 $is_complete = (
   !empty($titre) &&
   !empty($logo) &&
@@ -72,14 +74,14 @@ $classe_vide_coordonnees = ($iban_vide || $bic_vide) ? 'champ-vide' : '';
           <div class="resume-bloc resume-obligatoire deux-col-bloc">
             <h3>Champs obligatoires</h3>
             <ul class="resume-infos">
-              <li class="champ-organisateur champ-titre ligne-titre <?= empty($titre) ? 'champ-vide' : 'champ-rempli'; ?><?= $peut_editer ? '' : ' champ-desactive'; ?>"
+              <li class="champ-organisateur champ-titre ligne-titre <?= empty($titre) ? 'champ-vide' : 'champ-rempli'; ?><?= $peut_editer_titre ? '' : ' champ-desactive'; ?>"
                 data-champ="post_title"
                 data-cpt="organisateur"
                 data-post-id="<?= esc_attr($organisateur_id); ?>">
 
                 <div class="champ-affichage">
                   <label for="champ-titre-organisateur">Nom d’organisateur</label>
-                  <?php if ($peut_editer) : ?>
+                  <?php if ($peut_editer_titre) : ?>
                     <button type="button"
                       class="champ-modifier"
                       aria-label="Modifier le nom d’organisateur">
@@ -93,7 +95,7 @@ $classe_vide_coordonnees = ($iban_vide || $bic_vide) ? 'champ-vide' : '';
                     class="champ-input"
                     maxlength="50"
                     value="<?= esc_attr($titre); ?>"
-                    id="champ-titre-organisateur" <?= $peut_editer ? '' : 'disabled'; ?> >
+                    id="champ-titre-organisateur" <?= $peut_editer_titre ? '' : 'disabled'; ?> >
                   <button type="button" class="champ-enregistrer">✓</button>
                   <button type="button" class="champ-annuler">✖</button>
                 </div>
