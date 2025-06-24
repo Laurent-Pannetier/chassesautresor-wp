@@ -190,6 +190,8 @@ function gerer_organisateur() {
         if ($user_id) {
             $user = new WP_User($user_id);
             $user->set_role(ROLE_ORGANISATEUR); // Assurez-vous que ce rôle existe
+            // Nettoyer explicitement le rôle organisateur_creation si présent
+            $user->remove_role(ROLE_ORGANISATEUR_CREATION);
         }
 
         // Envoi d'un email de confirmation
