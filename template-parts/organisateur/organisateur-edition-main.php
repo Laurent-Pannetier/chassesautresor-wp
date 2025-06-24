@@ -3,7 +3,7 @@
 defined('ABSPATH') || exit;
 
 $organisateur_id = get_organisateur_id_from_context($args ?? []);
-$peut_modifier = utilisateur_peut_modifier_post($organisateur_id);
+$peut_modifier   = utilisateur_peut_voir_panneau($organisateur_id);
 
 
 // User
