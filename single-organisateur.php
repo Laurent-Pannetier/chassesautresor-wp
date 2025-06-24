@@ -79,6 +79,8 @@ get_header();
         <section class="chasses">
             <div class="conteneur">
                 <div class="titre-chasses-wrapper">
+                    <h2>Ses chasses</h2>
+                    <div class="separateur-2"></div>
                     <div class="ligne-chasses"></div>
                     <div class="liste-chasses">
                         <div class="grille-3">
