@@ -66,8 +66,7 @@ $can_validate = peut_valider_chasse($chasse_id, $user_id);
 $validation_envoyee = !empty($_GET['validation_demandee']);
 ?>
 
-<div class="ast-container">
-  <div id="primary" class="content-area">
+<div id="primary" class="content-area">
     <main id="main" class="site-main">
 
       <?php
@@ -164,8 +163,7 @@ $validation_envoyee = !empty($_GET['validation_demandee']);
       ?>
 
     </main>
-  </div>
-</div>
+    </div>
 
 <?php
 // 💬 Modale d’introduction (affichée une seule fois)

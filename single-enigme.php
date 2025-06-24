@@ -60,8 +60,7 @@ if (is_singular('enigme')) {
 ?>
 <?php get_header(); ?>
 
-<div class="ast-container">
-  <div id="primary" class="content-area">
+<div id="primary" class="content-area">
     <main id="main" class="site-main single-enigme-main statut-<?= esc_attr($statut_enigme); ?>">
 
       <?php
@@ -108,6 +107,5 @@ if (is_singular('enigme')) {
 
     </main>
   </div>
-</div>
 
 <?php get_footer(); ?>
