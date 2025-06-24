@@ -366,12 +366,13 @@ function utilisateur_peut_voir_enigme(int $enigme_id, ?int $user_id = null): boo
         return false;
     }
 
-    // ✅ Exception organisateur : accès si chasse en création ou correction
+    // ✅ Exception organisateur : accès si chasse en création, correction
+    //    ou en attente de validation
     $champs_caches = get_field('champs_caches', $chasse_id);
     $statut_validation = $champs_caches['chasse_cache_statut_validation'] ?? null;
     error_log("🧪 [voir énigme] chasse #$chasse_id → statut_validation = $statut_validation");
 
-    if (in_array($statut_validation, ['creation', 'correction'], true)) {
+    if (in_array($statut_validation, ['creation', 'correction', 'en_attente'], true)) {
         $autorise = in_array($post_status, ['publish', 'pending', 'draft'], true);
         error_log("🟡 [voir énigme] organisateur → chasse = $statut_validation → accès " . ($autorise ? 'OK' : 'REFUSÉ'));
         return $autorise;
@@ -1075,6 +1076,7 @@ function chasse_est_visible_pour_utilisateur(int $chasse_id, int $user_id): bool
     if ($status === 'pending') {
         $user  = get_userdata($user_id);
         $roles = $user ? (array) $user->roles : [];
+
         $assoc = utilisateur_est_organisateur_associe_a_chasse($user_id, $chasse_id);
 
         return $validation !== 'banni'
@@ -1083,6 +1085,7 @@ function chasse_est_visible_pour_utilisateur(int $chasse_id, int $user_id): bool
     }
 
     return $validation !== 'banni';
+
 }
 
 /**
