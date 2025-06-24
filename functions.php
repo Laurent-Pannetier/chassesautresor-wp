@@ -8,6 +8,8 @@
  * @since 1.0.0
  */
 defined( 'ABSPATH' ) || exit;
+
+require_once __DIR__ . '/vendor/autoload.php';
 /**
  * Define Constants
  */
