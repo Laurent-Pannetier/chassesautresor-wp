@@ -13,6 +13,8 @@ if (!$enigme_id || get_post_type($enigme_id) !== 'enigme') {
 }
 
 $peut_modifier = utilisateur_peut_voir_panneau($enigme_id);
+$peut_editer   = utilisateur_peut_editer_champs($enigme_id);
+
 $titre = get_the_title($enigme_id);
 $titre_defaut = TITRE_DEFAUT_ENIGME;
 $isTitreParDefaut = strtolower(trim($titre)) === strtolower($titre_defaut);
@@ -105,11 +107,13 @@ $has_variantes = ($nb_variantes > 0);
 
               <div class="champ-affichage">
                 <label for="champ-titre-enigme">Titre de l’énigme</label>
-                <button type="button"
-                  class="champ-modifier"
-                  aria-label="Modifier le titre">
-                  ✏️
-                </button>
+                <?php if ($peut_editer) : ?>
+                  <button type="button"
+                    class="champ-modifier"
+                    aria-label="Modifier le titre">
+                    ✏️
+                  </button>
+                <?php endif; ?>
               </div>
 
               <div class="champ-edition" style="display: none;">
@@ -117,7 +121,7 @@ $has_variantes = ($nb_variantes > 0);
                   class="champ-input"
                   maxlength="80"
                   value="<?= esc_attr($titre); ?>"
-                  id="champ-titre-enigme">
+                  id="champ-titre-enigme" <?= $peut_editer ? '' : 'disabled'; ?> >
                 <button type="button" class="champ-enregistrer">✓</button>
                 <button type="button" class="champ-annuler">✖</button>
               </div>
@@ -136,14 +140,16 @@ $has_variantes = ($nb_variantes > 0);
 
               Image(s)
 
-              <button
-                type="button"
-                class="champ-modifier ouvrir-panneau-images"
-                data-champ="enigme_visuel_image"
-                data-cpt="enigme"
-                data-post-id="<?= esc_attr($enigme_id); ?>">
-                ✏️
-                </button>
+              <?php if ($peut_editer) : ?>
+                <button
+                  type="button"
+                  class="champ-modifier ouvrir-panneau-images"
+                  data-champ="enigme_visuel_image"
+                  data-cpt="enigme"
+                  data-post-id="<?= esc_attr($enigme_id); ?>">
+                  ✏️
+                  </button>
+              <?php endif; ?>
 
             </li>
 
@@ -159,10 +165,12 @@ $has_variantes = ($nb_variantes > 0);
             <li class="champ-enigme champ-wysiwyg" data-champ="enigme_visuel_texte" data-cpt="enigme"
               data-post-id="<?= esc_attr($enigme_id); ?>">
               Un texte principal
-              <button type="button" class="champ-modifier ouvrir-panneau-description" data-champ="enigme_visuel_texte"
-                data-cpt="enigme" data-post-id="<?= esc_attr($enigme_id); ?>">
-                ✏️
-              </button>
+              <?php if ($peut_editer) : ?>
+                <button type="button" class="champ-modifier ouvrir-panneau-description" data-champ="enigme_visuel_texte"
+                  data-cpt="enigme" data-post-id="<?= esc_attr($enigme_id); ?>">
+                  ✏️
+                </button>
+              <?php endif; ?>
             </li>
 
             <li class="champ-enigme champ-texte" data-champ="enigme_visuel_legende" data-cpt="enigme"
@@ -170,12 +178,14 @@ $has_variantes = ($nb_variantes > 0);
 
               <div class="champ-affichage">
                 Un sous-titre
-                <button type="button" class="champ-modifier" aria-label="Modifier la légende">✏️</button>
+                <?php if ($peut_editer) : ?>
+                  <button type="button" class="champ-modifier" aria-label="Modifier la légende">✏️</button>
+                <?php endif; ?>
               </div>
 
               <div class="champ-edition" style="display: none;">
                 <input type="text" class="champ-input" maxlength="100" value="<?= esc_attr($legende); ?>"
-                  placeholder="Ajouter une légende (max 100 caractères)">
+                  placeholder="Ajouter une légende (max 100 caractères)" <?= $peut_editer ? '' : 'disabled'; ?>>
                 <button type="button" class="champ-enregistrer">✓</button>
                 <button type="button" class="champ-annuler">✖</button>
               </div>
@@ -194,9 +204,9 @@ $has_variantes = ($nb_variantes > 0);
             <div class="champ-enigme champ-mode-validation" data-champ="enigme_mode_validation" data-cpt="enigme" data-post-id="<?= esc_attr($enigme_id); ?>">
               <fieldset>
                 <legend>Validation de l’énigme</legend>
-                <label><input type="radio" name="acf[enigme_mode_validation]" value="aucune" <?= $mode_validation === 'aucune' ? 'checked' : ''; ?>> Aucune validation</label>
-                <label><input type="radio" name="acf[enigme_mode_validation]" value="manuelle" <?= $mode_validation === 'manuelle' ? 'checked' : ''; ?>> Validation manuelle</label>
-                <label><input type="radio" name="acf[enigme_mode_validation]" value="automatique" <?= $mode_validation === 'automatique' ? 'checked' : ''; ?>> Validation automatique</label>
+                <label><input type="radio" name="acf[enigme_mode_validation]" value="aucune" <?= $mode_validation === 'aucune' ? 'checked' : ''; ?> <?= $peut_editer ? '' : 'disabled'; ?>> Aucune validation</label>
+                <label><input type="radio" name="acf[enigme_mode_validation]" value="manuelle" <?= $mode_validation === 'manuelle' ? 'checked' : ''; ?> <?= $peut_editer ? '' : 'disabled'; ?>> Validation manuelle</label>
+                <label><input type="radio" name="acf[enigme_mode_validation]" value="automatique" <?= $mode_validation === 'automatique' ? 'checked' : ''; ?> <?= $peut_editer ? '' : 'disabled'; ?>> Validation automatique</label>
                 <div class="champ-explication champ-explication-validation" aria-live="polite"></div>
               </fieldset>
             </div>
@@ -227,7 +237,7 @@ $has_variantes = ($nb_variantes > 0);
                   <label style="display:inline-block; margin-right: 15px;">
                     <input type="radio" name="acf[enigme_acces_condition]"
                       value="<?= esc_attr($val); ?>"
-                      <?= $condition === $val ? 'checked' : ''; ?>>
+                      <?= $condition === $val ? 'checked' : ''; ?> <?= $peut_editer ? '' : 'disabled'; ?>>
                     <?= esc_html($label); ?>
                   </label>
                 <?php endforeach; ?>
@@ -241,7 +251,7 @@ $has_variantes = ($nb_variantes > 0);
                   id="enigme-date-deblocage"
                   name="enigme-date-deblocage"
                   value="<?= esc_attr($date_deblocage); ?>"
-                  class="champ-inline-date champ-date-edit" />
+                  class="champ-inline-date champ-date-edit" <?= $peut_editer ? '' : 'disabled'; ?> />
                 <div class="champ-feedback champ-date-feedback" style="display:none;"></div>
               </div>
 
@@ -276,7 +286,7 @@ $has_variantes = ($nb_variantes > 0);
                     ?>
                       <li>
                         <label>
-                          <input type="checkbox" value="<?= esc_attr($id); ?>" <?= $checked ? 'checked' : ''; ?>>
+                          <input type="checkbox" value="<?= esc_attr($id); ?>" <?= $checked ? 'checked' : ''; ?> <?= $peut_editer ? '' : 'disabled'; ?>>
                           <?= esc_html($titre); ?>
                         </label>
                       </li>
@@ -303,7 +313,7 @@ $has_variantes = ($nb_variantes > 0);
                         <i class="fa-solid fa-circle-question" aria-hidden="true"></i>
                       </button>
                     </label>
-                    <input type="number" class="champ-input champ-cout" min="0" step="1" value="<?= esc_attr($cout); ?>" placeholder="0" />
+                    <input type="number" class="champ-input champ-cout" min="0" step="1" value="<?= esc_attr($cout); ?>" placeholder="0" <?= $peut_editer ? '' : 'disabled'; ?> />
                   </div>
 
                   <!-- Option gratuit -->
@@ -313,7 +323,7 @@ $has_variantes = ($nb_variantes > 0);
                     $is_gratuit = $cout_normalise === '' || $cout_normalise === '0' || (int)$cout === 0;
                     ?>
                     <input type="checkbox" id="cout-gratuit-enigme" name="cout-gratuit-enigme"
-                      <?= $is_gratuit ? 'checked' : ''; ?>>
+                      <?= $is_gratuit ? 'checked' : ''; ?> <?= $peut_editer ? '' : 'disabled'; ?> >
 
                     <label for="cout-gratuit-enigme">Gratuit</label>
                   </div>
@@ -321,7 +331,7 @@ $has_variantes = ($nb_variantes > 0);
                   <!-- Nombre max de tentatives -->
                   <div class="champ-enigme champ-nb-tentatives <?= empty($max) ? 'champ-vide' : 'champ-rempli'; ?>" data-champ="enigme_tentative.enigme_tentative_max" data-cpt="enigme" data-post-id="<?= esc_attr($enigme_id); ?>">
                     <label for="enigme-nb-tentatives">Nombre max de tentatives/jour</label>
-                    <input type="number" id="enigme-nb-tentatives" class="champ-input" min="1" step="1" value="<?= esc_attr($max); ?>" placeholder="5" />
+                    <input type="number" id="enigme-nb-tentatives" class="champ-input" min="1" step="1" value="<?= esc_attr($max); ?>" placeholder="5" <?= $peut_editer ? '' : 'disabled'; ?> />
                     <p class="message-tentatives txt-small" style="margin-top: 4px;"></p>
                     <div class="champ-feedback"></div>
                   </div>
@@ -346,7 +356,7 @@ $has_variantes = ($nb_variantes > 0);
                   name="champ-bonne-reponse"
                   class="champ-input champ-texte-edit"
                   value="<?= esc_attr($reponse); ?>"
-                  placeholder="Ex : soleil" />
+                  placeholder="Ex : soleil" <?= $peut_editer ? '' : 'disabled'; ?> />
 
                 <div class="champ-feedback"></div>
               </div>
@@ -355,7 +365,7 @@ $has_variantes = ($nb_variantes > 0);
                 data-champ="enigme_reponse_casse"
                 data-cpt="enigme"
                 data-post-id="<?= esc_attr($enigme_id); ?>">
-                <label><input type="checkbox" <?= $casse ? 'checked' : ''; ?>> Respecter la casse</label>
+                <label><input type="checkbox" <?= $casse ? 'checked' : ''; ?> <?= $peut_editer ? '' : 'disabled'; ?>> Respecter la casse</label>
                 <div class="champ-feedback"></div>
               </div>
 
@@ -369,13 +379,15 @@ $has_variantes = ($nb_variantes > 0);
                   ? ($nb_variantes === 1 ? '1 variante ✏️' : $nb_variantes . ' variantes ✏️')
                   : '➕ Créer des variantes';
                 ?>
-                <button type="button"
-                  class="champ-modifier ouvrir-panneau-variantes"
-                  aria-label="<?= $has_variantes ? 'Éditer les variantes' : 'Créer des variantes'; ?>"
-                  data-cpt="enigme"
-                  data-post-id="<?= esc_attr($enigme_id); ?>">
-                  <?= esc_html($label); ?>
-                </button>
+                <?php if ($peut_editer) : ?>
+                  <button type="button"
+                    class="champ-modifier ouvrir-panneau-variantes"
+                    aria-label="<?= $has_variantes ? 'Éditer les variantes' : 'Créer des variantes'; ?>"
+                    data-cpt="enigme"
+                    data-post-id="<?= esc_attr($enigme_id); ?>">
+                    <?= esc_html($label); ?>
+                  </button>
+                <?php endif; ?>
               </div>
 
             </fieldset>
