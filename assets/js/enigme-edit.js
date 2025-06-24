@@ -2,9 +2,9 @@
 var DEBUG = window.DEBUG || false;
 DEBUG && console.log('✅ enigme-edit.js chargé (readyState =', document.readyState, ')');
 
+
 let boutonToggle;
 let panneauEdition;
-
 
 
 function initEnigmeEdit() {
@@ -13,9 +13,11 @@ function initEnigmeEdit() {
   panneauEdition = document.querySelector('.edition-panel-enigme');
   DEBUG && console.log('[enigme-edit] boutonToggle=', !!boutonToggle, '| panneauEdition=', !!panneauEdition);
 
+
   // ==============================
   // 🛠️ Contrôles panneau principal
   // ==============================
+
   boutonToggle?.addEventListener('click', () => {
     DEBUG && console.log('[enigme-edit] toggle clicked');
     document.body.classList.toggle('edition-active-enigme');
@@ -29,6 +31,7 @@ function initEnigmeEdit() {
     document.body.classList.remove('panneau-ouvert');
     document.activeElement?.blur();
   });
+
 
 
   // ==============================
@@ -304,6 +307,7 @@ function initEnigmeEdit() {
   }
 
 
+
 // ================================
 // 🖼️ Panneau images galerie (ACF gallery)
 // ================================
@@ -464,6 +468,27 @@ if (document.readyState === 'loading') {
     DEBUG && console.log('[enigme-edit] DOMContentLoaded');
     initEnigmeEdit();
   });
+} else {
+  initEnigmeEdit();
+}
+
+if (document.readyState === 'loading') {
+  DEBUG && console.log('[enigme-edit] waiting DOMContentLoaded');
+  document.addEventListener('DOMContentLoaded', () => {
+    DEBUG && console.log('[enigme-edit] DOMContentLoaded');
+    initEnigmeEdit();
+  });
+} else {
+  initEnigmeEdit();
+}
+
+if (document.readyState === 'loading') {
+  DEBUG && console.log('[enigme-edit] waiting DOMContentLoaded');
+  document.addEventListener('DOMContentLoaded', () => {
+    DEBUG && console.log('[enigme-edit] DOMContentLoaded');
+    initEnigmeEdit();
+  });
+
 } else {
   initEnigmeEdit();
 }
