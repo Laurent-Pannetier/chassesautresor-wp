@@ -1,4 +1,14 @@
 {
+    "autoload": {
+        "psr-4": {
+            "Chasses\\Enigme\\": "inc/enigme/"
+        },
+        "files": [
+            "inc/enigme/Cta.php",
+            "inc/enigme/ManualResponse.php",
+            "inc/enigme/Tentatives.php"
+        ]
+    },
     "require-dev": {
         "phpunit/phpunit": "^9"
     }

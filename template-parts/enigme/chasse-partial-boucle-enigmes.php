@@ -39,7 +39,7 @@ $has_enigmes = !empty($posts_visibles);
     $titre = get_the_title($enigme_id);
     $etat_systeme = enigme_get_etat_systeme($enigme_id);
     $statut_utilisateur = enigme_get_statut_utilisateur($enigme_id, $utilisateur_id);
-    $cta = get_cta_enigme($enigme_id);
+    $cta = \Chasses\Enigme\get_cta_enigme($enigme_id);
 
     $est_orga = est_organisateur();
     $voir_bordure = $est_orga && utilisateur_est_organisateur_associe_a_chasse($utilisateur_id, $chasse_id);
@@ -55,7 +55,7 @@ $has_enigmes = !empty($posts_visibles);
         <div class="carte-enigme-image">
           <?php afficher_picture_vignette_enigme($enigme_id, 'Vignette de l’énigme'); ?>
           <div class="carte-enigme-cta">
-            <?php render_cta_enigme($cta, $enigme_id); ?>
+            <?php \Chasses\Enigme\render_cta_enigme($cta, $enigme_id); ?>
           </div>
         </div>
         <h3><?= esc_html($titre); ?></h3>
