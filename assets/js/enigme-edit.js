@@ -1,4 +1,3 @@
-
 // ✅ enigme-edit.js
 var DEBUG = window.DEBUG || false;
 DEBUG && console.log('✅ enigme-edit.js chargé (readyState =', document.readyState, ')');
@@ -307,7 +306,7 @@ function initEnigmeEdit() {
     });
   }
 
-});
+
 
 // ================================
 // 🖼️ Panneau images galerie (ACF gallery)
@@ -461,6 +460,16 @@ function initChampNbTentatives() {
 
   // 🔄 Fonction exportée globalement
   window.mettreAJourMessageTentatives = mettreAJourAideTentatives;
+}
+
+if (document.readyState === 'loading') {
+  DEBUG && console.log('[enigme-edit] waiting DOMContentLoaded');
+  document.addEventListener('DOMContentLoaded', () => {
+    DEBUG && console.log('[enigme-edit] DOMContentLoaded');
+    initEnigmeEdit();
+  });
+} else {
+  initEnigmeEdit();
 }
 
 if (document.readyState === 'loading') {
@@ -1091,4 +1100,5 @@ function appliquerEtatGratuitEnLive() {
 
   // Appel initial différé de 50ms pour laisser le temps à la valeur d’être injectée
   setTimeout(syncGratuit, 50);
+}
 }

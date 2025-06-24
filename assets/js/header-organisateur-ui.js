@@ -1,4 +1,3 @@
-
 // ========================================
 // 📁 header-organisateur-ui.js
 // Gère les interactions visuelles du header organisateur :
@@ -62,4 +61,3 @@ if (document.readyState === 'loading') {
 } else {
   initHeaderOrganisateurUI();
 }
-
