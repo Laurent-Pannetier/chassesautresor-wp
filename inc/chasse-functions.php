@@ -388,3 +388,57 @@ function render_form_validation_chasse(int $chasse_id): string
     return ob_get_clean();
 }
 
+/**
+ * Vérifie si la solution d'une énigme peut être affichée.
+ *
+ * La solution n'est visible que si la chasse associée est terminée
+ * et que l'éventuel délai configuré est écoulé.
+ *
+ * @param int $enigme_id ID de l'énigme.
+ * @return bool
+ */
+function solution_peut_etre_affichee(int $enigme_id): bool
+{
+    if (!$enigme_id || get_post_type($enigme_id) !== 'enigme') {
+        return false;
+    }
+
+    $chasse_id = recuperer_id_chasse_associee($enigme_id);
+    if (!$chasse_id || get_post_type($chasse_id) !== 'chasse') {
+        return false;
+    }
+
+    $statut = get_field('statut_chasse', $chasse_id);
+    $terminee = in_array(strtolower($statut), ['terminée', 'termine', 'terminé'], true);
+    if (!$terminee) {
+        return false;
+    }
+
+    $mode  = get_field('enigme_solution_mode', $enigme_id) ?: 'fin_de_chasse';
+    $delai = (int) get_field('enigme_solution_delai', $enigme_id);
+    $heure = get_field('enigme_solution_heure', $enigme_id);
+    $date  = get_field('enigme_solution_date', $enigme_id);
+
+    $now = current_time('timestamp');
+
+    if ($mode === 'delai_fin_chasse') {
+        $base = get_field('date_de_decouverte', $chasse_id);
+        if (!$base) {
+            $carac = get_field('caracteristiques', $chasse_id);
+            $base  = $carac['chasse_infos_date_fin'] ?? null;
+        }
+        $timestamp_base = $base ? strtotime($base) : $now;
+        $cible = strtotime("+$delai days $heure", $timestamp_base);
+        if ($cible && $now < $cible) {
+            return false;
+        }
+    } elseif ($mode === 'date_fin_chasse') {
+        $cible = $date ? strtotime("$date $heure") : null;
+        if ($cible && $now < $cible) {
+            return false;
+        }
+    }
+
+    return true;
+}
+

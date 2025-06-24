@@ -15,6 +15,10 @@ if (!function_exists('add_rewrite_rule')) {
     function add_rewrite_rule(...$args) {}
 }
 
+$mock_posts = [];
+$mock_fields = [];
+$mock_current_time = null;
+
 // Minimal WP user functions for tests
 $mock_users = [];
 $current_user_id = 0;
@@ -37,5 +41,40 @@ if (!function_exists('get_user_by')) {
     }
 }
 
+if (!function_exists('get_post_type')) {
+    function get_post_type($post_id) {
+        global $mock_posts;
+        return $mock_posts[$post_id]['post_type'] ?? null;
+    }
+}
+
+if (!function_exists('get_field')) {
+    function get_field($key, $post_id = 0) {
+        global $mock_fields;
+        return $mock_fields[$post_id][$key] ?? null;
+    }
+}
+
+if (!function_exists('recuperer_id_chasse_associee')) {
+    function recuperer_id_chasse_associee($post_id) {
+        $champ = get_field('enigme_chasse_associee', $post_id);
+        if (is_array($champ)) {
+            return reset($champ);
+        }
+        return $champ;
+    }
+}
+
+if (!function_exists('current_time')) {
+    function current_time($type) {
+        global $mock_current_time;
+        if ($type === 'timestamp') {
+            return $mock_current_time ?? time();
+        }
+        return '';
+    }
+}
+
 require_once __DIR__ . '/../inc/constants.php';
 require_once __DIR__ . '/../inc/access-functions.php';
+require_once __DIR__ . '/../inc/chasse-functions.php';
