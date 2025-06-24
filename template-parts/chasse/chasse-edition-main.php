@@ -15,6 +15,7 @@ if (!$chasse_id || get_post_type($chasse_id) !== 'chasse') {
 $peut_modifier = utilisateur_peut_voir_panneau($chasse_id);
 $peut_editer   = utilisateur_peut_editer_champs($chasse_id);
 
+
 $image = get_field('chasse_principale_image', $chasse_id);
 $description = get_field('chasse_principale_description', $chasse_id);
 $titre = get_the_title($chasse_id);
