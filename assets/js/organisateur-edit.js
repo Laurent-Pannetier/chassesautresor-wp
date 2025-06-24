@@ -1,7 +1,7 @@
 var DEBUG = window.DEBUG || false;
 DEBUG && console.log('✅ organisateur-edit.js chargé');
 
-document.addEventListener('DOMContentLoaded', () => {
+function initOrganisateurEdit() {
 
   // 🟢 Champs inline
   document.querySelectorAll('.champ-organisateur[data-champ]').forEach((bloc) => {
@@ -151,7 +151,13 @@ document.addEventListener('DOMContentLoaded', () => {
     window.mettreAJourResumeInfos();
   }
 
-});
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initOrganisateurEdit);
+} else {
+  initOrganisateurEdit();
+}
 
 
 function initLiensOrganisateur(bloc) {
