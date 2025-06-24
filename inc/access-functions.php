@@ -1072,23 +1072,21 @@ function chasse_est_visible_pour_utilisateur(int $chasse_id, int $user_id): bool
 
     $cache      = get_field('champs_caches', $chasse_id) ?: [];
     $validation = $cache['chasse_cache_statut_validation'] ?? '';
-    if ($validation === 'banni') {
-        return false;
-    }
+
 
     if ($status === 'pending') {
         $user  = get_userdata($user_id);
         $roles = $user ? (array) $user->roles : [];
-        if (!array_intersect($roles, ['organisateur', 'organisateur_creation'])) {
-            return false;
-        }
 
-        if (!utilisateur_est_organisateur_associe_a_chasse($user_id, $chasse_id)) {
-            return false;
-        }
+        $assoc = utilisateur_est_organisateur_associe_a_chasse($user_id, $chasse_id);
+
+        return $validation !== 'banni'
+            && $assoc
+            && array_intersect($roles, ['organisateur', 'organisateur_creation']);
     }
 
-    return true;
+    return $validation !== 'banni';
+
 }
 
 /**
