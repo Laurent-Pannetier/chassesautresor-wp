@@ -8,6 +8,15 @@
  * @since 1.0.0
  */
 defined( 'ABSPATH' ) || exit;
+
+$autoload = __DIR__ . '/vendor/autoload.php';
+if (file_exists($autoload)) {
+    require_once $autoload;
+} else {
+    require_once __DIR__ . '/inc/enigme/Cta.php';
+    require_once __DIR__ . '/inc/enigme/ManualResponse.php';
+    require_once __DIR__ . '/inc/enigme/Tentatives.php';
+}
 /**
  * Define Constants
  */
