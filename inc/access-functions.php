@@ -700,9 +700,32 @@ function champ_est_editable($champ, $post_id, $user_id = null)
         return $status !== 'publish';
     }
 
-    // 🔒 Le nom d'organisateur est verrouillé pour les rôles non administrateurs
+    // 🔒 Le nom d'organisateur est verrouillé sauf pour certaines étapes de création
     if ($post_type === 'organisateur' && $champ === 'post_title') {
-        return current_user_can('manage_options');
+        // Administrateurs : accès illimité
+        if (current_user_can('manage_options')) {
+            return true;
+        }
+
+        // Rôle organisateur_creation : titre éditable si l'organisateur est en cours de création
+        if (in_array('organisateur_creation', $roles, true) && $status === 'pending') {
+            $chasses_query = get_chasses_de_organisateur($post_id);
+            $nb_chasses    = is_a($chasses_query, 'WP_Query') ? $chasses_query->post_count : 0;
+
+            // Aucune chasse ou une seule chasse en cours de création
+            if ($nb_chasses === 0) {
+                return true;
+            }
+
+            if ($nb_chasses === 1) {
+                $en_creation = get_chasses_en_creation($post_id);
+                if (count($en_creation) === 1) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     // 🔒 Le titre d'une énigme suit les mêmes restrictions que dans l'admin
