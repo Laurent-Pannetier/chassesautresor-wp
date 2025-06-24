@@ -6,8 +6,6 @@ $organisateur_id = get_organisateur_id_from_context($args ?? []);
 $peut_modifier   = utilisateur_peut_voir_panneau($organisateur_id);
 $peut_editer     = utilisateur_peut_editer_champs($organisateur_id);
 
-
-
 // User
 $current_user = wp_get_current_user();
 $roles = (array) $current_user->roles;
@@ -73,18 +71,20 @@ $classe_vide_coordonnees = ($iban_vide || $bic_vide) ? 'champ-vide' : '';
           <div class="resume-bloc resume-obligatoire deux-col-bloc">
             <h3>Champs obligatoires</h3>
             <ul class="resume-infos">
-              <li class="champ-organisateur champ-titre ligne-titre <?= empty($titre) ? 'champ-vide' : 'champ-rempli'; ?>"
+              <li class="champ-organisateur champ-titre ligne-titre <?= empty($titre) ? 'champ-vide' : 'champ-rempli'; ?><?= $peut_editer ? '' : ' champ-desactive'; ?>"
                 data-champ="post_title"
                 data-cpt="organisateur"
                 data-post-id="<?= esc_attr($organisateur_id); ?>">
 
                 <div class="champ-affichage">
                   <label for="champ-titre-organisateur">Nom d’organisateur</label>
-                  <button type="button"
-                    class="champ-modifier"
-                    aria-label="Modifier le nom d’organisateur">
-                    ✏️
-                  </button>
+                  <?php if ($peut_editer) : ?>
+                    <button type="button"
+                      class="champ-modifier"
+                      aria-label="Modifier le nom d’organisateur">
+                      ✏️
+                    </button>
+                  <?php endif; ?>
                 </div>
 
                 <div class="champ-edition" style="display: none;">
@@ -92,7 +92,7 @@ $classe_vide_coordonnees = ($iban_vide || $bic_vide) ? 'champ-vide' : '';
                     class="champ-input"
                     maxlength="50"
                     value="<?= esc_attr($titre); ?>"
-                    id="champ-titre-organisateur">
+                    id="champ-titre-organisateur" <?= $peut_editer ? '' : 'disabled'; ?> >
                   <button type="button" class="champ-enregistrer">✓</button>
                   <button type="button" class="champ-annuler">✖</button>
                 </div>

@@ -368,6 +368,16 @@ input[disabled].champ-cout {
   /* Important pour ne pas rendre semi-transparent */
 }
 
+/* Styles communs pour les champs verrouillés */
+.champ-desactive label {
+  color: var(--color-editor-placeholder);
+  font-style: italic;
+}
+
+.champ-desactive .champ-modifier {
+  display: none !important;
+}
+
 .edition-panel-section .champ-option-illimitee {
   display: inline-block;
   margin-left: 1rem;

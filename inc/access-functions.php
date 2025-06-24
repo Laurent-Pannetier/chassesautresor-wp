@@ -300,7 +300,10 @@ function utilisateur_peut_modifier_post($post_id)
 
             $match = in_array((string) $user_id, $associes, true);
 
-            return $match;
+            // Autoriser également l'auteur du post à modifier
+            $auteur = (int) get_post_field('post_author', $post_id);
+
+            return $match || $auteur === $user_id;
 
         case 'chasse':
             $organisateur_id = get_organisateur_from_chasse($post_id);

@@ -132,7 +132,7 @@ $has_variantes = ($nb_variantes > 0);
             <?php
             $has_images_utiles = enigme_a_une_image($enigme_id);
             ?>
-            <li class="champ-enigme champ-img <?= $has_images_utiles ? 'champ-rempli' : 'champ-vide'; ?>"
+            <li class="champ-enigme champ-img <?= $has_images_utiles ? 'champ-rempli' : 'champ-vide'; ?><?= $peut_editer ? '' : ' champ-desactive'; ?>"
               data-champ="enigme_visuel_image"
               data-cpt="enigme"
               data-post-id="<?= esc_attr($enigme_id); ?>"
@@ -162,7 +162,7 @@ $has_variantes = ($nb_variantes > 0);
           <h3>Facultatif mais recommandé</h3>
           <ul class="resume-infos">
 
-            <li class="champ-enigme champ-wysiwyg" data-champ="enigme_visuel_texte" data-cpt="enigme"
+            <li class="champ-enigme champ-wysiwyg<?= $peut_editer ? '' : ' champ-desactive'; ?>" data-champ="enigme_visuel_texte" data-cpt="enigme"
               data-post-id="<?= esc_attr($enigme_id); ?>">
               Un texte principal
               <?php if ($peut_editer) : ?>
@@ -173,7 +173,7 @@ $has_variantes = ($nb_variantes > 0);
               <?php endif; ?>
             </li>
 
-            <li class="champ-enigme champ-texte" data-champ="enigme_visuel_legende" data-cpt="enigme"
+            <li class="champ-enigme champ-texte<?= $peut_editer ? '' : ' champ-desactive'; ?>" data-champ="enigme_visuel_legende" data-cpt="enigme"
               data-post-id="<?= esc_attr($enigme_id); ?>">
 
               <div class="champ-affichage">
@@ -201,7 +201,7 @@ $has_variantes = ($nb_variantes > 0);
           <div class="resume-infos">
 
             <!-- Mode de validation -->
-            <div class="champ-enigme champ-mode-validation" data-champ="enigme_mode_validation" data-cpt="enigme" data-post-id="<?= esc_attr($enigme_id); ?>">
+            <div class="champ-enigme champ-mode-validation<?= $peut_editer ? '' : ' champ-desactive'; ?>" data-champ="enigme_mode_validation" data-cpt="enigme" data-post-id="<?= esc_attr($enigme_id); ?>">
               <fieldset>
                 <legend>Validation de l’énigme</legend>
                 <label><input type="radio" name="acf[enigme_mode_validation]" value="aucune" <?= $mode_validation === 'aucune' ? 'checked' : ''; ?> <?= $peut_editer ? '' : 'disabled'; ?>> Aucune validation</label>
@@ -228,7 +228,7 @@ $has_variantes = ($nb_variantes > 0);
                 $options['pre_requis'] = 'Pré-requis';
               }
               ?>
-              <div class="champ-enigme champ-access"
+              <div class="champ-enigme champ-access<?= $peut_editer ? '' : ' champ-desactive'; ?>"
                 data-champ="enigme_acces_condition"
                 data-cpt="enigme"
                 data-post-id="<?= esc_attr($enigme_id); ?>">
@@ -245,7 +245,7 @@ $has_variantes = ($nb_variantes > 0);
                 <div class="champ-feedback"></div>
               </div>
 
-              <div class="champ-enigme champ-date cache" data-champ="enigme_acces_date" data-cpt="enigme" data-post-id="<?= esc_attr($enigme_id); ?>" id="champ-enigme-date">
+              <div class="champ-enigme champ-date cache<?= $peut_editer ? '' : ' champ-desactive'; ?>" data-champ="enigme_acces_date" data-cpt="enigme" data-post-id="<?= esc_attr($enigme_id); ?>" id="champ-enigme-date">
                 <label for="enigme-date-deblocage">Date de déblocage</label>
                 <input type="date"
                   id="enigme-date-deblocage"
@@ -255,7 +255,7 @@ $has_variantes = ($nb_variantes > 0);
                 <div class="champ-feedback champ-date-feedback" style="display:none;"></div>
               </div>
 
-              <div class="champ-enigme champ-pre-requis cache"
+              <div class="champ-enigme champ-pre-requis cache<?= $peut_editer ? '' : ' champ-desactive'; ?>"
                 data-champ="enigme_acces_pre_requis"
                 data-cpt="enigme"
                 data-post-id="<?= esc_attr($enigme_id); ?>"
@@ -303,7 +303,7 @@ $has_variantes = ($nb_variantes > 0);
             <fieldset class="groupe-champ champ-groupe-tentatives">
               <legend>Gestion des tentatives</legend>
 
-              <div class="champ-enigme champ-cout-points <?= empty($cout) ? 'champ-vide' : 'champ-rempli'; ?>" data-champ="enigme_tentative.enigme_tentative_cout_points" data-cpt="enigme" data-post-id="<?= esc_attr($enigme_id); ?>">
+              <div class="champ-enigme champ-cout-points <?= empty($cout) ? 'champ-vide' : 'champ-rempli'; ?><?= $peut_editer ? '' : ' champ-desactive'; ?>" data-champ="enigme_tentative.enigme_tentative_cout_points" data-cpt="enigme" data-post-id="<?= esc_attr($enigme_id); ?>">
                 <div class="champ-edition" style="display: flex; align-items: flex-end; gap: 1rem; flex-wrap: wrap;">
 
                   <!-- Coût en points -->
@@ -329,7 +329,7 @@ $has_variantes = ($nb_variantes > 0);
                   </div>
 
                   <!-- Nombre max de tentatives -->
-                  <div class="champ-enigme champ-nb-tentatives <?= empty($max) ? 'champ-vide' : 'champ-rempli'; ?>" data-champ="enigme_tentative.enigme_tentative_max" data-cpt="enigme" data-post-id="<?= esc_attr($enigme_id); ?>">
+                  <div class="champ-enigme champ-nb-tentatives <?= empty($max) ? 'champ-vide' : 'champ-rempli'; ?><?= $peut_editer ? '' : ' champ-desactive'; ?>" data-champ="enigme_tentative.enigme_tentative_max" data-cpt="enigme" data-post-id="<?= esc_attr($enigme_id); ?>">
                     <label for="enigme-nb-tentatives">Nombre max de tentatives/jour</label>
                     <input type="number" id="enigme-nb-tentatives" class="champ-input" min="1" step="1" value="<?= esc_attr($max); ?>" placeholder="5" <?= $peut_editer ? '' : 'disabled'; ?> />
                     <p class="message-tentatives txt-small" style="margin-top: 4px;"></p>
@@ -344,7 +344,7 @@ $has_variantes = ($nb_variantes > 0);
             <!-- Réponse automatique -->
             <fieldset class="groupe-champ champ-groupe-reponse-automatique">
               <legend>Réponse attendue</legend>
-              <div class="champ-enigme champ-bonne-reponse <?= empty($reponse) ? 'champ-vide' : 'champ-rempli'; ?>"
+              <div class="champ-enigme champ-bonne-reponse <?= empty($reponse) ? 'champ-vide' : 'champ-rempli'; ?><?= $peut_editer ? '' : ' champ-desactive'; ?>"
                 data-champ="enigme_reponse_bonne"
                 data-cpt="enigme"
                 data-post-id="<?= esc_attr($enigme_id); ?>">
@@ -361,7 +361,7 @@ $has_variantes = ($nb_variantes > 0);
                 <div class="champ-feedback"></div>
               </div>
 
-              <div class="champ-enigme champ-casse <?= $casse ? 'champ-rempli' : 'champ-vide'; ?>"
+              <div class="champ-enigme champ-casse <?= $casse ? 'champ-rempli' : 'champ-vide'; ?><?= $peut_editer ? '' : ' champ-desactive'; ?>"
                 data-champ="enigme_reponse_casse"
                 data-cpt="enigme"
                 data-post-id="<?= esc_attr($enigme_id); ?>">
@@ -369,7 +369,7 @@ $has_variantes = ($nb_variantes > 0);
                 <div class="champ-feedback"></div>
               </div>
 
-              <div class="champ-enigme champ-variantes-resume"
+              <div class="champ-enigme champ-variantes-resume<?= $peut_editer ? '' : ' champ-desactive'; ?>"
                 data-champ="enigme_reponse_variantes"
                 data-cpt="enigme"
                 data-post-id="<?= esc_attr($enigme_id); ?>">

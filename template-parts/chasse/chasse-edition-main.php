@@ -15,7 +15,6 @@ if (!$chasse_id || get_post_type($chasse_id) !== 'chasse') {
 $peut_modifier = utilisateur_peut_voir_panneau($chasse_id);
 $peut_editer   = utilisateur_peut_editer_champs($chasse_id);
 
-
 $image = get_field('chasse_principale_image', $chasse_id);
 $description = get_field('chasse_principale_description', $chasse_id);
 $titre = get_the_title($chasse_id);
@@ -73,7 +72,7 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
               <ul class="resume-infos">
 
                 <!-- Titre -->
-                <li class="champ-chasse champ-titre <?= ($isTitreParDefaut ? 'champ-vide' : 'champ-rempli'); ?>"
+                <li class="champ-chasse champ-titre <?= ($isTitreParDefaut ? 'champ-vide' : 'champ-rempli'); ?><?= $peut_editer ? '' : ' champ-desactive'; ?>"
                   data-champ="post_title"
                   data-cpt="chasse"
                   data-post-id="<?= esc_attr($chasse_id); ?>">
@@ -97,7 +96,7 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
                 </li>
                 
                 <!-- Description -->
-                <li class="champ-chasse champ-description <?= empty($description) ? 'champ-vide' : 'champ-rempli'; ?>"
+                <li class="champ-chasse champ-description <?= empty($description) ? 'champ-vide' : 'champ-rempli'; ?><?= $peut_editer ? '' : ' champ-desactive'; ?>"
                   data-champ="chasse_principale_description"
                   data-cpt="chasse"
                   data-post-id="<?= esc_attr($chasse_id); ?>">
@@ -113,7 +112,7 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
                 </li>
 
                 <!-- Image -->
-                <li class="champ-chasse champ-img <?= empty($image) ? 'champ-vide' : 'champ-rempli'; ?>"
+                <li class="champ-chasse champ-img <?= empty($image) ? 'champ-vide' : 'champ-rempli'; ?><?= $peut_editer ? '' : ' champ-desactive'; ?>"
                   data-champ="chasse_principale_image"
                   data-cpt="chasse"
                   data-post-id="<?= esc_attr($chasse_id); ?>">
@@ -152,7 +151,8 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
 
                   <span class="champ-label">Sites et réseaux dédiés à cette chasse</span>
 
-                  <?php if ($peut_editer) : ?>
+                  <?php if ($peut_modifier) : ?>
+
                     <button type="button"
                       class="champ-modifier ouvrir-panneau-liens"
                       data-champ="chasse_principale_liens"
@@ -172,7 +172,7 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
               <ul class="resume-infos">
 
                 <!-- Date de début (édition inline) -->
-                <li class="champ-chasse champ-date-debut"
+                <li class="champ-chasse champ-date-debut<?= $peut_editer ? '' : ' champ-desactive'; ?>"
                   data-champ="caracteristiques.chasse_infos_date_debut"
                   data-cpt="chasse"
                   data-post-id="<?= esc_attr($chasse_id); ?>">
@@ -188,7 +188,7 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
                 </li>
 
                 <!-- Date de fin -->
-                <li class="champ-chasse champ-date-fin "
+                <li class="champ-chasse champ-date-fin<?= $peut_editer ? '' : ' champ-desactive'; ?>"
                   data-champ="caracteristiques.chasse_infos_date_fin"
                   data-cpt="chasse"
                   data-post-id="<?= esc_attr($chasse_id); ?>">
@@ -214,7 +214,7 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
 
 
                 <!-- Coût -->
-                <li class="champ-chasse champ-cout-points <?= empty($cout) ? 'champ-vide' : 'champ-rempli'; ?>"
+                <li class="champ-chasse champ-cout-points <?= empty($cout) ? 'champ-vide' : 'champ-rempli'; ?><?= $peut_editer ? '' : ' champ-desactive'; ?>"
                   data-champ="caracteristiques.chasse_infos_cout_points"
                   data-cpt="chasse"
                   data-post-id="<?= esc_attr($chasse_id); ?>">
@@ -245,7 +245,7 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
 
 
                 <!-- Nombre de gagnants -->
-                <li class="champ-chasse champ-nb-gagnants <?= empty($nb_max) ? 'champ-vide' : 'champ-rempli'; ?>"
+                <li class="champ-chasse champ-nb-gagnants <?= empty($nb_max) ? 'champ-vide' : 'champ-rempli'; ?><?= $peut_editer ? '' : ' champ-desactive'; ?>"
                   data-champ="caracteristiques.chasse_infos_nb_max_gagants"
                   data-cpt="chasse"
                   data-post-id="<?= esc_attr($chasse_id); ?>">
