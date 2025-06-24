@@ -8,11 +8,17 @@ This repository contains the custom WordPress theme used on **chassesautresor.co
 
 ## Setup
 
-Install PHP dependencies and run the test suite from the repository root:
+Install PHP dependencies and run the test suite and code style checks from the repository root:
 
 ```bash
 composer install
-vendor/bin/phpunit --configuration tests/phpunit.xml
+composer test
+```
+
+To run only the linter, execute:
+
+```bash
+vendor/bin/phpcs
 ```
 
 More details about the theme development workflow are available in the [docs/](docs/) directory.
