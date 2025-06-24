@@ -13,6 +13,7 @@ function initEnigmeEdit() {
   panneauEdition = document.querySelector('.edition-panel-enigme');
   DEBUG && console.log('[enigme-edit] boutonToggle=', !!boutonToggle, '| panneauEdition=', !!panneauEdition);
 
+
   // ==============================
   // 🛠️ Contrôles panneau principal
   // ==============================
@@ -465,6 +466,7 @@ if (document.readyState === 'loading') {
     DEBUG && console.log('[enigme-edit] DOMContentLoaded');
     initEnigmeEdit();
   });
+
 } else {
   initEnigmeEdit();
 }

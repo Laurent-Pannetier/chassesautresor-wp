@@ -12,6 +12,7 @@ DEBUG && console.log('✅ header-organisateur-ui.js chargé');
 function initHeaderOrganisateurUI() {
   DEBUG && console.log('[header-organisateur-ui] init');
 
+
   // ✅ Icône info : affichage/masquage de la description
   document.querySelector('.bouton-toggle-description')?.addEventListener('click', () => {
     DEBUG && console.log('[header-organisateur-ui] toggle description');
@@ -58,6 +59,7 @@ if (document.readyState === 'loading') {
     DEBUG && console.log('[header-organisateur-ui] DOMContentLoaded');
     initHeaderOrganisateurUI();
   });
+
 } else {
   initHeaderOrganisateurUI();
 }
