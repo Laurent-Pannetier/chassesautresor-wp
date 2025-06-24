@@ -9,27 +9,44 @@ if (!$organisateur_id || get_post_type($organisateur_id) !== 'organisateur') {
 $query = get_chasses_de_organisateur($organisateur_id);
 $posts = is_a($query, 'WP_Query') ? $query->posts : (array) $query;
 
+if (!function_exists('chasse_est_visible_pour_utilisateur')) {
+  /**
+   * Vérifie si une chasse doit être affichée pour l'utilisateur courant.
+   */
+  function chasse_est_visible_pour_utilisateur(int $chasse_id, int $user_id): bool
+  {
+    $status = get_post_status($chasse_id);
+    if (!in_array($status, ['pending', 'publish'], true)) {
+      return false;
+    }
+
+    $cache      = get_field('champs_caches', $chasse_id) ?: [];
+    $validation = $cache['chasse_cache_statut_validation'] ?? '';
+    if ($validation === 'banni') {
+      return false;
+    }
+
+    if ($status === 'pending') {
+      $roles = wp_get_current_user()->roles;
+      if (!array_intersect($roles, ['organisateur', 'organisateur_creation'])) {
+        return false;
+      }
+
+      if (!utilisateur_est_organisateur_associe_a_chasse($user_id, $chasse_id)) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+}
+
 // 🔒 Filtrer les chasses visibles selon leur statut et l'utilisateur courant
-$posts = array_filter($posts, function ($post) {
-  $chasse_id = $post->ID;
-  $statut_wp = get_post_status($chasse_id);
-  $cache = get_field('champs_caches', $chasse_id) ?? [];
-  $validation = $cache['chasse_cache_statut_validation'] ?? '';
+$user_id = get_current_user_id();
+$posts   = array_values(array_filter($posts, function ($post) use ($user_id) {
+  return chasse_est_visible_pour_utilisateur($post->ID, $user_id);
+}));
 
-  if (!in_array($statut_wp, ['pending', 'publish'], true)) {
-    return false;
-  }
-
-  if ($statut_wp === 'pending') {
-    $roles = wp_get_current_user()->roles;
-    $autorise = array_intersect($roles, ['organisateur', 'organisateur_creation'])
-      && utilisateur_est_organisateur_associe_a_chasse(get_current_user_id(), $chasse_id)
-      && $validation !== 'banni';
-    return $autorise;
-  }
-
-  return $validation !== 'banni';
-});
 ?>
 
 <div class="grille-liste">
