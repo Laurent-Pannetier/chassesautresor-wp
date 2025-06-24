@@ -12,7 +12,7 @@ if (!$chasse_id || get_post_type($chasse_id) !== 'chasse') {
   return;
 }
 
-$peut_modifier = utilisateur_peut_modifier_post($chasse_id);
+$peut_modifier = utilisateur_peut_voir_panneau($chasse_id);
 
 $image = get_field('chasse_principale_image', $chasse_id);
 $description = get_field('chasse_principale_description', $chasse_id);
