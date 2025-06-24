@@ -57,6 +57,9 @@ if (is_singular('enigme')) {
   forcer_relation_enigme_dans_chasse_si_absente($enigme_id);
 }
 
+// 🔹 Autorisations d'édition
+$peut_modifier = utilisateur_peut_voir_panneau($enigme_id);
+
 ?>
 <?php get_header(); ?>
 
@@ -73,7 +76,7 @@ if (is_singular('enigme')) {
       <?php if (enigme_est_visible_pour($user_id, $enigme_id)) : ?>
         <section class="enigme-wrapper">
           <!-- 🔧 Bouton pour ouvrir le panneau d’édition -->
-          <?php if ($edition_active) : ?>
+          <?php if ($peut_modifier) : ?>
             <div class="header-actions-droite">
               <button id="toggle-mode-edition-enigme" type="button"
                       class="bouton-edition-toggle"
@@ -91,8 +94,9 @@ if (is_singular('enigme')) {
 
       <!-- 🛠 Panneau principal d’édition -->
       <?php get_template_part('template-parts/enigme/enigme-edition-main', null, [
-        'enigme_id' => $enigme_id,
-        'user_id'   => $user_id,
+        'enigme_id'     => $enigme_id,
+        'user_id'       => $user_id,
+        'peut_modifier' => $peut_modifier,
       ]); ?>
 
       <?php if ($edition_active) : ?>
