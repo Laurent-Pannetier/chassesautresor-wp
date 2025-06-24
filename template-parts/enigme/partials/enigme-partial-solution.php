@@ -13,7 +13,7 @@ $fichier = get_field('enigme_solution_fichier', $post_id);
 $fichier_url = is_array($fichier) ? $fichier['url'] ?? '' : '';
 
 // 🚧 Placeholder pour l’instant – conditions à implémenter plus tard
-$conditions_ok = true; // TODO: vérifier chasse terminée + délai dépassé
+$conditions_ok = solution_peut_etre_affichee($post_id);
 
 if (!$conditions_ok) return;
 
