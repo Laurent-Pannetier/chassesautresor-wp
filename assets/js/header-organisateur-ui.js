@@ -1,3 +1,4 @@
+
 // ========================================
 // 📁 header-organisateur-ui.js
 // Gère les interactions visuelles du header organisateur :
@@ -11,7 +12,6 @@ DEBUG && console.log('✅ header-organisateur-ui.js chargé');
 
 function initHeaderOrganisateurUI() {
   DEBUG && console.log('[header-organisateur-ui] init');
-
 
   // ✅ Icône info : affichage/masquage de la description
   document.querySelector('.bouton-toggle-description')?.addEventListener('click', () => {
@@ -59,7 +59,7 @@ if (document.readyState === 'loading') {
     DEBUG && console.log('[header-organisateur-ui] DOMContentLoaded');
     initHeaderOrganisateurUI();
   });
-
 } else {
   initHeaderOrganisateurUI();
 }
+
