@@ -126,7 +126,7 @@ add_action('wp_enqueue_scripts', 'charger_script_conversion');
 function verifier_acces_conversion($user_id) {
     // 1️⃣ Vérification du rôle (bloquant immédiat)
     $user = get_userdata($user_id);
-    if (!$user || !in_array('organisateur', $user->roles)) {
+    if (!$user || !in_array(ROLE_ORGANISATEUR, $user->roles)) {
         return "Inscription en cours";
     }
 
@@ -376,7 +376,7 @@ function confirmer_demande_organisateur(int $user_id, string $token): ?int {
     $organisateur_id = creer_organisateur_pour_utilisateur($user_id);
     if ($organisateur_id) {
         $user = new WP_User($user_id);
-        $user->add_role('organisateur_creation');
+        $user->add_role(ROLE_ORGANISATEUR_CREATION);
     }
     return $organisateur_id;
 }

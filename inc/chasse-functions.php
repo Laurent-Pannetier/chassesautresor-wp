@@ -298,7 +298,7 @@ function peut_valider_chasse(int $chasse_id, int $user_id): bool
     }
 
     $roles = (array) $user->roles;
-    if (!array_intersect($roles, ['organisateur', 'organisateur_creation'])) {
+    if (!array_intersect($roles, [ROLE_ORGANISATEUR, ROLE_ORGANISATEUR_CREATION])) {
         return false;
     }
 

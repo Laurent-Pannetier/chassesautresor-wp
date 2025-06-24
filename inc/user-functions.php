@@ -432,7 +432,7 @@ function ajouter_role_organisateur_creation($post_id, $post, $update) {
 
     // 🔹 Vérifie si l'utilisateur est "subscriber" avant de lui attribuer "organisateur_creation"
     if (in_array('subscriber', $user->roles, true)) {
-        $user->add_role('organisateur_creation'); // ✅ Ajoute le rôle sans retirer "subscriber"
+        $user->add_role(ROLE_ORGANISATEUR_CREATION); // ✅ Ajoute le rôle sans retirer "subscriber"
         error_log("✅ L'utilisateur $user_id a maintenant aussi le rôle 'organisateur_creation'.");
     }
 }

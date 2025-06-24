@@ -12,7 +12,7 @@ if (isset($_GET['notice']) && $_GET['notice'] === 'profil_verification') {
 
 if ( in_array('administrator', $roles_utilisateur) ) {
     require 'admin.php';
-} elseif ( array_intersect(['organisateur', 'organisateur_creation'], $roles_utilisateur) ) {
+} elseif ( array_intersect([ROLE_ORGANISATEUR, ROLE_ORGANISATEUR_CREATION], $roles_utilisateur) ) {
     require 'organisateur.php';
 } else {
     require 'default.php'; // 🚀 Les abonnés (subscriber) arrivent ici

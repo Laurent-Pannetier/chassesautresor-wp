@@ -189,7 +189,7 @@ function gerer_organisateur() {
         $user_id = get_post_field('post_author', $post_id);
         if ($user_id) {
             $user = new WP_User($user_id);
-            $user->set_role('organisateur'); // Assurez-vous que ce rôle existe
+            $user->set_role(ROLE_ORGANISATEUR); // Assurez-vous que ce rôle existe
         }
 
         // Envoi d'un email de confirmation
@@ -834,7 +834,7 @@ function supprimer_metas_organisateur() {
 
     // Récupération des utilisateurs ayant un rôle d'organisateur
     $organisateurs = get_users([
-        'role' => 'organisateur',
+        'role' => ROLE_ORGANISATEUR,
         'fields' => 'ID'
     ]);
 
@@ -1307,7 +1307,7 @@ function recuperer_organisateurs_en_creation() {
         return [];
     }
 
-    $users   = get_users(['role' => 'organisateur_creation']);
+    $users   = get_users(['role' => ROLE_ORGANISATEUR_CREATION]);
     $entries = [];
 
     foreach ($users as $user) {

@@ -35,7 +35,7 @@ $organisateur_statut = get_post_status($organisateur_id);
 $est_en_creation = (
     $organisateur_statut === 'pending' &&
     $current_user_id === $organisateur_auteur &&
-    in_array('organisateur_creation', (array) $current_user->roles)
+    in_array(ROLE_ORGANISATEUR_CREATION, (array) $current_user->roles)
 );
 
 get_header();

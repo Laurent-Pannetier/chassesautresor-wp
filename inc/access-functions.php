@@ -232,7 +232,7 @@ function utilisateur_peut_creer_post($post_type, $chasse_id = null)
                 return false; // ❌ Refus si l'utilisateur n'a pas de CPT "organisateur"
             }
 
-            if (in_array('organisateur', $user_roles, true)) {
+            if (in_array(ROLE_ORGANISATEUR, $user_roles, true)) {
                 return true; // ✅ Un organisateur peut créer plusieurs chasses
             }
 
@@ -412,7 +412,7 @@ function utilisateur_peut_ajouter_enigme(int $chasse_id, ?int $user_id = null): 
 
     $user  = get_user_by('id', $user_id);
     $roles = (array) ($user->roles ?? []);
-    if (!array_intersect($roles, ['organisateur', 'organisateur_creation'])) {
+    if (!array_intersect($roles, [ROLE_ORGANISATEUR, ROLE_ORGANISATEUR_CREATION])) {
         error_log("❌ [ajout énigme] rôle utilisateur #$user_id invalide");
         return false;
     }
@@ -502,7 +502,7 @@ function utilisateur_peut_supprimer_enigme(int $enigme_id, ?int $user_id = null)
 
     $user  = get_user_by('id', $user_id);
     $roles = (array) ($user->roles ?? []);
-    if (!array_intersect($roles, ['organisateur', 'organisateur_creation'])) {
+    if (!array_intersect($roles, [ROLE_ORGANISATEUR, ROLE_ORGANISATEUR_CREATION])) {
         return false;
     }
 
@@ -554,12 +554,12 @@ function utilisateur_peut_ajouter_chasse(int $organisateur_id): bool
     }
 
     // Organisateur : aucune limite
-    if (in_array('organisateur', $roles, true)) {
+    if (in_array(ROLE_ORGANISATEUR, $roles, true)) {
         return true;
     }
 
     // Organisateur en cours de création : uniquement si aucune chasse existante
-    if (in_array('organisateur_creation', $roles, true)) {
+    if (in_array(ROLE_ORGANISATEUR_CREATION, $roles, true)) {
         return !organisateur_a_des_chasses($organisateur_id);
     }
 
@@ -584,7 +584,7 @@ function utilisateur_peut_voir_panneau(int $post_id): bool
     $user  = wp_get_current_user();
     $roles = (array) $user->roles;
 
-    if (!array_intersect($roles, ['organisateur', 'organisateur_creation'])) {
+    if (!array_intersect($roles, [ROLE_ORGANISATEUR, ROLE_ORGANISATEUR_CREATION])) {
         return false;
     }
 
@@ -637,7 +637,7 @@ function utilisateur_peut_editer_champs(int $post_id): bool
 
     switch ($type) {
         case 'organisateur':
-            return in_array('organisateur_creation', $roles, true) && $status === 'pending';
+            return in_array(ROLE_ORGANISATEUR_CREATION, $roles, true) && $status === 'pending';
 
         case 'chasse':
             $cache = get_field('champs_caches', $post_id);
@@ -708,7 +708,7 @@ function champ_est_editable($champ, $post_id, $user_id = null)
         }
 
         // Rôle organisateur_creation : titre éditable si l'organisateur est en cours de création
-        if (in_array('organisateur_creation', $roles, true) && $status === 'pending') {
+        if (in_array(ROLE_ORGANISATEUR_CREATION, $roles, true) && $status === 'pending') {
             $chasses_query = get_chasses_de_organisateur($post_id);
             $nb_chasses    = is_a($chasses_query, 'WP_Query') ? $chasses_query->post_count : 0;
 
@@ -790,7 +790,7 @@ add_action('admin_init', function () {
     }
 
     $user = wp_get_current_user();
-    $roles_bloques = ['organisateur', 'organisateur_creation'];
+    $roles_bloques = [ROLE_ORGANISATEUR, ROLE_ORGANISATEUR_CREATION];
 
     // Autoriser AJAX, REST et média
     if (defined('DOING_AJAX') && DOING_AJAX) return;
@@ -1114,7 +1114,7 @@ function chasse_est_visible_pour_utilisateur(int $chasse_id, int $user_id): bool
 
         return $validation !== 'banni'
             && $assoc
-            && array_intersect($roles, ['organisateur', 'organisateur_creation']);
+            && array_intersect($roles, [ROLE_ORGANISATEUR, ROLE_ORGANISATEUR_CREATION]);
     }
 
     return $validation !== 'banni';
@@ -1137,7 +1137,7 @@ add_action('pre_get_posts', function ($query) {
 
     if ($query->is_singular('enigme') && is_user_logged_in()) {
         $roles = (array) wp_get_current_user()->roles;
-        if (array_intersect($roles, ['organisateur', 'organisateur_creation'])) {
+        if (array_intersect($roles, [ROLE_ORGANISATEUR, ROLE_ORGANISATEUR_CREATION])) {
             $query->set('post_status', ['publish', 'pending', 'draft']);
         }
     }
