@@ -700,6 +700,16 @@ function champ_est_editable($champ, $post_id, $user_id = null)
         return $status !== 'publish';
     }
 
+    // 🔒 Le nom d'organisateur est verrouillé pour les rôles non administrateurs
+    if ($post_type === 'organisateur' && $champ === 'post_title') {
+        return current_user_can('manage_options');
+    }
+
+    // 🔒 Le titre d'une énigme suit les mêmes restrictions que dans l'admin
+    if ($post_type === 'enigme' && $champ === 'post_title') {
+        return current_user_can('manage_options');
+    }
+
     // ⚠️ Autres règles spécifiques à définir manuellement ensuite
     // Exemple :
     // if ($champ === 'caracteristiques.chasse_infos_date_debut') {
