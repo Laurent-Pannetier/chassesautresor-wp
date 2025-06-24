@@ -138,6 +138,8 @@ $validation_envoyee = !empty($_GET['validation_demandee']);
           </div>
         </header>
 
+        <h2>Énigmes</h2>
+        <div class="separateur-2"></div>
         <div class="chasse-enigmes-liste">
           <?php
           get_template_part('template-parts/enigme/chasse-partial-boucle-enigmes', null, [
