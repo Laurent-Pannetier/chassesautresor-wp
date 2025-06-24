@@ -6,7 +6,7 @@
 // - Panneau latéral ACF (présentation)
 // ========================================
 
-document.addEventListener('DOMContentLoaded', () => {
+function initHeaderOrganisateurUI() {
 
   // ✅ Icône info : affichage/masquage de la description
   document.querySelector('.bouton-toggle-description')?.addEventListener('click', () => {
@@ -42,4 +42,10 @@ document.addEventListener('DOMContentLoaded', () => {
       document.activeElement?.blur();
     }
   });
-});
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initHeaderOrganisateurUI);
+} else {
+  initHeaderOrganisateurUI();
+}

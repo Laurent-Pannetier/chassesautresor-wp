@@ -7,7 +7,7 @@ let panneauEdition;
 
 
 
-document.addEventListener('DOMContentLoaded', () => {
+function initEnigmeEdit() {
   boutonToggle = document.getElementById('toggle-mode-edition-enigme');
   panneauEdition = document.querySelector('.edition-panel-enigme');
 
@@ -453,6 +453,12 @@ function initChampNbTentatives() {
 
   // 🔄 Fonction exportée globalement
   window.mettreAJourMessageTentatives = mettreAJourAideTentatives;
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initEnigmeEdit);
+} else {
+  initEnigmeEdit();
 }
 
 
