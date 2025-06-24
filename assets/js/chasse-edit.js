@@ -99,14 +99,14 @@ document.addEventListener('DOMContentLoaded', () => {
   // ==============================
   // 📅 Gestion Date de fin + Durée illimitée
   // ==============================
-  if (inputDateFin) {
-
+  if (inputDateFin && !inputDateFin.disabled) {
     if (checkboxIllimitee) {
       inputDateFin.disabled = checkboxIllimitee.checked;
-
+      
       const postId = inputDateFin.closest('.champ-chasse')?.dataset.postId;
 
       checkboxIllimitee.addEventListener('change', function () {
+        if (inputDateFin.disabled) return;
         inputDateFin.disabled = this.checked;
 
         // Si la case est décochée et les dates incohérentes, corriger la date de fin
@@ -198,7 +198,7 @@ document.addEventListener('DOMContentLoaded', () => {
       ancienneValeurFin = nouvelleDateFin;
     });
   }
-  if (inputDateDebut) {
+  if (inputDateDebut && !inputDateDebut.disabled) {
     ancienneValeurDebut = inputDateDebut.value;
 
     inputDateDebut.addEventListener('change', function () {

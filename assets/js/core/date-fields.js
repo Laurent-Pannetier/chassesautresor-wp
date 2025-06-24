@@ -37,6 +37,10 @@ function mettreAJourAffichageDateFin() {
 function initChampDate(input) {
   console.log('⏱️ Attachement initChampDate à', input, '→ ID:', input.id);
 
+  if (input.disabled) {
+    return;
+  }
+
   const bloc = input.closest('[data-champ]');
   const champ = bloc?.dataset.champ;
   const postId = bloc?.dataset.postId;

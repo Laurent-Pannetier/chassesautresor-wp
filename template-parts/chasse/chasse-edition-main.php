@@ -136,10 +136,12 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
               <ul class="resume-infos">
 
                 <!-- Récompense -->
-                <li class="champ-chasse champ-rempli" data-champ="caracteristiques_chasse_infos_recompense_valeur" data-cpt="chasse" data-post-id="8991">
+                <li class="champ-chasse champ-rempli<?= $peut_editer ? '' : ' champ-desactive'; ?>" data-champ="caracteristiques_chasse_infos_recompense_valeur" data-cpt="chasse" data-post-id="<?= esc_attr($chasse_id); ?>">
                   Récompense
                   <?php if ($peut_editer) : ?>
-                    <button type="button" class="champ-modifier ouvrir-panneau-recompense" data-champ="caracteristiques_chasse_infos_recompense_valeur" data-cpt="chasse" data-post-id="8991" aria-label="Modifier la récompense">✏️</button>
+
+                    <button type="button" class="champ-modifier ouvrir-panneau-recompense" data-champ="caracteristiques_chasse_infos_recompense_valeur" data-cpt="chasse" data-post-id="<?= esc_attr($chasse_id); ?>" aria-label="Modifier la récompense">✏️</button>
+
                   <?php endif; ?>
                 </li>
 

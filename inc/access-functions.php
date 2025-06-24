@@ -1054,3 +1054,25 @@ add_action('wp_ajax_verifier_et_enregistrer_condition_pre_requis', 'verifier_et_
 enigme_est_affichable_pour_joueur() (à venir)
 get_cta_enigme() (à déplacer ici si elle migre du fichier visuel)
 tout helper type est_cliquable, affiche_indice, etc. */
+
+/**
+ * Autorise la consultation des énigmes non publiées pour les organisateurs
+ * associés.
+ *
+ * Les rôles "organisateur" et "organisateur_creation" peuvent voir les
+ * énigmes en statut "pending" ou "draft" sans disposer du lien de prévisualisation.
+ *
+ * @hook pre_get_posts
+ */
+add_action('pre_get_posts', function ($query) {
+    if (is_admin() || !$query->is_main_query()) {
+        return;
+    }
+
+    if ($query->is_singular('enigme') && is_user_logged_in()) {
+        $roles = (array) wp_get_current_user()->roles;
+        if (array_intersect($roles, ['organisateur', 'organisateur_creation'])) {
+            $query->set('post_status', ['publish', 'pending', 'draft']);
+        }
+    }
+});

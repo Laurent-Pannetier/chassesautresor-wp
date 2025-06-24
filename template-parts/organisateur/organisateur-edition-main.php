@@ -6,6 +6,7 @@ $organisateur_id = get_organisateur_id_from_context($args ?? []);
 $peut_modifier   = utilisateur_peut_voir_panneau($organisateur_id);
 $peut_editer     = utilisateur_peut_editer_champs($organisateur_id);
 
+
 // User
 $current_user = wp_get_current_user();
 $roles = (array) $current_user->roles;
