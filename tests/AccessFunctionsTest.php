@@ -1,5 +1,5 @@
 <?php
-use PHPUnit\Framework\TestCase;
+use WP_Mock\Tools\TestCase;
 
 require_once __DIR__ . '/bootstrap.php';
 
@@ -7,11 +7,18 @@ class AccessFunctionsTest extends TestCase
 {
     protected function setUp(): void
     {
+        parent::setUp();
         global $mock_users, $mock_posts, $mock_fields, $current_user_id;
         $mock_users = [];
         $mock_posts = [];
         $mock_fields = [];
         $current_user_id = 0;
+    }
+
+    protected function tearDown(): void
+    {
+        \WP_Mock::tearDown();
+        parent::tearDown();
     }
 
     public function test_est_organisateur_role_principal()

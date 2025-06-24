@@ -1,5 +1,5 @@
 <?php
-use PHPUnit\Framework\TestCase;
+use WP_Mock\Tools\TestCase;
 
 require_once __DIR__ . '/bootstrap.php';
 
@@ -7,10 +7,17 @@ class SolutionVisibilityTest extends TestCase
 {
     protected function setUp(): void
     {
+        parent::setUp();
         global $mock_posts, $mock_fields, $mock_current_time;
         $mock_posts = [];
         $mock_fields = [];
         $mock_current_time = null;
+    }
+
+    protected function tearDown(): void
+    {
+        \WP_Mock::tearDown();
+        parent::tearDown();
     }
 
     public function test_solution_hidden_if_chasse_not_terminee()

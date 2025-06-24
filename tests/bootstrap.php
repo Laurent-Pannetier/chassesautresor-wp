@@ -4,16 +4,8 @@ if (!defined('ABSPATH')) {
     define('ABSPATH', __DIR__ . '/..');
 }
 
-// Dummy WordPress hook functions
-if (!function_exists('add_action')) {
-    function add_action(...$args) {}
-}
-if (!function_exists('add_filter')) {
-    function add_filter(...$args) {}
-}
-if (!function_exists('add_rewrite_rule')) {
-    function add_rewrite_rule(...$args) {}
-}
+require_once __DIR__ . '/../vendor/autoload.php';
+\WP_Mock::bootstrap();
 
 $mock_posts = [];
 $mock_fields = [];
