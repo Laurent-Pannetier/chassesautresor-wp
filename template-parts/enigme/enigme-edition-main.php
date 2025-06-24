@@ -17,7 +17,7 @@ if (!$enigme_id || get_post_type($enigme_id) !== 'enigme') {
   return;
 }
 
-$peut_modifier = utilisateur_peut_voir_panneau($enigme_id);
+$peut_modifier = $args['peut_modifier'] ?? false;
 $peut_editer   = utilisateur_peut_editer_champs($enigme_id);
 $peut_editer_titre = champ_est_editable('post_title', $enigme_id);
 
