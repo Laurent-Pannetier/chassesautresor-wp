@@ -40,6 +40,7 @@ if (!function_exists('chasse_est_visible_pour_utilisateur')) {
 
 if (!chasse_est_visible_pour_utilisateur($chasse_id, $utilisateur_id)) {
   return;
+
 }
 
 // 🔎 Récupération des énigmes associées à la chasse

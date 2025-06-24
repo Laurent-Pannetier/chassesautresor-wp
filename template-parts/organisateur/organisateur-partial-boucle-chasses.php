@@ -46,6 +46,7 @@ $user_id = get_current_user_id();
 $posts   = array_values(array_filter($posts, function ($post) use ($user_id) {
   return chasse_est_visible_pour_utilisateur($post->ID, $user_id);
 }));
+
 ?>
 
 <div class="grille-liste">
