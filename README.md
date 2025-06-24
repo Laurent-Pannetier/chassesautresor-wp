@@ -26,5 +26,7 @@ automatically. After modifying `composer.json` run:
 composer dump-autoload
 ```
 
-The theme loads `vendor/autoload.php` in `functions.php`, so no manual
-`require` statements are needed for files inside `inc/`.
+The theme loads `vendor/autoload.php` in `functions.php`. If the autoloader is
+missing (e.g. Composer isn't installed in production), the script falls back to
+including the helper files from `inc/` manually.
+
