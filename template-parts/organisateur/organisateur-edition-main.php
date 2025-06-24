@@ -3,7 +3,8 @@
 defined('ABSPATH') || exit;
 
 $organisateur_id = get_organisateur_id_from_context($args ?? []);
-$peut_modifier = utilisateur_peut_modifier_post($organisateur_id);
+$peut_modifier   = utilisateur_peut_voir_panneau($organisateur_id);
+$peut_editer     = utilisateur_peut_editer_champs($organisateur_id);
 
 
 // User
@@ -71,18 +72,20 @@ $classe_vide_coordonnees = ($iban_vide || $bic_vide) ? 'champ-vide' : '';
           <div class="resume-bloc resume-obligatoire deux-col-bloc">
             <h3>Champs obligatoires</h3>
             <ul class="resume-infos">
-              <li class="champ-organisateur champ-titre ligne-titre <?= empty($titre) ? 'champ-vide' : 'champ-rempli'; ?>"
+              <li class="champ-organisateur champ-titre ligne-titre <?= empty($titre) ? 'champ-vide' : 'champ-rempli'; ?><?= $peut_editer ? '' : ' champ-desactive'; ?>"
                 data-champ="post_title"
                 data-cpt="organisateur"
                 data-post-id="<?= esc_attr($organisateur_id); ?>">
 
                 <div class="champ-affichage">
                   <label for="champ-titre-organisateur">Nom d’organisateur</label>
-                  <button type="button"
-                    class="champ-modifier"
-                    aria-label="Modifier le nom d’organisateur">
-                    ✏️
-                  </button>
+                  <?php if ($peut_editer) : ?>
+                    <button type="button"
+                      class="champ-modifier"
+                      aria-label="Modifier le nom d’organisateur">
+                      ✏️
+                    </button>
+                  <?php endif; ?>
                 </div>
 
                 <div class="champ-edition" style="display: none;">
@@ -90,7 +93,7 @@ $classe_vide_coordonnees = ($iban_vide || $bic_vide) ? 'champ-vide' : '';
                     class="champ-input"
                     maxlength="50"
                     value="<?= esc_attr($titre); ?>"
-                    id="champ-titre-organisateur">
+                    id="champ-titre-organisateur" <?= $peut_editer ? '' : 'disabled'; ?> >
                   <button type="button" class="champ-enregistrer">✓</button>
                   <button type="button" class="champ-annuler">✖</button>
                 </div>
@@ -136,7 +139,7 @@ $classe_vide_coordonnees = ($iban_vide || $bic_vide) ? 'champ-vide' : '';
 
               <li class="ligne-liens <?= ($nb_liens > 0) ? 'champ-rempli' : ''; ?>" data-champ="liens_publics">
                 des liens externes (réseau social ou site)
-                <?php if ($peut_modifier) : ?>
+                <?php if ($peut_editer) : ?>
                   <button type="button"
                     class="champ-modifier ouvrir-panneau-liens"
                     aria-label="Configurer les liens publics">
@@ -151,7 +154,7 @@ $classe_vide_coordonnees = ($iban_vide || $bic_vide) ? 'champ-vide' : '';
                   onclick="alert('Ces informations sont nécessaires uniquement pour vous verser les gains issus de la conversion de vos points en euros. Nous ne prélevons jamais d’argent.');">
                   <i class="fa-solid fa-circle-question" aria-hidden="true"></i>
                 </button>
-                <?php if ($peut_modifier) : ?>
+                <?php if ($peut_editer) : ?>
                   <button type="button"
                     id="ouvrir-coordonnees"
                     class="champ-modifier"
@@ -182,7 +185,7 @@ $classe_vide_coordonnees = ($iban_vide || $bic_vide) ? 'champ-vide' : '';
                       onclick="alert('Quand aucune adresse n est renseignée, votre email utilisateur est utilisé par défaut.');">
                       <i class="fa-solid fa-circle-question" aria-hidden="true"></i>
                     </button>
-                    <?php if ($peut_modifier) : ?>
+                    <?php if ($peut_editer) : ?>
                       <button type="button"
                         class="champ-modifier"
                         aria-label="Modifier l’adresse email de contact">
