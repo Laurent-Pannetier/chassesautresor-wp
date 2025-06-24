@@ -73,7 +73,7 @@ function injecter_htaccess_protection_images_enigme($post_id, bool $forcer = fal
 {
   $post_id = (int) $post_id;
   if ($post_id <= 0 || get_post_type($post_id) !== 'enigme') {
-    error_log("❌ Post ID invalide ou type incorrect pour htaccess : {$post_id}");
+    cat_debug("❌ Post ID invalide ou type incorrect pour htaccess : {$post_id}");
     return false;
   }
 
@@ -82,24 +82,24 @@ function injecter_htaccess_protection_images_enigme($post_id, bool $forcer = fal
 
   if (!is_dir($base_dir)) {
     if (!wp_mkdir_p($base_dir)) {
-      error_log("❌ Impossible de créer le dossier {$base_dir}");
+      cat_debug("❌ Impossible de créer le dossier {$base_dir}");
       return false;
     }
-    error_log("📁 Dossier créé : {$base_dir}");
+    cat_debug("📁 Dossier créé : {$base_dir}");
   }
 
   $fichier_htaccess = $base_dir . '/.htaccess';
   $fichier_tmp = $fichier_htaccess . '.tmp';
 
   if (!$forcer && file_exists($fichier_htaccess)) {
-    error_log("ℹ️ .htaccess déjà présent pour énigme {$post_id}, pas de réécriture.");
+    cat_debug("ℹ️ .htaccess déjà présent pour énigme {$post_id}, pas de réécriture.");
     return true;
   }
 
   // Supprime le fichier temporaire si présent
   if (file_exists($fichier_tmp)) {
     unlink($fichier_tmp);
-    error_log("🧹 Fichier temporaire .htaccess.tmp supprimé");
+    cat_debug("🧹 Fichier temporaire .htaccess.tmp supprimé");
   }
 
   $contenu = <<<HTACCESS
@@ -120,11 +120,11 @@ RewriteRule . - [L]
 HTACCESS;
 
   if (file_put_contents($fichier_htaccess, $contenu, LOCK_EX) === false) {
-    error_log("❌ Échec d’écriture du fichier .htaccess pour énigme {$post_id}");
+    cat_debug("❌ Échec d’écriture du fichier .htaccess pour énigme {$post_id}");
     return false;
   }
 
-  error_log("✅ .htaccess injecté avec succès pour énigme {$post_id}");
+  cat_debug("✅ .htaccess injecté avec succès pour énigme {$post_id}");
   return true;
 }
 
@@ -168,8 +168,8 @@ add_action('acf/save_post', 'verrouiller_visuels_enigme_si_nouveau_upload', 20);
  */
 function filtrer_visuels_enigme_front($images, $post_id, $field)
 {
-  error_log('[DEBUG] filtre gallery appelé pour post ID : ' . $post_id);
-  error_log("[✔️ filtre ACF gallery actif] post_id = $post_id | champ = " . ($field['name'] ?? 'inconnu'));
+  cat_debug('[DEBUG] filtre gallery appelé pour post ID : ' . $post_id);
+  cat_debug("[✔️ filtre ACF gallery actif] post_id = $post_id | champ = " . ($field['name'] ?? 'inconnu'));
 
 
   if (is_admin()) return $images;
@@ -219,16 +219,16 @@ function desactiver_htaccess_temporairement_enigme()
   // ✅ Si .htaccess existe et pas déjà désactivé
   if (file_exists($fichier_htaccess)) {
     if (!@rename($fichier_htaccess, $fichier_tmp)) {
-      error_log("❌ Impossible de renommer .htaccess vers .tmp pour énigme {$post_id}");
+      cat_debug("❌ Impossible de renommer .htaccess vers .tmp pour énigme {$post_id}");
       wp_send_json_error("Erreur désactivation");
     }
-    error_log("✅ .htaccess désactivé temporairement pour énigme {$post_id}");
+    cat_debug("✅ .htaccess désactivé temporairement pour énigme {$post_id}");
     $message = 'Protection désactivée (nouveau .tmp)';
   } elseif (file_exists($fichier_tmp)) {
-    error_log("ℹ️ .htaccess déjà désactivé pour énigme {$post_id} – renouvellement délai");
+    cat_debug("ℹ️ .htaccess déjà désactivé pour énigme {$post_id} – renouvellement délai");
     $message = 'Déjà désactivé – délai renouvelé';
   } else {
-    error_log("ℹ️ Aucun .htaccess à désactiver (pas encore d’image) pour énigme {$post_id}");
+    cat_debug("ℹ️ Aucun .htaccess à désactiver (pas encore d’image) pour énigme {$post_id}");
     $message = 'Aucun fichier à désactiver (pas encore d’image)';
   }
 
@@ -256,7 +256,7 @@ function reactiver_htaccess_protection_enigme_apres_save($post_id)
   $fichier_tmp = $upload_dir['basedir'] . '/_enigmes/enigme-' . $post_id . '/.htaccess.tmp';
   if (file_exists($fichier_tmp)) {
     unlink($fichier_tmp);
-    error_log("🧼 .htaccess.tmp supprimé après enregistrement de l’énigme {$post_id}");
+    cat_debug("🧼 .htaccess.tmp supprimé après enregistrement de l’énigme {$post_id}");
   }
 
   // Supprime le transient
@@ -293,14 +293,14 @@ function verifier_expiration_desactivations_htaccess()
     if ($now > $expiration) {
       if (file_exists($htaccess_tmp) && !file_exists($htaccess)) {
         if (rename($htaccess_tmp, $htaccess)) {
-          error_log("⏲️ Fallback restauration .htaccess (expiration dépassée) pour énigme {$post_id}");
+          cat_debug("⏲️ Fallback restauration .htaccess (expiration dépassée) pour énigme {$post_id}");
         } else {
-          error_log("❌ Échec restauration .htaccess depuis .tmp pour énigme {$post_id}");
+          cat_debug("❌ Échec restauration .htaccess depuis .tmp pour énigme {$post_id}");
         }
       } else {
         // sinon réécrit quand même pour être sûr
         injecter_htaccess_protection_images_enigme($post_id, true);
-        error_log("⏱️ Expiration atteinte : .htaccess réinjecté pour énigme {$post_id}");
+        cat_debug("⏱️ Expiration atteinte : .htaccess réinjecté pour énigme {$post_id}");
       }
 
       // Nettoyage
@@ -328,14 +328,14 @@ function restaurer_htaccess_si_temporairement_desactive($post_id)
   if (file_exists($htaccess)) {
     // .htaccess existe déjà, donc on peut supprimer le temporaire s’il traîne
     unlink($tmp);
-    error_log("🧹 .htaccess.tmp supprimé (déjà restauré) pour énigme {$post_id}");
+    cat_debug("🧹 .htaccess.tmp supprimé (déjà restauré) pour énigme {$post_id}");
     return;
   }
 
   if (rename($tmp, $htaccess)) {
-    error_log("🔁 .htaccess restauré depuis .tmp pour énigme {$post_id}");
+    cat_debug("🔁 .htaccess restauré depuis .tmp pour énigme {$post_id}");
   } else {
-    error_log("❌ Impossible de restaurer .htaccess depuis .tmp pour énigme {$post_id}");
+    cat_debug("❌ Impossible de restaurer .htaccess depuis .tmp pour énigme {$post_id}");
   }
 }
 
@@ -408,9 +408,9 @@ function get_expiration_htaccess_enigme()
   // ❌ Transient expiré ou absent, mais .tmp encore là → on restaure
   @unlink($fichier_htaccess); // au cas où résidu
   if (@rename($fichier_htaccess_tmp, $fichier_htaccess)) {
-    error_log("🔒 htaccess restauré automatiquement (expiration dépassée) pour énigme {$post_id}");
+    cat_debug("🔒 htaccess restauré automatiquement (expiration dépassée) pour énigme {$post_id}");
   } else {
-    error_log("⚠️ Échec restauration htaccess expirée pour énigme {$post_id}");
+    cat_debug("⚠️ Échec restauration htaccess expirée pour énigme {$post_id}");
   }
 
   delete_transient($transient_key);
@@ -433,7 +433,7 @@ add_action('wp_ajax_verrouillage_termine_enigme', function () {
 
   if (file_exists($dossier . '/.htaccess.tmp') && !file_exists($dossier . '/.htaccess')) {
     rename($dossier . '/.htaccess.tmp', $dossier . '/.htaccess');
-    error_log("🔁 .htaccess restauré depuis .tmp (expiration JS) pour énigme #$post_id");
+    cat_debug("🔁 .htaccess restauré depuis .tmp (expiration JS) pour énigme #$post_id");
   }
 
   delete_transient('htaccess_timeout_enigme_' . $post_id);
@@ -458,13 +458,13 @@ add_action('wp_ajax_verrouillage_termine_enigme', function () {
  */
 function purger_htaccess_temp_enigmes()
 {
-  error_log('🟡 CRON lancé : purge htaccess');
+  cat_debug('🟡 CRON lancé : purge htaccess');
 
   $upload_dir = wp_upload_dir();
   $base = $upload_dir['basedir'] . '/_enigmes';
 
   if (!is_dir($base)) {
-    error_log('❌ Base des énigmes introuvable');
+    cat_debug('❌ Base des énigmes introuvable');
     return;
   }
 
@@ -479,20 +479,20 @@ function purger_htaccess_temp_enigmes()
     }
 
     $transient = get_transient('htaccess_timeout_enigme_' . $post_id);
-    error_log("⏱️ Transient actuel pour $post_id : " . var_export($transient, true));
+    cat_debug("⏱️ Transient actuel pour $post_id : " . var_export($transient, true));
 
     if (!$transient || $transient < time()) {
-      error_log("🟥 Transient expiré ou absent pour $post_id → tentative restauration");
+      cat_debug("🟥 Transient expiré ou absent pour $post_id → tentative restauration");
 
       $fichier_final = $dossier . '/.htaccess';
       if (@rename($fichier_tmp, $fichier_final)) {
         delete_transient('htaccess_timeout_enigme_' . $post_id);
-        error_log("🟢 Restauration OK htaccess pour énigme $post_id");
+        cat_debug("🟢 Restauration OK htaccess pour énigme $post_id");
       } else {
-        error_log("⚠️ Échec restauration pour énigme $post_id");
+        cat_debug("⚠️ Échec restauration pour énigme $post_id");
       }
     } else {
-      error_log("🟩 Transient encore actif pour $post_id");
+      cat_debug("🟩 Transient encore actif pour $post_id");
     }
   }
 }

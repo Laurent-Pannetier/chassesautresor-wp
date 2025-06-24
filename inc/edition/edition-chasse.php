@@ -105,15 +105,15 @@ function creer_chasse_et_rediriger_si_appel()
   $user_id    = (int) $user->ID;
   $roles      = (array) $user->roles;
 
-  error_log("👤 Utilisateur connecté : {$user_id}");
+  cat_debug("👤 Utilisateur connecté : {$user_id}");
 
   // 📎 Récupération de l'organisateur lié
   $organisateur_id = get_organisateur_from_user($user_id);
   if (!$organisateur_id) {
-    error_log("🛑 Aucun organisateur trouvé pour l'utilisateur {$user_id}");
+    cat_debug("🛑 Aucun organisateur trouvé pour l'utilisateur {$user_id}");
     wp_die('Aucun organisateur associé.');
   }
-  error_log("✅ Organisateur trouvé : {$organisateur_id}");
+  cat_debug("✅ Organisateur trouvé : {$organisateur_id}");
 
   // 🔒 Vérification des droits de création
   if (!current_user_can('administrator') && !current_user_can(ROLE_ORGANISATEUR)) {
@@ -135,11 +135,11 @@ function creer_chasse_et_rediriger_si_appel()
   ]);
 
   if (is_wp_error($post_id)) {
-    error_log("🛑 Erreur création post : " . $post_id->get_error_message());
+    cat_debug("🛑 Erreur création post : " . $post_id->get_error_message());
     wp_die('Erreur lors de la création de la chasse.');
   }
 
-  error_log("✅ Chasse créée avec l’ID : {$post_id}");
+  cat_debug("✅ Chasse créée avec l’ID : {$post_id}");
 
   update_field('chasse_principale_image', 3902, $post_id);
 
@@ -164,7 +164,7 @@ function creer_chasse_et_rediriger_si_appel()
 
   // 🚀 Redirection vers la prévisualisation frontale avec panneau ouvert
   $preview_url = add_query_arg('edition', 'open', get_preview_post_link($post_id));
-  error_log("➡️ Redirection vers : {$preview_url}");
+  cat_debug("➡️ Redirection vers : {$preview_url}");
   wp_redirect($preview_url);
   exit;
 }
@@ -227,7 +227,7 @@ function modifier_champ_chasse()
   // 🛡️ Initialisation sécurisée du groupe caracteristiques
   $groupe_actuel = get_field('caracteristiques', $post_id);
   if (!is_array($groupe_actuel)) {
-    error_log("⚠️ Groupe caracteristiques vide ou absent — tentative de réinitialisation forcée.");
+    cat_debug("⚠️ Groupe caracteristiques vide ou absent — tentative de réinitialisation forcée.");
 
     $groupe_init = [
       'chasse_infos_date_debut'        => '',
@@ -242,9 +242,9 @@ function modifier_champ_chasse()
 
     $ok_init = update_field('caracteristiques', $groupe_init, $post_id);
     if (!$ok_init) {
-      error_log("❌ Groupe ACF toujours introuvable après tentative d'initialisation : caracteristiques");
+      cat_debug("❌ Groupe ACF toujours introuvable après tentative d'initialisation : caracteristiques");
     } else {
-      error_log("✅ Groupe caracteristiques initialisé manuellement pour post #$post_id");
+      cat_debug("✅ Groupe caracteristiques initialisé manuellement pour post #$post_id");
     }
   }
 
@@ -302,7 +302,7 @@ function modifier_champ_chasse()
     $ok = update_field('caracteristiques', $groupe, $post_id);
     $carac_maj = get_field('caracteristiques', $post_id);
     $mode_continue = empty($carac_maj['chasse_infos_duree_illimitee']);
-    error_log("🧪 Illimitée (après MAJ) = " . var_export($carac_maj['chasse_infos_duree_illimitee'], true));
+    cat_debug("🧪 Illimitée (après MAJ) = " . var_export($carac_maj['chasse_infos_duree_illimitee'], true));
 
 
     if ($ok) {
@@ -324,14 +324,14 @@ function modifier_champ_chasse()
   }
 
   if ($champ === 'caracteristiques.chasse_infos_cout_points') {
-    error_log("🧪 Correction tentative : MAJ cout_points → valeur = {$valeur}");
+    cat_debug("🧪 Correction tentative : MAJ cout_points → valeur = {$valeur}");
     $ok = mettre_a_jour_sous_champ_group($post_id, 'caracteristiques', 'chasse_infos_cout_points', (int) $valeur);
     if ($ok) {
-      error_log("✅ MAJ réussie pour chasse_infos_cout_points");
+      cat_debug("✅ MAJ réussie pour chasse_infos_cout_points");
       $champ_valide = true;
       $doit_recalculer_statut = true;
     } else {
-      error_log("❌ MAJ échouée malgré nom exact");
+      cat_debug("❌ MAJ échouée malgré nom exact");
     }
   }
 
@@ -342,7 +342,7 @@ function modifier_champ_chasse()
     $liste_enigmes = recuperer_enigmes_associees($post_id);
     if (!empty($liste_enigmes)) {
       foreach ($liste_enigmes as $enigme_id) {
-        error_log("🧩 Planification/déplacement : énigme #$enigme_id");
+        cat_debug("🧩 Planification/déplacement : énigme #$enigme_id");
         planifier_ou_deplacer_pdf_solution_immediatement($enigme_id);
       }
     }
@@ -398,7 +398,7 @@ function modifier_champ_chasse()
     wp_cache_delete($post_id, 'post');
     sleep(1); // donne une chance au cache + update ACF de se stabiliser
     $caracteristiques = get_field('caracteristiques', $post_id);
-    error_log("[🔁 RELOAD] Relecture avant recalcul : " . json_encode($caracteristiques));
+    cat_debug("[🔁 RELOAD] Relecture avant recalcul : " . json_encode($caracteristiques));
     mettre_a_jour_statuts_chasse($post_id);
   }
   wp_send_json_success($reponse);
@@ -440,10 +440,10 @@ function assigner_organisateur_a_chasse($post_id, $post)
 
     // Vérification après mise à jour
     if (!$resultat) {
-      error_log("🛑 Échec de la mise à jour de organisateur_chasse pour la chasse $post_id");
+      cat_debug("🛑 Échec de la mise à jour de organisateur_chasse pour la chasse $post_id");
     }
   } else {
-    error_log("🛑 Aucun organisateur trouvé pour la chasse $post_id (aucune mise à jour)");
+    cat_debug("🛑 Aucun organisateur trouvé pour la chasse $post_id (aucune mise à jour)");
   }
 }
 add_action('save_post_chasse', 'assigner_organisateur_a_chasse', 20, 2);

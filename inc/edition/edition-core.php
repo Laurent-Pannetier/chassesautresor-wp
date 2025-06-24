@@ -484,20 +484,20 @@ function convertir_en_datetime(?string $date_string, array $formats = [
 ]): ?DateTime
 {
   if (empty($date_string)) {
-    error_log("🚫 Date vide ou non fournie.");
+    cat_debug("🚫 Date vide ou non fournie.");
     return null;
   }
 
   foreach ($formats as $format) {
     $date_obj = DateTime::createFromFormat($format, $date_string);
     if ($date_obj) {
-      error_log("✅ Date '{$date_string}' convertie avec le format : {$format}");
+      cat_debug("✅ Date '{$date_string}' convertie avec le format : {$format}");
       return $date_obj;
     }
   }
 
   // 🚨 Ajout d'un fallback pour éviter le crash
-  error_log("⚠️ Échec de conversion pour la date : '{$date_string}'. Formats testés : " . implode(', ', $formats));
+  cat_debug("⚠️ Échec de conversion pour la date : '{$date_string}'. Formats testés : " . implode(', ', $formats));
   return new DateTime('now', new DateTimeZone('UTC')); // Retourne la date actuelle au lieu de `null`
 }
 
@@ -549,7 +549,7 @@ function mettre_a_jour_relation_acf($post_id, $relation_field, $related_post_id,
 {
   // Vérifier les paramètres requis
   if (empty($post_id) || empty($relation_field) || empty($related_post_id)) {
-    error_log("🛑 ERREUR : Paramètres manquants pour mettre à jour la relation ACF.");
+    cat_debug("🛑 ERREUR : Paramètres manquants pour mettre à jour la relation ACF.");
     return false;
   }
 
@@ -579,7 +579,7 @@ function mettre_a_jour_relation_acf($post_id, $relation_field, $related_post_id,
     return true;
   }
 
-  error_log("🛑 ERREUR : La mise à jour de {$full_field_name} a échoué dans mettre_a_jour_relation_acf().");
+  cat_debug("🛑 ERREUR : La mise à jour de {$full_field_name} a échoué dans mettre_a_jour_relation_acf().");
   return false;
 }
 
@@ -604,7 +604,7 @@ function mettre_a_jour_relation_acf($post_id, $relation_field, $related_post_id,
 function modifier_relation_acf($post_id, $relation_field, $related_post_id, $acf_key, $action = 'add')
 {
   if (empty($post_id) || empty($relation_field) || empty($related_post_id)) {
-    error_log("🛑 ERREUR : Paramètres manquants pour modifier la relation ACF.");
+    cat_debug("🛑 ERREUR : Paramètres manquants pour modifier la relation ACF.");
     return false;
   }
 
@@ -621,10 +621,10 @@ function modifier_relation_acf($post_id, $relation_field, $related_post_id, $acf
       update_post_meta($post_id, $relation_field, $current_value);
       update_post_meta($post_id, "_{$relation_field}", $acf_key);
 
-      error_log("✅ Relation ajoutée avec succès : {$relation_field} → {$related_post_id}.");
+      cat_debug("✅ Relation ajoutée avec succès : {$relation_field} → {$related_post_id}.");
       return true;
     }
-    error_log("ℹ️ Relation déjà existante : {$relation_field} → {$related_post_id}. Aucune modification.");
+    cat_debug("ℹ️ Relation déjà existante : {$relation_field} → {$related_post_id}. Aucune modification.");
   } elseif ($action === 'remove') {
     // 📌 Supprimer uniquement si l'ID est présent
     if (in_array($related_post_id, $current_value)) {
@@ -632,12 +632,12 @@ function modifier_relation_acf($post_id, $relation_field, $related_post_id, $acf
       update_post_meta($post_id, $relation_field, $current_value);
       update_post_meta($post_id, "_{$relation_field}", $acf_key);
 
-      error_log("✅ Relation supprimée avec succès : {$relation_field} → {$related_post_id}.");
+      cat_debug("✅ Relation supprimée avec succès : {$relation_field} → {$related_post_id}.");
       return true;
     }
-    error_log("ℹ️ La relation à supprimer n'existait pas : {$relation_field} → {$related_post_id}.");
+    cat_debug("ℹ️ La relation à supprimer n'existait pas : {$relation_field} → {$related_post_id}.");
   } else {
-    error_log("🛑 ERREUR : Action inconnue '{$action}' pour modifier_relation_acf().");
+    cat_debug("🛑 ERREUR : Action inconnue '{$action}' pour modifier_relation_acf().");
   }
 
   return false;
@@ -659,7 +659,7 @@ function modifier_relation_acf($post_id, $relation_field, $related_post_id, $acf
 function mettre_a_jour_sous_champ_group(int $post_id, string $group_key_or_name, string $subfield_name, $new_value): bool
 {
   if (!$post_id || !$group_key_or_name || !$subfield_name) {
-    error_log('❌ Paramètres manquants dans mettre_a_jour_sous_champ_group()');
+    cat_debug('❌ Paramètres manquants dans mettre_a_jour_sous_champ_group()');
     return false;
   }
 
@@ -669,11 +669,11 @@ function mettre_a_jour_sous_champ_group(int $post_id, string $group_key_or_name,
 
   if (!$group_object || empty($group_object['sub_fields'])) {
     // Tentative d'initialisation minimale si jamais le groupe n'est pas encore enregistré
-    error_log("⚠️ Groupe $group_key_or_name vide ou absent — tentative de réinitialisation forcée.");
+    cat_debug("⚠️ Groupe $group_key_or_name vide ou absent — tentative de réinitialisation forcée.");
     update_field($group_key_or_name, [], $post_id);
     $group_object = get_field_object($group_key_or_name, $post_id);
     if (!$group_object || empty($group_object['sub_fields'])) {
-      error_log("❌ Groupe ACF toujours introuvable après tentative d'initialisation : $group_key_or_name");
+      cat_debug("❌ Groupe ACF toujours introuvable après tentative d'initialisation : $group_key_or_name");
       return false;
     }
   }
@@ -727,7 +727,7 @@ function mettre_a_jour_sous_champ_group(int $post_id, string $group_key_or_name,
   }
 
   delete_field($group_object['name'], $post_id);
-  error_log('[DEBUG] Données envoyées à update_field() pour groupe ' . $group_object['name'] . ' : ' . json_encode($champ_a_enregistrer));
+  cat_debug('[DEBUG] Données envoyées à update_field() pour groupe ' . $group_object['name'] . ' : ' . json_encode($champ_a_enregistrer));
 
   $ok = update_field($group_object['name'], $champ_a_enregistrer, $post_id);
   clean_post_cache($post_id);
@@ -736,10 +736,10 @@ function mettre_a_jour_sous_champ_group(int $post_id, string $group_key_or_name,
   $groupe_verif = get_field($group_object['name'], $post_id);
 
   $str_valeur = is_array($new_value) ? json_encode($new_value) : $new_value;
-  error_log("🧪 [DEBUG ACF] Mise à jour demandée : $group_key_or_name.$subfield_name → $str_valeur (post #$post_id)");
+  cat_debug("🧪 [DEBUG ACF] Mise à jour demandée : $group_key_or_name.$subfield_name → $str_valeur (post #$post_id)");
 
   $groupe_verif = get_field($group_key_or_name, $post_id);
-  error_log("📥 [DEBUG ACF] Relecture après update : " . json_encode($groupe_verif));
+  cat_debug("📥 [DEBUG ACF] Relecture après update : " . json_encode($groupe_verif));
 
 
 
@@ -761,6 +761,6 @@ function mettre_a_jour_sous_champ_group(int $post_id, string $group_key_or_name,
     return wp_strip_all_tags($str_new) === wp_strip_all_tags($str_relue);
   }
 
-  error_log("❌ Échec de vérification pour $subfield_name dans {$group_object['name']}");
+  cat_debug("❌ Échec de vérification pour $subfield_name dans {$group_object['name']}");
   return false;
 }
