@@ -139,7 +139,9 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
                 <li class="champ-chasse champ-rempli<?= $peut_editer ? '' : ' champ-desactive'; ?>" data-champ="caracteristiques_chasse_infos_recompense_valeur" data-cpt="chasse" data-post-id="<?= esc_attr($chasse_id); ?>">
                   Récompense
                   <?php if ($peut_editer) : ?>
+
                     <button type="button" class="champ-modifier ouvrir-panneau-recompense" data-champ="caracteristiques_chasse_infos_recompense_valeur" data-cpt="chasse" data-post-id="<?= esc_attr($chasse_id); ?>" aria-label="Modifier la récompense">✏️</button>
+
                   <?php endif; ?>
                 </li>
 
@@ -152,6 +154,7 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
                   <span class="champ-label">Sites et réseaux dédiés à cette chasse</span>
 
                   <?php if ($peut_modifier) : ?>
+
                     <button type="button"
                       class="champ-modifier ouvrir-panneau-liens"
                       data-champ="chasse_principale_liens"

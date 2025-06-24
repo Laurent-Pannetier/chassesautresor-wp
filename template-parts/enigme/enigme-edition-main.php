@@ -14,6 +14,7 @@ if (!$enigme_id || get_post_type($enigme_id) !== 'enigme') {
 
 $peut_modifier = utilisateur_peut_voir_panneau($enigme_id);
 $peut_editer   = utilisateur_peut_editer_champs($enigme_id);
+
 $titre = get_the_title($enigme_id);
 $titre_defaut = TITRE_DEFAUT_ENIGME;
 $isTitreParDefaut = strtolower(trim($titre)) === strtolower($titre_defaut);
