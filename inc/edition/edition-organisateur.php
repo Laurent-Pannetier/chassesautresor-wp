@@ -130,23 +130,8 @@ function enqueue_script_organisateur_edit()
   }
 
   if ($organisateur_id && utilisateur_peut_modifier_post($organisateur_id)) {
-    $theme_uri = get_stylesheet_directory_uri();
-    $theme_dir = get_stylesheet_directory();
-
-    // 📦 Modules JS partagés
-    enqueue_core_edit_scripts();
-
-    // 📤 Script organisateur
-    $path = '/assets/js/organisateur-edit.js';
-    $version = file_exists($theme_dir . $path) ? filemtime($theme_dir . $path) : null;
-
-    wp_enqueue_script(
-      'organisateur-edit',
-      $theme_uri . $path,
-      ['champ-init', 'helpers', 'ajax', 'ui'],
-      $version,
-      true
-    );
+    // 📦 Modules JS partagés + script organisateur
+    enqueue_core_edit_scripts(['organisateur-edit']);
 
     // ✅ Injection JavaScript APRÈS le enqueue (très important)
     $author_id = (int) get_post_field('post_author', $organisateur_id);
