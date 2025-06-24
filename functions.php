@@ -12,10 +12,6 @@ defined( 'ABSPATH' ) || exit;
 $autoload = __DIR__ . '/vendor/autoload.php';
 if (file_exists($autoload)) {
     require_once $autoload;
-} else {
-    require_once __DIR__ . '/inc/enigme/Cta.php';
-    require_once __DIR__ . '/inc/enigme/ManualResponse.php';
-    require_once __DIR__ . '/inc/enigme/Tentatives.php';
 }
 
 /**
@@ -60,37 +56,8 @@ add_action('wp_enqueue_scripts', function () {
 
 
 // ----------------------------------------------------------
-// 📂 Chargement des fichiers fonctionnels organisés
+// 📂 Les fichiers du dossier inc/ sont chargés via Composer
 // ----------------------------------------------------------
-
-$inc_path = get_stylesheet_directory() . '/inc/';
-
-require_once $inc_path . 'constants.php';
-require_once $inc_path . 'utils.php';
-
-require_once $inc_path . 'shortcodes-init.php';
-require_once $inc_path . 'enigme-functions.php';
-require_once $inc_path . 'user-functions.php';
-require_once $inc_path . 'chasse-functions.php';
-require_once $inc_path . 'gamify-functions.php';
-require_once $inc_path . 'utils/titres.php';
-require_once $inc_path . 'statut-functions.php';
-require_once $inc_path . 'admin-functions.php';
-require_once $inc_path . 'organisateur-functions.php';
-//require_once $inc_path . 'stat-functions.php';
-require_once $inc_path . 'access-functions.php';
-require_once $inc_path . 'relations-functions.php';
-require_once $inc_path . 'layout-functions.php';
-require_once $inc_path . 'utils/liens.php';
-
-require_once $inc_path . 'edition/edition-core.php';
-require_once $inc_path . 'edition/edition-organisateur.php';
-require_once $inc_path . 'edition/edition-chasse.php';
-require_once $inc_path . 'edition/edition-enigme.php';
-require_once $inc_path . 'edition/edition-securite.php';
-
-
-
 /**
  * Injecte automatiquement `acf_form_head()` pour les fiches chasse.
  *
