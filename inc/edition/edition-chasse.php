@@ -29,24 +29,8 @@ function enqueue_script_chasse_edit()
     return;
   }
 
-  $theme_uri = get_stylesheet_directory_uri();
-  $theme_dir = get_stylesheet_directory();
-
-  // Enfile les scripts partagés (helpers, ui, etc.)
-  enqueue_core_edit_scripts();
-
-  // Script spécifique à la chasse
-  $path = '/assets/js/chasse-edit.js';
-  $file = $theme_dir . $path;
-  $version = file_exists($file) ? filemtime($file) : null;
-
-  wp_enqueue_script(
-    'chasse-edit',
-    $theme_uri . $path,
-    ['helpers', 'ajax', 'ui', 'champ-init'],
-    $version,
-    true
-  );
+  // Enfile les scripts nécessaires
+  enqueue_core_edit_scripts(['chasse-edit']);
 
   // Injecte les valeurs par défaut pour JS
   wp_localize_script('champ-init', 'CHP_CHASSE_DEFAUT', [

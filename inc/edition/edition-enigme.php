@@ -31,35 +31,8 @@ function enqueue_script_enigme_edit()
   $enigme_id = get_the_ID();
   if (!utilisateur_peut_modifier_post($enigme_id)) return;
 
-  $theme_uri = get_stylesheet_directory_uri();
-  $theme_dir = get_stylesheet_directory();
-
-  // 📦 Modules JS partagés
-  enqueue_core_edit_scripts();
-
-  // 📤 Header organisateur
-  $path_org = '/assets/js/organisateur-edit.js';
-  $version_org = file_exists($theme_dir . $path_org) ? filemtime($theme_dir . $path_org) : null;
-
-  wp_enqueue_script(
-    'organisateur-edit',
-    $theme_uri . $path_org,
-    ['champ-init', 'helpers', 'ajax', 'ui'],
-    $version_org,
-    true
-  );
-
-  // 📤 Panneau énigme
-  $path_enigme = '/assets/js/enigme-edit.js';
-  $version_enigme = file_exists($theme_dir . $path_enigme) ? filemtime($theme_dir . $path_enigme) : null;
-
-  wp_enqueue_script(
-    'enigme-edit',
-    $theme_uri . $path_enigme,
-    ['champ-init', 'helpers', 'ajax', 'ui'],
-    $version_enigme,
-    true
-  );
+  // 📦 Modules JS partagés + scripts spécifiques
+  enqueue_core_edit_scripts(['organisateur-edit', 'enigme-edit']);
 
   // Localisation JS si besoin (ex : valeurs par défaut)
   wp_localize_script('champ-init', 'CHP_ENIGME_DEFAUT', [

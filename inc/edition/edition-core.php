@@ -73,8 +73,10 @@ add_filter('tiny_mce_before_init', function ($init) {
  *
  * @return void
  */
-function enqueue_core_edit_scripts()
+function enqueue_core_edit_scripts(array $additional = [])
 {
+  static $versions = [];
+
   $theme_uri = get_stylesheet_directory_uri();
   $theme_dir = get_stylesheet_directory();
 
@@ -96,17 +98,37 @@ function enqueue_core_edit_scripts()
   foreach ($core_scripts as $handle => $filename) {
     $path = "/assets/js/core/{$filename}";
     $file = $theme_dir . $path;
-    $version = file_exists($file) ? filemtime($file) : null;
+
+    if (!isset($versions[$handle])) {
+      $versions[$handle] = file_exists($file) ? filemtime($file) : null;
+    }
 
     wp_enqueue_script(
       $handle,
       $theme_uri . $path,
       $previous_handle ? [$previous_handle] : [], // le script dépend du précédent
-      $version,
+      $versions[$handle],
       true
     );
 
     $previous_handle = $handle; // pour chaîner la dépendance
+  }
+
+  foreach ($additional as $handle) {
+    $path = "/assets/js/{$handle}.js";
+    $file = $theme_dir . $path;
+
+    if (!isset($versions[$handle])) {
+      $versions[$handle] = file_exists($file) ? filemtime($file) : null;
+    }
+
+    wp_enqueue_script(
+      $handle,
+      $theme_uri . $path,
+      ['helpers', 'ajax', 'ui', 'champ-init'],
+      $versions[$handle],
+      true
+    );
   }
 }
 
