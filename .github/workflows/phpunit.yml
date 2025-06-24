@@ -20,4 +20,4 @@ jobs:
         with:
           php-version: '8.1'
       - run: composer install --no-interaction --prefer-dist
-      - run: vendor/bin/phpunit --configuration tests/phpunit.xml
+      - run: composer test
