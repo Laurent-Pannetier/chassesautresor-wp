@@ -17,6 +17,8 @@ $posts   = array_values(array_filter($posts, function ($post) use ($user_id) {
 
 ?>
 
+<h2>Ses chasses</h2>
+<div class="separateur-2"></div>
 <div class="grille-liste">
   <?php foreach ($posts as $post) : ?>
     <?php
