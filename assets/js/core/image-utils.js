@@ -20,6 +20,8 @@ function initChampImage(bloc) {
       return;
     }
 
+    wp.media.view.settings.post.id = postId;
+
     const frame = wp.media({
       title: 'Choisir une image',
       multiple: false,
