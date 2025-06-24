@@ -10,11 +10,11 @@ $peut_editer     = utilisateur_peut_editer_champs($organisateur_id);
 // User
 $current_user = wp_get_current_user();
 $roles = (array) $current_user->roles;
-$profil_expanded = array_intersect($roles, ['organisateur_creation', 'abonne']);
+$profil_expanded = array_intersect($roles, [ROLE_ORGANISATEUR_CREATION, 'abonne']);
 $profil_expanded = !empty($profil_expanded);
 $infos_expanded = !$profil_expanded;
 $cache_complet  = get_field('organisateur_cache_complet', $organisateur_id);
-$edition_active = in_array('organisateur_creation', $roles) && !$cache_complet;
+$edition_active = in_array(ROLE_ORGANISATEUR_CREATION, $roles) && !$cache_complet;
 
 // Post
 $titre        = get_post_field('post_title', $organisateur_id);

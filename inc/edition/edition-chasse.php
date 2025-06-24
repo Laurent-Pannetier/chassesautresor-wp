@@ -116,8 +116,8 @@ function creer_chasse_et_rediriger_si_appel()
   error_log("✅ Organisateur trouvé : {$organisateur_id}");
 
   // 🔒 Vérification des droits de création
-  if (!current_user_can('administrator') && !current_user_can('organisateur')) {
-    if (in_array('organisateur_creation', $roles, true)) {
+  if (!current_user_can('administrator') && !current_user_can(ROLE_ORGANISATEUR)) {
+    if (in_array(ROLE_ORGANISATEUR_CREATION, $roles, true)) {
       if (organisateur_a_des_chasses($organisateur_id)) {
         wp_die('Limite atteinte');
       }

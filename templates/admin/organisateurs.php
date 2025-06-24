@@ -13,7 +13,7 @@ $logout_url = wc_get_account_endpoint_url('customer-logout'); // Lien déconnexi
 
 
 // Récupérer tous les utilisateurs ayant le rôle "organisateur_creation"
-$utilisateurs = get_users(['role' => 'organisateur_creation']);
+$utilisateurs = get_users(['role' => ROLE_ORGANISATEUR_CREATION]);
 
 $organisateurs_liste = []; // Stocker les résultats trouvés
 

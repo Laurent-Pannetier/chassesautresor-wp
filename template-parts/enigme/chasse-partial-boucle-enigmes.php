@@ -42,7 +42,7 @@ $has_enigmes = !empty($posts_visibles);
     $cta = get_cta_enigme($enigme_id);
 
     $roles = wp_get_current_user()->roles;
-    $est_orga = array_intersect($roles, ['organisateur', 'organisateur_creation']);
+    $est_orga = array_intersect($roles, [ROLE_ORGANISATEUR, ROLE_ORGANISATEUR_CREATION]);
     $voir_bordure = !empty($est_orga) && utilisateur_est_organisateur_associe_a_chasse($utilisateur_id, $chasse_id);
     $classe_completion = '';
     if ($voir_bordure) {

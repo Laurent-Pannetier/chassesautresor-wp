@@ -426,7 +426,7 @@ function assigner_organisateur_automatiquement($post_id, $post)
   $user = get_userdata($auteur_id);
 
   // Accepte organisateur ET organisateur_creation
-  if (array_intersect((array) $user->roles, ['organisateur', 'organisateur_creation'])) {
+  if (array_intersect((array) $user->roles, [ROLE_ORGANISATEUR, ROLE_ORGANISATEUR_CREATION])) {
     update_field('organisateur_id', $auteur_id, $post_id);
   } else {
     error_log("⚠️ Avertissement : L'auteur {$auteur_id} n'a pas un rôle valide (organisateur ou organisateur_creation).");
@@ -769,7 +769,7 @@ function forcer_relation_enigme_dans_chasse_si_absente(int $enigme_id): void
  */
 function verifier_et_synchroniser_cache_enigmes_si_autorise(int $chasse_id): void
 {
-  if (!current_user_can('administrator') && !current_user_can('organisateur') && !current_user_can('organisateur_creation')) {
+  if (!current_user_can('administrator') && !current_user_can(ROLE_ORGANISATEUR) && !current_user_can(ROLE_ORGANISATEUR_CREATION)) {
     return;
   }
 

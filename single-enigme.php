@@ -31,7 +31,7 @@ verifier_ou_mettre_a_jour_cache_complet($enigme_id);
 $enigme_complete = (bool) get_field('enigme_cache_complet', $enigme_id);
 if (
   $edition_active &&
-  current_user_can('organisateur_creation') &&
+  current_user_can(ROLE_ORGANISATEUR_CREATION) &&
   !$enigme_complete &&
   !isset($_GET['edition'])
 ) {
