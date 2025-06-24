@@ -17,6 +17,7 @@ if (file_exists($autoload)) {
     require_once __DIR__ . '/inc/enigme/ManualResponse.php';
     require_once __DIR__ . '/inc/enigme/Tentatives.php';
 }
+
 /**
  * Define Constants
  */
