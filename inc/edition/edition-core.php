@@ -652,13 +652,20 @@ function modifier_relation_acf($post_id, $relation_field, $related_post_id, $acf
  *
  * @param int    $post_id           ID du post concerné
  * @param string $group_key_or_name Nom du groupe ACF (clé ou name)
- * @param string $subfield_name     Nom du sous-champ à mettre à jour
- * @param mixed  $new_value         Nouvelle valeur à enregistrer
+ * @param string $subfield_name     Nom du sous-champ à mettre à jour. Peut être
+ *                                  vide pour une simple initialisation.
+ * @param mixed  $new_value         Nouvelle valeur à enregistrer. S'il s'agit
+ *                                  d'un tableau et que `$subfield_name` est
+ *                                  vide, il sera fusionné avec les valeurs par
+ *                                  défaut.
+ * @param array  $defaults          (Optionnel) Valeurs par défaut du groupe si
+ *                                  celui-ci n'existe pas encore.
+ *
  * @return bool True si la mise à jour est réussie, false sinon
  */
-function mettre_a_jour_sous_champ_group(int $post_id, string $group_key_or_name, string $subfield_name, $new_value): bool
+function mettre_a_jour_sous_champ_group(int $post_id, string $group_key_or_name, string $subfield_name, $new_value, array $defaults = []): bool
 {
-  if (!$post_id || !$group_key_or_name || !$subfield_name) {
+  if (!$post_id || !$group_key_or_name) {
     cat_debug('❌ Paramètres manquants dans mettre_a_jour_sous_champ_group()');
     return false;
   }
@@ -670,7 +677,7 @@ function mettre_a_jour_sous_champ_group(int $post_id, string $group_key_or_name,
   if (!$group_object || empty($group_object['sub_fields'])) {
     // Tentative d'initialisation minimale si jamais le groupe n'est pas encore enregistré
     cat_debug("⚠️ Groupe $group_key_or_name vide ou absent — tentative de réinitialisation forcée.");
-    update_field($group_key_or_name, [], $post_id);
+    update_field($group_key_or_name, $defaults, $post_id);
     $group_object = get_field_object($group_key_or_name, $post_id);
     if (!$group_object || empty($group_object['sub_fields'])) {
       cat_debug("❌ Groupe ACF toujours introuvable après tentative d'initialisation : $group_key_or_name");
@@ -681,11 +688,16 @@ function mettre_a_jour_sous_champ_group(int $post_id, string $group_key_or_name,
 
   $groupe = get_field($group_object['name'], $post_id);
   if (!is_array($groupe)) {
-    $groupe = [];
+    $groupe = $defaults;
+  } else {
+    $groupe = array_merge($defaults, $groupe);
   }
 
-  // Injection de la nouvelle valeur
-  $groupe[$subfield_name] = $new_value;
+  if ($subfield_name !== '') {
+    $groupe[$subfield_name] = $new_value;
+  } elseif (is_array($new_value)) {
+    $groupe = array_merge($groupe, $new_value);
+  }
 
   $champ_a_enregistrer = [];
 
@@ -693,13 +705,10 @@ function mettre_a_jour_sous_champ_group(int $post_id, string $group_key_or_name,
     $name = $sub_field['name'];
     $type = $sub_field['type'];
 
-    if (!array_key_exists($name, $groupe) && $name !== $subfield_name) {
-      $valeur = ''; // Valeur vide par défaut
-    } else {
-      $valeur = ($name === $subfield_name) ? $new_value : $groupe[$name];
+    $valeur = $groupe[$name] ?? '';
+    if ($name === $subfield_name) {
+      $valeur = $new_value;
     }
-
-    $valeur = ($name === $subfield_name) ? $new_value : $groupe[$name];
 
     if ($type === 'date_time_picker') {
       if (preg_match('/^\d{4}-\d{2}-\d{2}$/', trim((string) $valeur))) {
@@ -742,6 +751,10 @@ function mettre_a_jour_sous_champ_group(int $post_id, string $group_key_or_name,
   cat_debug("📥 [DEBUG ACF] Relecture après update : " . json_encode($groupe_verif));
 
 
+
+  if ($subfield_name === '') {
+    return is_array($groupe_verif);
+  }
 
   if (isset($groupe_verif[$subfield_name])) {
     $valeur_relue = $groupe_verif[$subfield_name];

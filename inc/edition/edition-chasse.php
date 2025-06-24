@@ -148,19 +148,30 @@ function creer_chasse_et_rediriger_si_appel()
   $today = current_time('Y-m-d');
   $in_two_years = date('Y-m-d', strtotime('+2 years'));
 
-  // ✅ Mise à jour du groupe ACF "caracteristiques"
-  update_field('caracteristiques', [
-    'chasse_infos_date_debut'        => $today,
-    'chasse_infos_date_fin'          => $in_two_years,
-    'chasse_infos_duree_illimitee'   => false,
-  ], $post_id);
+  // ✅ Initialisation des groupes ACF
+  mettre_a_jour_sous_champ_group(
+    $post_id,
+    'caracteristiques',
+    'chasse_infos_date_debut',
+    $today,
+    [
+      'chasse_infos_date_debut'      => $today,
+      'chasse_infos_date_fin'        => $in_two_years,
+      'chasse_infos_duree_illimitee' => false,
+    ]
+  );
 
-  // ✅ Mise à jour du groupe ACF "champs_caches"
-  update_field('champs_caches', [
-    'chasse_cache_statut'            => 'revision',
-    'chasse_cache_statut_validation' => 'creation',
-    'chasse_cache_organisateur'      => [$organisateur_id],
-  ], $post_id);
+  mettre_a_jour_sous_champ_group(
+    $post_id,
+    'champs_caches',
+    'chasse_cache_organisateur',
+    [$organisateur_id],
+    [
+      'chasse_cache_statut'            => 'revision',
+      'chasse_cache_statut_validation' => 'creation',
+      'chasse_cache_organisateur'      => [$organisateur_id],
+    ]
+  );
 
   // 🚀 Redirection vers la prévisualisation frontale avec panneau ouvert
   $preview_url = add_query_arg('edition', 'open', get_preview_post_link($post_id));
@@ -225,11 +236,12 @@ function modifier_champ_chasse()
   $champ_valide = false;
   $reponse = ['champ' => $champ, 'valeur' => $valeur];
   // 🛡️ Initialisation sécurisée du groupe caracteristiques
-  $groupe_actuel = get_field('caracteristiques', $post_id);
-  if (!is_array($groupe_actuel)) {
-    cat_debug("⚠️ Groupe caracteristiques vide ou absent — tentative de réinitialisation forcée.");
-
-    $groupe_init = [
+  mettre_a_jour_sous_champ_group(
+    $post_id,
+    'caracteristiques',
+    '',
+    [],
+    [
       'chasse_infos_date_debut'        => '',
       'chasse_infos_date_fin'          => '',
       'chasse_infos_duree_illimitee'   => 0,
@@ -238,15 +250,8 @@ function modifier_champ_chasse()
       'chasse_infos_recompense_texte'  => '',
       'chasse_infos_nb_max_gagants'    => 0,
       'chasse_infos_cout_points'       => 0,
-    ];
-
-    $ok_init = update_field('caracteristiques', $groupe_init, $post_id);
-    if (!$ok_init) {
-      cat_debug("❌ Groupe ACF toujours introuvable après tentative d'initialisation : caracteristiques");
-    } else {
-      cat_debug("✅ Groupe caracteristiques initialisé manuellement pour post #$post_id");
-    }
-  }
+    ]
+  );
 
 
   // 🔹 post_title
