@@ -1057,6 +1057,41 @@ get_cta_enigme() (à déplacer ici si elle migre du fichier visuel)
 tout helper type est_cliquable, affiche_indice, etc. */
 
 /**
+ * Détermine si une chasse doit être visible pour un utilisateur.
+ *
+ * @param int $chasse_id ID de la chasse.
+ * @param int $user_id   ID de l'utilisateur.
+ * @return bool          True si visible, false sinon.
+ */
+function chasse_est_visible_pour_utilisateur(int $chasse_id, int $user_id): bool
+{
+    $status = get_post_status($chasse_id);
+    if (!in_array($status, ['pending', 'publish'], true)) {
+        return false;
+    }
+
+    $cache      = get_field('champs_caches', $chasse_id) ?: [];
+    $validation = $cache['chasse_cache_statut_validation'] ?? '';
+    if ($validation === 'banni') {
+        return false;
+    }
+
+    if ($status === 'pending') {
+        $user  = get_userdata($user_id);
+        $roles = $user ? (array) $user->roles : [];
+        if (!array_intersect($roles, ['organisateur', 'organisateur_creation'])) {
+            return false;
+        }
+
+        if (!utilisateur_est_organisateur_associe_a_chasse($user_id, $chasse_id)) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+/**
  * Autorise la consultation des énigmes non publiées pour les organisateurs
  * associés.
  *

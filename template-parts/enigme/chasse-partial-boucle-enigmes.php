@@ -4,39 +4,8 @@ defined('ABSPATH') || exit;
 $chasse_id = $args['chasse_id'] ?? null;
 if (!$chasse_id || get_post_type($chasse_id) !== 'chasse') return;
 
+
 $utilisateur_id = get_current_user_id();
-
-if (!function_exists('chasse_est_visible_pour_utilisateur')) {
-  /**
-   * Détermine si la liste des énigmes d'une chasse doit être affichée pour un utilisateur.
-   */
-  function chasse_est_visible_pour_utilisateur(int $chasse_id, int $user_id): bool
-  {
-    $status = get_post_status($chasse_id);
-    if (!in_array($status, ['pending', 'publish'], true)) {
-      return false;
-    }
-
-    $cache       = get_field('champs_caches', $chasse_id) ?: [];
-    $validation  = $cache['chasse_cache_statut_validation'] ?? '';
-    if ($validation === 'banni') {
-      return false;
-    }
-
-    if ($status === 'pending') {
-      $roles = wp_get_current_user()->roles;
-      if (!array_intersect($roles, ['organisateur', 'organisateur_creation'])) {
-        return false;
-      }
-
-      if (!utilisateur_est_organisateur_associe_a_chasse($user_id, $chasse_id)) {
-        return false;
-      }
-    }
-
-    return true;
-  }
-}
 
 if (!chasse_est_visible_pour_utilisateur($chasse_id, $utilisateur_id)) {
   return;
