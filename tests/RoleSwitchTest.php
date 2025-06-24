@@ -1,5 +1,5 @@
 <?php
-use PHPUnit\Framework\TestCase;
+use WP_Mock\Tools\TestCase;
 
 require_once __DIR__ . '/bootstrap.php';
 
@@ -7,9 +7,16 @@ class RoleSwitchTest extends TestCase
 {
     protected function setUp(): void
     {
+        parent::setUp();
         global $mock_users, $current_user_id;
         $mock_users = [];
         $current_user_id = 0;
+    }
+
+    protected function tearDown(): void
+    {
+        \WP_Mock::tearDown();
+        parent::tearDown();
     }
 
     public function test_ajouter_role_organisateur_creation_adds_role()
