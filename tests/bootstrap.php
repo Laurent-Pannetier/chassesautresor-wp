@@ -29,6 +29,17 @@ if (!function_exists('get_current_user_id')) {
         return $current_user_id;
     }
 }
+if (!function_exists('is_user_logged_in')) {
+    function is_user_logged_in() {
+        return get_current_user_id() > 0;
+    }
+}
+if (!function_exists('wp_get_current_user')) {
+    function wp_get_current_user() {
+        $id = get_current_user_id();
+        return get_userdata($id) ?: new WP_User($id);
+    }
+}
 if (!function_exists('get_userdata')) {
     function get_userdata($id) {
         global $mock_users;
@@ -47,6 +58,18 @@ if (!function_exists('get_post_type')) {
         return $mock_posts[$post_id]['post_type'] ?? null;
     }
 }
+if (!function_exists('get_post_field')) {
+    function get_post_field($field, $post_id) {
+        global $mock_posts;
+        return $mock_posts[$post_id][$field] ?? null;
+    }
+}
+if (!function_exists('get_post_status')) {
+    function get_post_status($post_id) {
+        global $mock_posts;
+        return $mock_posts[$post_id]['post_status'] ?? 'publish';
+    }
+}
 
 if (!function_exists('get_field')) {
     function get_field($key, $post_id = 0) {
@@ -62,6 +85,21 @@ if (!function_exists('recuperer_id_chasse_associee')) {
             return reset($champ);
         }
         return $champ;
+    }
+}
+if (!function_exists('get_organisateur_from_chasse')) {
+    function get_organisateur_from_chasse($chasse_id) {
+        $cache = get_field('champs_caches', $chasse_id);
+        if (!$cache || !isset($cache['chasse_cache_organisateur'])) {
+            return null;
+        }
+        $id = $cache['chasse_cache_organisateur'];
+        if (is_array($id)) {
+            $id = reset($id);
+        } elseif ($id instanceof WP_Post) {
+            $id = $id->ID;
+        }
+        return is_numeric($id) ? (int) $id : null;
     }
 }
 
@@ -117,3 +155,4 @@ if (!class_exists('WP_User')) {
 require_once __DIR__ . '/../inc/constants.php';
 require_once __DIR__ . '/../inc/access-functions.php';
 require_once __DIR__ . '/../inc/chasse-functions.php';
+require_once __DIR__ . '/../inc/user-functions.php';
