@@ -84,14 +84,17 @@ get_header();
                         <div class="grille-3">
                             <?php
                             $organisateur_id = get_the_ID();
-                            $chasses = get_chasses_en_creation($organisateur_id);
+                            $query = get_chasses_de_organisateur($organisateur_id);
+                            $chasses = is_a($query, 'WP_Query') ? $query->posts : (array) $query;
+                            $user_id = get_current_user_id();
+                            $chasses = array_values(array_filter($chasses, function ($post) use ($user_id) {
+                                return chasse_est_visible_pour_utilisateur($post->ID, $user_id);
+                            }));
                             $peut_ajouter = utilisateur_peut_ajouter_chasse($organisateur_id);
                             $has_chasses = !empty($chasses);
 
                             foreach ($chasses as $post) :
                                 $chasse_id = $post->ID;
-                                $image = get_field('chasse_principale_image', $chasse_id);
-                                $image_url = is_array($image) ? $image['sizes']['large'] ?? $image['url'] : '';
 
                             ?>
                                 <article class="carte-chasse" data-post-id="<?= esc_attr($chasse_id); ?>">
