@@ -41,9 +41,8 @@ $has_enigmes = !empty($posts_visibles);
     $statut_utilisateur = enigme_get_statut_utilisateur($enigme_id, $utilisateur_id);
     $cta = get_cta_enigme($enigme_id);
 
-    $roles = wp_get_current_user()->roles;
-    $est_orga = array_intersect($roles, [ROLE_ORGANISATEUR, ROLE_ORGANISATEUR_CREATION]);
-    $voir_bordure = !empty($est_orga) && utilisateur_est_organisateur_associe_a_chasse($utilisateur_id, $chasse_id);
+    $est_orga = est_organisateur();
+    $voir_bordure = $est_orga && utilisateur_est_organisateur_associe_a_chasse($utilisateur_id, $chasse_id);
     $classe_completion = '';
     if ($voir_bordure) {
       verifier_ou_mettre_a_jour_cache_complet($enigme_id);

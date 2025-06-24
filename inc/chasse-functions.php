@@ -292,13 +292,7 @@ function peut_valider_chasse(int $chasse_id, int $user_id): bool
         return false;
     }
 
-    $user = get_user_by('id', $user_id);
-    if (!$user) {
-        return false;
-    }
-
-    $roles = (array) $user->roles;
-    if (!array_intersect($roles, [ROLE_ORGANISATEUR, ROLE_ORGANISATEUR_CREATION])) {
+    if (!est_organisateur($user_id)) {
         return false;
     }
 

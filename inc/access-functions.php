@@ -177,6 +177,36 @@ add_filter('user_has_cap', function ($allcaps, $cap, $args, $user) {
     return $allcaps;
 }, 10, 4);
 
+/**
+ * Vérifie si un utilisateur possède un rôle d'organisateur.
+ *
+ * L'utilisateur peut être organisateur confirmé ou en cours de création.
+ * Si aucun ID n'est fourni, l'utilisateur courant est utilisé.
+ *
+ * @param int|null $user_id ID de l'utilisateur ou null pour courant.
+ * @return bool True si l'utilisateur a un rôle d'organisateur.
+ */
+function est_organisateur($user_id = null)
+{
+    if (!$user_id) {
+        $user_id = get_current_user_id();
+    }
+
+    if (!$user_id) {
+        return false;
+    }
+
+    $user = get_userdata($user_id);
+    if (!$user) {
+        return false;
+    }
+
+    $roles = (array) $user->roles;
+
+    return in_array(ROLE_ORGANISATEUR, $roles, true)
+        || in_array(ROLE_ORGANISATEUR_CREATION, $roles, true);
+}
+
 
 // ==================================================
 // 📄 ACCÈS À UN POST (voir, modifier, créer, voir)
@@ -410,9 +440,7 @@ function utilisateur_peut_ajouter_enigme(int $chasse_id, ?int $user_id = null): 
         return false;
     }
 
-    $user  = get_user_by('id', $user_id);
-    $roles = (array) ($user->roles ?? []);
-    if (!array_intersect($roles, [ROLE_ORGANISATEUR, ROLE_ORGANISATEUR_CREATION])) {
+    if (!est_organisateur($user_id)) {
         error_log("❌ [ajout énigme] rôle utilisateur #$user_id invalide");
         return false;
     }
@@ -500,9 +528,7 @@ function utilisateur_peut_supprimer_enigme(int $enigme_id, ?int $user_id = null)
         return false;
     }
 
-    $user  = get_user_by('id', $user_id);
-    $roles = (array) ($user->roles ?? []);
-    if (!array_intersect($roles, [ROLE_ORGANISATEUR, ROLE_ORGANISATEUR_CREATION])) {
+    if (!est_organisateur($user_id)) {
         return false;
     }
 
@@ -582,9 +608,8 @@ function utilisateur_peut_voir_panneau(int $post_id): bool
     }
 
     $user  = wp_get_current_user();
-    $roles = (array) $user->roles;
 
-    if (!array_intersect($roles, [ROLE_ORGANISATEUR, ROLE_ORGANISATEUR_CREATION])) {
+    if (!est_organisateur($user->ID)) {
         return false;
     }
 
@@ -803,7 +828,7 @@ add_action('admin_init', function () {
     }
 
     // Si le rôle est bloqué et qu'on est dans wp-admin, redirection
-    if (array_intersect($roles_bloques, (array) $user->roles)) {
+    if (est_organisateur($user->ID)) {
         // Exception possible : autoriser upload.php pour wp.media
         $current_screen = $_SERVER['REQUEST_URI'] ?? '';
         if (strpos($current_screen, '/upload.php') !== false) {
@@ -1107,14 +1132,11 @@ function chasse_est_visible_pour_utilisateur(int $chasse_id, int $user_id): bool
     $validation = $cache['chasse_cache_statut_validation'] ?? '';
 
     if ($status === 'pending') {
-        $user  = get_userdata($user_id);
-        $roles = $user ? (array) $user->roles : [];
-
         $assoc = utilisateur_est_organisateur_associe_a_chasse($user_id, $chasse_id);
 
         return $validation !== 'banni'
             && $assoc
-            && array_intersect($roles, [ROLE_ORGANISATEUR, ROLE_ORGANISATEUR_CREATION]);
+            && est_organisateur($user_id);
     }
 
     return $validation !== 'banni';
@@ -1136,8 +1158,7 @@ add_action('pre_get_posts', function ($query) {
     }
 
     if ($query->is_singular('enigme') && is_user_logged_in()) {
-        $roles = (array) wp_get_current_user()->roles;
-        if (array_intersect($roles, [ROLE_ORGANISATEUR, ROLE_ORGANISATEUR_CREATION])) {
+        if (est_organisateur()) {
             $query->set('post_status', ['publish', 'pending', 'draft']);
         }
     }

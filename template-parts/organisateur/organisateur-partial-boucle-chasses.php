@@ -21,9 +21,8 @@ $posts   = array_values(array_filter($posts, function ($post) use ($user_id) {
   <?php foreach ($posts as $post) : ?>
     <?php
     $chasse_id = $post->ID;
-    $roles = wp_get_current_user()->roles;
-    $est_orga = array_intersect($roles, [ROLE_ORGANISATEUR, ROLE_ORGANISATEUR_CREATION]);
-    $voir_bordure = !empty($est_orga) && utilisateur_est_organisateur_associe_a_chasse(get_current_user_id(), $chasse_id);
+    $est_orga = est_organisateur();
+    $voir_bordure = $est_orga && utilisateur_est_organisateur_associe_a_chasse(get_current_user_id(), $chasse_id);
     $classe_completion = '';
     if ($voir_bordure) {
       verifier_ou_mettre_a_jour_cache_complet($chasse_id);

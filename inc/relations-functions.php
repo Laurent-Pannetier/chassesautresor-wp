@@ -423,10 +423,8 @@ function assigner_organisateur_automatiquement($post_id, $post)
   }
 
   $auteur_id = $post->post_author;
-  $user = get_userdata($auteur_id);
 
-  // Accepte organisateur ET organisateur_creation
-  if (array_intersect((array) $user->roles, [ROLE_ORGANISATEUR, ROLE_ORGANISATEUR_CREATION])) {
+  if (est_organisateur($auteur_id)) {
     update_field('organisateur_id', $auteur_id, $post_id);
   } else {
     error_log("⚠️ Avertissement : L'auteur {$auteur_id} n'a pas un rôle valide (organisateur ou organisateur_creation).");
