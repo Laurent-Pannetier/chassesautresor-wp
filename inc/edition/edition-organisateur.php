@@ -54,14 +54,14 @@ function organisateur_get_liens_actifs(int $organisateur_id): array
 function creer_organisateur_pour_utilisateur($user_id)
 {
   if (!is_int($user_id) || $user_id <= 0) {
-    error_log("❌ ID utilisateur invalide : $user_id");
+    cat_debug("❌ ID utilisateur invalide : $user_id");
     return null;
   }
 
   // Vérifie si un organisateur est déjà lié à cet utilisateur
   $existant = get_organisateur_from_user($user_id);
   if ($existant) {
-    error_log("ℹ️ Un organisateur existe déjà pour l'utilisateur $user_id (ID : $existant)");
+    cat_debug("ℹ️ Un organisateur existe déjà pour l'utilisateur $user_id (ID : $existant)");
     // Renvoie simplement l'ID existant pour éviter un échec de confirmation
     return (int) $existant;
   }
@@ -75,7 +75,7 @@ function creer_organisateur_pour_utilisateur($user_id)
   ]);
 
   if (is_wp_error($post_id)) {
-    error_log("❌ Erreur création organisateur : " . $post_id->get_error_message());
+    cat_debug("❌ Erreur création organisateur : " . $post_id->get_error_message());
     return null;
   }
 
@@ -96,7 +96,7 @@ function creer_organisateur_pour_utilisateur($user_id)
 
   update_field('profil_public', $profil_public, $post_id);
 
-  error_log("✅ Organisateur créé (pending) pour user $user_id : post ID $post_id");
+  cat_debug("✅ Organisateur créé (pending) pour user $user_id : post ID $post_id");
 
   return $post_id;
 }
@@ -361,8 +361,8 @@ add_action('wp_ajax_modifier_titre_organisateur', 'modifier_titre_organisateur')
  */
 function modifier_titre_organisateur()
 {
-  error_log('== FICHIER AJAX ORGANISATEUR CHARGÉ ==');
-  error_log('== ENTREE AJAX modifier_titre_organisateur ==');
+  cat_debug('== FICHIER AJAX ORGANISATEUR CHARGÉ ==');
+  cat_debug('== ENTREE AJAX modifier_titre_organisateur ==');
 
   if (!is_user_logged_in()) {
     wp_send_json_error('non_connecte');
@@ -394,16 +394,16 @@ function modifier_titre_organisateur()
     'post_title' => $titre,
   ], true);
 
-  error_log("=== DEBUG TITRE ===");
-  error_log("Résultat : " . print_r($result, true));
+  cat_debug("=== DEBUG TITRE ===");
+  cat_debug("Résultat : " . print_r($result, true));
   $post = get_post($organisateur_id);
-  error_log("Titre réel en base : " . $post->post_title);
+  cat_debug("Titre réel en base : " . $post->post_title);
 
 
-  error_log("=== MODIF ORGANISATEUR ===");
-  error_log("User ID: " . $user_id);
-  error_log("Post ID: " . $organisateur_id);
-  error_log("Titre envoyé : " . $titre);
+  cat_debug("=== MODIF ORGANISATEUR ===");
+  cat_debug("User ID: " . $user_id);
+  cat_debug("Post ID: " . $organisateur_id);
+  cat_debug("Titre envoyé : " . $titre);
 
 
 

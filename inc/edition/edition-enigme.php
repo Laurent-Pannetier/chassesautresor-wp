@@ -706,9 +706,9 @@ add_action('acf/save_post', function ($post_id) {
   );
 
   if ($success) {
-    error_log("✅ Énigme $post_id ajoutée à la chasse $chasse_id");
+    cat_debug("✅ Énigme $post_id ajoutée à la chasse $chasse_id");
   } else {
-    error_log("❌ Échec ajout énigme $post_id à la chasse $chasse_id");
+    cat_debug("❌ Échec ajout énigme $post_id à la chasse $chasse_id");
   }
 }, 20);
 
@@ -755,7 +755,7 @@ function nettoyer_relations_orphelines()
     // 🔥 Si on a supprimé des IDs, mettre à jour la base
     if (count($relations_nettoyees) !== count($relations)) {
       update_post_meta($post_id, 'champs_caches_enigmes_associees', $relations_nettoyees);
-      error_log("✅ Relations nettoyées pour la chasse ID {$post_id} : " . print_r($relations_nettoyees, true));
+      cat_debug("✅ Relations nettoyées pour la chasse ID {$post_id} : " . print_r($relations_nettoyees, true));
     }
   }
 }

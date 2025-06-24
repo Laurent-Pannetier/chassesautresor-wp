@@ -93,7 +93,7 @@ function enigme_mettre_a_jour_statut_utilisateur(int $enigme_id, int $user_id, s
     ];
 
     if (!isset($priorites[$nouveau_statut])) {
-        error_log("❌ Statut utilisateur invalide : $nouveau_statut");
+        cat_debug("❌ Statut utilisateur invalide : $nouveau_statut");
         return false;
     }
 
@@ -105,7 +105,7 @@ function enigme_mettre_a_jour_statut_utilisateur(int $enigme_id, int $user_id, s
 
     // Protection : interdiction de rétrograder un joueur ayant déjà résolu l’énigme
     if (!$forcer && in_array($statut_actuel, ['resolue', 'terminee'], true)) {
-        error_log("🔒 Statut non modifié : $statut_actuel → tentative de mise à jour vers $nouveau_statut bloquée (UID: $user_id / Enigme: $enigme_id)");
+        cat_debug("🔒 Statut non modifié : $statut_actuel → tentative de mise à jour vers $nouveau_statut bloquée (UID: $user_id / Enigme: $enigme_id)");
         return false;
     }
 
@@ -399,7 +399,7 @@ function mettre_a_jour_statuts_enigmes_de_la_chasse(int $chasse_id): void
 function enigme_mettre_a_jour_etat_systeme(int $enigme_id, bool $mettre_a_jour = true, ?string $statut_chasse_forcé = null): string
 {
     if (get_post_type($enigme_id) !== 'enigme') {
-        error_log("❌ [STATUT] Post #$enigme_id n'est pas une énigme");
+        cat_debug("❌ [STATUT] Post #$enigme_id n'est pas une énigme");
         return 'cache_invalide';
     }
     $etat = 'accessible';
@@ -408,10 +408,10 @@ function enigme_mettre_a_jour_etat_systeme(int $enigme_id, bool $mettre_a_jour =
     $chasse_id = recuperer_id_chasse_associee($enigme_id);
     if (!$chasse_id || get_post_type($chasse_id) !== 'chasse') {
         $etat = 'bloquee_chasse';
-        error_log("🧩 #$enigme_id → bloquee_chasse (aucune chasse valide liée)");
+        cat_debug("🧩 #$enigme_id → bloquee_chasse (aucune chasse valide liée)");
     } else {
         $statut_chasse = $statut_chasse_forcé ?? (get_field('champs_caches', $chasse_id)['chasse_cache_statut'] ?? null);
-        error_log("🧩 #$enigme_id → chasse #$chasse_id statut = $statut_chasse");
+        cat_debug("🧩 #$enigme_id → chasse #$chasse_id statut = $statut_chasse");
 
         if (!in_array($statut_chasse, ['en_cours', 'payante', 'termine'], true)) {
             $etat = 'bloquee_chasse';
@@ -426,7 +426,7 @@ function enigme_mettre_a_jour_etat_systeme(int $enigme_id, bool $mettre_a_jour =
         $date_obj = convertir_en_datetime($date);
         if (!$date_obj || $date_obj->getTimestamp() > time()) {
             $etat = 'bloquee_date';
-            error_log("🧩 #$enigme_id → bloquee_date (accès programmé futur ou vide)");
+            cat_debug("🧩 #$enigme_id → bloquee_date (accès programmé futur ou vide)");
         }
     }
 
@@ -435,7 +435,7 @@ function enigme_mettre_a_jour_etat_systeme(int $enigme_id, bool $mettre_a_jour =
     $reponse = get_field('enigme_reponse_bonne', $enigme_id);
     if ($etat === 'accessible' && $mode === 'automatique' && !$reponse) {
         $etat = 'invalide';
-        error_log("🧩 #$enigme_id → invalide (automatique sans réponse)");
+        cat_debug("🧩 #$enigme_id → invalide (automatique sans réponse)");
     }
 
     // ✅ Mise à jour ACF si demandé
@@ -444,7 +444,7 @@ function enigme_mettre_a_jour_etat_systeme(int $enigme_id, bool $mettre_a_jour =
         if ($actuel !== $etat) {
             update_field('enigme_cache_etat_systeme', $etat, $enigme_id);
         } else {
-            error_log("⏸️ [STATUT] Pas de changement pour #$enigme_id (déjà $etat)");
+            cat_debug("⏸️ [STATUT] Pas de changement pour #$enigme_id (déjà $etat)");
         }
     }
 
@@ -752,7 +752,7 @@ function mettre_a_jour_statuts_chasse($chasse_id)
     $carac = get_field('caracteristiques', $chasse_id);
     $cache = get_field('champs_caches', $chasse_id);
     if (!$carac || !$cache) {
-        error_log("⚠️ Données manquantes pour chasse #$chasse_id : caractéristiques ou champs_caches");
+        cat_debug("⚠️ Données manquantes pour chasse #$chasse_id : caractéristiques ou champs_caches");
         return;
     }
 
@@ -854,7 +854,7 @@ function mettre_a_jour_statut_si_chasse($post_id)
         // 🔁 Supprimer le champ pour forcer une relecture propre (évite valeurs en cache)
         delete_transient("acf_field_{$post_id}_champs_caches");
 
-        error_log("🔁 Recalcul du statut via acf/save_post pour la chasse $post_id");
+        cat_debug("🔁 Recalcul du statut via acf/save_post pour la chasse $post_id");
         mettre_a_jour_statuts_chasse($post_id);
     }
 }
@@ -996,7 +996,7 @@ function forcer_statut_selon_validation_chasse($post_id, $post, $update)
     };
 
     if ($statut_wp !== $statut_attendu) {
-        error_log("⚠️ Décalage statut WP vs ACF pour chasse $post_id → WP = $statut_wp / ACF = $validation");
+        cat_debug("⚠️ Décalage statut WP vs ACF pour chasse $post_id → WP = $statut_wp / ACF = $validation");
 
         // ⛔ EN DÉVELOPPEMENT : synchronisation désactivée
         // ✅ À ACTIVER EN PROD :
