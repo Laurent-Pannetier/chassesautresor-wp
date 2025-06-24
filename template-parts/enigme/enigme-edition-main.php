@@ -7,6 +7,10 @@
 
 defined('ABSPATH') || exit;
 
+use function Chasses\Enigme\enigme_get_liste_prerequis_possibles;
+use function Chasses\Enigme\recuperer_tentatives_enigme;
+use function Chasses\Enigme\compter_tentatives_enigme;
+
 $enigme_id = $args['enigme_id'] ?? null;
 if (!$enigme_id || get_post_type($enigme_id) !== 'enigme') {
   return;

@@ -1,26 +1,30 @@
 // ✅ enigme-edit.js
 var DEBUG = window.DEBUG || false;
-DEBUG && console.log('✅ enigme-edit.js chargé');
+DEBUG && console.log('✅ enigme-edit.js chargé (readyState =', document.readyState, ')');
 
 let boutonToggle;
 let panneauEdition;
 
 
 
-document.addEventListener('DOMContentLoaded', () => {
+function initEnigmeEdit() {
+  DEBUG && console.log('[enigme-edit] initEnigmeEdit');
   boutonToggle = document.getElementById('toggle-mode-edition-enigme');
   panneauEdition = document.querySelector('.edition-panel-enigme');
+  DEBUG && console.log('[enigme-edit] boutonToggle=', !!boutonToggle, '| panneauEdition=', !!panneauEdition);
 
   // ==============================
   // 🛠️ Contrôles panneau principal
   // ==============================
   boutonToggle?.addEventListener('click', () => {
+    DEBUG && console.log('[enigme-edit] toggle clicked');
     document.body.classList.toggle('edition-active-enigme');
     document.body.classList.toggle('panneau-ouvert');
   });
 
 
   panneauEdition?.querySelector('.panneau-fermer')?.addEventListener('click', () => {
+    DEBUG && console.log('[enigme-edit] panneau fermé');
     document.body.classList.remove('edition-active-enigme');
     document.body.classList.remove('panneau-ouvert');
     document.activeElement?.blur();
@@ -453,6 +457,16 @@ function initChampNbTentatives() {
 
   // 🔄 Fonction exportée globalement
   window.mettreAJourMessageTentatives = mettreAJourAideTentatives;
+}
+
+if (document.readyState === 'loading') {
+  DEBUG && console.log('[enigme-edit] waiting DOMContentLoaded');
+  document.addEventListener('DOMContentLoaded', () => {
+    DEBUG && console.log('[enigme-edit] DOMContentLoaded');
+    initEnigmeEdit();
+  });
+} else {
+  initEnigmeEdit();
 }
 
 
