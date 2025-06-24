@@ -472,27 +472,6 @@ if (document.readyState === 'loading') {
   initEnigmeEdit();
 }
 
-if (document.readyState === 'loading') {
-  DEBUG && console.log('[enigme-edit] waiting DOMContentLoaded');
-  document.addEventListener('DOMContentLoaded', () => {
-    DEBUG && console.log('[enigme-edit] DOMContentLoaded');
-    initEnigmeEdit();
-  });
-} else {
-  initEnigmeEdit();
-}
-
-if (document.readyState === 'loading') {
-  DEBUG && console.log('[enigme-edit] waiting DOMContentLoaded');
-  document.addEventListener('DOMContentLoaded', () => {
-    DEBUG && console.log('[enigme-edit] DOMContentLoaded');
-    initEnigmeEdit();
-  });
-
-} else {
-  initEnigmeEdit();
-}
-
 
 
 // ================================
