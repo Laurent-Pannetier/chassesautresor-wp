@@ -6,7 +6,6 @@ $organisateur_id = get_organisateur_id_from_context($args ?? []);
 $peut_modifier   = utilisateur_peut_voir_panneau($organisateur_id);
 $peut_editer     = utilisateur_peut_editer_champs($organisateur_id);
 
-
 // User
 $current_user = wp_get_current_user();
 $roles = (array) $current_user->roles;
@@ -103,7 +102,7 @@ $classe_vide_coordonnees = ($iban_vide || $bic_vide) ? 'champ-vide' : '';
 
               <li class="champ-organisateur champ-logo ligne-logo <?= !empty($logo) ? 'champ-rempli' : 'champ-vide'; ?>" data-champ="profil_public_logo_organisateur">
                 Un logo
-                <?php if ($peut_modifier) : ?>
+                <?php if ($peut_editer) : ?>
                   <button type="button"
                     class="champ-modifier"
                     aria-label="Modifier le logo"
@@ -120,7 +119,7 @@ $classe_vide_coordonnees = ($iban_vide || $bic_vide) ? 'champ-vide' : '';
               <?php $class_description = empty($description) ? 'champ-vide' : 'champ-rempli'; ?>
               <li class="champ-organisateur champ-description ligne-description <?= $class_description; ?>" data-champ="description_longue">
                 Une présentation
-                <?php if ($peut_modifier) : ?>
+                <?php if ($peut_editer) : ?>
                   <button type="button"
                     class="champ-modifier ouvrir-panneau-description"
                     aria-label="Modifier la description longue">
@@ -233,7 +232,7 @@ $classe_vide_coordonnees = ($iban_vide || $bic_vide) ? 'champ-vide' : '';
     <div class="edition-panel-footer"></div>
   </section>
 <?php endif; ?>
-<?php if ($peut_modifier) : ?>
+<?php if ($peut_editer) : ?>
   <?php get_template_part('template-parts/organisateur/panneaux/organisateur-edition-description', null, [
     'organisateur_id' => $organisateur_id
   ]); ?>

@@ -152,6 +152,7 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
                   <span class="champ-label">Sites et réseaux dédiés à cette chasse</span>
 
                   <?php if ($peut_modifier) : ?>
+
                     <button type="button"
                       class="champ-modifier ouvrir-panneau-liens"
                       data-champ="chasse_principale_liens"
