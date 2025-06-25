@@ -108,6 +108,9 @@ function creer_enigme_pour_chasse($chasse_id, $user_id = null)
   $date_deblocage = (new DateTime('+1 month'))->format('Y-m-d');
   update_field('enigme_acces_date', $date_deblocage, $enigme_id);
 
+  // Calcule l\'état système initial pour permettre l\'édition complète
+  enigme_mettre_a_jour_etat_systeme($enigme_id);
+
   return $enigme_id;
 }
 
