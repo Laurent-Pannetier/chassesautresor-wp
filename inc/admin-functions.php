@@ -1373,3 +1373,80 @@ function afficher_tableau_organisateurs_en_creation() {
     echo '<td>' . intval($oldest['nb_enigmes']) . ' énigmes</td>';
     echo '</tr></tbody></table>';
 }
+
+/**
+ * Récupère les chasses ayant une demande de validation en attente.
+ *
+ * @return array[] Liste des données des demandes.
+ */
+function recuperer_demandes_validation_chasse() {
+    if (!current_user_can('administrator')) {
+        return [];
+    }
+
+    $query = new WP_Query([
+        'post_type'      => 'chasse',
+        'posts_per_page' => -1,
+        'post_status'    => 'pending',
+        'meta_query'     => [
+            [
+                'key'     => 'champs_caches_chasse_cache_statut',
+                'value'   => 'en_attente',
+                'compare' => '='
+            ]
+        ]
+    ]);
+
+    $entries = [];
+    foreach ($query->posts as $post) {
+        $chasse_id = $post->ID;
+        $organisateur_id = get_organisateur_from_chasse($chasse_id);
+        $organisateur_titre = $organisateur_id ? get_the_title($organisateur_id) : '';
+        $organisateur_status = $organisateur_id ? get_post_status($organisateur_id) : '';
+        $users = $organisateur_id ? (array) get_field('utilisateurs_associes', $organisateur_id) : [];
+        $user_obj = !empty($users) ? get_user_by('id', $users[0]) : null;
+        $user_name = $user_obj ? $user_obj->display_name : '';
+        $nb_enigmes = count(recuperer_enigmes_associees($chasse_id));
+        $date_demande = get_post_modified_time('d/m/Y', false, $chasse_id);
+
+        $entries[] = [
+            'user_name'           => $user_name,
+            'organisateur_id'     => $organisateur_id,
+            'organisateur_titre'  => $organisateur_titre,
+            'organisateur_status' => $organisateur_status,
+            'chasse_id'           => $chasse_id,
+            'chasse_titre'        => get_the_title($chasse_id),
+            'nb_enigmes'          => $nb_enigmes,
+            'date_demande'        => $date_demande,
+        ];
+    }
+    wp_reset_postdata();
+    return $entries;
+}
+
+/**
+ * Affiche un tableau des demandes de validation de chasse en attente.
+ */
+function afficher_tableau_demandes_validation_chasse() {
+    $liste = recuperer_demandes_validation_chasse();
+    if (empty($liste)) {
+        echo '<p>Aucune demande de validation en attente.</p>';
+        return;
+    }
+
+    echo '<table class="table-organisateurs">';
+    echo '<thead><tr><th>Utilisateur</th><th>Organisateur</th><th>Chasse</th><th>Date</th></tr></thead><tbody>';
+    foreach ($liste as $entry) {
+        echo '<tr>';
+        echo '<td>' . esc_html($entry['user_name']) . '</td>';
+        echo '<td>' . esc_html($entry['organisateur_titre']);
+        if ($entry['organisateur_status'] === 'pending') {
+            echo ' <span class="badge-new">new</span>';
+        }
+        echo '</td>';
+        echo '<td><strong><a href="' . esc_url(get_permalink($entry['chasse_id'])) . '">' . esc_html($entry['chasse_titre']) . '</a></strong> (' . intval($entry['nb_enigmes']) . ')</td>';
+        echo '<td>' . esc_html($entry['date_demande']) . '</td>';
+        echo '</tr>';
+    }
+    echo '</tbody></table>';
+}

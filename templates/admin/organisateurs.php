@@ -138,44 +138,51 @@ foreach ($utilisateurs as $user) {
             <!-- 📌 Contenu Principal -->
             <div class="dashboard-content">
                 <div class="woocommerce-account-content">
-                    <?php 
-                    
-                    // Vérifier s'il y a des résultats avant d'afficher le tableau
-if (!empty($organisateurs_liste)) :
-?>
-    <h3>Organisateurs : création en cours</h3>
-    <span><?php echo count($organisateurs_liste); ?> résultat(s) trouvé(s)</span>
-    <table class="table-organisateurs">
-        <thead>
-            <tr>
-                <th>Utilisateur</th>
-                <th>Organisateur</th>
-                <th>Chasse</th>
-                <th>Nb Énigmes</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php foreach ($organisateurs_liste as $entry) : ?>
-                <tr>
-                    <td><?php echo esc_html($entry['user_name']); ?></td>
-                    <td>
-                        <a href="<?php echo esc_url($entry['organisateur_preview_url']); ?>" target="_blank">
-                            <?php echo esc_html($entry['organisateur_titre']); ?>
-                        </a>
-                        <br><small>Dernière modif : <?php echo esc_html($entry['organisateur_mod_date']); ?></small>
-                    </td>
-                    <td>
-                        <a href="<?php echo esc_url($entry['chasse_preview_url']); ?>" target="_blank">
-                            <?php echo esc_html($entry['chasse_titre']); ?>
-                        </a>
-                        <br><small>Dernière modif : <?php echo esc_html($entry['chasse_mod_date']); ?></small>
-                    </td>
-                    <td><?php echo esc_html($entry['total_enigmes']); ?></td>
-                </tr>
-            <?php endforeach; ?>
-        </tbody>
-    </table>
-<?php endif; // Fin de la condition ?>
+                    <?php
+                    if (!empty($organisateurs_liste)) :
+                    ?>
+                        <h3>Organisateurs : création en cours</h3>
+                        <span><?php echo count($organisateurs_liste); ?> résultat(s) trouvé(s)</span>
+                        <table class="table-organisateurs">
+                            <thead>
+                                <tr>
+                                    <th>Utilisateur</th>
+                                    <th>Organisateur</th>
+                                    <th>Chasse</th>
+                                    <th>Nb Énigmes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($organisateurs_liste as $entry) : ?>
+                                    <tr>
+                                        <td><?php echo esc_html($entry['user_name']); ?></td>
+                                        <td>
+                                            <a href="<?php echo esc_url($entry['organisateur_preview_url']); ?>" target="_blank">
+                                                <?php echo esc_html($entry['organisateur_titre']); ?>
+                                            </a>
+                                            <br><small>Dernière modif : <?php echo esc_html($entry['organisateur_mod_date']); ?></small>
+                                        </td>
+                                        <td>
+                                            <a href="<?php echo esc_url($entry['chasse_preview_url']); ?>" target="_blank">
+                                                <?php echo esc_html($entry['chasse_titre']); ?>
+                                            </a>
+                                            <br><small>Dernière modif : <?php echo esc_html($entry['chasse_mod_date']); ?></small>
+                                        </td>
+                                        <td><?php echo esc_html($entry['total_enigmes']); ?></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    <?php endif; ?>
+
+                    <?php
+                    $demandes = recuperer_demandes_validation_chasse();
+                    if (!empty($demandes)) :
+                    ?>
+                        <h3>Demande de validation chasse</h3>
+                        <span><?php echo count($demandes); ?> résultat(s) trouvé(s)</span>
+                        <?php afficher_tableau_demandes_validation_chasse(); ?>
+                    <?php endif; ?>
    
                     
                 </div>
