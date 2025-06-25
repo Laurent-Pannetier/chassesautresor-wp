@@ -84,12 +84,10 @@ if ($edition_active && !$est_complet) {
     <?php
     $cache = get_field('champs_caches', $chasse_id);
     $statut = get_field('champs_caches')['chasse_cache_statut'] ?? 'revision';
-    if ($statut !== 'revision') :
     ?>
       <span class="badge-statut statut-<?= esc_attr($statut); ?>" data-post-id="<?= esc_attr($chasse_id); ?>">
         <?= ucfirst(str_replace('_', ' ', $statut)); ?>
       </span>
-    <?php endif; ?>
 
     <!-- 🔧 Bouton panneau édition -->
     <?php if ($edition_active) : ?>
