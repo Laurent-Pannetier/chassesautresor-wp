@@ -640,6 +640,13 @@ function mettre_a_jour_cache_complet_automatiquement($post_id): void
         chasse_mettre_a_jour_complet((int) $post_id);
     } elseif ($type === 'enigme') {
         enigme_mettre_a_jour_complet((int) $post_id);
+
+        // ⚡ Synchronise la chasse parente pour que la complétion soit
+        // immédiatement prise en compte sur la fiche énigme.
+        $chasse_id = recuperer_id_chasse_associee((int) $post_id);
+        if ($chasse_id) {
+            chasse_mettre_a_jour_complet((int) $chasse_id);
+        }
     }
 }
 add_action('acf/save_post', 'mettre_a_jour_cache_complet_automatiquement', 20);
