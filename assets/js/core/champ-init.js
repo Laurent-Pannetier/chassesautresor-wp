@@ -421,6 +421,8 @@ function initZoneClicEdition(bouton) {
 
     if (
       e.target.closest('.champ-modifier') ||
+      e.target.closest('.champ-annuler') ||
+      e.target.closest('.champ-enregistrer') ||
       e.target.closest('.icone-info') ||
       e.target.closest('input, select, textarea, a')
     ) {
