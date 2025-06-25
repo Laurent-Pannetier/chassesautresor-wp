@@ -411,7 +411,7 @@ function initChampBooleen(bloc) {
 // ==============================
 
 function initZoneClicEdition(bouton) {
-  const zone = bouton.closest('[data-champ]');
+  const zone = bouton.closest('li') || bouton.closest('[data-champ]');
   if (!zone) return;
 
 
