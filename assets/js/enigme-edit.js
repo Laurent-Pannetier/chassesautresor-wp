@@ -8,6 +8,7 @@ let panneauEdition;
 
 
 document.addEventListener('DOMContentLoaded', () => {
+  if (typeof initZonesClicEdition === 'function') initZonesClicEdition();
   boutonToggle = document.getElementById('toggle-mode-edition-enigme');
   panneauEdition = document.querySelector('.edition-panel-enigme');
 
