@@ -218,8 +218,9 @@ $classe_vide_coordonnees = ($iban_vide || $bic_vide) ? 'champ-vide' : '';
             </h3>
 
             <div class="section-content deux-col-wrapper">
-              <div class="resume-bloc resume-obligatoire deux-col-bloc">
-                <h3>Champs obligatoires</h3>
+              <div class="resume-bloc resume-facultatif deux-col-bloc">
+                <h3>Information bancaires</h3>
+
                 <ul class="resume-infos">
                   <li class="champ-organisateur champ-coordonnees ligne-coordonnees <?= !empty($coordonnees['iban']) ? 'champ-rempli' : ''; ?>" data-champ="coordonnees_bancaires">
                     Coordonnées bancaires
