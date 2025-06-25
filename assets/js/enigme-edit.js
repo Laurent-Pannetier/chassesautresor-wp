@@ -5,9 +5,14 @@ DEBUG && console.log('✅ enigme-edit.js chargé (readyState =', document.readyS
 
 let boutonToggle;
 let panneauEdition;
+let enigmeEditInitialized = false;
 
 
 function initEnigmeEdit() {
+  if (enigmeEditInitialized) {
+    DEBUG && console.log('[enigme-edit] already initialized');
+    return;
+  }
   DEBUG && console.log('[enigme-edit] initEnigmeEdit');
   boutonToggle = document.getElementById('toggle-mode-edition-enigme');
   panneauEdition = document.querySelector('.edition-panel-enigme');
@@ -461,6 +466,7 @@ function initChampNbTentatives() {
 
   // 🔄 Fonction exportée globalement
   window.mettreAJourMessageTentatives = mettreAJourAideTentatives;
+  enigmeEditInitialized = true;
 }
 
 if (document.readyState === 'loading') {
