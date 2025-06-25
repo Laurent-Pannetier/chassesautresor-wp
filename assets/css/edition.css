@@ -105,6 +105,12 @@ body.edition-active .champ-organisateur.champ-vide:hover {
   }
 }
 
+body.edition-active .champ-organisateur[data-champ],
+body.edition-active-chasse .champ-chasse[data-champ],
+body.edition-active-enigme .champ-enigme[data-champ] {
+  cursor: pointer;
+}
+
 
 /* ========== 📂 Toggle panneau édition ========== */
 section.enigme-wrapper {
