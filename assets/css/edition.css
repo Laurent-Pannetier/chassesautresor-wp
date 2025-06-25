@@ -667,6 +667,7 @@ li.champ-titre {
   display: flex;
   align-items: start;
   gap: 0.5rem;
+  align-items: center ;
 }
 
 li.ligne-logo .champ-modifier {

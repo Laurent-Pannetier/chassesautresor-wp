@@ -535,6 +535,7 @@ body.single-organisateur .formulaire-contact-wrapper .wpforms-field-label {
   animation: pulse-attention 1.2s ease-in-out infinite;
   background-color: #fff5f5;
   border-radius: 8px;
+  padding-left: 5px;
 }
 
 @keyframes pulse-attention {
