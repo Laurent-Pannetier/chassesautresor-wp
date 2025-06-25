@@ -38,21 +38,19 @@ if (has_post_thumbnail()) {
 }
 
 get_header(); ?>
+<?php if (isset($_GET['notice']) && $_GET['notice'] === 'profil_verification') : ?>
+<div class="woocommerce-message" role="alert">
+  ✉️ Un email de vérification vous a été envoyé. Veuillez cliquer sur le lien pour confirmer votre demande.
+</div>
+<?php endif; ?>
 <section class="bandeau-hero">
   <div class="hero-overlay" style="background-image: url('<?php echo esc_url($image_url); ?>');">
     <div class="contenu-hero">
       <h1><?php the_title(); ?></h1>
       <p class="sous-titre">Créez, publiez et partagez vos aventures interactives.</p>
-      <?php
-        $cta_url  = '/creer-mon-profil/';
-        $cta_text = 'Créer mon profil';
-        if (is_user_logged_in() && get_user_meta($user_id, 'organisateur_demande_token', true)) {
-          $cta_url  = '/creer-mon-profil/?resend=1';
-          $cta_text = "Renvoyer l'email de confirmation";
-        }
-      ?>
-      <a href="<?php echo esc_url($cta_url); ?>" class="bouton-cta" id="creer-profil-btn" data-event="clic_creer_profil">
-        <?php echo esc_html($cta_text); ?>
+      <?php $cta = get_cta_devenir_organisateur(); ?>
+      <a href="<?php echo $cta['url'] ? esc_url($cta['url']) : '#'; ?>" class="bouton-cta" id="creer-profil-btn" data-event="clic_creer_profil" <?php echo $cta['disabled'] ? 'style="pointer-events:none;opacity:0.6"' : ''; ?>>
+        <?php echo esc_html($cta['label']); ?>
       </a>
     </div>
   </div>
@@ -78,7 +76,11 @@ get_header(); ?>
       // Ajout de la section "cta-final"
       $cta_final_post = get_page_by_path('cta-final-devenir-organisateur', OBJECT, 'section_editoriale');
       if ($cta_final_post) {
-         echo apply_filters('the_content', $cta_final_post->post_content);
+         $content = apply_filters('the_content', $cta_final_post->post_content);
+         $cta     = get_cta_devenir_organisateur();
+         $content = str_replace('/creer-mon-profil/', $cta['url'], $content);
+         $content = str_replace('Créer mon profil', $cta['label'], $content);
+         echo $content;
       }
     ?>
 </main>
