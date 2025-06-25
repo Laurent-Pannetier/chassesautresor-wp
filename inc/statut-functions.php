@@ -273,16 +273,37 @@ function enigme_verifier_verrouillage(int $enigme_id, int $user_id): array
  */
 function traiter_statut_enigme(int $enigme_id, ?int $user_id = null): array
 {
-    $user_id = $user_id ?: get_current_user_id();
-    $statut = enigme_get_statut_utilisateur($enigme_id, $user_id);
-    $chasse_id = recuperer_id_chasse_associee($enigme_id);
+    $user_id     = $user_id ?: get_current_user_id();
+    $statut       = enigme_get_statut_utilisateur($enigme_id, $user_id);
+    $chasse_id    = recuperer_id_chasse_associee($enigme_id);
+    $post_status  = get_post_status($enigme_id);
 
-    // 🔓 Bypass total : admin ou organisateur
-    // 🛡️ Organisateur ou admin : pas de réponse possible
-    if (
-        current_user_can('manage_options') ||
-        utilisateur_est_organisateur_associe_a_chasse($user_id, $chasse_id)
-    ) {
+    // 🔓 Accès total pour l'administrateur
+    if (current_user_can('manage_options')) {
+        return [
+            'etat' => $statut,
+            'rediriger' => false,
+            'url' => null,
+            'afficher_formulaire' => false,
+            'afficher_message' => false,
+            'message_html' => '',
+        ];
+    }
+
+    // 🚫 Contenu brouillon : aucun accès hors administrateur
+    if ($post_status === 'draft') {
+        return [
+            'etat' => $statut,
+            'rediriger' => true,
+            'url' => $chasse_id ? get_permalink($chasse_id) : home_url('/'),
+            'afficher_formulaire' => false,
+            'afficher_message' => false,
+            'message_html' => '',
+        ];
+    }
+
+    // ✅ Organisateur associé : accès standard
+    if (utilisateur_est_organisateur_associe_a_chasse($user_id, $chasse_id)) {
         return [
             'etat' => $statut,
             'rediriger' => false,
