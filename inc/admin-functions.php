@@ -1605,6 +1605,8 @@ function traiter_validation_chasse_admin() {
             wp_update_post(['ID' => $eid, 'post_status' => 'draft']);
         }
 
+        envoyer_mail_chasse_bannie($organisateur_id, $chasse_id);
+
     } elseif ($action === 'supprimer') {
         foreach ($enigmes as $eid) {
             wp_delete_post($eid, true);
@@ -1616,6 +1618,8 @@ function traiter_validation_chasse_admin() {
         }
 
         wp_trash_post($chasse_id);
+
+        envoyer_mail_chasse_supprimee($organisateur_id, $chasse_id);
     }
 
     // Après le traitement, rediriger systématiquement vers la liste des
@@ -1683,6 +1687,104 @@ function envoyer_mail_demande_correction(int $organisateur_id, int $chasse_id, s
     wp_mail($email, $subject, $body, $headers);
     remove_filter('wp_mail_from_name', $from_filter, 10);
 
+}
+
+/**
+ * Envoie un email informant l'organisateur que sa chasse a été bannie.
+ *
+ * @param int $organisateur_id ID du CPT organisateur.
+ * @param int $chasse_id       ID de la chasse concernée.
+ *
+ * @return void
+ */
+function envoyer_mail_chasse_bannie(int $organisateur_id, int $chasse_id)
+{
+    if (!$organisateur_id || !$chasse_id) {
+        return;
+    }
+
+    $email = get_field('email_organisateur', $organisateur_id);
+    if (is_array($email)) {
+        $email = reset($email);
+    }
+
+    if (!is_string($email) || !is_email($email)) {
+        $email = get_option('admin_email');
+    }
+
+    $admin_email = get_option('admin_email');
+    $titre_chasse = get_the_title($chasse_id);
+
+    $subject_raw = '[Chasses au Trésor] Chasse bannie';
+    $subject = function_exists('wp_encode_mime_header')
+        ? wp_encode_mime_header($subject_raw)
+        : mb_encode_mimeheader($subject_raw, 'UTF-8', 'B', "\r\n");
+
+    $body  = "Bonjour,\n\n";
+    $body .= sprintf('Votre chasse "%s" a été bannie par l\'administrateur.', $titre_chasse);
+
+    $headers = [
+        'Content-Type: text/plain; charset=UTF-8',
+        'Bcc: ' . $admin_email,
+    ];
+
+    $from_filter = function ($name) use ($organisateur_id) {
+        $titre = get_the_title($organisateur_id);
+        return $titre ?: $name;
+    };
+    add_filter('wp_mail_from_name', $from_filter, 10, 1);
+
+    wp_mail($email, $subject, $body, $headers);
+    remove_filter('wp_mail_from_name', $from_filter, 10);
+}
+
+/**
+ * Envoie un email informant l'organisateur que sa chasse a été supprimée.
+ *
+ * @param int $organisateur_id ID du CPT organisateur.
+ * @param int $chasse_id       ID de la chasse concernée.
+ *
+ * @return void
+ */
+function envoyer_mail_chasse_supprimee(int $organisateur_id, int $chasse_id)
+{
+    if (!$organisateur_id || !$chasse_id) {
+        return;
+    }
+
+    $email = get_field('email_organisateur', $organisateur_id);
+    if (is_array($email)) {
+        $email = reset($email);
+    }
+
+    if (!is_string($email) || !is_email($email)) {
+        $email = get_option('admin_email');
+    }
+
+    $admin_email = get_option('admin_email');
+    $titre_chasse = get_the_title($chasse_id);
+
+    $subject_raw = '[Chasses au Trésor] Chasse supprimée';
+    $subject = function_exists('wp_encode_mime_header')
+        ? wp_encode_mime_header($subject_raw)
+        : mb_encode_mimeheader($subject_raw, 'UTF-8', 'B', "\r\n");
+
+    $body  = "Bonjour,\n\n";
+    $body .= sprintf('Votre chasse "%s" a été supprimée par l\'administrateur.', $titre_chasse);
+
+    $headers = [
+        'Content-Type: text/plain; charset=UTF-8',
+        'Bcc: ' . $admin_email,
+    ];
+
+    $from_filter = function ($name) use ($organisateur_id) {
+        $titre = get_the_title($organisateur_id);
+        return $titre ?: $name;
+    };
+    add_filter('wp_mail_from_name', $from_filter, 10, 1);
+
+    wp_mail($email, $subject, $body, $headers);
+    remove_filter('wp_mail_from_name', $from_filter, 10);
 }
 
 

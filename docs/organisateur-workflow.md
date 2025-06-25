@@ -90,6 +90,7 @@ Une zone de texte permet d'envoyer un message de retour ; deux boutons « Vali
 
 **CPT organisateur**
 - aucun changement
+- un e-mail informe l'organisateur que la chasse a été bannie
 
 ### 🗑️ Supprimer
 
@@ -103,4 +104,5 @@ Confirmation requise avant suppression.
 
 **CPT organisateur**
 - aucun changement
+- un e-mail informe l'organisateur que la chasse a été supprimée
 
