@@ -94,7 +94,9 @@ get_header();
                             }));
                             $peut_ajouter = utilisateur_peut_ajouter_chasse($organisateur_id);
                             $has_chasses = !empty($chasses);
-                            $highlight_pulse = !$has_chasses && $is_owner && in_array(ROLE_ORGANISATEUR_CREATION, $roles, true);
+                            $cache_complet = (bool) get_field('organisateur_cache_complet', $organisateur_id);
+                            $highlight_pulse = !$has_chasses && $is_owner && in_array(ROLE_ORGANISATEUR_CREATION, $roles, true) && $cache_complet;
+
 
                             foreach ($chasses as $post) :
                                 $chasse_id = $post->ID;
