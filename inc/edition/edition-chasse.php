@@ -129,7 +129,7 @@ function creer_chasse_et_rediriger_si_appel()
 
 
   // 📅 Préparation des valeurs
-  $today = current_time('Y-m-d');
+  $today = current_time('Y-m-d H:i:s');
   $in_two_years = date('Y-m-d', strtotime('+2 years'));
 
   // ✅ Initialisation des groupes ACF
@@ -268,16 +268,26 @@ function modifier_champ_chasse()
   }
 
   // 🔹 Dates (début / fin)
-  $champs_dates = [
-    'caracteristiques.chasse_infos_date_debut',
-    'caracteristiques.chasse_infos_date_fin'
-  ];
-  if (in_array($champ, $champs_dates, true)) {
+  if ($champ === 'caracteristiques.chasse_infos_date_debut') {
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/', $valeur)) {
+      wp_send_json_error('⚠️ format_date_invalide');
+    }
+    $dt = DateTime::createFromFormat('Y-m-d\TH:i', $valeur);
+    if ($dt) {
+      $valeur = $dt->format('Y-m-d H:i:s');
+    }
+    $ok = mettre_a_jour_sous_champ_group($post_id, 'caracteristiques', 'chasse_infos_date_debut', $valeur);
+    if ($ok) {
+      $champ_valide = true;
+      $doit_recalculer_statut = true;
+    }
+  }
+
+  if ($champ === 'caracteristiques.chasse_infos_date_fin') {
     if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $valeur)) {
       wp_send_json_error('⚠️ format_date_invalide');
     }
-    $sous_champ = str_replace('caracteristiques.', '', $champ);
-    $ok = mettre_a_jour_sous_champ_group($post_id, 'caracteristiques', $sous_champ, $valeur);
+    $ok = mettre_a_jour_sous_champ_group($post_id, 'caracteristiques', 'chasse_infos_date_fin', $valeur);
     if ($ok) {
       $champ_valide = true;
       $doit_recalculer_statut = true;

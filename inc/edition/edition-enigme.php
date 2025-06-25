@@ -105,7 +105,7 @@ function creer_enigme_pour_chasse($chasse_id, $user_id = null)
   update_field('enigme_acces_condition', 'immediat', $enigme_id);
   update_field('enigme_acces_pre_requis', [], $enigme_id);
 
-  $date_deblocage = (new DateTime('+1 month'))->format('Y-m-d');
+  $date_deblocage = (new DateTime('+1 month'))->format('Y-m-d H:i:s');
   update_field('enigme_acces_date', $date_deblocage, $enigme_id);
 
   // Calcule l\'état système initial pour permettre l\'édition complète
@@ -289,11 +289,16 @@ function modifier_champ_enigme()
 
   // 🔹 Accès : date
   if ($champ === 'enigme_acces_date') {
-    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $valeur)) {
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/', $valeur)) {
       wp_send_json_error('⚠️ format_date_invalide');
     }
 
-    $timestamp = strtotime($valeur);
+    $dt = DateTime::createFromFormat('Y-m-d\TH:i', $valeur);
+    if (!$dt) {
+      wp_send_json_error('⚠️ format_date_invalide');
+    }
+    $timestamp = $dt->getTimestamp();
+    $valeur_mysql = $dt->format('Y-m-d H:i:s');
     $today = strtotime(date('Y-m-d'));
     $mode = get_field('enigme_acces_condition', $post_id);
 
@@ -301,9 +306,8 @@ function modifier_champ_enigme()
       update_field('enigme_acces_condition', 'immediat', $post_id);
     }
 
-    $ok = update_field($champ, $valeur, $post_id);
-    $relue = get_field($champ, $post_id);
-    if ($ok || substr($relue, 0, 10) === $valeur) {
+    $ok = update_field($champ, $valeur_mysql, $post_id);
+    if ($ok) {
       $champ_valide = true;
     }
 

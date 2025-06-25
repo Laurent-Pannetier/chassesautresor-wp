@@ -759,8 +759,10 @@ function mettre_a_jour_statuts_chasse($chasse_id)
     $maintenant = current_time('timestamp');
 
     $statut_validation = $cache['chasse_cache_statut_validation'] ?? 'creation';
-    $date_debut        = !empty($carac['chasse_infos_date_debut']) ? strtotime($carac['chasse_infos_date_debut']) : null;
-    $date_fin          = !empty($carac['chasse_infos_date_fin']) ? strtotime($carac['chasse_infos_date_fin']) : null;
+    $date_debut_obj    = convertir_en_datetime($carac['chasse_infos_date_debut'] ?? null);
+    $date_debut        = $date_debut_obj ? $date_debut_obj->getTimestamp() : null;
+    $date_fin_obj      = convertir_en_datetime($carac['chasse_infos_date_fin'] ?? null);
+    $date_fin          = $date_fin_obj ? $date_fin_obj->getTimestamp() : null;
     $date_obj          = convertir_en_datetime($cache['chasse_cache_date_decouverte'] ?? null);
     $date_decouverte   = $date_obj ? $date_obj->getTimestamp() : null;
     $cout_points       = intval($carac['chasse_infos_cout_points'] ?? 0);
