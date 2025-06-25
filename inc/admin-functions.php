@@ -1510,4 +1510,110 @@ function afficher_tableau_organisateurs_pending() {
     echo '</tbody></table>';
 }
 
+/**
+ * Traite les actions de validation d'une chasse envoyées depuis l'interface admin.
+ *
+ * Les actions possibles sont :
+ * - `valider`    : publie la chasse et les énigmes liées puis bascule l'organisateur
+ * - `correction` : demande des modifications sans changer le statut WordPress
+ * - `bannir`     : passe la chasse et ses énigmes en brouillon
+ * - `supprimer`  : met la chasse à la corbeille et supprime ses énigmes
+ *
+ * Un nonce `validation_admin_nonce` doit être présent dans le formulaire.
+ *
+ * @return void
+ */
+function traiter_validation_chasse_admin() {
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_POST['validation_admin_action'])) {
+        return;
+    }
+
+    if (!current_user_can('administrator')) {
+        wp_die('Accès refusé.');
+    }
+
+    $chasse_id = isset($_POST['chasse_id']) ? intval($_POST['chasse_id']) : 0;
+    $action    = sanitize_text_field($_POST['validation_admin_action']);
+
+    if (!$chasse_id || get_post_type($chasse_id) !== 'chasse') {
+        wp_die('ID de chasse invalide.');
+    }
+
+    if (!isset($_POST['validation_admin_nonce']) || !wp_verify_nonce($_POST['validation_admin_nonce'], 'validation_admin_' . $chasse_id)) {
+        wp_die('Nonce invalide.');
+    }
+
+    $enigmes = recuperer_enigmes_associees($chasse_id);
+    $organisateur_id = get_organisateur_from_chasse($chasse_id);
+
+    if ($action === 'valider') {
+        wp_update_post([
+            'ID'          => $chasse_id,
+            'post_status' => 'publish',
+        ]);
+
+        $cache = get_field('champs_caches', $chasse_id) ?: [];
+        $cache['chasse_cache_statut_validation'] = 'valide';
+        update_field('champs_caches', $cache, $chasse_id);
+        mettre_a_jour_statuts_chasse($chasse_id);
+
+        foreach ($enigmes as $eid) {
+            wp_update_post(['ID' => $eid, 'post_status' => 'publish']);
+            enigme_mettre_a_jour_etat_systeme($eid);
+        }
+
+        if ($organisateur_id) {
+            if (get_post_status($organisateur_id) === 'pending') {
+                wp_update_post([
+                    'ID'          => $organisateur_id,
+                    'post_status' => 'publish',
+                ]);
+            }
+
+            $users = (array) get_field('utilisateurs_associes', $organisateur_id);
+            $user_id = $users ? intval(reset($users)) : 0;
+            if ($user_id) {
+                $user = new WP_User($user_id);
+                $user->add_role(ROLE_ORGANISATEUR);
+                $user->remove_role(ROLE_ORGANISATEUR_CREATION);
+            }
+        }
+
+    } elseif ($action === 'correction') {
+        $cache = get_field('champs_caches', $chasse_id) ?: [];
+        $cache['chasse_cache_statut_validation'] = 'correction';
+        update_field('champs_caches', $cache, $chasse_id);
+
+    } elseif ($action === 'bannir') {
+        wp_update_post([
+            'ID'          => $chasse_id,
+            'post_status' => 'draft',
+        ]);
+
+        $cache = get_field('champs_caches', $chasse_id) ?: [];
+        $cache['chasse_cache_statut_validation'] = 'banni';
+        update_field('champs_caches', $cache, $chasse_id);
+
+        foreach ($enigmes as $eid) {
+            wp_update_post(['ID' => $eid, 'post_status' => 'draft']);
+        }
+
+    } elseif ($action === 'supprimer') {
+        foreach ($enigmes as $eid) {
+            wp_delete_post($eid, true);
+        }
+
+        $images = get_attached_media('image', $chasse_id);
+        foreach ($images as $attachment) {
+            wp_delete_attachment($attachment->ID, true);
+        }
+
+        wp_trash_post($chasse_id);
+    }
+
+    wp_safe_redirect(wp_get_referer() ?: home_url('/')); 
+    exit;
+}
+add_action('admin_post_traiter_validation_chasse', 'traiter_validation_chasse_admin');
+
 
