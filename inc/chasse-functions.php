@@ -408,8 +408,8 @@ function solution_peut_etre_affichee(int $enigme_id): bool
         return false;
     }
 
-    $statut = get_field('statut_chasse', $chasse_id);
-    $terminee = in_array(strtolower($statut), ['terminée', 'termine', 'terminé'], true);
+    $statut   = get_field('statut_chasse', $chasse_id);
+    $terminee = is_string($statut) && in_array(strtolower($statut), ['terminée', 'termine', 'terminé'], true);
     if (!$terminee) {
         return false;
     }
