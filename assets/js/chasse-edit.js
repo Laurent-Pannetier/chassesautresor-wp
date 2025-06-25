@@ -7,6 +7,8 @@ let inputDateFin;
 let erreurDebut;
 let erreurFin;
 let checkboxIllimitee;
+let ancienneValeurDebut = '';
+let ancienneValeurFin = '';
 
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -100,6 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 📅 Gestion Date de fin + Durée illimitée
   // ==============================
   if (inputDateFin && !inputDateFin.disabled) {
+    ancienneValeurFin = inputDateFin.value;
     if (checkboxIllimitee) {
       inputDateFin.disabled = checkboxIllimitee.checked;
       
