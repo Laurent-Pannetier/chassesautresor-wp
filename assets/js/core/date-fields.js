@@ -79,7 +79,10 @@ function initChampDate(input) {
       return;
     }
 
-    const valeur = valeurBrute;
+    let valeur = valeurBrute;
+    if (regexDateTime.test(valeurBrute) && input.type === 'datetime-local') {
+      valeur = valeurBrute.replace('T', ' ') + ':00';
+    }
 
     if (cpt === 'chasse' && typeof window.validerDatesAvantEnvoi === 'function') {
       let type = '';
