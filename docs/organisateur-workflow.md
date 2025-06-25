@@ -40,3 +40,66 @@ Les boutons ✏️ portant la classe `champ-modifier` ouvrent les panneaux d'éd
 - `utilisateur_peut_editer_champs($post_id)` et `champ_est_editable()` : contrôlent la possibilité d'éditer un champ donné.
 
 Seuls les utilisateurs possédant un rôle `organisateur` ou `organisateur_creation` et étant associés au contenu peuvent voir et éditer ces panneaux.
+
+## 6. Traitement des demandes de validation
+
+L'administrateur consulte les demandes sur `/mon-compte/organisateurs/`. Depuis cette page il accède à la chasse concernée et choisit l'une des actions suivantes :
+
+### ✅ Valider la chasse
+
+**CPT chasse**
+- `post_status` : `pending` → `publish`
+- `chasse_cache_statut_validation` : `en_attente` → `valide`
+- `chasse_cache_statut` : recalculé via `mettre_a_jour_statuts_chasse()`
+
+**CPTs énigme liés**
+- `post_status` : `pending` → `publish`
+- `enigme_cache_etat_systeme` : recalculé via `enigme_mettre_a_jour_etat_systeme()`
+
+**CPT organisateur (si concerné)**
+- `post_status` : `pending` → `publish`
+- ajout du rôle `organisateur` à l'utilisateur
+- suppression du rôle `organisateur_creation`
+
+### ✍️ Correction
+
+Une zone de texte permet d'envoyer un message de retour ; deux boutons « Valider » ou « Annuler » sont proposés.
+
+**CPT chasse**
+- `post_status` : reste `pending`
+- `chasse_cache_statut_validation` : `en_attente` → `correction`
+- `chasse_cache_statut` : reste `revision`
+
+**CPTs énigme**
+- aucun changement
+
+**CPT organisateur**
+- aucun changement
+
+### ❌ Bannir
+
+**CPT chasse**
+- `post_status` : `pending` → `draft`
+- `chasse_cache_statut_validation` : `en_attente` → `banni`
+- `chasse_cache_statut` : reste `revision`
+
+**CPTs énigme**
+- `post_status` : `pending` → `draft`
+- `enigme_cache_etat_systeme` : inchangé
+
+**CPT organisateur**
+- aucun changement
+
+### 🗑️ Supprimer
+
+Confirmation requise avant suppression.
+
+**CPT chasse**
+- passage en corbeille et suppression des images associées
+
+**CPTs énigme**
+- suppression individuelle via la logique existante
+
+**CPT organisateur**
+- aucun changement
+
