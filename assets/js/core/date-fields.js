@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // date, datetime-local...). L'important est qu'ils possèdent la classe
   // `.champ-date-edit`.
   document.querySelectorAll('input.champ-date-edit').forEach(initChampDate);
+
 });
 
 
@@ -67,6 +68,7 @@ function initChampDate(input) {
   }
 
   const enregistrer = () => {
+
     const valeurBrute = input.value.trim();
     console.log('[🧪 initChampDate]', champ, '| valeur saisie :', valeurBrute);
     const regexDate = /^\d{4}-\d{2}-\d{2}$/;
