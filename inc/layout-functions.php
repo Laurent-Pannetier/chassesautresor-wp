@@ -301,9 +301,9 @@ function filtrer_content_sans_titre($content) {
  * @return string HTML généré avec le texte tronqué et le toggle.
  */
 function limiter_texte_avec_toggle($texte, $limite = 200, $label_plus = 'Lire la suite', $label_moins = 'Réduire') {
-    $texte = trim($texte);
+    $texte = trim(wp_strip_all_tags($texte));
     if (mb_strlen($texte) <= $limite) {
-        return wpautop($texte);
+        return wpautop(esc_html($texte));
     }
 
     $texte_visible = mb_substr($texte, 0, $limite);
