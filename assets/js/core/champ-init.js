@@ -405,3 +405,23 @@ function initChampBooleen(bloc) {
     modifierChampSimple(champ, valeur, postId, cpt);
   });
 }
+
+// ==============================
+// 👆 Zone de clic étendue sur l'affichage des champs
+// ==============================
+function initZoneClicEdition(zone) {
+  const bouton = zone.querySelector('.champ-modifier');
+  if (!bouton) return;
+
+  zone.style.cursor = 'pointer';
+
+  zone.addEventListener('click', (e) => {
+    if (e.target.closest('.champ-modifier')) return;
+    bouton.click();
+  });
+}
+
+function initZonesClicEdition() {
+  document.querySelectorAll('.champ-affichage').forEach(initZoneClicEdition);
+}
+window.initZonesClicEdition = initZonesClicEdition;

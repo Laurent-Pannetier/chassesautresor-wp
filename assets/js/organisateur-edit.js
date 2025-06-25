@@ -2,6 +2,7 @@ var DEBUG = window.DEBUG || false;
 DEBUG && console.log('✅ organisateur-edit.js chargé');
 
 document.addEventListener('DOMContentLoaded', () => {
+  if (typeof initZonesClicEdition === 'function') initZonesClicEdition();
 
   // 🟢 Champs inline
   document.querySelectorAll('.champ-organisateur[data-champ]').forEach((bloc) => {
