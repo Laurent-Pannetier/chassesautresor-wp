@@ -10,6 +10,7 @@ let checkboxIllimitee;
 
 
 document.addEventListener('DOMContentLoaded', () => {
+  if (typeof initZonesClicEdition === 'function') initZonesClicEdition();
   inputDateDebut = document.getElementById('chasse-date-debut');
   inputDateFin = document.getElementById('chasse-date-fin');
   erreurDebut = document.getElementById('erreur-date-debut');
