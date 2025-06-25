@@ -3,6 +3,7 @@ defined('ABSPATH') || exit;
 
 $organisateur_id = $args['organisateur_id'] ?? null;
 $has_chasses = $args['has_chasses'] ?? false;
+$highlight_pulse = $args['highlight_pulse'] ?? false;
 
 
 if (!$organisateur_id || get_post_type($organisateur_id) !== 'organisateur') {
@@ -13,7 +14,7 @@ if (!$organisateur_id || get_post_type($organisateur_id) !== 'organisateur') {
 <a
   href="<?= esc_url(site_url('/creer-chasse/')); ?>"
   id="carte-ajout-chasse"
-  class="carte-chasse carte-ajout-chasse disabled"
+  class="carte-chasse carte-ajout-chasse disabled<?= $highlight_pulse ? ' pulsation' : ''; ?>"
   data-post-id="0">
 
   <div class="carte-chasse-contenu">

@@ -94,6 +94,7 @@ get_header();
                             }));
                             $peut_ajouter = utilisateur_peut_ajouter_chasse($organisateur_id);
                             $has_chasses = !empty($chasses);
+                            $highlight_pulse = !$has_chasses && $is_owner && in_array(ROLE_ORGANISATEUR_CREATION, $roles, true);
 
                             foreach ($chasses as $post) :
                                 $chasse_id = $post->ID;
@@ -109,8 +110,9 @@ get_header();
 
                             <?php if ($peut_ajouter) :
                                 get_template_part('template-parts/chasse/chasse-partial-ajout-chasse', null, [
-                                    'has_chasses' => $has_chasses,
+                                    'has_chasses'    => $has_chasses,
                                     'organisateur_id' => $organisateur_id,
+                                    'highlight_pulse' => $highlight_pulse,
                                 ]);
                             endif; ?>
                         </div>
