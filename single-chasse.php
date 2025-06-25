@@ -109,9 +109,6 @@ $validation_envoyee = !empty($_GET['validation_demandee']);
       <!-- 🧩 Liste des énigmes -->
       <section class="chasse-enigmes-wrapper" id="chasse-enigmes-wrapper">
         <header class="chasse-enigmes-header">
-          <p class="progression-joueur">
-            🔍 Vous avez résolu <strong><?= $enigmes_resolues; ?></strong> énigme<?= $enigmes_resolues > 1 ? 's' : ''; ?> sur <strong><?= $total_enigmes; ?></strong>.
-          </p>
           <div class="barre-progression">
             <div class="remplissage" style="width: <?= ($total_enigmes ? round(100 * $enigmes_resolues / $total_enigmes) : 0); ?>%;"></div>
           </div>
