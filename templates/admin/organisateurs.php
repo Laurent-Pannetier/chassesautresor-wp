@@ -100,13 +100,13 @@ if (!empty($organisateurs_liste)) :
             <tr>
                 <th>Organisateur</th>
                 <th>Chasse</th>
-                <th>Nb Énigmes</th>
+                <th>Utilisateur</th>
                 <th>Créé le</th>
             </tr>
         </thead>
         <tbody>
             <?php foreach ($organisateurs_liste as $entry) : ?>
-                <tr>
+                <tr class="<?php echo $entry['validation'] === 'en_attente' ? 'champ-attention' : ''; ?>">
                     <td class="<?php echo $entry['organisateur_complet'] ? 'carte-complete' : 'carte-incomplete'; ?>">
                         <a href="<?php echo esc_url($entry['organisateur_permalink']); ?>" target="_blank">
                             <?php echo esc_html($entry['organisateur_titre']); ?>
@@ -114,15 +114,28 @@ if (!empty($organisateurs_liste)) :
                     </td>
                     <td>
                         <?php if ($entry['chasse_id']) : ?>
+                            <?php
+                                $titre_chasse = $entry['chasse_titre'];
+                                if ($entry['nb_enigmes']) {
+                                    $titre_chasse .= ' (' . intval($entry['nb_enigmes']) . ')';
+                                }
+                            ?>
                             <a class="<?php echo $entry['chasse_complet'] ? 'carte-complete' : 'carte-incomplete'; ?>" href="<?php echo esc_url($entry['chasse_permalink']); ?>" target="_blank">
-                                <?php echo esc_html($entry['chasse_titre']); ?>
+                                <?php echo esc_html($titre_chasse); ?>
                             </a>
                         <?php else : ?>
                             -
                         <?php endif; ?>
                     </td>
-                    <td><?php echo esc_html($entry['nb_enigmes']); ?></td>
-                    <td><?php echo esc_html(date('Y-m-d', strtotime($entry['date_creation']))); ?></td>
+                    <td>
+                        <?php if ($entry['user_id']) : ?>
+                            <a href="<?php echo esc_url($entry['user_link']); ?>" target="_blank">
+                                <?php echo esc_html($entry['user_name']); ?>
+                            </a>
+                        <?php else : ?>-
+                        <?php endif; ?>
+                    </td>
+                    <td><?php echo esc_html(date_i18n('d/m/y', strtotime($entry['date_creation']))); ?></td>
                 </tr>
             <?php endforeach; ?>
         </tbody>
