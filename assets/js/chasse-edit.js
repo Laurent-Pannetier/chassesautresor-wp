@@ -2,7 +2,6 @@
 var DEBUG = window.DEBUG || false;
 DEBUG && console.log('✅ chasse-edit.js chargé');
 
-<<<<<<< codex/corriger-fonction-du-champ-chasse_infos_date_fin
 let inputDateDebut;
 let inputDateFin;
 let erreurDebut;
@@ -10,15 +9,6 @@ let erreurFin;
 let checkboxIllimitee;
 let ancienneValeurDebut = '';
 let ancienneValeurFin = '';
-=======
-let inputDateDebut;
-let inputDateFin;
-let erreurDebut;
-let erreurFin;
-let checkboxIllimitee;
-let ancienneValeurDebut = '';
-let ancienneValeurFin = '';
->>>>>>> edit3.1
 
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -111,26 +101,15 @@ document.addEventListener('DOMContentLoaded', () => {
   // ==============================
   // 📅 Gestion Date de fin + Durée illimitée
   // ==============================
-<<<<<<< codex/corriger-fonction-du-champ-chasse_infos_date_fin
   if (inputDateFin) {
     ancienneValeurFin = inputDateFin.value;
-=======
-  if (inputDateFin) {
-
-    ancienneValeurFin = inputDateFin.value;
->>>>>>> edit3.1
     if (checkboxIllimitee) {
       inputDateFin.disabled = checkboxIllimitee.checked;
       
       const postId = inputDateFin.closest('.champ-chasse')?.dataset.postId;
 
-<<<<<<< codex/corriger-fonction-du-champ-chasse_infos_date_fin
       checkboxIllimitee.addEventListener('change', function () {
         inputDateFin.disabled = this.checked;
-=======
-      checkboxIllimitee.addEventListener('change', function () {
-        inputDateFin.disabled = this.checked;
->>>>>>> edit3.1
 
         // Si la case est décochée et les dates incohérentes, corriger la date de fin
         if (!this.checked) {
@@ -221,11 +200,7 @@ document.addEventListener('DOMContentLoaded', () => {
       ancienneValeurFin = nouvelleDateFin;
     });
   }
-<<<<<<< codex/corriger-fonction-du-champ-chasse_infos_date_fin
   if (inputDateDebut) {
-=======
-  if (inputDateDebut) {
->>>>>>> edit3.1
     ancienneValeurDebut = inputDateDebut.value;
 
     inputDateDebut.addEventListener('change', function () {
