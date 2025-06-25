@@ -289,14 +289,15 @@ function modifier_champ_enigme()
 
   // 🔹 Accès : date
   if ($champ === 'enigme_acces_date') {
-    if (!preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/', $valeur)) {
-      wp_send_json_error('⚠️ format_date_invalide');
-    }
-
-    $dt = DateTime::createFromFormat('Y-m-d\TH:i', $valeur);
+    $dt = convertir_en_datetime($valeur, [
+      'Y-m-d\TH:i',
+      'Y-m-d H:i:s',
+      'Y-m-d H:i'
+    ]);
     if (!$dt) {
       wp_send_json_error('⚠️ format_date_invalide');
     }
+
     $timestamp = $dt->getTimestamp();
     $valeur_mysql = $dt->format('Y-m-d H:i:s');
     $today = strtotime(date('Y-m-d'));

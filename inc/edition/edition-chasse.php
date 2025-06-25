@@ -269,13 +269,16 @@ function modifier_champ_chasse()
 
   // 🔹 Dates (début / fin)
   if ($champ === 'caracteristiques.chasse_infos_date_debut') {
-    if (!preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/', $valeur)) {
+    $dt = convertir_en_datetime($valeur, [
+      'Y-m-d\TH:i',
+      'Y-m-d H:i:s',
+      'Y-m-d H:i'
+    ]);
+    if (!$dt) {
       wp_send_json_error('⚠️ format_date_invalide');
     }
-    $dt = DateTime::createFromFormat('Y-m-d\TH:i', $valeur);
-    if ($dt) {
-      $valeur = $dt->format('Y-m-d H:i:s');
-    }
+    $valeur = $dt->format('Y-m-d H:i:s');
+
     $ok = mettre_a_jour_sous_champ_group($post_id, 'caracteristiques', 'chasse_infos_date_debut', $valeur);
     if ($ok) {
       $champ_valide = true;

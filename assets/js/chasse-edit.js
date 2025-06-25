@@ -220,16 +220,14 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      let nouvelleDateDebut = nouvelleDateDebutBrute;
-      if (regexDateTime.test(nouvelleDateDebutBrute)) {
-        nouvelleDateDebut = nouvelleDateDebutBrute.replace('T', ' ') + ':00';
-      }
+      const nouvelleDateDebut = nouvelleDateDebutBrute;
+
 
       const postId = this.closest('.champ-chasse')?.dataset.postId;
       modifierChampSimple('caracteristiques.chasse_infos_date_debut', nouvelleDateDebut, postId);
       rafraichirStatutChasse(postId);
 
-      ancienneValeurDebut = nouvelleDateDebut;
+      ancienneValeurDebut = nouvelleDateDebutBrute;
     });
 
   }
