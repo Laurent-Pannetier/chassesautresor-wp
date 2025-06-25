@@ -409,13 +409,16 @@ function initChampBooleen(bloc) {
 // ==============================
 // 👆 Zone de clic étendue sur l'affichage des champs
 // ==============================
+
 function initZoneClicEdition(bouton) {
   const zone = bouton.closest('[data-champ]');
   if (!zone) return;
 
+
   zone.style.cursor = 'pointer';
 
   zone.addEventListener('click', (e) => {
+
     if (
       e.target.closest('.champ-modifier') ||
       e.target.closest('.icone-info') ||
@@ -423,11 +426,13 @@ function initZoneClicEdition(bouton) {
     ) {
       return;
     }
+
     bouton.click();
   });
 }
 
 function initZonesClicEdition() {
   document.querySelectorAll('.champ-modifier').forEach(initZoneClicEdition);
+
 }
 window.initZonesClicEdition = initZonesClicEdition;
