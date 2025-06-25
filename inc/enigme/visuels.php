@@ -262,3 +262,11 @@ defined('ABSPATH') || exit;
                 'jpg', 'jpeg' => 'image/jpeg',
                 'png'         => 'image/png',
                 'gif'         => 'image/gif',
+                'webp'        => 'image/webp',
+                default       => 'application/octet-stream',
+            };
+            return ['path' => $path, 'mime' => $mime];
+        }
+
+        return null;
+    }
