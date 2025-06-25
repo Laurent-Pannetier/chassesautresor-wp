@@ -1584,6 +1584,12 @@ function traiter_validation_chasse_admin() {
         $cache['chasse_cache_statut_validation'] = 'correction';
         update_field('champs_caches', $cache, $chasse_id);
 
+        $message = isset($_POST['validation_admin_message'])
+            ? sanitize_textarea_field(wp_unslash($_POST['validation_admin_message']))
+            : '';
+
+        envoyer_mail_demande_correction($organisateur_id, $chasse_id, $message);
+
     } elseif ($action === 'bannir') {
         wp_update_post([
             'ID'          => $chasse_id,
@@ -1617,5 +1623,63 @@ function traiter_validation_chasse_admin() {
     exit;
 }
 add_action('admin_post_traiter_validation_chasse', 'traiter_validation_chasse_admin');
+
+/**
+ * Envoie un email à l'organisateur lorsqu'une chasse nécessite des corrections.
+ *
+ * @param int    $organisateur_id ID du CPT organisateur.
+ * @param int    $chasse_id       ID de la chasse concernée.
+ * @param string $message         Message saisi par l'administrateur.
+ *
+ * @return void
+ */
+function envoyer_mail_demande_correction(int $organisateur_id, int $chasse_id, string $message)
+{
+    if (!$organisateur_id || !$chasse_id) {
+        return;
+    }
+
+    $email = get_field('email_organisateur', $organisateur_id);
+    if (is_array($email)) {
+        $email = reset($email);
+    }
+
+    if (!is_string($email) || !is_email($email)) {
+        $email = get_option('admin_email');
+    }
+
+    $admin_email = get_option('admin_email');
+    $titre_chasse = get_the_title($chasse_id);
+    $url_chasse   = get_permalink($chasse_id);
+
+    $subject_raw = '[Chasses au Trésor] Corrections requises pour votre chasse';
+    $subject = function_exists('wp_encode_mime_header')
+        ? wp_encode_mime_header($subject_raw)
+        : mb_encode_mimeheader($subject_raw, 'UTF-8', 'B', "\r\n");
+
+    $body  = '<div style="font-family:Arial,sans-serif;font-size:14px;">';
+    $body .= '<p>Bonjour,</p>';
+    $body .= '<p>Votre chasse <a href="' . esc_url($url_chasse) . '">' . esc_html($titre_chasse) . '</a> nécessite des corrections pour être validée.</p>';
+    if ($message !== '') {
+        $body .= '<p><em>Message de l\'administrateur :</em><br>' . nl2br(esc_html($message)) . '</p>';
+    }
+    $body .= '<p>Une fois les modifications effectuées, soumettez à nouveau votre chasse depuis votre espace organisateur.</p>';
+    $body .= '<p style="margin-top:2em;">L’équipe chassesautresor.com</p>';
+    $body .= '</div>';
+
+    $headers = [
+        'Content-Type: text/html; charset=UTF-8',
+        'Bcc: ' . $admin_email,
+    ];
+
+    $from_filter = function ($name) use ($organisateur_id) {
+        $titre = get_the_title($organisateur_id);
+        return $titre ?: $name;
+    };
+    add_filter('wp_mail_from_name', $from_filter, 10, 1);
+
+    wp_mail($email, $subject, $body, $headers);
+    remove_filter('wp_mail_from_name', $from_filter, 10);
+}
 
 
