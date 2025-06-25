@@ -1586,6 +1586,7 @@ function traiter_validation_chasse_admin() {
 
         $message = isset($_POST['validation_admin_message'])
             ? sanitize_textarea_field(wp_unslash($_POST['validation_admin_message']))
+
             : '';
 
         envoyer_mail_demande_correction($organisateur_id, $chasse_id, $message);
@@ -1646,6 +1647,7 @@ function envoyer_mail_demande_correction(int $organisateur_id, int $chasse_id, s
 
     if (!is_string($email) || !is_email($email)) {
         $email = get_option('admin_email');
+
     }
 
     $admin_email = get_option('admin_email');
@@ -1680,6 +1682,7 @@ function envoyer_mail_demande_correction(int $organisateur_id, int $chasse_id, s
 
     wp_mail($email, $subject, $body, $headers);
     remove_filter('wp_mail_from_name', $from_filter, 10);
+
 }
 
 

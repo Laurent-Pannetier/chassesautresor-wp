@@ -4,8 +4,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // date, datetime-local...). L'important est qu'ils possèdent la classe
   // `.champ-date-edit`.
   document.querySelectorAll('input.champ-date-edit').forEach(initChampDate);
-
 });
+
 
 
 
@@ -24,6 +24,7 @@ function formatDateFr(dateStr) {
   if (parts.length !== 3) return dateStr;
   return `${parts[2]}/${parts[1]}/${parts[0]}`;
 }
+
 
 
 // ==============================
@@ -68,7 +69,6 @@ function initChampDate(input) {
   }
 
   const enregistrer = () => {
-
     const valeurBrute = input.value.trim();
     console.log('[🧪 initChampDate]', champ, '| valeur saisie :', valeurBrute);
     const regexDate = /^\d{4}-\d{2}-\d{2}$/;
@@ -79,10 +79,7 @@ function initChampDate(input) {
       return;
     }
 
-    let valeur = valeurBrute;
-    if (regexDateTime.test(valeurBrute)) {
-      valeur = valeurBrute.replace('T', ' ') + ':00';
-    }
+    const valeur = valeurBrute;
 
     if (cpt === 'chasse' && typeof window.validerDatesAvantEnvoi === 'function') {
       let type = '';
@@ -96,9 +93,9 @@ function initChampDate(input) {
 
     modifierChampSimple(champ, valeur, postId, cpt).then(success => {
       if (success) {
-        input.dataset.previous = valeur;
+        input.dataset.previous = valeurBrute;
         if (typeof window.onDateFieldUpdated === 'function') {
-          window.onDateFieldUpdated(input, valeur);
+          window.onDateFieldUpdated(input, valeurBrute);
         }
       } else {
         input.value = input.dataset.previous || '';
@@ -116,6 +113,7 @@ function initChampDate(input) {
       enregistrer();
     }
   });
+
   if (typeof window.onDateFieldUpdated === 'function') {
     const valeurInit = input.value?.trim() || ''; // 🔹 protection + fallback vide
     window.onDateFieldUpdated(input, valeurInit);

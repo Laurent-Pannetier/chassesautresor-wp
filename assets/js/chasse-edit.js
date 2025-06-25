@@ -7,6 +7,8 @@ let inputDateFin;
 let erreurDebut;
 let erreurFin;
 let checkboxIllimitee;
+let ancienneValeurDebut = '';
+let ancienneValeurFin = '';
 
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -100,6 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 📅 Gestion Date de fin + Durée illimitée
   // ==============================
   if (inputDateFin && !inputDateFin.disabled) {
+    ancienneValeurFin = inputDateFin.value;
     if (checkboxIllimitee) {
       inputDateFin.disabled = checkboxIllimitee.checked;
       
@@ -190,7 +193,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       const postId = this.closest('.champ-chasse')?.dataset.postId;
-      modifierChampSimple('caracteristiques.chasse_infos_date_fin', nouvelleDateFin, postId);
+      modifierChampSimple('caracteristiques.chasse_infos_date_fin', nouvelleDateFin, postId, 'chasse');
       rafraichirStatutChasse(postId);
 
       mettreAJourAffichageDateFin();
@@ -220,16 +223,14 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      let nouvelleDateDebut = nouvelleDateDebutBrute;
-      if (regexDateTime.test(nouvelleDateDebutBrute)) {
-        nouvelleDateDebut = nouvelleDateDebutBrute.replace('T', ' ') + ':00';
-      }
+      const nouvelleDateDebut = nouvelleDateDebutBrute;
+
 
       const postId = this.closest('.champ-chasse')?.dataset.postId;
-      modifierChampSimple('caracteristiques.chasse_infos_date_debut', nouvelleDateDebut, postId);
+      modifierChampSimple('caracteristiques.chasse_infos_date_debut', nouvelleDateDebut, postId, 'chasse');
       rafraichirStatutChasse(postId);
 
-      ancienneValeurDebut = nouvelleDateDebut;
+      ancienneValeurDebut = nouvelleDateDebutBrute;
     });
 
   }
@@ -532,7 +533,7 @@ document.querySelectorAll('.champ-cout-points .champ-enregistrer').forEach(bouto
 
     if (!champ || !postId) return;
 
-    modifierChampSimple(champ, valeur, postId);
+    modifierChampSimple(champ, valeur, postId, 'chasse');
 
     if (champ === 'caracteristiques.chasse_infos_cout_points') {
       mettreAJourAffichageCout(postId, valeur);
@@ -593,12 +594,12 @@ function initChampNbGagnants() {
     if (checkboxIllimite.checked) {
       inputNb.disabled = true;
       inputNb.value = '0';
-      modifierChampSimple('caracteristiques.chasse_infos_nb_max_gagants', 0, postId);
+      modifierChampSimple('caracteristiques.chasse_infos_nb_max_gagants', 0, postId, 'chasse');
     } else {
       inputNb.disabled = false;
       if (parseInt(inputNb.value.trim(), 10) === 0 || inputNb.value.trim() === '') {
         inputNb.value = '1';
-        modifierChampSimple('caracteristiques.chasse_infos_nb_max_gagants', 1, postId);
+        modifierChampSimple('caracteristiques.chasse_infos_nb_max_gagants', 1, postId, 'chasse');
       }
     }
     // 🔥 Mise à jour dynamique après changement illimité
@@ -616,7 +617,7 @@ function initChampNbGagnants() {
         valeur = 1;
         inputNb.value = '1';
       }
-      modifierChampSimple('caracteristiques.chasse_infos_nb_max_gagants', valeur, postId);
+      modifierChampSimple('caracteristiques.chasse_infos_nb_max_gagants', valeur, postId, 'chasse');
       mettreAJourAffichageNbGagnants(postId, valeur); // ✅ ici, APRES avoir défini valeur
     }, 500);
   });
