@@ -20,7 +20,7 @@ rediriger_selon_etat_organisateur();
 // 3. Gestion de la demande en cours
 if (isset($_GET['resend'])) {
     renvoyer_email_confirmation_organisateur($current_user_id);
-    wp_redirect(add_query_arg('notice', 'profil_verification', home_url('/mon-compte/')));
+    wp_redirect(add_query_arg('notice', 'profil_verification', home_url('/devenir-organisateur/')));
     exit;
 }
 
@@ -33,5 +33,5 @@ if ($token) {
 
 // 4. Nouvelle demande
 lancer_demande_organisateur($current_user_id);
-wp_redirect(add_query_arg('notice', 'profil_verification', home_url('/mon-compte/')));
+wp_redirect(add_query_arg('notice', 'profil_verification', home_url('/devenir-organisateur/')));
 exit;

@@ -317,6 +317,103 @@ function generer_liste_chasses_hierarchique($organisateur_id) {
 
 
 // ==================================================
+// 🎯 CTA PAGE "DEVENIR ORGANISATEUR"
+// ==================================================
+/**
+ * Retourne le libellé et l'URL du bouton d'appel à l'action
+ * présent sur la page "Devenir organisateur".
+ *
+ * @param int|null $user_id Utilisateur ciblé ou actuel par défaut.
+ * @return array{label:string,url:?string,disabled:bool}
+ */
+function get_cta_devenir_organisateur(?int $user_id = null): array
+{
+    $user_id = $user_id ?: get_current_user_id();
+
+    $label = 'Créer mon profil';
+    $url = home_url('/creer-mon-profil/');
+    $disabled = false;
+
+    if (!$user_id) {
+        return [
+            'label' => 'Devenir organisateur',
+            'url'   => wp_login_url($url),
+            'disabled' => false,
+        ];
+    }
+
+    $user = get_userdata($user_id);
+    if (!$user) {
+        return compact('label', 'url', 'disabled');
+    }
+
+    $roles = (array) $user->roles;
+
+    if (in_array('administrator', $roles, true)) {
+        return [
+            'label' => 'Salut Patron',
+            'url'   => null,
+            'disabled' => true,
+        ];
+    }
+
+    // Demande d'inscription non confirmée
+    if (get_user_meta($user_id, 'organisateur_demande_token', true)) {
+        return [
+            'label' => "Renvoyer l'email de confirmation",
+            'url'   => home_url('/creer-mon-profil/?resend=1'),
+            'disabled' => false,
+        ];
+    }
+
+    $organisateur_id = get_organisateur_from_user($user_id);
+    $has_pending_chasse = false;
+    if ($organisateur_id) {
+        $query = get_chasses_de_organisateur($organisateur_id);
+        if ($query && $query->have_posts()) {
+            foreach ($query->posts as $chasse) {
+                $statut_validation = get_field('champs_caches_chasse_cache_statut_validation', $chasse->ID);
+                if ($statut_validation === 'en_attente') {
+                    $has_pending_chasse = true;
+                    break;
+                }
+            }
+        }
+    }
+
+    if (in_array(ROLE_ORGANISATEUR_CREATION, $roles, true) && $has_pending_chasse) {
+        return [
+            'label' => "Renvoyer l'email",
+            'url'   => home_url('/creer-mon-profil/?resend=1'),
+            'disabled' => false,
+        ];
+    }
+
+    if (
+        $organisateur_id &&
+        (in_array(ROLE_ORGANISATEUR_CREATION, $roles, true) || in_array(ROLE_ORGANISATEUR, $roles, true)) &&
+        !$has_pending_chasse
+    ) {
+        return [
+            'label' => 'Votre profil',
+            'url'   => get_permalink($organisateur_id),
+            'disabled' => false,
+        ];
+    }
+
+    if (!in_array(ROLE_ORGANISATEUR_CREATION, $roles, true) && !in_array(ROLE_ORGANISATEUR, $roles, true) && !$organisateur_id) {
+        return [
+            'label' => 'Devenir organisateur',
+            'url'   => home_url('/creer-mon-profil/'),
+            'disabled' => false,
+        ];
+    }
+
+    return compact('label', 'url', 'disabled');
+}
+
+
+// ==================================================
 // 📩 DEMANDE DE CRÉATION DE PROFIL ORGANISATEUR
 // ==================================================
 /**
