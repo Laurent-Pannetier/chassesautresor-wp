@@ -1,7 +1,10 @@
 document.addEventListener('DOMContentLoaded', () => {
-  document
-    .querySelectorAll('input[type="date"], input[type="datetime-local"]')
-    .forEach(initChampDate);
+  // On cible de manière plus large les champs de date pour prendre en charge
+  // les inputs générés dynamiquement ou ceux dont le type peut varier (text,
+  // date, datetime-local...). L'important est qu'ils possèdent la classe
+  // `.champ-date-edit`.
+  document.querySelectorAll('input.champ-date-edit').forEach(initChampDate);
+
 });
 
 
@@ -64,7 +67,8 @@ function initChampDate(input) {
     }
   }
 
-  input.addEventListener('change', () => {
+  const enregistrer = () => {
+
     const valeurBrute = input.value.trim();
     console.log('[🧪 initChampDate]', champ, '| valeur saisie :', valeurBrute);
     const regexDate = /^\d{4}-\d{2}-\d{2}$/;
@@ -100,6 +104,17 @@ function initChampDate(input) {
         input.value = input.dataset.previous || '';
       }
     });
+  };
+
+  input.addEventListener('change', enregistrer);
+
+  // Certains navigateurs ne déclenchent pas toujours l'évènement "change" après
+  // sélection dans le datepicker. On ajoute donc un fallback sur "blur" si la
+  // valeur a effectivement été modifiée.
+  input.addEventListener('blur', () => {
+    if (input.value.trim() !== (input.dataset.previous || '')) {
+      enregistrer();
+    }
   });
   if (typeof window.onDateFieldUpdated === 'function') {
     const valeurInit = input.value?.trim() || ''; // 🔹 protection + fallback vide
