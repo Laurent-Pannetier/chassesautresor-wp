@@ -144,7 +144,9 @@ $validation_envoyee = !empty($_GET['validation_demandee']);
           ?>
         </div>
 
-        <footer class="chasse-enigmes-footer"></footer>
+        <footer class="chasse-enigmes-footer">
+          
+        </footer>
       </section>
 
       <!-- 📜 Description finale -->

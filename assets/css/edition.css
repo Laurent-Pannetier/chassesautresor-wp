@@ -642,6 +642,15 @@ body.edition-active .edition-panel {
 
 
 /* ========== ✏️ CHAMPS PARTICULIERS ========== */
+
+.champ-enigme.champ-texte[data-champ="enigme_visuel_legende"] {
+  display: flex;
+  align-items: center;
+}
+.champ-enigme.champ-texte[data-champ="enigme_visuel_legende"] i.fa-circle {
+  margin-right: 10px;
+}
+
 li.ligne-email .champ-organisateur.champ-vide,
 li.ligne-coordonnees.champ-organisateur.champ-vide,
 li.ligne-logo.champ-organisateur.champ-vide {
