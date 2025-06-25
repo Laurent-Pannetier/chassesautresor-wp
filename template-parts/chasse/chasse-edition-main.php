@@ -186,7 +186,7 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
                   data-cpt="chasse"
                   data-post-id="<?= esc_attr($chasse_id); ?>">
 
-                  <label for="chasse-date-debut">Date et heure de début</label>
+                  <label for="chasse-date-debut">Début</label>
                   <input type="datetime-local"
                     id="chasse-date-debut"
                     name="chasse-date-debut"
