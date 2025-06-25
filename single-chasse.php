@@ -58,6 +58,8 @@ $total_enigmes = count($enigmes_associees);
 $enigmes_resolues = compter_enigmes_resolues($chasse_id, $user_id);
 
 $statut = get_field('champs_caches')['chasse_cache_statut'] ?? 'revision';
+$cache_global = get_field('champs_caches', $chasse_id);
+$statut_validation = $cache_global['chasse_cache_statut_validation'] ?? '';
 $nb_joueurs = 0;
 
 get_header();
@@ -87,6 +89,14 @@ $validation_envoyee = !empty($_GET['validation_demandee']);
       }
       if ($validation_envoyee) {
         echo '<p class="message-succes">✅ Votre demande de validation a bien été envoyée. Elle sera traitée par l’équipe.</p>';
+      }
+      ?>
+
+      <?php
+      if (current_user_can('administrator') && $statut_validation === 'en_attente') {
+        get_template_part('template-parts/chasse/chasse-validation-actions', null, [
+          'chasse_id' => $chasse_id,
+        ]);
       }
       ?>
 
