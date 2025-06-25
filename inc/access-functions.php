@@ -383,6 +383,11 @@ function utilisateur_peut_voir_enigme(int $enigme_id, ?int $user_id = null): boo
         return $autorise;
     }
 
+    if ($post_status === 'draft') {
+        error_log("❌ [voir énigme] brouillon interdit pour utilisateur #$user_id");
+        return false;
+    }
+
     // 🎯 Chasse liée
     $chasse_id = recuperer_id_chasse_associee($enigme_id);
     if (!$chasse_id) {
@@ -403,7 +408,7 @@ function utilisateur_peut_voir_enigme(int $enigme_id, ?int $user_id = null): boo
     error_log("🧪 [voir énigme] chasse #$chasse_id → statut_validation = $statut_validation");
 
     if (in_array($statut_validation, ['creation', 'correction', 'en_attente'], true)) {
-        $autorise = in_array($post_status, ['publish', 'pending', 'draft'], true);
+        $autorise = in_array($post_status, ['publish', 'pending'], true);
         error_log("🟡 [voir énigme] organisateur → chasse = $statut_validation → accès " . ($autorise ? 'OK' : 'REFUSÉ'));
         return $autorise;
     }
@@ -1159,8 +1164,18 @@ add_action('pre_get_posts', function ($query) {
     }
 
     if ($query->is_singular('enigme') && is_user_logged_in()) {
-        if (est_organisateur()) {
+        if (current_user_can('manage_options')) {
             $query->set('post_status', ['publish', 'pending', 'draft']);
+        } elseif (est_organisateur()) {
+            $query->set('post_status', ['publish', 'pending']);
+        }
+    }
+
+    if ($query->is_singular('chasse') && is_user_logged_in()) {
+        if (current_user_can('manage_options')) {
+            $query->set('post_status', ['publish', 'pending', 'draft']);
+        } elseif (est_organisateur()) {
+            $query->set('post_status', ['publish', 'pending']);
         }
     }
 });

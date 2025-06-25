@@ -18,6 +18,10 @@ verifier_ou_mettre_a_jour_cache_complet($chasse_id);
 
 $edition_active = utilisateur_peut_modifier_post($chasse_id);
 $user_id = get_current_user_id();
+if (!current_user_can('manage_options') && !chasse_est_visible_pour_utilisateur($chasse_id, $user_id)) {
+  wp_redirect(home_url('/'));
+  exit;
+}
 $points_utilisateur = get_user_points($user_id);
 
 // Champs principaux
