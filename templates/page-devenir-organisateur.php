@@ -27,8 +27,9 @@ acf_form_head(); // ✅ nécessaire pour ACF frontend
 $user_id = get_current_user_id();
 $organisateur_id = get_organisateur_from_user($user_id);
 
-// 👉 maintenant que le CPT existe (ou pas), on peut rediriger
-rediriger_selon_etat_organisateur();
+// 👉 l'accès à cette page est désormais autorisé pour les organisateurs ayant
+// au moins une chasse non en attente de validation. La redirection automatique
+// n'est donc plus nécessaire et est gérée via le CTA dynamique.
 
 // Image par défaut au cas où aucune miniature n'est définie
 $image_url = '';

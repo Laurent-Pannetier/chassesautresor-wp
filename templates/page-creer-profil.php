@@ -14,8 +14,9 @@ if (!is_user_logged_in()) {
 
 $current_user_id = get_current_user_id();
 
-// 2. Si un profil existe déjà, redirection automatique
-rediriger_selon_etat_organisateur();
+// 2. Si un profil existe déjà, on n'effectue plus de redirection automatique
+// vers l'espace organisateur. Le bouton principal se charge de guider
+// l'utilisateur selon l'état de son profil.
 
 // 3. Gestion de la demande en cours
 if (isset($_GET['resend'])) {
