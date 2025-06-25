@@ -218,6 +218,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initChampSolution();
   initSolutionInline();
   initChampConditionnel('acf[enigme_acces_condition]', {
+    'immediat': [], // pas d'affichage spécifique pour l'accès immédiat
     'date_programmee': ['#champ-enigme-date'],
     'pre_requis': ['#champ-enigme-pre-requis']
   });
