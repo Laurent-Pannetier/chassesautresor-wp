@@ -97,6 +97,7 @@ get_header();
                             $cache_complet = (bool) get_field('organisateur_cache_complet', $organisateur_id);
                             $highlight_pulse = !$has_chasses && $is_owner && in_array(ROLE_ORGANISATEUR_CREATION, $roles, true) && $cache_complet;
 
+
                             foreach ($chasses as $post) :
                                 $chasse_id = $post->ID;
 
