@@ -1087,4 +1087,3 @@ function appliquerEtatGratuitEnLive() {
   // Appel initial différé de 50ms pour laisser le temps à la valeur d’être injectée
   setTimeout(syncGratuit, 50);
 }
-}
