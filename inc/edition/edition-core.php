@@ -502,6 +502,7 @@ function convertir_en_datetime(?string $date_string, array $formats = [
   'd/m/Y h:i a',
   'd/m/Y',
   'Y-m-d H:i:s',
+  'Y-m-d\TH:i',
   'Y-m-d'
 ]): ?DateTime
 {

@@ -350,7 +350,8 @@ body.edition-active .header-organisateur-wrapper .champ-modifier:focus {
 }
 
 /* ========== 📅 CHAMPS DATES — AFFICHAGE ET COMPORTEMENT ========== */
-input[type=date].champ-date-edit {
+input[type=date].champ-date-edit,
+input[type=datetime-local].champ-date-edit {
   width: auto;
 }
 

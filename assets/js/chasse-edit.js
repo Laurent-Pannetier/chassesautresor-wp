@@ -210,20 +210,23 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      const nouvelleDateDebut = this.value;
+      const nouvelleDateDebutBrute = this.value;
       const regexDate = /^\d{4}-\d{2}-\d{2}$/;
+      const regexDateTime = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
 
-      if (!regexDate.test(nouvelleDateDebut)) {
-        console.error('❌ Format de date début invalide:', nouvelleDateDebut);
+      if (!regexDate.test(nouvelleDateDebutBrute) && !regexDateTime.test(nouvelleDateDebutBrute)) {
+        console.error('❌ Format de date début invalide:', nouvelleDateDebutBrute);
         this.value = ancienneValeurDebut;
         return;
       }
+
+      const nouvelleDateDebut = nouvelleDateDebutBrute;
 
       const postId = this.closest('.champ-chasse')?.dataset.postId;
       modifierChampSimple('caracteristiques.chasse_infos_date_debut', nouvelleDateDebut, postId);
       rafraichirStatutChasse(postId);
 
-      ancienneValeurDebut = nouvelleDateDebut;
+      ancienneValeurDebut = nouvelleDateDebutBrute;
     });
 
   }

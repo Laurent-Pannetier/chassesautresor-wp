@@ -1,5 +1,9 @@
 document.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll('input[type="date"]').forEach(initChampDate);
+  // On cible de manière plus large les champs de date pour prendre en charge
+  // les inputs générés dynamiquement ou ceux dont le type peut varier (text,
+  // date, datetime-local...). L'important est qu'ils possèdent la classe
+  // `.champ-date-edit`.
+  document.querySelectorAll('input.champ-date-edit').forEach(initChampDate);
 });
 
 
@@ -9,6 +13,12 @@ document.addEventListener('DOMContentLoaded', () => {
 // ==============================
 function formatDateFr(dateStr) {
   if (!dateStr) return '';
+  if (dateStr.includes('T')) {
+    const [datePart, timePart] = dateStr.split('T');
+    const parts = datePart.split('-');
+    if (parts.length !== 3) return dateStr;
+    return `${parts[2]}/${parts[1]}/${parts[0]} ${timePart}`;
+  }
   const parts = dateStr.split('-');
   if (parts.length !== 3) return dateStr;
   return `${parts[2]}/${parts[1]}/${parts[0]}`;
@@ -51,19 +61,23 @@ function initChampDate(input) {
   // 🕒 Pré-remplissage si vide
   if (!input.value && bloc.dataset.date) {
     const dateInit = bloc.dataset.date;
-    if (/^\d{4}-\d{2}-\d{2}$/.test(dateInit)) {
+    if (/^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2})?$/.test(dateInit)) {
       input.value = dateInit;
     }
   }
 
-  input.addEventListener('change', () => {
-    const valeur = input.value.trim();
-    console.log('[🧪 initChampDate]', champ, '| valeur saisie :', valeur);
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(valeur)) {
-      console.warn(`❌ Date invalide (${champ}) :`, valeur);
+  const enregistrer = () => {
+    const valeurBrute = input.value.trim();
+    console.log('[🧪 initChampDate]', champ, '| valeur saisie :', valeurBrute);
+    const regexDate = /^\d{4}-\d{2}-\d{2}$/;
+    const regexDateTime = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
+    if (!regexDate.test(valeurBrute) && !regexDateTime.test(valeurBrute)) {
+      console.warn(`❌ Date invalide (${champ}) :`, valeurBrute);
       input.value = input.dataset.previous || '';
       return;
     }
+
+    const valeur = valeurBrute;
 
     if (cpt === 'chasse' && typeof window.validerDatesAvantEnvoi === 'function') {
       let type = '';
@@ -77,14 +91,25 @@ function initChampDate(input) {
 
     modifierChampSimple(champ, valeur, postId, cpt).then(success => {
       if (success) {
-        input.dataset.previous = valeur;
+        input.dataset.previous = valeurBrute;
         if (typeof window.onDateFieldUpdated === 'function') {
-          window.onDateFieldUpdated(input, valeur);
+          window.onDateFieldUpdated(input, valeurBrute);
         }
       } else {
         input.value = input.dataset.previous || '';
       }
     });
+  };
+
+  input.addEventListener('change', enregistrer);
+
+  // Certains navigateurs ne déclenchent pas toujours l'évènement "change" après
+  // sélection dans le datepicker. On ajoute donc un fallback sur "blur" si la
+  // valeur a effectivement été modifiée.
+  input.addEventListener('blur', () => {
+    if (input.value.trim() !== (input.dataset.previous || '')) {
+      enregistrer();
+    }
   });
   if (typeof window.onDateFieldUpdated === 'function') {
     const valeurInit = input.value?.trim() || ''; // 🔹 protection + fallback vide
