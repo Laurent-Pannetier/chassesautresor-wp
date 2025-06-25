@@ -1472,15 +1472,17 @@ function recuperer_organisateurs_pending() {
 /**
  * Affiche la liste des organisateurs en attente dans un tableau.
  */
-function afficher_tableau_organisateurs_pending() {
-    $liste = recuperer_organisateurs_pending();
+function afficher_tableau_organisateurs_pending($liste = null) {
+    if ($liste === null) {
+        $liste = recuperer_organisateurs_pending();
+    }
     if (empty($liste)) {
         echo '<p>Aucun organisateur en attente.</p>';
         return;
     }
 
     echo '<table class="table-organisateurs">';
-    echo '<thead><tr><th>Organisateur</th><th>Chasse</th><th>Utilisateur</th><th>Créé le</th></tr></thead><tbody>';
+    echo '<thead><tr><th>Organisateur</th><th>Chasse</th><th>Utilisateur</th><th>Créé le</th><th>Actions</th></tr></thead><tbody>';
 
     foreach ($liste as $entry) {
         $class_org = $entry['organisateur_complet'] ? 'carte-complete' : 'carte-incomplete';
@@ -1504,6 +1506,23 @@ function afficher_tableau_organisateurs_pending() {
             echo '<td>-</td>';
         }
         echo '<td>' . esc_html(date_i18n('d/m/y', strtotime($entry['date_creation']))) . '</td>';
+
+        echo '<td>';
+        if ($entry['chasse_id']) {
+            $nonce = wp_create_nonce('validation_admin_' . $entry['chasse_id']);
+            echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '" class="form-validation-admin">';
+            echo '<input type="hidden" name="action" value="traiter_validation_chasse">';
+            echo '<input type="hidden" name="chasse_id" value="' . intval($entry['chasse_id']) . '">';
+            echo '<input type="hidden" name="validation_admin_nonce" value="' . esc_attr($nonce) . '">';
+            echo '<button type="submit" name="validation_admin_action" value="valider" class="button">Valider</button> ';
+            echo '<button type="submit" name="validation_admin_action" value="correction" class="button">Correction</button> ';
+            echo '<button type="submit" name="validation_admin_action" value="bannir" class="button">Bannir</button> ';
+            echo '<button type="submit" name="validation_admin_action" value="supprimer" class="button" onclick="return confirm(\'Confirmer la suppression ?\');">Supprimer</button>';
+            echo '</form>';
+        } else {
+            echo '-';
+        }
+        echo '</td>';
         echo '</tr>';
     }
 

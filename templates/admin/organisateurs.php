@@ -12,8 +12,6 @@ $current_user = wp_get_current_user();
 $logout_url = wc_get_account_endpoint_url('customer-logout'); // Lien déconnexion
 
 
-// Récupérer la liste des organisateurs en attente de validation
-$organisateurs_liste = recuperer_organisateurs_pending();
 
 ?>
 <div id="primary" class="content-area primary ">
@@ -91,58 +89,14 @@ $organisateurs_liste = recuperer_organisateurs_pending();
                     <?php 
                     
                     // Vérifier s'il y a des résultats avant d'afficher le tableau
+$organisateurs_liste = recuperer_organisateurs_pending();
 if (!empty($organisateurs_liste)) :
+    echo '<h3>Organisateurs en attente</h3>';
+    echo '<span>' . count($organisateurs_liste) . ' résultat(s) trouvé(s)</span>';
+    afficher_tableau_organisateurs_pending($organisateurs_liste);
+endif;
 ?>
-    <h3>Organisateurs en attente</h3>
-    <span><?php echo count($organisateurs_liste); ?> résultat(s) trouvé(s)</span>
-    <table class="table-organisateurs">
-        <thead>
-            <tr>
-                <th>Organisateur</th>
-                <th>Chasse</th>
-                <th>Utilisateur</th>
-                <th>Créé le</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php foreach ($organisateurs_liste as $entry) : ?>
-                <tr class="<?php echo $entry['validation'] === 'en_attente' ? 'champ-attention' : ''; ?>">
-                    <td class="<?php echo $entry['organisateur_complet'] ? 'carte-complete' : 'carte-incomplete'; ?>">
-                        <a href="<?php echo esc_url($entry['organisateur_permalink']); ?>" target="_blank">
-                            <?php echo esc_html($entry['organisateur_titre']); ?>
-                        </a>
-                    </td>
-                    <td>
-                        <?php if ($entry['chasse_id']) : ?>
-                            <?php
-                                $titre_chasse = $entry['chasse_titre'];
-                                if ($entry['nb_enigmes']) {
-                                    $titre_chasse .= ' (' . intval($entry['nb_enigmes']) . ')';
-                                }
-                            ?>
-                            <a class="<?php echo $entry['chasse_complet'] ? 'carte-complete' : 'carte-incomplete'; ?>" href="<?php echo esc_url($entry['chasse_permalink']); ?>" target="_blank">
-                                <?php echo esc_html($titre_chasse); ?>
-                            </a>
-                        <?php else : ?>
-                            -
-                        <?php endif; ?>
-                    </td>
-                    <td>
-                        <?php if ($entry['user_id']) : ?>
-                            <a href="<?php echo esc_url($entry['user_link']); ?>" target="_blank">
-                                <?php echo esc_html($entry['user_name']); ?>
-                            </a>
-                        <?php else : ?>-
-                        <?php endif; ?>
-                    </td>
-                    <td><?php echo esc_html(date_i18n('d/m/y', strtotime($entry['date_creation']))); ?></td>
-                </tr>
-            <?php endforeach; ?>
-        </tbody>
-    </table>
-<?php endif; // Fin de la condition ?>
-   
-                    
+
                 </div>
             </div>
         
