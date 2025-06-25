@@ -26,6 +26,13 @@ $valeur     = $carac['chasse_infos_recompense_valeur'] ?? '';
 $cout       = $carac['chasse_infos_cout_points'] ?? '';
 $date_debut = $carac['chasse_infos_date_debut'] ?? '';
 $date_fin   = $carac['chasse_infos_date_fin'] ?? '';
+
+// 🎯 Conversion des dates pour les champs <input>
+$date_debut_obj = convertir_en_datetime($date_debut);
+$date_debut_iso = $date_debut_obj ? $date_debut_obj->format('Y-m-d\TH:i') : '';
+
+$date_fin_obj = convertir_en_datetime($date_fin);
+$date_fin_iso = $date_fin_obj ? $date_fin_obj->format('Y-m-d') : '';
 $illimitee  = $carac['chasse_infos_duree_illimitee'] ?? false;
 $nb_max     = $carac['chasse_infos_nb_max_gagants'] ?? 1;
 
@@ -179,11 +186,11 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
                   data-cpt="chasse"
                   data-post-id="<?= esc_attr($chasse_id); ?>">
 
-                  <label for="chasse-date-debut">Date de début</label>
-                  <input type="date"
+                  <label for="chasse-date-debut">Date et heure de début</label>
+                  <input type="datetime-local"
                     id="chasse-date-debut"
                     name="chasse-date-debut"
-                    value="<?= esc_attr($date_debut); ?>"
+                    value="<?= esc_attr($date_debut_iso); ?>"
                     class="champ-inline-date champ-date-edit" <?= $peut_editer ? '' : 'disabled'; ?> required />
                   <div id="erreur-date-debut" class="message-erreur" style="display:none; color:red; font-size:0.9em; margin-top:5px;"></div>
 
@@ -199,7 +206,7 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
                   <input type="date"
                     id="chasse-date-fin"
                     name="chasse-date-fin"
-                    value="<?= esc_attr($date_fin); ?>"
+                    value="<?= esc_attr($date_fin_iso); ?>"
                     class="champ-inline-date champ-date-edit" <?= $peut_editer ? '' : 'disabled'; ?> />
                   <div id="erreur-date-fin" class="message-erreur" style="display:none; color:red; font-size:0.9em; margin-top:5px;"></div>
 
