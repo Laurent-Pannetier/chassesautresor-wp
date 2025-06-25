@@ -145,7 +145,6 @@ function tache_cron_synchroniser_cache_enigmes(): void {
 }
 
 add_action('wp_enqueue_scripts', function () {
-  if (current_user_can('administrator')) {
-    wp_add_inline_script('enigme-edit', 'window.DEBUG = true;', 'before');
-  }
-});
+  wp_add_inline_script('enigme-edit', 'window.DEBUG = true;', 'before');
+}, 100);
+
