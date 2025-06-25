@@ -329,5 +329,6 @@ function mettreAJourLigneResume(ligne, champ, estRempli, type) {
     });
 
     ligne.appendChild(bouton);
+    if (typeof initZoneClicEdition === 'function') initZoneClicEdition(bouton);
   }
 }
