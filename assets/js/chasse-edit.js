@@ -7,8 +7,6 @@ let inputDateFin;
 let erreurDebut;
 let erreurFin;
 let checkboxIllimitee;
-let ancienneValeurDebut = '';
-let ancienneValeurFin = '';
 
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -102,7 +100,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // 📅 Gestion Date de fin + Durée illimitée
   // ==============================
   if (inputDateFin) {
-    ancienneValeurFin = inputDateFin.value;
     if (checkboxIllimitee) {
       inputDateFin.disabled = checkboxIllimitee.checked;
       
@@ -173,68 +170,15 @@ document.addEventListener('DOMContentLoaded', () => {
         mettreAJourAffichageDateFin();
       });
     }
-    inputDateFin.addEventListener('change', function () {
-      const sauvegardeAvantChangement = this.value;
-
-      const valid = validerDatesAvantEnvoi('fin');
-      if (!valid) {
-        this.value = ancienneValeurFin;
-        return;
-      }
-
-      const nouvelleDateFin = this.value;
-      const regexDate = /^\d{4}-\d{2}-\d{2}$/;
-
-      if (!regexDate.test(nouvelleDateFin)) {
-        console.error('❌ Format de date fin invalide:', nouvelleDateFin);
-        this.value = ancienneValeurFin;
-        return;
-      }
-
-      const postId = this.closest('.champ-chasse')?.dataset.postId;
-      modifierChampSimple('caracteristiques.chasse_infos_date_fin', nouvelleDateFin, postId, 'chasse');
-      rafraichirStatutChasse(postId);
-
-      mettreAJourAffichageDateFin();
-
-      ancienneValeurFin = nouvelleDateFin;
-    });
+      // La logique d'enregistrement de la date de fin est gérée
+      // globalement par `date-fields.js` via `initChampDate()`.
+      // On se limite ici à mettre à jour l'affichage lorsqu'on
+      // modifie la case « illimitée ».
   }
   if (inputDateDebut) {
-    ancienneValeurDebut = inputDateDebut.value;
-
-    inputDateDebut.addEventListener('change', function () {
-      const sauvegardeAvantChangement = this.value;
-
-      const valid = validerDatesAvantEnvoi('debut');
-      if (!valid) {
-        this.value = ancienneValeurDebut;
-        return;
-      }
-
-      const nouvelleDateDebutBrute = this.value;
-      const regexDate = /^\d{4}-\d{2}-\d{2}$/;
-      const regexDateTime = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
-
-      if (!regexDate.test(nouvelleDateDebutBrute) && !regexDateTime.test(nouvelleDateDebutBrute)) {
-        console.error('❌ Format de date début invalide:', nouvelleDateDebutBrute);
-        this.value = ancienneValeurDebut;
-        return;
-      }
-
-      let nouvelleDateDebut = nouvelleDateDebutBrute;
-      if (regexDateTime.test(nouvelleDateDebutBrute)) {
-        nouvelleDateDebut = nouvelleDateDebutBrute.replace('T', ' ') + ':00';
-      }
-
-
-      const postId = this.closest('.champ-chasse')?.dataset.postId;
-      modifierChampSimple('caracteristiques.chasse_infos_date_debut', nouvelleDateDebut, postId, 'chasse');
-      rafraichirStatutChasse(postId);
-
-      ancienneValeurDebut = nouvelleDateDebutBrute;
-    });
-
+    // L'enregistrement et la validation sont gérés par `date-fields.js`.
+    // Ce fichier ne fait que fournir les messages d'erreur via
+    // `validerDatesAvantEnvoi` appelé par `initChampDate()`.
   }
 
 
