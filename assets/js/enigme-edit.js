@@ -224,6 +224,7 @@ function initEnigmeEdit() {
   initChampSolution();
   initSolutionInline();
   initChampConditionnel('acf[enigme_acces_condition]', {
+    'immediat': [],
     'date_programmee': ['#champ-enigme-date'],
     'pre_requis': ['#champ-enigme-pre-requis']
   });
