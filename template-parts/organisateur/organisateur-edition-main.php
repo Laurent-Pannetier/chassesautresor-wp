@@ -150,25 +150,6 @@ $classe_vide_coordonnees = ($iban_vide || $bic_vide) ? 'champ-vide' : '';
                 <?php endif; ?>
               </li>
 
-              <li class="champ-organisateur champ-coordonnees ligne-coordonnees <?= !empty($coordonnees['iban']) ? 'champ-rempli' : ''; ?>" data-champ="coordonnees_bancaires">
-                Coordonnées bancaires
-                <button type="button" class="icone-info" aria-label="Informations sur les coordonnées bancaires"
-                  onclick="alert('Ces informations sont nécessaires uniquement pour vous verser les gains issus de la conversion de vos points en euros. Nous ne prélevons jamais d’argent.');">
-                  <i class="fa-solid fa-circle-question" aria-hidden="true"></i>
-                </button>
-                <?php if ($peut_editer) : ?>
-                  <button type="button"
-                    id="ouvrir-coordonnees"
-                    class="champ-modifier"
-                    aria-label="Modifier les coordonnées bancaires"
-                    data-champ="coordonnees_bancaires"
-                    data-cpt="organisateur"
-                    data-post-id="<?php echo esc_attr($organisateur_id); ?>">
-                    ✏️
-                  </button>
-
-                <?php endif; ?>
-              </li>
 
               <li class="ligne-email <?= !empty($email_contact) ? 'champ-rempli' : ''; ?>">
                 <i aria-hidden="true" class="fa-regular fa-solid fa-envelope"></i>
@@ -229,7 +210,41 @@ $classe_vide_coordonnees = ($iban_vide || $bic_vide) ? 'champ-vide' : '';
         <div class="edition-panel-header">
           <h2><i class="fa-solid fa-coins"></i> Revenus</h2>
         </div>
-        <p class="edition-placeholder">La section « Revenus » sera bientôt disponible.</p>
+        <div class="edition-panel-body">
+          <div class="edition-panel-section edition-panel-section-ligne">
+            <h3 class="section-title">
+              <i class="fa-solid fa-coins" aria-hidden="true"></i>
+              Revenus
+            </h3>
+
+            <div class="section-content deux-col-wrapper">
+              <div class="resume-bloc resume-facultatif deux-col-bloc">
+                <h3>Information bancaires</h3>
+                <ul class="resume-infos">
+                  <li class="champ-organisateur champ-coordonnees ligne-coordonnees <?= !empty($coordonnees['iban']) ? 'champ-rempli' : ''; ?>" data-champ="coordonnees_bancaires">
+                    Coordonnées bancaires
+                    <button type="button" class="icone-info" aria-label="Informations sur les coordonnées bancaires"
+                      onclick="alert('Ces informations sont nécessaires uniquement pour vous verser les gains issus de la conversion de vos points en euros. Nous ne prélevons jamais d\u2019argent.');">
+                      <i class="fa-solid fa-circle-question" aria-hidden="true"></i>
+                    </button>
+                    <?php if ($peut_editer) : ?>
+                      <button type="button"
+                        id="ouvrir-coordonnees"
+                        class="champ-modifier"
+                        aria-label="Modifier les coordonnées bancaires"
+                        data-champ="coordonnees_bancaires"
+                        data-cpt="organisateur"
+                        data-post-id="<?php echo esc_attr($organisateur_id); ?>">
+                        ✏️
+                      </button>
+
+                    <?php endif; ?>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div> <!-- .edition-panel-body -->
       </div>
 
     <div class="edition-panel-footer"></div>
