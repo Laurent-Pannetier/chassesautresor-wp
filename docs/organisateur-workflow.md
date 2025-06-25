@@ -69,6 +69,7 @@ Une zone de texte permet d'envoyer un message de retour ; deux boutons « Vali
 - `post_status` : reste `pending`
 - `chasse_cache_statut_validation` : `en_attente` → `correction`
 - `chasse_cache_statut` : reste `revision`
+- un e-mail est envoyé à l'organisateur (copie à l'admin) avec le message de retour
 
 **CPTs énigme**
 - aucun changement
