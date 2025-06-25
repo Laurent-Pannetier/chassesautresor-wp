@@ -219,7 +219,7 @@ function organisateur_a_des_chasses($organisateur_id)
     'post_status'    => 'any', // 🔍 Vérifier toutes les chasses, y compris les brouillons
     'meta_query'     => [
       [
-        'key'     => 'champs_caches_organisateur_chasse',
+        'key'     => 'champs_caches_chasse_cache_organisateur',
         'value'   => '"' . $organisateur_id . '"', // 🔄 Ajout de guillemets pour matcher dans un tableau sérialisé
         'compare' => 'LIKE'
       ]
@@ -243,7 +243,7 @@ function get_chasses_de_organisateur($organisateur_id)
     'post_status'    => ['publish', 'pending'], // Inclure les chasses en attente
     'meta_query'     => [
       [
-        'key'     => 'champs_caches_organisateur_chasse', // Champ correct
+        'key'     => 'champs_caches_chasse_cache_organisateur', // Champ correct
         'value'   => '"' . strval($organisateur_id) . '"', // Recherche dans le tableau sérialisé
         'compare' => 'LIKE'
       ]
