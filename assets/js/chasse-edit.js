@@ -7,6 +7,8 @@ let inputDateFin;
 let erreurDebut;
 let erreurFin;
 let checkboxIllimitee;
+let ancienneValeurDebut = '';
+let ancienneValeurFin = '';
 
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -99,14 +101,14 @@ document.addEventListener('DOMContentLoaded', () => {
   // ==============================
   // 📅 Gestion Date de fin + Durée illimitée
   // ==============================
-  if (inputDateFin && !inputDateFin.disabled) {
+  if (inputDateFin) {
+    ancienneValeurFin = inputDateFin.value;
     if (checkboxIllimitee) {
       inputDateFin.disabled = checkboxIllimitee.checked;
       
       const postId = inputDateFin.closest('.champ-chasse')?.dataset.postId;
 
       checkboxIllimitee.addEventListener('change', function () {
-        if (inputDateFin.disabled) return;
         inputDateFin.disabled = this.checked;
 
         // Si la case est décochée et les dates incohérentes, corriger la date de fin
@@ -198,7 +200,7 @@ document.addEventListener('DOMContentLoaded', () => {
       ancienneValeurFin = nouvelleDateFin;
     });
   }
-  if (inputDateDebut && !inputDateDebut.disabled) {
+  if (inputDateDebut) {
     ancienneValeurDebut = inputDateDebut.value;
 
     inputDateDebut.addEventListener('change', function () {
@@ -220,7 +222,10 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      const nouvelleDateDebut = nouvelleDateDebutBrute;
+      let nouvelleDateDebut = nouvelleDateDebutBrute;
+      if (regexDateTime.test(nouvelleDateDebutBrute)) {
+        nouvelleDateDebut = nouvelleDateDebutBrute.replace('T', ' ') + ':00';
+      }
 
 
       const postId = this.closest('.champ-chasse')?.dataset.postId;
