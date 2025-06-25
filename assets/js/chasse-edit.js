@@ -102,6 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 📅 Gestion Date de fin + Durée illimitée
   // ==============================
   if (inputDateFin) {
+
     ancienneValeurFin = inputDateFin.value;
     if (checkboxIllimitee) {
       inputDateFin.disabled = checkboxIllimitee.checked;
