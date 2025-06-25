@@ -147,6 +147,14 @@ function charger_scripts_personnalises() {
       filemtime(get_stylesheet_directory() . '/assets/js/validation-chasse.js'),
       true
     );
+
+    wp_enqueue_script(
+      'validation-admin',
+      $theme_dir . 'validation-admin.js',
+      [],
+      filemtime(get_stylesheet_directory() . '/assets/js/validation-admin.js'),
+      true
+    );
 }
 // ✅ Ajout des scripts au chargement de WordPress
 add_action('wp_enqueue_scripts', 'charger_scripts_personnalises');
