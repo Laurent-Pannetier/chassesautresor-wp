@@ -1,5 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll('input[type="date"]').forEach(initChampDate);
+  document
+    .querySelectorAll('input[type="date"], input[type="datetime-local"]')
+    .forEach(initChampDate);
 });
 
 
@@ -9,6 +11,12 @@ document.addEventListener('DOMContentLoaded', () => {
 // ==============================
 function formatDateFr(dateStr) {
   if (!dateStr) return '';
+  if (dateStr.includes('T')) {
+    const [datePart, timePart] = dateStr.split('T');
+    const parts = datePart.split('-');
+    if (parts.length !== 3) return dateStr;
+    return `${parts[2]}/${parts[1]}/${parts[0]} ${timePart}`;
+  }
   const parts = dateStr.split('-');
   if (parts.length !== 3) return dateStr;
   return `${parts[2]}/${parts[1]}/${parts[0]}`;
@@ -51,18 +59,25 @@ function initChampDate(input) {
   // 🕒 Pré-remplissage si vide
   if (!input.value && bloc.dataset.date) {
     const dateInit = bloc.dataset.date;
-    if (/^\d{4}-\d{2}-\d{2}$/.test(dateInit)) {
+    if (/^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2})?$/.test(dateInit)) {
       input.value = dateInit;
     }
   }
 
   input.addEventListener('change', () => {
-    const valeur = input.value.trim();
-    console.log('[🧪 initChampDate]', champ, '| valeur saisie :', valeur);
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(valeur)) {
-      console.warn(`❌ Date invalide (${champ}) :`, valeur);
+    const valeurBrute = input.value.trim();
+    console.log('[🧪 initChampDate]', champ, '| valeur saisie :', valeurBrute);
+    const regexDate = /^\d{4}-\d{2}-\d{2}$/;
+    const regexDateTime = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
+    if (!regexDate.test(valeurBrute) && !regexDateTime.test(valeurBrute)) {
+      console.warn(`❌ Date invalide (${champ}) :`, valeurBrute);
       input.value = input.dataset.previous || '';
       return;
+    }
+
+    let valeur = valeurBrute;
+    if (regexDateTime.test(valeurBrute)) {
+      valeur = valeurBrute.replace('T', ' ') + ':00';
     }
 
     if (cpt === 'chasse' && typeof window.validerDatesAvantEnvoi === 'function') {

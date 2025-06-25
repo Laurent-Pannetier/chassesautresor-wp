@@ -33,7 +33,8 @@ $mode_validation = get_field('enigme_mode_validation', $enigme_id) ?? 'aucune';
 $style = get_field('enigme_style_affichage', $enigme_id);
 $solution = get_field('enigme_solution', $enigme_id);
 $date_raw = get_field('enigme_acces_date', $enigme_id);
-$date_deblocage = $date_raw ? substr($date_raw, 0, 10) : '';
+$date_obj = convertir_en_datetime($date_raw);
+$date_deblocage = $date_obj ? $date_obj->format('Y-m-d\TH:i') : '';
 
 
 $chasse = get_field('enigme_chasse_associee', $enigme_id);
@@ -247,8 +248,8 @@ $has_variantes = ($nb_variantes > 0);
               </div>
 
               <div class="champ-enigme champ-date cache<?= $peut_editer ? '' : ' champ-desactive'; ?>" data-champ="enigme_acces_date" data-cpt="enigme" data-post-id="<?= esc_attr($enigme_id); ?>" id="champ-enigme-date">
-                <label for="enigme-date-deblocage">Date de déblocage</label>
-                <input type="date"
+                <label for="enigme-date-deblocage">Date et heure de déblocage</label>
+                <input type="datetime-local"
                   id="enigme-date-deblocage"
                   name="enigme-date-deblocage"
                   value="<?= esc_attr($date_deblocage); ?>"
