@@ -216,12 +216,18 @@ function organisateur_a_des_chasses($organisateur_id)
   $query = new WP_Query([
     'post_type'      => 'chasse',
     'posts_per_page' => 1,
-    'post_status'    => 'any', // 🔍 Vérifier toutes les chasses, y compris les brouillons
+    'post_status'    => ['publish', 'pending'],
     'meta_query'     => [
+      'relation' => 'AND',
       [
         'key'     => 'champs_caches_chasse_cache_organisateur',
-        'value'   => '"' . $organisateur_id . '"', // 🔄 Ajout de guillemets pour matcher dans un tableau sérialisé
+        'value'   => '"' . $organisateur_id . '"',
         'compare' => 'LIKE'
+      ],
+      [
+        'key'     => 'champs_caches_chasse_cache_statut_validation',
+        'value'   => 'banni',
+        'compare' => '!='
       ]
     ]
   ]);
