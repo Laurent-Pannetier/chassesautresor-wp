@@ -1400,6 +1400,7 @@ function recuperer_organisateurs_pending() {
         $titre         = get_the_title($organisateur_id);
         $permalink     = get_permalink($organisateur_id);
 
+
         $users = (array) get_field('utilisateurs_associes', $organisateur_id);
         $user_id = $users ? intval(reset($users)) : null;
         $user_name = '';
@@ -1412,6 +1413,7 @@ function recuperer_organisateurs_pending() {
             }
         }
 
+
         verifier_ou_mettre_a_jour_cache_complet($organisateur_id);
         $org_complet = (bool) get_field('organisateur_cache_complet', $organisateur_id);
 
@@ -1422,6 +1424,7 @@ function recuperer_organisateurs_pending() {
         $chasse_complet = false;
         $nb_enigmes = 0;
         $validation = '';
+
         if ($chasses && $chasses->have_posts()) {
             $chasse_id = $chasses->posts[0]->ID;
             $chasse_titre = get_the_title($chasse_id);
@@ -1430,6 +1433,7 @@ function recuperer_organisateurs_pending() {
             $chasse_complet = (bool) get_field('chasse_cache_complet', $chasse_id);
             $nb_enigmes = count(recuperer_enigmes_associees($chasse_id));
             $validation = get_field('champs_caches_chasse_cache_statut_validation', $chasse_id);
+
         }
 
         $resultats[] = [
@@ -1440,6 +1444,7 @@ function recuperer_organisateurs_pending() {
             'user_id'               => $user_id,
             'user_name'             => $user_name,
             'user_link'             => $user_link,
+
             'date_creation'         => $date_creation,
             'chasse_id'             => $chasse_id,
             'chasse_titre'          => $chasse_titre,
