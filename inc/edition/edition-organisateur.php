@@ -314,6 +314,25 @@ function rediriger_selon_etat_organisateur()
     return; // Aucun organisateur : accès au canevas autorisé
   }
 
+  $user  = wp_get_current_user();
+  $roles = (array) $user->roles;
+
+  $has_chasse_non_attente = false;
+  $query = get_chasses_de_organisateur($organisateur_id);
+  if ($query && $query->have_posts()) {
+    foreach ($query->posts as $chasse) {
+      $statut_validation = get_field('champs_caches_chasse_cache_statut_validation', $chasse->ID);
+      if ($statut_validation !== 'en_attente') {
+        $has_chasse_non_attente = true;
+        break;
+      }
+    }
+  }
+
+  if ((in_array(ROLE_ORGANISATEUR_CREATION, $roles, true) || in_array(ROLE_ORGANISATEUR, $roles, true)) && $has_chasse_non_attente) {
+    return; // Laisser accès à la page, pas de redirection
+  }
+
   $post = get_post($organisateur_id);
 
   switch ($post->post_status) {
