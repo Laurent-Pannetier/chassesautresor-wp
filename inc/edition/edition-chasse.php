@@ -278,6 +278,7 @@ function modifier_champ_chasse()
       wp_send_json_error('⚠️ format_date_invalide');
     }
     $valeur = $dt->format('Y-m-d H:i:s');
+
     $ok = mettre_a_jour_sous_champ_group($post_id, 'caracteristiques', 'chasse_infos_date_debut', $valeur);
     if ($ok) {
       $champ_valide = true;

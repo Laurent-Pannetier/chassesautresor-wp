@@ -222,6 +222,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const nouvelleDateDebut = nouvelleDateDebutBrute;
 
+
       const postId = this.closest('.champ-chasse')?.dataset.postId;
       modifierChampSimple('caracteristiques.chasse_infos_date_debut', nouvelleDateDebut, postId);
       rafraichirStatutChasse(postId);

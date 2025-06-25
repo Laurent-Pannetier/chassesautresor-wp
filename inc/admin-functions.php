@@ -1611,7 +1611,9 @@ function traiter_validation_chasse_admin() {
         wp_trash_post($chasse_id);
     }
 
-    wp_safe_redirect(wp_get_referer() ?: home_url('/')); 
+    // Après le traitement, rediriger systématiquement vers la liste des
+    // organisateurs afin d'éviter une erreur 404 si la chasse n'existe plus.
+    wp_safe_redirect(home_url('/mon-compte/organisateurs/'));
     exit;
 }
 add_action('admin_post_traiter_validation_chasse', 'traiter_validation_chasse_admin');

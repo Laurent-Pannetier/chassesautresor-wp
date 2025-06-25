@@ -297,6 +297,7 @@ function modifier_champ_enigme()
     if (!$dt) {
       wp_send_json_error('⚠️ format_date_invalide');
     }
+
     $timestamp = $dt->getTimestamp();
     $valeur_mysql = $dt->format('Y-m-d H:i:s');
     $today = strtotime(date('Y-m-d'));

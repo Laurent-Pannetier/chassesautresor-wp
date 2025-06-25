@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
+
 // ==============================
 // 📅 Formatage des dates Y-m-d ➔ d/m/Y
 // ==============================
@@ -23,6 +24,7 @@ function formatDateFr(dateStr) {
   if (parts.length !== 3) return dateStr;
   return `${parts[2]}/${parts[1]}/${parts[0]}`;
 }
+
 
 
 // ==============================
@@ -111,6 +113,7 @@ function initChampDate(input) {
       enregistrer();
     }
   });
+
   if (typeof window.onDateFieldUpdated === 'function') {
     const valeurInit = input.value?.trim() || ''; // 🔹 protection + fallback vide
     window.onDateFieldUpdated(input, valeurInit);
