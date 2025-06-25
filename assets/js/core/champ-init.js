@@ -24,7 +24,19 @@ function modifierChampSimple(champ, valeur, postId, cpt = 'enigme') {
       post_id: postId
     })
   })
-    .then(r => r.json())
+    .then(r => {
+      const contentType = r.headers.get('Content-Type') || '';
+      if (contentType.includes('application/json')) {
+        return r.json().catch(err => {
+          console.error('❌ Erreur parsing JSON :', err);
+          return { success: false };
+        });
+      }
+      return r.text().then(text => {
+        console.warn('⚠️ Réponse inattendue :', contentType, text);
+        return { success: false };
+      });
+    })
     .then(res => {
       if (res.success) {
         DEBUG && console.log(`✅ Champ ${champ} enregistré`);
