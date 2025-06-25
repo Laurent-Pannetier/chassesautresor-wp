@@ -62,19 +62,6 @@ get_header();
             !organisateur_a_des_chasses($organisateur_id);
         ?>
 
-        <!-- Présentation -->
-        <section class="presentation">
-            <div class="conteneur">
-                <div id="alerte-incomplete" class="alerte-discret" style="display: none;">
-                    ⚠️ test
-                </div>
-
-                <?php if ($description) : ?>
-                    <?php echo limiter_texte_avec_toggle($description, 300); ?>
-                <?php endif; ?>
-
-            </div>
-        </section>
         <!-- Section Chasses -->
         <section class="chasses">
             <div class="conteneur">
