@@ -511,8 +511,10 @@ function convertir_en_datetime(?string $date_string, array $formats = [
     return null;
   }
 
+  $timezone = function_exists('wp_timezone') ? wp_timezone() : new DateTimeZone('UTC');
+
   foreach ($formats as $format) {
-    $date_obj = DateTime::createFromFormat($format, $date_string);
+    $date_obj = DateTime::createFromFormat($format, $date_string, $timezone);
     if ($date_obj) {
       cat_debug("✅ Date '{$date_string}' convertie avec le format : {$format}");
       return $date_obj;
@@ -521,7 +523,7 @@ function convertir_en_datetime(?string $date_string, array $formats = [
 
   // 🚨 Ajout d'un fallback pour éviter le crash
   cat_debug("⚠️ Échec de conversion pour la date : '{$date_string}'. Formats testés : " . implode(', ', $formats));
-  return new DateTime('now', new DateTimeZone('UTC')); // Retourne la date actuelle au lieu de `null`
+  return null;
 }
 
 /**
@@ -709,7 +711,8 @@ function mettre_a_jour_sous_champ_group(int $post_id, string $group_key_or_name,
   }
 
 
-  $groupe = get_field($group_object['name'], $post_id);
+  // Lecture brute du groupe pour éviter toute mise en forme ACF
+  $groupe = get_field($group_object['name'], $post_id, false);
   if (!is_array($groupe)) {
     $groupe = $defaults;
   } else {
@@ -723,10 +726,15 @@ function mettre_a_jour_sous_champ_group(int $post_id, string $group_key_or_name,
   }
 
   $champ_a_enregistrer = [];
+  
+  $sub_field_type = null;
 
   foreach ($group_object['sub_fields'] as $sub_field) {
     $name = $sub_field['name'];
     $type = $sub_field['type'];
+    if ($name === $subfield_name) {
+      $sub_field_type = $type;
+    }
 
     $valeur = $groupe[$name] ?? '';
     if ($name === $subfield_name) {
@@ -758,19 +766,22 @@ function mettre_a_jour_sous_champ_group(int $post_id, string $group_key_or_name,
     $champ_a_enregistrer[$name] = $valeur;
   }
 
-  delete_field($group_object['name'], $post_id);
   cat_debug('[DEBUG] Données envoyées à update_field() pour groupe ' . $group_object['name'] . ' : ' . json_encode($champ_a_enregistrer));
 
   $ok = update_field($group_object['name'], $champ_a_enregistrer, $post_id);
+  cat_debug('[DEBUG] update_field() retourne : ' . var_export($ok, true));
+  // L'écriture ACF pouvant être asynchrone, on laisse une
+  // petite marge avant de relire pour vérification
+  sleep(1);
   clean_post_cache($post_id);
 
   // 🧪 Vérification lecture après update
-  $groupe_verif = get_field($group_object['name'], $post_id);
+  $groupe_verif = get_field($group_object['name'], $post_id, false);
 
   $str_valeur = is_array($new_value) ? json_encode($new_value) : $new_value;
   cat_debug("🧪 [DEBUG ACF] Mise à jour demandée : $group_key_or_name.$subfield_name → $str_valeur (post #$post_id)");
 
-  $groupe_verif = get_field($group_key_or_name, $post_id);
+  $groupe_verif = get_field($group_key_or_name, $post_id, false);
   cat_debug("📥 [DEBUG ACF] Relecture après update : " . json_encode($groupe_verif));
 
 
@@ -791,8 +802,19 @@ function mettre_a_jour_sous_champ_group(int $post_id, string $group_key_or_name,
       }
     }
 
-    $str_new = is_array($new_value) ? implode(',', $new_value) : (string) $new_value;
+    if ($sub_field_type === 'date_time_picker') {
+      $dt_new  = convertir_en_datetime((string) $new_value, ['Y-m-d H:i:s', 'Y-m-d\TH:i']);
+      $dt_read = convertir_en_datetime((string) $valeur_relue, ['Y-m-d H:i:s', 'Y-m-d\TH:i']);
+      if ($dt_new && $dt_read) {
+        cat_debug('[DEBUG] dt_new=' . $dt_new->format('c') . ' dt_read=' . $dt_read->format('c'));
+        return $dt_new->getTimestamp() === $dt_read->getTimestamp();
+      }
+      cat_debug('[DEBUG] Impossible de convertir les dates pour comparaison');
+    }
+
+    $str_new  = is_array($new_value) ? implode(',', $new_value) : (string) $new_value;
     $str_relue = is_array($valeur_relue) ? implode(',', $valeur_relue) : (string) $valeur_relue;
+    cat_debug('[DEBUG] str_new=' . $str_new . ' str_relue=' . $str_relue);
 
     return wp_strip_all_tags($str_new) === wp_strip_all_tags($str_relue);
   }
