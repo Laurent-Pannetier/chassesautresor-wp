@@ -1,0 +1,14 @@
+{
+  "name": "php-dev",
+  "dockerComposeFile": "../docker-compose.yml",
+  "service": "web",
+  "workspaceFolder": "/var/www/html",
+  "extensions": [
+    "bmewburn.vscode-intelephense-client",
+    "esbenp.prettier-vscode"
+  ],
+  "settings": {
+    "php.validate.executablePath": "/usr/local/bin/php"
+  },
+  "postCreateCommand": "composer install || true"
+}
