@@ -4,8 +4,8 @@ Ce document décrit la structure HTML, la logique JS et le traitement PHP pour l
 
 Actuellement utilisé pour :
 
-* `caracteristiques.chasse_infos_cout_points` (CPT `chasse`)
-* `enigme_tentative.enigme_tentative_cout_points` (CPT `enigme`)
+* `chasse_infos_cout_points` (CPT `chasse`)
+* `enigme_tentative_cout_points` (CPT `enigme`)
 
 ---
 
@@ -39,7 +39,7 @@ Actuellement utilisé pour :
 </li>
 ```
 
-> Remplacer `champ-cpt` et `xxx.yyy` par les bons identifiants selon le contexte (ex: `champ-chasse`, `caracteristiques.chasse_infos_cout_points`).
+> Remplacer `champ-cpt` et `xxx.yyy` par les bons identifiants selon le contexte (ex: `champ-chasse`, `chasse_infos_cout_points`).
 
 ---
 
@@ -104,14 +104,14 @@ document.addEventListener('DOMContentLoaded', initChampCoutPoints);
 
 ```js
 window.onCoutPointsUpdated = function (bloc, champ, valeur, postId, cpt) {
-  if (champ === 'caracteristiques.chasse_infos_cout_points') {
+  if (champ === 'chasse_infos_cout_points') {
     if (typeof mettreAJourAffichageCout === 'function') {
       mettreAJourAffichageCout(postId, valeur);
     }
   }
 
-  if (champ === 'enigme_tentative.enigme_tentative_cout_points') {
-    const champMaxBloc = document.querySelector('[data-champ="enigme_tentative.enigme_tentative_max"]');
+  if (champ === 'enigme_tentative_cout_points') {
+    const champMaxBloc = document.querySelector('[data-champ="enigme_tentative_max"]');
     const champMaxInput = champMaxBloc?.querySelector('.champ-input');
     const message = champMaxBloc?.querySelector('.message-tentatives');
 
@@ -119,7 +119,7 @@ window.onCoutPointsUpdated = function (bloc, champ, valeur, postId, cpt) {
       if (valeur === 0) {
         champMaxInput.value = 5;
         champMaxInput.max = 5;
-        modifierChampSimple('enigme_tentative.enigme_tentative_max', 5, postId, cpt);
+        modifierChampSimple('enigme_tentative_max', 5, postId, cpt);
       } else {
         champMaxInput.removeAttribute('max');
       }
@@ -141,8 +141,8 @@ window.onCoutPointsUpdated = function (bloc, champ, valeur, postId, cpt) {
 ### Exemple `chasse` :
 
 ```php
-if ($champ === 'caracteristiques.chasse_infos_cout_points') {
-  $ok = mettre_a_jour_sous_champ_group($post_id, 'caracteristiques', 'chasse_infos_cout_points', (int) $valeur);
+if ($champ === 'chasse_infos_cout_points') {
+  $ok = update_field('chasse_infos_cout_points', (int) $valeur, $post_id);
   if ($ok) {
     $champ_valide = true;
     $doit_recalculer_statut = true;

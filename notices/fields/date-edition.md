@@ -12,7 +12,7 @@ Ce document décrit les bonnes pratiques pour gérer un champ ACF de type `date`
 
 ```php
 <div class="champ-chasse champ-date-debut"
-     data-champ="caracteristiques.chasse_infos_date_debut"
+     data-champ="chasse_infos_date_debut"
      data-cpt="chasse"
      data-post-id="<?= esc_attr($post_id); ?>">
 
@@ -85,7 +85,7 @@ if ($champ === 'enigme_acces.date') {
     wp_send_json_error('⚠️ format_date_invalide');
   }
   $valeur .= ' 00:00:00'; // conversion Y-m-d -> Y-m-d H:i:s
-  $ok = mettre_a_jour_sous_champ_group($post_id, 'enigme_acces', 'enigme_acces_date', $valeur);
+  $ok = update_field('enigme_acces_date', $valeur, $post_id);
   if ($ok) wp_send_json_success([...]);
   wp_send_json_error('⚠️ echec_mise_a_jour_final');
 }
@@ -98,7 +98,7 @@ if ($champ === 'enigme_acces.date') {
 ```js
 window.onDateFieldUpdated = function(input, valeur) {
   const champ = input.closest('[data-champ]')?.dataset.champ;
-  if (champ === 'caracteristiques.chasse_infos_date_debut') {
+  if (champ === 'chasse_infos_date_debut') {
     const span = document.querySelector('.date-debut');
     if (span) span.textContent = formatDateFr(valeur);
   }

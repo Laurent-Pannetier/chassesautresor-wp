@@ -9,9 +9,9 @@ Cette notice décrit les bonnes pratiques pour la gestion **des champs ACF imbri
 Permettre la **lecture**, **mise à jour** et **contrôle** des champs ACF imbriqués **sans casser les autres valeurs du groupe**.
 
 Cas typiques :
-* `caracteristiques.chasse_infos_cout_points`
-* `enigme_tentative.enigme_tentative_max`
-* `enigme_acces.enigme_acces_date` (type `date_time_picker`)
+* `chasse_infos_cout_points`
+* `enigme_tentative_max`
+* `enigme_acces_date` (type `date_time_picker`)
 
 ---
 
@@ -19,9 +19,9 @@ Cas typiques :
 
 | Format JS (`data-champ`)                    | Format PHP (`update_field`)                        |
 | ------------------------------------------- | -------------------------------------------------- |
-| `caracteristiques.chasse_infos_cout_points` | `chasse_infos_cout_points` dans `caracteristiques` |
-| `enigme_tentative.enigme_tentative_max`     | `enigme_tentative_max` dans `enigme_tentative`     |
-| `enigme_acces.enigme_acces_date`            | `enigme_acces_date` dans `enigme_acces`            |
+| `chasse_infos_cout_points` | `chasse_infos_cout_points` |
+| `enigme_tentative_max`     | `enigme_tentative_max`     |
+| `enigme_acces_date`        | `enigme_acces_date`        |
 
 **Important :**
 - JS utilise la notation pointée (`groupe.champ`)
@@ -33,67 +33,22 @@ Cas typiques :
 ## ✅ 3. JS — Envoi AJAX avec champ imbriqué
 
 ```js
-modifierChampSimple('caracteristiques.chasse_infos_date_debut', '2025-06-01', postId, 'chasse');
+modifierChampSimple('chasse_infos_date_debut', '2025-06-01', postId, 'chasse');
 ```
 
 ---
 
-## ✅ 4. PHP — Fonction centrale `mettre_a_jour_sous_champ_group()`
+## ✅ 4. PHP — Enregistrement d'un champ
 
-### Structure correcte à utiliser :
-
-```php
-function mettre_a_jour_sous_champ_group($post_id, $group_key_or_name, $subfield_name, $new_value) {
-    $group_object = get_field_object($group_key_or_name, $post_id);
-    if (!$group_object || !isset($group_object['sub_fields'])) return false;
-
-    $groupe = get_field($group_object['name'], $post_id) ?: [];
-    $groupe[$subfield_name] = $new_value;
-
-    $champ_a_enregistrer = [];
-    foreach ($group_object['sub_fields'] as $sub) {
-        $name = $sub['name'];
-        $type = $sub['type'];
-        $val  = $groupe[$name] ?? null;
-
-        // Conversion automatique date_time_picker
-        if ($name === $subfield_name && $type === 'date_time_picker') {
-            if (is_string($val) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $val)) {
-                $val .= ' 00:00:00';
-            }
-        }
-
-        // Ignorer relationship vides (empêchent update_field)
-        if (in_array($type, ['relationship', 'post_object', 'taxonomy'], true) && empty($val)) {
-            continue;
-        }
-
-        $champ_a_enregistrer[$name] = $val;
-    }
-
-    // ⚠️ ACF exige que tous les champs attendus soient présents OU explicitement ignorés
-    foreach ($group_object['sub_fields'] as $sub) {
-        $name = $sub['name'];
-        if (!array_key_exists($name, $champ_a_enregistrer)) {
-            $champ_a_enregistrer[$name] = null;
-        }
-    }
-
-    return update_field($group_object['name'], $champ_a_enregistrer, $post_id);
-}
-```
-
----
-
-## ✅ 5. Traitement AJAX dans `modifier_champ_*()`
+La fonction `mettre_a_jour_sous_champ_group()` a été supprimée. Les champs anciennement imbriqués sont maintenant stockés sous forme plate et s'enregistrent directement :
 
 ```php
-if (strpos($champ, '.') !== false) {
-  [$groupe, $sous_champ] = explode('.', $champ, 2);
-  $ok = mettre_a_jour_sous_champ_group($post_id, $groupe, "{$groupe}_{$sous_champ}", $valeur);
-  if ($ok) wp_send_json_success(['champ' => $champ, 'valeur' => $valeur]);
-  wp_send_json_error('echec_mise_a_jour_final');
+// Exemple pour un champ de chasse
+$ok = update_field('chasse_infos_cout_points', (int) $valeur, $post_id);
+if ($ok) {
+    wp_send_json_success(['champ' => 'chasse_infos_cout_points', 'valeur' => $valeur]);
 }
+wp_send_json_error('echec_mise_a_jour_final');
 ```
 
 ---
@@ -113,8 +68,8 @@ if (strpos($champ, '.') !== false) {
 
 | Test                                       | Attendu                        |
 |-------------------------------------------|--------------------------------|
-| Envoi AJAX sur champ imbriqué             | ✅ Format `group.champ` en JS   |
-| Traitement PHP `mettre_a_jour_sous_champ_group()` | ✅ Retourne true           |
+| Envoi AJAX sur champ                      | ✅ Format `nom_champ` en JS   |
+| Traitement PHP `update_field()`           | ✅ Retourne true         |
 | Relecture admin après enregistrement      | ✅ Champ mis à jour            |
 | `date_time_picker`                        | ✅ Formattée `Y-m-d H:i:s`     |
 | Relationship vide                         | ✅ Ignoré proprement            |
