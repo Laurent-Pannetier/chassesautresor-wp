@@ -802,6 +802,7 @@ function mettre_a_jour_sous_champ_group(int $post_id, string $group_key_or_name,
       $dt_read = convertir_en_datetime((string) $valeur_relue, ['Y-m-d H:i:s', 'Y-m-d\TH:i']);
       if ($dt_new && $dt_read) {
         return $dt_new->getTimestamp() === $dt_read->getTimestamp();
+
       }
     }
 
