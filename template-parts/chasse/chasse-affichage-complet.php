@@ -55,6 +55,21 @@ $edition_active = utilisateur_peut_modifier_post($chasse_id);
 $organisateur_id = get_organisateur_from_chasse($chasse_id);
 $organisateur_nom = $organisateur_id ? get_the_title($organisateur_id) : get_the_author();
 
+// Liens publics de la chasse
+$liens_publics = get_field('chasse_principale_liens', $chasse_id);
+$liens_publics = is_array($liens_publics) ? $liens_publics : [];
+$has_liens = false;
+foreach ($liens_publics as $entry) {
+    $url = $entry['chasse_principale_liens_url'] ?? '';
+    if (is_string($url) && trim($url) !== '') {
+        $has_liens = true;
+        break;
+    }
+}
+$liens_publics_html = $has_liens
+    ? render_liens_publics($liens_publics, 'chasse', ['afficher_titre' => false, 'wrap' => false])
+    : '';
+
 
 if (current_user_can('administrator')) {
   $chasse_id = get_the_ID();
@@ -195,6 +210,11 @@ if ($edition_active && !$est_complet) {
 
     </div>
   </div>
+  <?php if ($liens_publics_html) : ?>
+    <div class="bandeau-liens-chasse">
+      <?= $liens_publics_html; ?>
+    </div>
+  <?php endif; ?>
 </section>
 
 <?php if ($edition_active) : ?>

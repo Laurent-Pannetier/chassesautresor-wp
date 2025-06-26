@@ -683,6 +683,7 @@ function utilisateur_peut_editer_champs(int $post_id): bool
                 return true;
             }
 
+
             return $status === 'pending'
                 && $stat === 'revision'
                 && in_array($val, ['creation', 'correction'], true);

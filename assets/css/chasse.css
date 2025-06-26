@@ -77,6 +77,35 @@
     margin-bottom: 0;
 }
 
+/* Bandeau discret en bas à droite avec les liens publics */
+.chasse-section-intro {
+    position: relative;
+}
+.chasse-section-intro .bandeau-liens-chasse {
+    position: absolute;
+    right: 0.5rem;
+    bottom: 0.5rem;
+    background: rgba(0, 0, 0, 0.6);
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.5rem;
+    z-index: 10;
+}
+.chasse-section-intro .bandeau-liens-chasse .liste-liens-publics {
+    gap: 0.5rem;
+}
+.chasse-section-intro .bandeau-liens-chasse .lien-public {
+    padding: 0;
+    background: none;
+    color: #fff;
+    font-size: 1.2rem;
+}
+.chasse-section-intro .bandeau-liens-chasse .lien-public:hover {
+    color: var(--color-secondary);
+}
+.chasse-section-intro .bandeau-liens-chasse .texte-lien {
+    display: none;
+}
+
 .chasse-section-intro.champ-vide-obligatoire {
     border: 2px dashed var(--color-editor-error);
     animation: clignoteTitre 1s infinite alternate;
