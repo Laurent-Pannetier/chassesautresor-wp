@@ -177,6 +177,35 @@ add_action('wp_ajax_modifier_champ_chasse', 'modifier_champ_chasse');
  */
 add_action('wp_ajax_modifier_dates_chasse', 'modifier_dates_chasse');
 
+/**
+ * Met à jour en une seule opération les trois champs ACF liés aux dates
+ * d'une chasse : date de début, date de fin et case illimitée.
+ *
+ * @param int        $post_id   ID de la chasse.
+ * @param DateTime   $debut     Date de début.
+ * @param DateTime|null $fin    Date de fin, null si illimitée.
+ * @param bool       $illimitee Mode illimité.
+ * @return bool      True si la mise à jour a réussi, false sinon.
+ */
+function mettre_a_jour_dates_chasse_acf(int $post_id, DateTime $debut, ?DateTime $fin, bool $illimitee): bool
+{
+  $valeurs = [
+    'chasse_infos_date_debut'      => $debut->format('Y-m-d H:i:s'),
+    'chasse_infos_date_fin'        => $illimitee ? '' : ($fin ? $fin->format('Y-m-d') : ''),
+    'chasse_infos_duree_illimitee' => $illimitee ? 1 : 0,
+  ];
+
+  cat_debug('[mettre_a_jour_dates_chasse_acf] valeurs=' . json_encode($valeurs));
+
+  return mettre_a_jour_sous_champ_group(
+    $post_id,
+    'caracteristiques',
+    '',
+    $valeurs,
+    $valeurs
+  );
+}
+
 function modifier_dates_chasse()
 {
   if (!is_user_logged_in()) {
@@ -187,6 +216,8 @@ function modifier_dates_chasse()
   $date_debut  = sanitize_text_field($_POST['date_debut'] ?? '');
   $date_fin    = sanitize_text_field($_POST['date_fin'] ?? '');
   $illimitee   = isset($_POST['illimitee']) ? (int) $_POST['illimitee'] : 0;
+
+  cat_debug("[modifier_dates_chasse] post_id={$post_id} debut={$date_debut} fin={$date_fin} illimitee={$illimitee}");
 
   if (!$post_id || get_post_type($post_id) !== 'chasse') {
     wp_send_json_error('post_invalide');
@@ -210,6 +241,7 @@ function modifier_dates_chasse()
   if (!$dt_debut) {
     wp_send_json_error('format_debut_invalide');
   }
+  cat_debug('[modifier_dates_chasse] dt_debut=' . $dt_debut->format('c'));
 
   $dt_fin = null;
   if (!$illimitee) {
@@ -224,43 +256,16 @@ function modifier_dates_chasse()
     if ($dt_fin->getTimestamp() <= $dt_debut->getTimestamp()) {
       wp_send_json_error('date_fin_avant_debut');
     }
+    cat_debug('[modifier_dates_chasse] dt_fin=' . $dt_fin->format('c'));
   }
 
-  mettre_a_jour_sous_champ_group(
-    $post_id,
-    'caracteristiques',
-    '',
-    [],
-    [
-      'chasse_infos_date_debut'      => '',
-      'chasse_infos_date_fin'        => '',
-      'chasse_infos_duree_illimitee' => 0,
-    ]
-  );
+  cat_debug('[modifier_dates_chasse] appel mettre_a_jour_dates_chasse_acf');
+  $ok = mettre_a_jour_dates_chasse_acf($post_id, $dt_debut, $dt_fin, (bool) $illimitee);
+  cat_debug('[modifier_dates_chasse] resultat=' . var_export($ok, true));
 
-  $ok1 = mettre_a_jour_sous_champ_group(
-    $post_id,
-    'caracteristiques',
-    'chasse_infos_date_debut',
-    $dt_debut->format('Y-m-d H:i:s')
-  );
-
-  $ok2 = mettre_a_jour_sous_champ_group(
-    $post_id,
-    'caracteristiques',
-    'chasse_infos_duree_illimitee',
-    $illimitee ? 1 : 0
-  );
-
-  $ok3 = mettre_a_jour_sous_champ_group(
-    $post_id,
-    'caracteristiques',
-    'chasse_infos_date_fin',
-    $illimitee ? '' : $dt_fin->format('Y-m-d')
-  );
-
-  if ($ok1 && $ok2 && $ok3) {
+  if ($ok) {
     mettre_a_jour_statuts_chasse($post_id);
+    cat_debug('[modifier_dates_chasse] mise a jour reussie');
     wp_send_json_success([
       'date_debut' => $dt_debut->format('Y-m-d H:i:s'),
       'date_fin'   => $illimitee ? '' : $dt_fin->format('Y-m-d'),
@@ -268,6 +273,7 @@ function modifier_dates_chasse()
     ]);
   }
 
+  cat_debug('[modifier_dates_chasse] echec mise a jour');
   wp_send_json_error('echec_mise_a_jour');
 }
 

@@ -671,8 +671,17 @@ function utilisateur_peut_editer_champs(int $post_id): bool
 
         case 'chasse':
             $cache = get_field('champs_caches', $post_id);
-            $val   = $cache['chasse_cache_statut_validation'] ?? '';
-            $stat  = $cache['chasse_cache_statut'] ?? '';
+            $val   = $cache['chasse_cache_statut_validation'] ?? 'creation';
+            $stat  = $cache['chasse_cache_statut'] ?? 'revision';
+
+            cat_debug("[utilisateur_peut_editer_champs] chasse #{$post_id} stat={$status} val={$val} metier={$stat}");
+
+            $a_role_orga = in_array(ROLE_ORGANISATEUR, $roles, true)
+                || in_array(ROLE_ORGANISATEUR_CREATION, $roles, true);
+
+            if ($status === 'pending' && $a_role_orga && (!$cache || !$val || !$stat)) {
+                return true;
+            }
 
             return $status === 'pending'
                 && $stat === 'revision'
