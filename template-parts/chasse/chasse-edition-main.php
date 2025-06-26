@@ -19,13 +19,11 @@ $image = get_field('chasse_principale_image', $chasse_id);
 $description = get_field('chasse_principale_description', $chasse_id);
 $titre = get_the_title($chasse_id);
 $liens = get_field('chasse_principale_liens', $chasse_id);
-$carac = get_field('caracteristiques', $chasse_id);
-
-$recompense = $carac['chasse_infos_recompense_texte'] ?? '';
-$valeur     = $carac['chasse_infos_recompense_valeur'] ?? '';
-$cout       = $carac['chasse_infos_cout_points'] ?? '';
-$date_debut = $carac['chasse_infos_date_debut'] ?? '';
-$date_fin   = $carac['chasse_infos_date_fin'] ?? '';
+$recompense = get_field('chasse_infos_recompense_texte', $chasse_id);
+$valeur     = get_field('chasse_infos_recompense_valeur', $chasse_id);
+$cout       = get_field('chasse_infos_cout_points', $chasse_id);
+$date_debut = get_field('chasse_infos_date_debut', $chasse_id);
+$date_fin   = get_field('chasse_infos_date_fin', $chasse_id);
 
 // 🎯 Conversion des dates pour les champs <input>
 $date_debut_obj = convertir_en_datetime($date_debut);
@@ -33,8 +31,8 @@ $date_debut_iso = $date_debut_obj ? $date_debut_obj->format('Y-m-d\TH:i') : '';
 
 $date_fin_obj = convertir_en_datetime($date_fin);
 $date_fin_iso = $date_fin_obj ? $date_fin_obj->format('Y-m-d') : '';
-$illimitee  = $carac['chasse_infos_duree_illimitee'] ?? false;
-$nb_max     = $carac['chasse_infos_nb_max_gagants'] ?? 1;
+$illimitee  = get_field('chasse_infos_duree_illimitee', $chasse_id);
+$nb_max     = get_field('chasse_infos_nb_max_gagants', $chasse_id) ?: 1;
 
 $champTitreParDefaut = 'nouvelle chasse'; // À adapter si besoin
 $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut);
@@ -143,11 +141,11 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
               <ul class="resume-infos">
 
                 <!-- Récompense -->
-                <li class="champ-chasse champ-rempli<?= $peut_editer ? '' : ' champ-desactive'; ?>" data-champ="caracteristiques_chasse_infos_recompense_valeur" data-cpt="chasse" data-post-id="<?= esc_attr($chasse_id); ?>">
+                <li class="champ-chasse champ-rempli<?= $peut_editer ? '' : ' champ-desactive'; ?>" data-champ="chasse_infos_recompense_valeur" data-cpt="chasse" data-post-id="<?= esc_attr($chasse_id); ?>">
                   Récompense
                   <?php if ($peut_editer) : ?>
 
-                    <button type="button" class="champ-modifier ouvrir-panneau-recompense" data-champ="caracteristiques_chasse_infos_recompense_valeur" data-cpt="chasse" data-post-id="<?= esc_attr($chasse_id); ?>" aria-label="Modifier la récompense">✏️</button>
+                    <button type="button" class="champ-modifier ouvrir-panneau-recompense" data-champ="chasse_infos_recompense_valeur" data-cpt="chasse" data-post-id="<?= esc_attr($chasse_id); ?>" aria-label="Modifier la récompense">✏️</button>
 
                   <?php endif; ?>
                 </li>
@@ -182,7 +180,7 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
 
                 <!-- Date de début (édition inline) -->
                 <li class="champ-chasse champ-date-debut<?= $peut_editer ? '' : ' champ-desactive'; ?>"
-                  data-champ="caracteristiques.chasse_infos_date_debut"
+                  data-champ="chasse_infos_date_debut"
                   data-cpt="chasse"
                   data-post-id="<?= esc_attr($chasse_id); ?>">
 
@@ -198,7 +196,7 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
 
                 <!-- Date de fin -->
                 <li class="champ-chasse champ-date-fin<?= $peut_editer ? '' : ' champ-desactive'; ?>"
-                  data-champ="caracteristiques.chasse_infos_date_fin"
+                  data-champ="chasse_infos_date_fin"
                   data-cpt="chasse"
                   data-post-id="<?= esc_attr($chasse_id); ?>">
 
@@ -214,7 +212,7 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
                     <input type="checkbox"
                       id="duree-illimitee"
                       name="duree-illimitee"
-                      data-champ="caracteristiques.chasse_infos_duree_illimitee"
+                      data-champ="chasse_infos_duree_illimitee"
                       <?= ($illimitee ? 'checked' : ''); ?> <?= $peut_editer ? '' : 'disabled'; ?>>
                     <label for="duree-illimitee">Durée illimitée</label>
                   </div>
@@ -224,7 +222,7 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
 
                 <!-- Coût -->
                 <li class="champ-chasse champ-cout-points <?= empty($cout) ? 'champ-vide' : 'champ-rempli'; ?><?= $peut_editer ? '' : ' champ-desactive'; ?>"
-                  data-champ="caracteristiques.chasse_infos_cout_points"
+                  data-champ="chasse_infos_cout_points"
                   data-cpt="chasse"
                   data-post-id="<?= esc_attr($chasse_id); ?>">
 
@@ -255,7 +253,7 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
 
                 <!-- Nombre de gagnants -->
                 <li class="champ-chasse champ-nb-gagnants <?= empty($nb_max) ? 'champ-vide' : 'champ-rempli'; ?><?= $peut_editer ? '' : ' champ-desactive'; ?>"
-                  data-champ="caracteristiques.chasse_infos_nb_max_gagants"
+                  data-champ="chasse_infos_nb_max_gagants"
                   data-cpt="chasse"
                   data-post-id="<?= esc_attr($chasse_id); ?>">
 
@@ -274,7 +272,7 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
                       id="nb-gagnants-illimite"
                       name="nb-gagnants-illimite"
                       <?= ($nb_max == 0 ? 'checked' : ''); ?> <?= $peut_editer ? '' : 'disabled'; ?>
-                      data-champ="caracteristiques.chasse_infos_nb_max_gagants">
+                      data-champ="chasse_infos_nb_max_gagants">
                     <label for="nb-gagnants-illimite">Illimité</label>
                   </div>
 

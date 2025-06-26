@@ -21,15 +21,14 @@ $description = get_field('description_chasse', $chasse_id);
 $statut = mettre_a_jour_statuts_chasse($chasse_id);
 
 // 🔹 Récupération des groupes ACF
-$caracteristiques = get_field('caracteristiques', $chasse_id) ?? [];
 $trophee = get_field('trophee', $chasse_id) ?? [];
 
-// 🔹 Extraction des sous-champs depuis leurs groupes
-$date_debut = $caracteristiques['date_de_debut'] ?? null;
-$date_fin = $caracteristiques['date_de_fin'] ?? null;
-$illimitee = $caracteristiques['illimitee'] ?? null; // "stop" ou "continue"
-$valeur_tresor = $caracteristiques['contre_valeur_tresor'] ?? null;
-$lot_description = $caracteristiques['lot'] ?? null;
+// 🔹 Lecture directe des sous-champs ACF
+$date_debut     = get_field('chasse_infos_date_debut', $chasse_id);
+$date_fin       = get_field('chasse_infos_date_fin', $chasse_id);
+$illimitee      = get_field('chasse_infos_duree_illimitee', $chasse_id); // "stop" ou "continue"
+$valeur_tresor  = get_field('contre_valeur_tresor', $chasse_id);
+$lot_description = get_field('lot', $chasse_id);
 
 $nb_joueurs = get_field('total_joueurs_souscription_chasse', $chasse_id);
 
@@ -144,9 +143,8 @@ $classe_verrouillee = ($statut === 'Verrouillée') ? 'statut-verrouille' : '';
             <div class="chasse-terminee">
                 <?php 
                 // 🔹 Date de découverte
-                $champs_caches = get_field('champs_caches', $chasse_id);
-                $date_decouverte = $champs_caches['date_de_decouverte'] ?? null;
-                $gagnants = $champs_caches['gagnant'] ?? [];
+                $date_decouverte = get_field('date_de_decouverte', $chasse_id);
+                $gagnants = get_field('gagnant', $chasse_id) ?? [];
                 ?>
                 <p>
                     <?php echo esc_html($date_decouverte ? formater_date($date_decouverte) : __('Solution non trouvée', 'textdomain')); ?>

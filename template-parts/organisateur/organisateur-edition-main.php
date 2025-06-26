@@ -23,7 +23,8 @@ $description  = get_field('description_longue', $organisateur_id);
 $reseaux      = get_field('reseaux_sociaux', $organisateur_id);
 $site         = get_field('lien_site_web', $organisateur_id);
 $email_contact = get_field('profil_public_email_contact', $organisateur_id);
-$coordonnees  = get_field('coordonnees_bancaires', $organisateur_id);
+$iban         = get_field('coordonnees_bancaires_iban', $organisateur_id);
+$bic          = get_field('coordonnees_bancaires_bic', $organisateur_id);
 $liens_actifs = organisateur_get_liens_actifs($organisateur_id);
 $nb_liens = count($liens_actifs);
 
@@ -35,9 +36,8 @@ $is_complete = (
   !empty($description)
 );
 
-$coordonnees = get_field('coordonnees_bancaires', $organisateur_id);
-$iban_vide = empty($coordonnees['iban']);
-$bic_vide  = empty($coordonnees['bic']);
+$iban_vide = empty($iban);
+$bic_vide  = empty($bic);
 $classe_vide_coordonnees = ($iban_vide || $bic_vide) ? 'champ-vide' : '';
 ?>
 
@@ -222,7 +222,7 @@ $classe_vide_coordonnees = ($iban_vide || $bic_vide) ? 'champ-vide' : '';
                 <h3>Information bancaires</h3>
 
                 <ul class="resume-infos">
-                  <li class="champ-organisateur champ-coordonnees ligne-coordonnees <?= !empty($coordonnees['iban']) ? 'champ-rempli' : ''; ?>" data-champ="coordonnees_bancaires">
+                  <li class="champ-organisateur champ-coordonnees ligne-coordonnees <?= !empty($iban) ? 'champ-rempli' : ''; ?>" data-champ="coordonnees_bancaires">
                     Coordonnées bancaires
                     <button type="button" class="icone-info" aria-label="Informations sur les coordonnées bancaires"
                       onclick="alert('Ces informations sont nécessaires uniquement pour vous verser les gains issus de la conversion de vos points en euros. Nous ne prélevons jamais d\u2019argent.');">

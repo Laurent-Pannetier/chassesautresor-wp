@@ -3,9 +3,8 @@ defined('ABSPATH') || exit;
 $chasse_id = $args['chasse_id'] ?? null;
 if (!$chasse_id || get_post_type($chasse_id) !== 'chasse') return;
 
-$caracteristiques = get_field('caracteristiques', $chasse_id);
-$texte_recompense = $caracteristiques['chasse_infos_recompense_texte'] ?? '';
-$valeur_recompense = $caracteristiques['chasse_infos_recompense_valeur'] ?? '';
+$texte_recompense  = get_field('chasse_infos_recompense_texte', $chasse_id);
+$valeur_recompense = get_field('chasse_infos_recompense_valeur', $chasse_id);
 ?>
 
 
@@ -20,7 +19,7 @@ $valeur_recompense = $caracteristiques['chasse_infos_recompense_valeur'] ?? '';
     <div class="champ-wrapper" style="display: flex; flex-direction: column; gap: 20px;">
         
       <label for="champ-recompense-titre">Titre de la récompense <span class="champ-obligatoire">*</span></label>
-      <input id="champ-recompense-titre" type="text" maxlength="40" placeholder="Ex : Un papillon en cristal..." value="<?= esc_attr($caracteristiques['chasse_infos_recompense_titre'] ?? ''); ?>">
+      <input id="champ-recompense-titre" type="text" maxlength="40" placeholder="Ex : Un papillon en cristal..." value="<?= esc_attr(get_field('chasse_infos_recompense_titre', $chasse_id)); ?>">
 
       <label for="champ-recompense-texte">Descripton de la récompense <span class="champ-obligatoire">*</span></label>
       <textarea id="champ-recompense-texte" rows="4" placeholder="Ex : Un coffret cadeau comprenant..."><?= esc_textarea(wp_strip_all_tags($texte_recompense)); ?></textarea>

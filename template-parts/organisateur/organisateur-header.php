@@ -14,9 +14,10 @@ if (!is_numeric($organisateur_id)) return;
 $liens_actifs = organisateur_get_liens_actifs($organisateur_id);
 $types_disponibles = organisateur_get_liste_liens_publics(); // à garder si nécessaire
 
-$coordonnees = get_field('coordonnees_bancaires', $organisateur_id);
-$iban_vide = empty($coordonnees['iban']);
-$bic_vide  = empty($coordonnees['bic']);
+$iban  = get_field('coordonnees_bancaires_iban', $organisateur_id);
+$bic   = get_field('coordonnees_bancaires_bic', $organisateur_id);
+$iban_vide = empty($iban);
+$bic_vide  = empty($bic);
 $classe_vide_coordonnees = ($iban_vide || $bic_vide) ? 'champ-vide' : '';
 
 $base_url = get_permalink($organisateur_id);
