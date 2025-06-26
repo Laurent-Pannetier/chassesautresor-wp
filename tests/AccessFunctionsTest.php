@@ -84,7 +84,7 @@ class AccessFunctionsTest extends TestCase
         $mock_fields[200]['utilisateurs_associes'] = [3];
 
         $mock_posts[201] = ['post_type' => 'chasse'];
-        $mock_fields[201]['champs_caches'] = ['chasse_cache_organisateur' => 200];
+        $mock_fields[201]['chasse_cache_organisateur'] = 200;
 
         $this->assertTrue(utilisateur_peut_modifier_post(201));
     }
@@ -100,7 +100,7 @@ class AccessFunctionsTest extends TestCase
         $mock_fields[300]['utilisateurs_associes'] = [4];
 
         $mock_posts[301] = ['post_type' => 'chasse'];
-        $mock_fields[301]['champs_caches'] = ['chasse_cache_organisateur' => 300];
+        $mock_fields[301]['chasse_cache_organisateur'] = 300;
 
         $mock_posts[302] = ['post_type' => 'enigme'];
         $mock_fields[302]['enigme_chasse_associee'] = 301;

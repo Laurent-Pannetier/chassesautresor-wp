@@ -38,7 +38,7 @@ class EditionCoreGroupTest extends TestCase
         );
 
         $this->assertTrue($result);
-        $this->assertSame('2025-06-01 00:00:00', $mock_fields[$post_id]['caracteristiques']['chasse_infos_date_debut']);
+        $this->assertSame('2025-06-01 00:00:00', $mock_fields[$post_id]['chasse_infos_date_debut']);
     }
 
     public function test_grouped_updates_store_values()
@@ -72,7 +72,7 @@ class EditionCoreGroupTest extends TestCase
         $result = mettre_a_jour_sous_champ_group($post_id, 'infos', '', $values);
 
         $this->assertTrue($result);
-        $this->assertSame('Test', $mock_fields[$post_id]['infos']['infos_titre']);
-        $this->assertSame('2025-05-01 10:30:00', $mock_fields[$post_id]['infos']['infos_date']);
+        $this->assertSame('Test', $mock_fields[$post_id]['infos_titre']);
+        $this->assertSame('2025-05-01 10:30:00', $mock_fields[$post_id]['infos_date']);
     }
 }
