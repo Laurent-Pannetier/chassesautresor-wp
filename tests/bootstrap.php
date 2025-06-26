@@ -17,7 +17,65 @@ if (!function_exists('add_rewrite_rule')) {
 
 $mock_posts = [];
 $mock_fields = [];
+$mock_field_objects = [];
 $mock_current_time = null;
+
+if (!function_exists('update_field')) {
+    function update_field($selector, $value, $post_id = false) {
+        global $mock_fields, $mock_field_objects;
+
+        $group = $mock_field_objects[$selector] ?? null;
+        if (!$group) {
+            foreach ($mock_field_objects as $obj) {
+                if (($obj['name'] ?? null) === $selector && isset($obj['sub_fields'])) {
+                    $group = $obj;
+                    break;
+                }
+            }
+        }
+
+        if ($group && isset($group['sub_fields'])) {
+            $converted = [];
+            foreach ($group['sub_fields'] as $sub) {
+                $name = $sub['name'];
+                $key  = $sub['key'] ?? $name;
+                if (array_key_exists($name, $value)) {
+                    $converted[$name] = $value[$name];
+                } elseif (array_key_exists($key, $value)) {
+                    $converted[$name] = $value[$key];
+                }
+            }
+            $mock_fields[$post_id][$group['name']] = $converted;
+        } else {
+            $mock_fields[$post_id][$selector] = $value;
+        }
+
+        return true;
+    }
+}
+if (!function_exists('get_field_object')) {
+    function get_field_object($selector, $post_id = false) {
+        global $mock_field_objects;
+        if (isset($mock_field_objects[$selector])) {
+            return $mock_field_objects[$selector];
+        }
+        foreach ($mock_field_objects as $object) {
+            if (($object['name'] ?? null) === $selector) {
+                return $object;
+            }
+        }
+        return null;
+    }
+}
+if (!function_exists('clean_post_cache')) {
+    function clean_post_cache($post_id) {}
+}
+if (!function_exists('wp_strip_all_tags')) {
+    function wp_strip_all_tags($string) { return strip_tags($string); }
+}
+if (!function_exists('cat_debug')) {
+    function cat_debug($message, bool $force = false): void {}
+}
 
 // Minimal WP user functions for tests
 $mock_users = [];
@@ -73,7 +131,23 @@ if (!function_exists('get_post_status')) {
 
 if (!function_exists('get_field')) {
     function get_field($key, $post_id = 0) {
-        global $mock_fields;
+        global $mock_fields, $mock_field_objects;
+
+        // Attempt to resolve group name from key or object
+        $group = $mock_field_objects[$key] ?? null;
+        if (!$group) {
+            foreach ($mock_field_objects as $obj) {
+                if (($obj['name'] ?? null) === $key && isset($obj['sub_fields'])) {
+                    $group = $obj;
+                    break;
+                }
+            }
+        }
+
+        if ($group && isset($mock_fields[$post_id][$group['name']])) {
+            return $mock_fields[$post_id][$group['name']];
+        }
+
         return $mock_fields[$post_id][$key] ?? null;
     }
 }
@@ -156,3 +230,4 @@ require_once __DIR__ . '/../inc/constants.php';
 require_once __DIR__ . '/../inc/access-functions.php';
 require_once __DIR__ . '/../inc/chasse-functions.php';
 require_once __DIR__ . '/../inc/user-functions.php';
+require_once __DIR__ . '/../inc/edition/edition-core.php';
