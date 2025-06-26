@@ -17,6 +17,13 @@ document.addEventListener('DOMContentLoaded', () => {
   erreurFin = document.getElementById('erreur-date-fin');
   checkboxIllimitee = document.getElementById('duree-illimitee');
 
+  DEBUG && console.log('🔄 Init date fields', {
+    debut: inputDateDebut?.value,
+    fin: inputDateFin?.value,
+    illimitee: checkboxIllimitee?.checked,
+    postId: inputDateDebut?.closest('.champ-chasse')?.dataset.postId
+  });
+
 
   // ==============================
   // 🟢 Initialisation des champs
@@ -672,6 +679,13 @@ function enregistrerDatesChasse() {
   const postId = inputDateDebut.closest('.champ-chasse')?.dataset.postId;
   if (!postId) return Promise.resolve(false);
 
+  DEBUG && console.log('📤 enregistrerDatesChasse', {
+    postId,
+    debut: inputDateDebut.value,
+    fin: checkboxIllimitee?.checked ? '' : inputDateFin.value,
+    illimitee: checkboxIllimitee?.checked
+  });
+
   const params = new URLSearchParams({
     action: 'modifier_dates_chasse',
     post_id: postId,
@@ -693,6 +707,9 @@ function enregistrerDatesChasse() {
         return true;
       }
       console.error('❌ Erreur sauvegarde dates:', res.data);
+      if (typeof afficherErreurGlobale === 'function') {
+        afficherErreurGlobale('❌ ' + res.data);
+      }
       return false;
     })
     .catch(err => {
