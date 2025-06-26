@@ -1432,7 +1432,7 @@ function recuperer_organisateurs_pending() {
             verifier_ou_mettre_a_jour_cache_complet($chasse_id);
             $chasse_complet = (bool) get_field('chasse_cache_complet', $chasse_id);
             $nb_enigmes = count(recuperer_enigmes_associees($chasse_id));
-            $validation = get_field('champs_caches_chasse_cache_statut_validation', $chasse_id);
+            $validation = get_field('chasse_cache_statut_validation', $chasse_id);
 
         }
 

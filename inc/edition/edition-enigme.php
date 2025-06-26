@@ -678,7 +678,7 @@ add_action('acf/save_post', function ($post_id) {
   // ✅ Ajoute l’ID de l’énigme à la relation "chasse_cache_enigmes"
   $success = modifier_relation_acf(
     $chasse_id,
-    'champs_caches_enigmes',
+    'chasse_cache_enigmes',
     $post_id,
     'field_67b740025aae0',
     'add'
@@ -693,10 +693,10 @@ add_action('acf/save_post', function ($post_id) {
 
 
 /**
- * 🧹 Nettoyer les relations ACF orphelines dans le champ `champs_caches_enigmes_associees`.
+ * 🧹 Nettoyer les relations ACF orphelines dans le champ `chasse_cache_enigmes`.
  *
  * Cette fonction parcourt toutes les chasses possédant des valeurs dans le champ ACF
- * `champs_caches_enigmes_associees`, et supprime les références à des énigmes qui ont été supprimées.
+ * `chasse_cache_enigmes`, et supprime les références à des énigmes qui ont été supprimées.
  *
  * ⚠️ Cette vérification est utile notamment lorsqu'on supprime une énigme manuellement
  * ou que la cohérence de la relation ACF est rompue.
@@ -715,7 +715,7 @@ function nettoyer_relations_orphelines()
   $chasses = $wpdb->get_results("
         SELECT post_id, meta_value 
         FROM {$wpdb->postmeta} 
-        WHERE meta_key = 'champs_caches_enigmes_associees'
+        WHERE meta_key = 'chasse_cache_enigmes'
     ");
 
   foreach ($chasses as $chasse) {
@@ -733,7 +733,7 @@ function nettoyer_relations_orphelines()
 
     // 🔥 Si on a supprimé des IDs, mettre à jour la base
     if (count($relations_nettoyees) !== count($relations)) {
-      update_post_meta($post_id, 'champs_caches_enigmes_associees', $relations_nettoyees);
+      update_post_meta($post_id, 'chasse_cache_enigmes', $relations_nettoyees);
       cat_debug("✅ Relations nettoyées pour la chasse ID {$post_id} : " . print_r($relations_nettoyees, true));
     }
   }
@@ -746,7 +746,7 @@ function nettoyer_relations_orphelines()
  * Si le post supprimé est de type `enigme`, elle effectue :
  *
  * 1. 🔄 La suppression de l’ID de l’énigme dans le champ relation ACF
- *    `champs_caches_enigmes_associees` de la chasse associée, via `modifier_relation_acf()`.
+ *    `chasse_cache_enigmes` de la chasse associée, via `modifier_relation_acf()`.
  *
  * 2. 🧹 Un nettoyage global des champs relationnels dans toutes les chasses,
  *    pour supprimer les références à des énigmes qui n’existent plus,
@@ -769,8 +769,8 @@ add_action('before_delete_post', function ($post_id) {
   }
 
   // 🔹 Supprimer proprement la relation avec l’énigme supprimée
-  $acf_key = 'field_67b740025aae0'; // Clé exacte du champ `champs_caches_enigmes_associees`
-  modifier_relation_acf($chasse_id, 'champs_caches_enigmes_associees', $post_id, $acf_key, 'remove');
+  $acf_key = 'field_67b740025aae0'; // Clé exacte du champ `chasse_cache_enigmes`
+  modifier_relation_acf($chasse_id, 'chasse_cache_enigmes', $post_id, $acf_key, 'remove');
 
   // 🔹 Nettoyer les relations orphelines (toutes les chasses)
   nettoyer_relations_orphelines();

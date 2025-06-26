@@ -63,7 +63,7 @@ function get_organisateur_chasse($chasse_id)
 function get_organisateur_from_chasse($chasse_id)
 {
   // ✅ Lecture directe
-  $relation = get_field('champs_caches_chasse_cache_organisateur', $chasse_id);
+  $relation = get_field('chasse_cache_organisateur', $chasse_id);
 
   if (!empty($relation)) {
 
@@ -219,12 +219,12 @@ function organisateur_a_des_chasses($organisateur_id)
     'meta_query'     => [
       'relation' => 'AND',
       [
-        'key'     => 'champs_caches_chasse_cache_organisateur',
+        'key'     => 'chasse_cache_organisateur',
         'value'   => '"' . $organisateur_id . '"',
         'compare' => 'LIKE'
       ],
       [
-        'key'     => 'champs_caches_chasse_cache_statut_validation',
+        'key'     => 'chasse_cache_statut_validation',
         'value'   => 'banni',
         'compare' => '!='
       ]
@@ -248,7 +248,7 @@ function get_chasses_de_organisateur($organisateur_id)
     'post_status'    => ['publish', 'pending'], // Inclure les chasses en attente
     'meta_query'     => [
       [
-        'key'     => 'champs_caches_chasse_cache_organisateur', // Champ correct
+        'key'     => 'chasse_cache_organisateur', // Champ correct
         'value'   => '"' . strval($organisateur_id) . '"', // Recherche dans le tableau sérialisé
         'compare' => 'LIKE'
       ]
@@ -280,8 +280,8 @@ function get_chasses_en_creation($organisateur_id)
   $filtrees = array_filter($chasses, function ($post) {
     $id = $post->ID;
     $statut_wp = get_post_status($id);
-    $statut_validation = get_field('champs_caches_chasse_cache_statut_validation', $id);
-    $statut_metier = get_field('champs_caches_chasse_cache_statut', $id);
+    $statut_validation = get_field('chasse_cache_statut_validation', $id);
+    $statut_metier = get_field('chasse_cache_statut', $id);
 
     error_log("🧪 #$id | statut=$statut_wp | validation=$statut_validation | metier=$statut_metier");
 
@@ -321,7 +321,7 @@ function recuperer_enigmes_associees(int $chasse_id): array
     return [];
   }
 
-  $liste_brute = get_field('champs_caches_chasse_cache_enigmes', $chasse_id) ?? [];
+  $liste_brute = get_field('chasse_cache_enigmes', $chasse_id) ?? [];
 
   // Extraction des IDs (objet ou int)
   $ids = [];
@@ -696,8 +696,7 @@ function synchroniser_relations_cache_enigmes($chasse_id): bool
       $chasse_id,
       'chasse_cache_enigmes',
       $enigme_id,
-      'field_67b740025aae0',
-      'champs_caches_'
+      'field_67b740025aae0'
     );
 
     if (!$ok) {
@@ -740,12 +739,12 @@ function forcer_relation_enigme_dans_chasse_si_absente(int $enigme_id): void
     return;
   }
 
-  $liste = is_array(get_field('champs_caches_chasse_cache_enigmes', $chasse_id) ?? null) ? array_map('intval', get_field('champs_caches_chasse_cache_enigmes', $chasse_id)) : [];
+  $liste = is_array(get_field('chasse_cache_enigmes', $chasse_id) ?? null) ? array_map('intval', get_field('chasse_cache_enigmes', $chasse_id)) : [];
 
   if (!in_array($enigme_id, $liste, true)) {
     $ok = modifier_relation_acf(
       $chasse_id,
-      'champs_caches_chasse_cache_enigmes',
+      'chasse_cache_enigmes',
       $enigme_id,
       'field_67b740025aae0',
       'add'

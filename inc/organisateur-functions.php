@@ -372,7 +372,7 @@ function get_cta_devenir_organisateur(?int $user_id = null): array
         $query = get_chasses_de_organisateur($organisateur_id);
         if ($query && $query->have_posts()) {
             foreach ($query->posts as $chasse) {
-                $statut_validation = get_field('champs_caches_chasse_cache_statut_validation', $chasse->ID);
+                $statut_validation = get_field('chasse_cache_statut_validation', $chasse->ID);
                 if ($statut_validation === 'en_attente') {
                     $has_pending_chasse = true;
                     break;

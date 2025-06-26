@@ -315,7 +315,7 @@ function traiter_statut_enigme(int $enigme_id, ?int $user_id = null): array
     }
 
     // ✅ Chasse terminée = accès libre à toutes les énigmes
-    $statut_chasse = get_field('champs_caches_chasse_cache_statut', $chasse_id);
+    $statut_chasse = get_field('chasse_cache_statut', $chasse_id);
     if ($statut_chasse === 'termine') {
         return [
             'etat' => 'terminee',
@@ -430,7 +430,7 @@ function enigme_mettre_a_jour_etat_systeme(int $enigme_id, bool $mettre_a_jour =
         $etat = 'bloquee_chasse';
         cat_debug("🧩 #$enigme_id → bloquee_chasse (aucune chasse valide liée)");
     } else {
-        $statut_chasse = $statut_chasse_forcé ?? get_field('champs_caches_chasse_cache_statut', $chasse_id);
+        $statut_chasse = $statut_chasse_forcé ?? get_field('chasse_cache_statut', $chasse_id);
         cat_debug("🧩 #$enigme_id → chasse #$chasse_id statut = $statut_chasse");
 
         if (!in_array($statut_chasse, ['en_cours', 'payante', 'termine'], true)) {
@@ -741,7 +741,7 @@ function verifier_ou_recalculer_statut_chasse($chasse_id): void
     $chasses_traitees[] = $chasse_id;
 
 
-    $statut = get_field('champs_caches_chasse_cache_statut', $chasse_id);
+    $statut = get_field('chasse_cache_statut', $chasse_id);
 
     // Si le statut est manquant ou invalide, on le recalcule
     $statuts_valides = ['revision', 'a_venir', 'en_cours', 'payante', 'termine'];
@@ -777,9 +777,9 @@ function mettre_a_jour_statuts_chasse($chasse_id)
     if (get_post_type($chasse_id) !== 'chasse') return;
 
     $cache = [
-        'validation' => get_field('champs_caches_chasse_cache_statut_validation', $chasse_id),
-        'statut'     => get_field('champs_caches_chasse_cache_statut', $chasse_id),
-        'date'       => get_field('champs_caches_chasse_cache_date_decouverte', $chasse_id),
+        'validation' => get_field('chasse_cache_statut_validation', $chasse_id),
+        'statut'     => get_field('chasse_cache_statut', $chasse_id),
+        'date'       => get_field('chasse_cache_date_decouverte', $chasse_id),
     ];
 
     $carac = [
@@ -833,7 +833,7 @@ function mettre_a_jour_statuts_chasse($chasse_id)
         }
     }
 
-    update_field('champs_caches_chasse_cache_statut', $statut, $chasse_id);
+    update_field('chasse_cache_statut', $statut, $chasse_id);
 
     if (function_exists('synchroniser_cache_enigmes_chasse')) {
         synchroniser_cache_enigmes_chasse($chasse_id, true, true);
@@ -923,7 +923,7 @@ function recuperer_statut_chasse()
         wp_send_json_error('post_invalide');
     }
 
-    $statut = get_field('champs_caches_chasse_cache_statut', $post_id);
+    $statut = get_field('chasse_cache_statut', $post_id);
     if (!$statut) {
         wp_send_json_error('statut_indisponible');
     }
@@ -951,10 +951,10 @@ function forcer_statut_apres_acf($post_id, $nouvelle_validation = null)
     if (!is_numeric($post_id) || get_post_type($post_id) !== 'chasse') return;
 
     // Lecture et mise à jour facultative
-    $validation = get_field('champs_caches_chasse_cache_statut_validation', $post_id);
+    $validation = get_field('chasse_cache_statut_validation', $post_id);
 
     if ($nouvelle_validation !== null) {
-        update_field('champs_caches_chasse_cache_statut_validation', sanitize_text_field($nouvelle_validation), $post_id);
+        update_field('chasse_cache_statut_validation', sanitize_text_field($nouvelle_validation), $post_id);
         $validation = sanitize_text_field($nouvelle_validation);
     }
 
@@ -1022,7 +1022,7 @@ function forcer_statut_selon_validation_chasse($post_id, $post, $update)
     if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) return;
     if (wp_is_post_revision($post_id)) return;
 
-    $validation = get_field('champs_caches_chasse_cache_statut_validation', $post_id);
+    $validation = get_field('chasse_cache_statut_validation', $post_id);
     if (!$validation) return;
     $statut_wp = get_post_status($post_id);
 
