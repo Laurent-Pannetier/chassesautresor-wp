@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
+  console.log('✅ date-fields.js chargé');
   // On cible de manière plus large les champs de date pour prendre en charge
   // les inputs générés dynamiquement ou ceux dont le type peut varier (text,
   // date, datetime-local...). L'important est qu'ils possèdent la classe
@@ -23,6 +24,56 @@ function formatDateFr(dateStr) {
   const parts = dateStr.split('-');
   if (parts.length !== 3) return dateStr;
   return `${parts[2]}/${parts[1]}/${parts[0]}`;
+}
+
+// ==============================
+// 📅 Tentative de normalisation d'une valeur de champ date
+// ==============================
+function normaliserValeurDate(brute, type) {
+  if (!brute) return '';
+
+  const regexIsoDate = /^\d{4}-\d{2}-\d{2}$/;
+  const regexIsoDateTime = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
+  if (regexIsoDate.test(brute) || regexIsoDateTime.test(brute)) {
+    return brute;
+  }
+
+  const m = brute.match(/^(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})\s*(am|pm))?$/i);
+  if (m) {
+    const day = m[1];
+    const month = m[2];
+    const year = m[3];
+    let hour = '00';
+    let minute = '00';
+    if (m[4]) {
+      hour = parseInt(m[4], 10);
+      const mer = (m[6] || '').toLowerCase();
+      if (mer === 'pm' && hour < 12) hour += 12;
+      if (mer === 'am' && hour === 12) hour = 0;
+      hour = String(hour).padStart(2, '0');
+      minute = m[5];
+    }
+    if (type === 'datetime-local') {
+      return `${year}-${month}-${day}T${hour}:${minute}`;
+    }
+    return `${year}-${month}-${day}`;
+  }
+
+  // Dernier recours : tentative via Date()
+  const d = new Date(brute);
+  if (!isNaN(d.getTime())) {
+    const yyyy = d.getFullYear().toString().padStart(4, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    if (type === 'datetime-local') {
+      const hh = String(d.getHours()).padStart(2, '0');
+      const ii = String(d.getMinutes()).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd}T${hh}:${ii}`;
+    }
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  return '';
 }
 
 
@@ -63,14 +114,26 @@ function initChampDate(input) {
   // 🕒 Pré-remplissage si vide
   if (!input.value && bloc.dataset.date) {
     const dateInit = bloc.dataset.date;
-    if (/^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2})?$/.test(dateInit)) {
-      input.value = dateInit;
+    const norm = normaliserValeurDate(dateInit, input.type);
+    if (norm) {
+      input.value = norm;
+    }
+  } else if (input.value) {
+    const norm = normaliserValeurDate(input.value, input.type);
+    if (norm) {
+      input.value = norm;
     }
   }
 
   const enregistrer = () => {
     const valeurBrute = input.value.trim();
     console.log('[🧪 initChampDate]', champ, '| valeur saisie :', valeurBrute);
+    console.log('📤 Tentative d\'enregistrement', {
+      champ,
+      valeur: valeurBrute,
+      postId,
+      cpt
+    });
     const regexDate = /^\d{4}-\d{2}-\d{2}$/;
     const regexDateTime = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
     if (!regexDate.test(valeurBrute) && !regexDateTime.test(valeurBrute)) {
@@ -96,19 +159,32 @@ function initChampDate(input) {
 
     if (
       cpt === 'chasse' &&
-      typeof window.enregistrerDatesChasse === 'function' &&
       (champ.endsWith('_date_debut') || champ.endsWith('_date_fin'))
     ) {
-      window.enregistrerDatesChasse().then(success => {
-        if (success) {
-          input.dataset.previous = valeurBrute;
-          if (typeof window.onDateFieldUpdated === 'function') {
-            window.onDateFieldUpdated(input, valeurBrute);
+      if (typeof window.enregistrerDatesChasse === 'function') {
+        window.enregistrerDatesChasse().then(success => {
+          if (success) {
+            input.dataset.previous = valeurBrute;
+            if (typeof window.onDateFieldUpdated === 'function') {
+              window.onDateFieldUpdated(input, valeurBrute);
+            }
+          } else {
+            input.value = input.dataset.previous || '';
           }
-        } else {
-          input.value = input.dataset.previous || '';
-        }
-      });
+        });
+      } else {
+        console.warn('enregistrerDatesChasse non disponible');
+        modifierChampSimple(champ, valeur, postId, cpt).then(success => {
+          if (success) {
+            input.dataset.previous = valeurBrute;
+            if (typeof window.onDateFieldUpdated === 'function') {
+              window.onDateFieldUpdated(input, valeurBrute);
+            }
+          } else {
+            input.value = input.dataset.previous || '';
+          }
+        });
+      }
     } else {
       modifierChampSimple(champ, valeur, postId, cpt).then(success => {
         if (success) {
