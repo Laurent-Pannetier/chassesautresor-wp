@@ -132,30 +132,14 @@ function creer_chasse_et_rediriger_si_appel()
   $today = current_time('Y-m-d H:i:s');
   $in_two_years = date('Y-m-d', strtotime('+2 years'));
 
-  // ✅ Initialisation des groupes ACF
-  mettre_a_jour_sous_champ_group(
-    $post_id,
-    'caracteristiques',
-    'chasse_infos_date_debut',
-    $today,
-    [
-      'chasse_infos_date_debut'      => $today,
-      'chasse_infos_date_fin'        => $in_two_years,
-      'chasse_infos_duree_illimitee' => false,
-    ]
-  );
+  // ✅ Initialisation des champs ACF
+  update_field('chasse_infos_date_debut', $today, $post_id);
+  update_field('chasse_infos_date_fin', $in_two_years, $post_id);
+  update_field('chasse_infos_duree_illimitee', false, $post_id);
 
-  mettre_a_jour_sous_champ_group(
-    $post_id,
-    'champs_caches',
-    'chasse_cache_organisateur',
-    [$organisateur_id],
-    [
-      'chasse_cache_statut'            => 'revision',
-      'chasse_cache_statut_validation' => 'creation',
-      'chasse_cache_organisateur'      => [$organisateur_id],
-    ]
-  );
+  update_field('champs_caches_chasse_cache_statut', 'revision', $post_id);
+  update_field('champs_caches_chasse_cache_statut_validation', 'creation', $post_id);
+  update_field('champs_caches_chasse_cache_organisateur', [$organisateur_id], $post_id);
 
   // 🚀 Redirection vers la prévisualisation frontale avec panneau ouvert
   $preview_url = add_query_arg('edition', 'open', get_preview_post_link($post_id));
@@ -230,40 +214,13 @@ function modifier_dates_chasse()
     error_log('[modifier_dates_chasse] dt_fin=' . $dt_fin->format('c'));
   }
 
-  mettre_a_jour_sous_champ_group(
-    $post_id,
-    'caracteristiques',
-    '',
-    [],
-    [
-      'chasse_infos_date_debut'      => '',
-      'chasse_infos_date_fin'        => '',
-      'chasse_infos_duree_illimitee' => 0,
-    ]
-  );
-
-  $ok1 = mettre_a_jour_sous_champ_group(
-    $post_id,
-    'caracteristiques',
-    'chasse_infos_date_debut',
-    $dt_debut->format('Y-m-d H:i:s')
-  );
+  $ok1 = update_field('chasse_infos_date_debut', $dt_debut->format('Y-m-d H:i:s'), $post_id);
   error_log('[modifier_dates_chasse] update chasse_infos_date_debut=' . var_export($ok1, true));
 
-  $ok2 = mettre_a_jour_sous_champ_group(
-    $post_id,
-    'caracteristiques',
-    'chasse_infos_duree_illimitee',
-    $illimitee ? 1 : 0
-  );
+  $ok2 = update_field('chasse_infos_duree_illimitee', $illimitee ? 1 : 0, $post_id);
   error_log('[modifier_dates_chasse] update chasse_infos_duree_illimitee=' . var_export($ok2, true));
 
-  $ok3 = mettre_a_jour_sous_champ_group(
-    $post_id,
-    'caracteristiques',
-    'chasse_infos_date_fin',
-    $illimitee ? '' : $dt_fin->format('Y-m-d')
-  );
+  $ok3 = update_field('chasse_infos_date_fin', $illimitee ? '' : $dt_fin->format('Y-m-d'), $post_id);
   error_log('[modifier_dates_chasse] update chasse_infos_date_fin=' . var_export($ok3, true));
 
   if ($ok1 && $ok2 && $ok3) {
@@ -327,23 +284,7 @@ function modifier_champ_chasse()
   $doit_recalculer_statut = false;
   $champ_valide = false;
   $reponse = ['champ' => $champ, 'valeur' => $valeur];
-  // 🛡️ Initialisation sécurisée du groupe caracteristiques
-  mettre_a_jour_sous_champ_group(
-    $post_id,
-    'caracteristiques',
-    '',
-    [],
-    [
-      'chasse_infos_date_debut'        => '',
-      'chasse_infos_date_fin'          => '',
-      'chasse_infos_duree_illimitee'   => 0,
-      'chasse_infos_recompense_valeur' => '',
-      'chasse_infos_recompense_titre'  => '',
-      'chasse_infos_recompense_texte'  => '',
-      'chasse_infos_nb_max_gagants'    => 0,
-      'chasse_infos_cout_points'       => 0,
-    ]
-  );
+  // 🛡️ Initialisation sécurisée (champ simple)
 
 
   // 🔹 post_title
@@ -386,9 +327,8 @@ function modifier_champ_chasse()
       wp_send_json_error('⚠️ format_date_invalide');
     }
     $valeur = $dt->format('Y-m-d H:i:s');
-
-    $ok = mettre_a_jour_sous_champ_group($post_id, 'caracteristiques', 'chasse_infos_date_debut', $valeur);
-    if ($ok) {
+    $ok = update_field('chasse_infos_date_debut', $valeur, $post_id);
+    if ($ok !== false) {
       $champ_valide = true;
       $doit_recalculer_statut = true;
     }
@@ -398,8 +338,8 @@ function modifier_champ_chasse()
     if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $valeur)) {
       wp_send_json_error('⚠️ format_date_invalide');
     }
-    $ok = mettre_a_jour_sous_champ_group($post_id, 'caracteristiques', 'chasse_infos_date_fin', $valeur);
-    if ($ok) {
+    $ok = update_field('chasse_infos_date_fin', $valeur, $post_id);
+    if ($ok !== false) {
       $champ_valide = true;
       $doit_recalculer_statut = true;
     }
@@ -407,15 +347,12 @@ function modifier_champ_chasse()
 
   // 🔹 Durée illimitée (true_false)
   if ($champ === 'caracteristiques.chasse_infos_duree_illimitee') {
-    $groupe = get_field('caracteristiques', $post_id) ?: [];
-    $groupe['chasse_infos_duree_illimitee'] = (int) $valeur;
-    $ok = update_field('caracteristiques', $groupe, $post_id);
-    $carac_maj = get_field('caracteristiques', $post_id);
-    $mode_continue = empty($carac_maj['chasse_infos_duree_illimitee']);
-    cat_debug("🧪 Illimitée (après MAJ) = " . var_export($carac_maj['chasse_infos_duree_illimitee'], true));
+    $ok = update_field('chasse_infos_duree_illimitee', (int) $valeur, $post_id);
+    $mode_continue = empty(get_field('chasse_infos_duree_illimitee', $post_id));
+    cat_debug("🧪 Illimitée (après MAJ) = " . var_export(!$mode_continue, true));
 
 
-    if ($ok) {
+    if ($ok !== false) {
       $champ_valide = true;
       $doit_recalculer_statut = true;
     }
@@ -428,15 +365,15 @@ function modifier_champ_chasse()
   ];
   if (in_array($champ, $champs_recompense, true)) {
     $sous_champ = str_replace('caracteristiques.', '', $champ);
-    $ok = mettre_a_jour_sous_champ_group($post_id, 'caracteristiques', $sous_champ, $valeur);
-    if ($ok) $champ_valide = true;
+    $ok = update_field($sous_champ, $valeur, $post_id);
+    if ($ok !== false) $champ_valide = true;
     $doit_recalculer_statut = true;
   }
 
   if ($champ === 'caracteristiques.chasse_infos_cout_points') {
     cat_debug("🧪 Correction tentative : MAJ cout_points → valeur = {$valeur}");
-    $ok = mettre_a_jour_sous_champ_group($post_id, 'caracteristiques', 'chasse_infos_cout_points', (int) $valeur);
-    if ($ok) {
+    $ok = update_field('chasse_infos_cout_points', (int) $valeur, $post_id);
+    if ($ok !== false) {
       cat_debug("✅ MAJ réussie pour chasse_infos_cout_points");
       $champ_valide = true;
       $doit_recalculer_statut = true;
@@ -461,23 +398,21 @@ function modifier_champ_chasse()
   // 🔹 Nb gagnants
   if ($champ === 'caracteristiques.chasse_infos_nb_max_gagants') {
     $sous_champ = 'chasse_infos_nb_max_gagants';
-    $ok = mettre_a_jour_sous_champ_group($post_id, 'caracteristiques', $sous_champ, (int) $valeur);
-    if ($ok) $champ_valide = true;
+    $ok = update_field($sous_champ, (int) $valeur, $post_id);
+    if ($ok !== false) $champ_valide = true;
   }
 
   // 🔹 Titre récompense
   if ($champ === 'caracteristiques.chasse_infos_recompense_titre') {
     $sous_champ = 'chasse_infos_recompense_titre';
-    $ok = mettre_a_jour_sous_champ_group($post_id, 'caracteristiques', $sous_champ, $valeur);
-    if ($ok) $champ_valide = true;
+    $ok = update_field($sous_champ, $valeur, $post_id);
+    if ($ok !== false) $champ_valide = true;
   }
 
   // 🔹 Validation manuelle (par admin)
   if ($champ === 'champs_caches.chasse_cache_statut_validation' || $champ === 'chasse_cache_statut_validation') {
-    $ok = update_field('champs_caches', array_merge(get_field('champs_caches', $post_id), [
-      'chasse_cache_statut_validation' => sanitize_text_field($valeur)
-    ]), $post_id);
-    if ($ok) $champ_valide = true;
+    $ok = update_field('champs_caches_chasse_cache_statut_validation', sanitize_text_field($valeur), $post_id);
+    if ($ok !== false) $champ_valide = true;
   }
 
   // 🔹 Cas générique (fallback)
@@ -507,7 +442,7 @@ function modifier_champ_chasse()
   if ($doit_recalculer_statut || in_array($champ, $champs_declencheurs_statut, true)) {
     wp_cache_delete($post_id, 'post');
     sleep(1); // donne une chance au cache + update ACF de se stabiliser
-    $caracteristiques = get_field('caracteristiques', $post_id);
+    $caracteristiques = get_field('chasse_infos_date_debut', $post_id);
     cat_debug("[🔁 RELOAD] Relecture avant recalcul : " . json_encode($caracteristiques));
     mettre_a_jour_statuts_chasse($post_id);
   }

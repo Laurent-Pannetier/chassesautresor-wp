@@ -45,20 +45,17 @@ function recuperer_infos_chasse($chasse_id) {
  * @return array
  */
 function chasse_get_champs($chasse_id) {
-    $caracteristiques = get_field('caracteristiques', $chasse_id) ?? [];
-    $champs_caches = get_field('champs_caches', $chasse_id) ?? [];
-
     return [
-        'lot' => $caracteristiques['chasse_infos_recompense_texte'] ?? '',
-        'titre_recompense' => $caracteristiques['chasse_infos_recompense_titre'] ?? '',
-        'valeur_recompense' => $caracteristiques['chasse_infos_recompense_valeur'] ?? '',
-        'cout_points' => $caracteristiques['chasse_infos_cout_points'] ?? 0,
-        'date_debut' => $caracteristiques['chasse_infos_date_debut'] ?? null,
-        'date_fin' => $caracteristiques['chasse_infos_date_fin'] ?? null,
-        'illimitee' => $caracteristiques['chasse_infos_duree_illimitee'] ?? false,
-        'nb_max' => $caracteristiques['chasse_infos_nb_max_gagants'] ?? 0,
-        'date_decouverte' => $champs_caches['chasse_cache_date_decouverte'] ?? null,
-        'current_stored_statut' => $champs_caches['chasse_cache_statut'] ?? null,
+        'lot' => get_field('chasse_infos_recompense_texte', $chasse_id) ?? '',
+        'titre_recompense' => get_field('chasse_infos_recompense_titre', $chasse_id) ?? '',
+        'valeur_recompense' => get_field('chasse_infos_recompense_valeur', $chasse_id) ?? '',
+        'cout_points' => get_field('chasse_infos_cout_points', $chasse_id) ?? 0,
+        'date_debut' => get_field('chasse_infos_date_debut', $chasse_id),
+        'date_fin' => get_field('chasse_infos_date_fin', $chasse_id),
+        'illimitee' => get_field('chasse_infos_duree_illimitee', $chasse_id) ?? false,
+        'nb_max' => get_field('chasse_infos_nb_max_gagants', $chasse_id) ?? 0,
+        'date_decouverte' => get_field('champs_caches_chasse_cache_date_decouverte', $chasse_id),
+        'current_stored_statut' => get_field('champs_caches_chasse_cache_statut', $chasse_id),
     ];
 }
 
@@ -313,16 +310,14 @@ function peut_valider_chasse(int $chasse_id, int $user_id): bool
         return false;
     }
 
-    $cache = get_field('champs_caches', $chasse_id);
-    if (!$cache) {
+    $statut_validation = get_field('champs_caches_chasse_cache_statut_validation', $chasse_id);
+    $statut_metier     = get_field('champs_caches_chasse_cache_statut', $chasse_id);
+
+    if (!in_array($statut_validation ?? '', ['creation', 'correction'], true)) {
         return false;
     }
 
-    if (!in_array($cache['chasse_cache_statut_validation'] ?? '', ['creation', 'correction'], true)) {
-        return false;
-    }
-
-    if (($cache['chasse_cache_statut'] ?? '') !== 'revision') {
+    if (($statut_metier ?? '') !== 'revision') {
         return false;
     }
 
@@ -424,8 +419,7 @@ function solution_peut_etre_affichee(int $enigme_id): bool
     if ($mode === 'delai_fin_chasse') {
         $base = get_field('date_de_decouverte', $chasse_id);
         if (!$base) {
-            $carac = get_field('caracteristiques', $chasse_id);
-            $base  = $carac['chasse_infos_date_fin'] ?? null;
+            $base = get_field('chasse_infos_date_fin', $chasse_id);
         }
         $timestamp_base = $base ? strtotime($base) : $now;
         $cible = strtotime("+$delai days $heure", $timestamp_base);

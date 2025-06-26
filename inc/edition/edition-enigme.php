@@ -90,16 +90,8 @@ function creer_enigme_pour_chasse($chasse_id, $user_id = null)
   update_field('enigme_chasse_associee', $chasse_id, $enigme_id);
   update_field('enigme_organisateur_associe', $organisateur_id, $enigme_id);
 
-  mettre_a_jour_sous_champ_group(
-    $enigme_id,
-    'enigme_tentative',
-    'enigme_tentative_max',
-    5,
-    [
-      'enigme_tentative_cout_points' => 0,
-      'enigme_tentative_max'         => 5,
-    ]
-  );
+  update_field('enigme_tentative_cout_points', 0, $enigme_id);
+  update_field('enigme_tentative_max', 5, $enigme_id);
 
   update_field('enigme_reponse_casse', true, $enigme_id);
   update_field('enigme_acces_condition', 'immediat', $enigme_id);
@@ -274,11 +266,11 @@ function modifier_champ_enigme()
 
   // 🔹 Tentatives (coût et max)
   if ($champ === 'enigme_tentative.enigme_tentative_cout_points') {
-    $champ_valide = mettre_a_jour_sous_champ_group($post_id, 'enigme_tentative', 'enigme_tentative_cout_points', (int) $valeur);
+    $champ_valide = update_field('enigme_tentative_cout_points', (int) $valeur, $post_id) !== false;
   }
 
   if ($champ === 'enigme_tentative.enigme_tentative_max') {
-    $champ_valide = mettre_a_jour_sous_champ_group($post_id, 'enigme_tentative', 'enigme_tentative_max', (int) $valeur);
+    $champ_valide = update_field('enigme_tentative_max', (int) $valeur, $post_id) !== false;
   }
 
   // 🔹 Accès : condition (immédiat, date_programmee uniquement)
