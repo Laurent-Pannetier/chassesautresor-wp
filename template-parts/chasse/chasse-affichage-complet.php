@@ -147,7 +147,7 @@ if ($edition_active && !$est_complet) {
         <div class="meta-etiquette">
           <?php echo get_svg_icon('calendar'); ?>
           <span class="chasse-date-plage">
-            Du <span class="date-debut"><?= esc_html($date_debut_formatee); ?></span> →
+            <span class="date-debut"><?= esc_html($date_debut_formatee); ?></span> →
             <span class="date-fin"><?= esc_html($date_fin_formatee); ?></span>
           </span>
 
