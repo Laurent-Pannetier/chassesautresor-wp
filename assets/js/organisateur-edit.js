@@ -177,7 +177,7 @@ window.mettreAJourCarteAjoutChasse = function () {
   // 🔍 Champs JS dynamiques
   const champsJS = [
     '[data-champ="post_title"]',
-    '[data-champ="profil_public_logo_organisateur"]'
+    '[data-champ="logo_organisateur"]'
   ];
 
   // 🔁 Vérifie visuellement ceux qui sont vides

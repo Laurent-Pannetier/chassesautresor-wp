@@ -83,7 +83,7 @@ function initChampTexte(bloc) {
     feedback.textContent = '';
     feedback.className = 'champ-feedback';
 
-    if (champ === 'profil_public_email_contact') {
+    if (champ === 'email_contact') {
       const fallback = window.organisateurData?.defaultEmail || '…';
       const affichageTexte = affichage.querySelector('p');
       if (affichageTexte && input.value.trim() === '') {
@@ -105,7 +105,7 @@ function initChampTexte(bloc) {
     const valeur = input.value.trim();
     if (!champ || !postId) return;
 
-    if (champ === 'profil_public_email_contact') {
+    if (champ === 'email_contact') {
       const isValide = valeur === '' || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(valeur);
       if (!isValide) {
         feedback.textContent = '⛔ Adresse email invalide';
@@ -137,7 +137,7 @@ function initChampTexte(bloc) {
       if (success) {
         const affichageTexte = affichage.querySelector('h1, h2, p, span');
 
-        if (champ === 'profil_public_email_contact') {
+        if (champ === 'email_contact') {
           const fallbackEmail = window.organisateurData?.defaultEmail || '…';
           const p = affichage.querySelector('p');
           if (p) {
@@ -280,7 +280,7 @@ function initChampCoutPoints() {
 
         // ✅ Mise à jour visuelle du badge coût pour la chasse
         if (
-          champ === 'caracteristiques.chasse_infos_cout_points' &&
+          champ === 'chasse_infos_cout_points' &&
           typeof mettreAJourAffichageCout === 'function'
         ) {
           mettreAJourAffichageCout(postId, valeur);
