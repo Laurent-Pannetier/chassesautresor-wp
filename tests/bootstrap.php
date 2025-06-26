@@ -22,8 +22,34 @@ $mock_current_time = null;
 
 if (!function_exists('update_field')) {
     function update_field($selector, $value, $post_id = false) {
-        global $mock_fields;
-        $mock_fields[$post_id][$selector] = $value;
+        global $mock_fields, $mock_field_objects;
+
+        $group = $mock_field_objects[$selector] ?? null;
+        if (!$group) {
+            foreach ($mock_field_objects as $obj) {
+                if (($obj['name'] ?? null) === $selector && isset($obj['sub_fields'])) {
+                    $group = $obj;
+                    break;
+                }
+            }
+        }
+
+        if ($group && isset($group['sub_fields'])) {
+            $converted = [];
+            foreach ($group['sub_fields'] as $sub) {
+                $name = $sub['name'];
+                $key  = $sub['key'] ?? $name;
+                if (array_key_exists($name, $value)) {
+                    $converted[$name] = $value[$name];
+                } elseif (array_key_exists($key, $value)) {
+                    $converted[$name] = $value[$key];
+                }
+            }
+            $mock_fields[$post_id][$group['name']] = $converted;
+        } else {
+            $mock_fields[$post_id][$selector] = $value;
+        }
+
         return true;
     }
 }
@@ -105,7 +131,23 @@ if (!function_exists('get_post_status')) {
 
 if (!function_exists('get_field')) {
     function get_field($key, $post_id = 0) {
-        global $mock_fields;
+        global $mock_fields, $mock_field_objects;
+
+        // Attempt to resolve group name from key or object
+        $group = $mock_field_objects[$key] ?? null;
+        if (!$group) {
+            foreach ($mock_field_objects as $obj) {
+                if (($obj['name'] ?? null) === $key && isset($obj['sub_fields'])) {
+                    $group = $obj;
+                    break;
+                }
+            }
+        }
+
+        if ($group && isset($mock_fields[$post_id][$group['name']])) {
+            return $mock_fields[$post_id][$group['name']];
+        }
+
         return $mock_fields[$post_id][$key] ?? null;
     }
 }
