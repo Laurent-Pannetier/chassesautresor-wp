@@ -735,11 +735,9 @@ function mettre_a_jour_sous_champ_group(int $post_id, string $group_key_or_name,
 
   foreach ($group_object['sub_fields'] as $sub_field) {
     $name = $sub_field['name'];
-    $key  = $sub_field['key'] ?? $name; // Utiliser la clé exacte si disponible
     $type = $sub_field['type'];
     if ($name === $subfield_name) {
       $sub_field_type = $type;
-      error_log("[mettre_a_jour_sous_champ_group] mapping {$subfield_name} -> {$key}");
     }
 
     $valeur = $groupe[$name] ?? '';
@@ -769,7 +767,7 @@ function mettre_a_jour_sous_champ_group(int $post_id, string $group_key_or_name,
     if ($name === $subfield_name) {
       $valeur = $new_value;
     }
-    $champ_a_enregistrer[$key] = $valeur;
+    $champ_a_enregistrer[$name] = $valeur;
   }
 
   cat_debug('[DEBUG] Données envoyées à update_field() pour groupe ' . $group_object['name'] . ' : ' . json_encode($champ_a_enregistrer));
@@ -789,8 +787,6 @@ function mettre_a_jour_sous_champ_group(int $post_id, string $group_key_or_name,
 
   $str_valeur = is_array($new_value) ? json_encode($new_value) : $new_value;
   cat_debug("🧪 [DEBUG ACF] Mise à jour demandée : $group_key_or_name.$subfield_name → $str_valeur (post #$post_id)");
-
-  $groupe_verif = get_field($group_key_or_name, $post_id, false);
   cat_debug("📥 [DEBUG ACF] Relecture après update : " . json_encode($groupe_verif));
 
 
