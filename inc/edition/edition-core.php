@@ -697,6 +697,8 @@ function mettre_a_jour_sous_champ_group(int $post_id, string $group_key_or_name,
 
   error_log("[mettre_a_jour_sous_champ_group] post_id={$post_id} group={$group_key_or_name} subfield={$subfield_name} valeur=" . (is_array($new_value) ? json_encode($new_value) : $new_value));
 
+  error_log("[mettre_a_jour_sous_champ_group] post_id={$post_id} group={$group_key_or_name} subfield={$subfield_name} valeur=" . (is_array($new_value) ? json_encode($new_value) : $new_value));
+
 
 
   $group_object = get_field_object($group_key_or_name, $post_id);
@@ -776,6 +778,7 @@ function mettre_a_jour_sous_champ_group(int $post_id, string $group_key_or_name,
   cat_debug('[DEBUG] update_field() retourne : ' . var_export($ok, true));
   error_log('[mettre_a_jour_sous_champ_group] update_field ok=' . var_export($ok, true));
 
+
   // L'écriture ACF pouvant être asynchrone, on laisse une
   // petite marge avant de relire pour vérification
   sleep(1);
@@ -825,6 +828,7 @@ function mettre_a_jour_sous_champ_group(int $post_id, string $group_key_or_name,
       }
       cat_debug('[DEBUG] Impossible de convertir les dates pour comparaison');
 
+
     }
 
     $str_new  = is_array($new_value) ? implode(',', $new_value) : (string) $new_value;
@@ -840,3 +844,4 @@ function mettre_a_jour_sous_champ_group(int $post_id, string $group_key_or_name,
   error_log('[mettre_a_jour_sous_champ_group] verification failed for ' . $subfield_name);
   return false;
 }
+
