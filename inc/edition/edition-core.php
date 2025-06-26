@@ -768,6 +768,9 @@ function mettre_a_jour_sous_champ_group(int $post_id, string $group_key_or_name,
   cat_debug('[DEBUG] Données envoyées à update_field() pour groupe ' . $group_object['name'] . ' : ' . json_encode($champ_a_enregistrer));
 
   $ok = update_field($group_object['name'], $champ_a_enregistrer, $post_id);
+  // L'écriture ACF pouvant être asynchrone, on laisse une
+  // petite marge avant de relire pour vérification
+  sleep(1);
   clean_post_cache($post_id);
 
   // 🧪 Vérification lecture après update
@@ -802,7 +805,6 @@ function mettre_a_jour_sous_champ_group(int $post_id, string $group_key_or_name,
       $dt_read = convertir_en_datetime((string) $valeur_relue, ['Y-m-d H:i:s', 'Y-m-d\TH:i']);
       if ($dt_new && $dt_read) {
         return $dt_new->getTimestamp() === $dt_read->getTimestamp();
-
       }
     }
 
