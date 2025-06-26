@@ -1,5 +1,6 @@
 <?php
 defined('ABSPATH') || exit;
+require_once __DIR__ . "/date-utils.php";
 
 
 // ==================================================
@@ -221,49 +222,20 @@ function modifier_dates_chasse()
     if (!$dt_fin) {
       wp_send_json_error('format_fin_invalide');
     }
-    if ($dt_fin->getTimestamp() <= $dt_debut->getTimestamp()) {
-      wp_send_json_error('date_fin_avant_debut');
-    }
   }
 
-  mettre_a_jour_sous_champ_group(
-    $post_id,
-    'caracteristiques',
-    '',
-    [],
-    [
-      'chasse_infos_date_debut'      => '',
-      'chasse_infos_date_fin'        => '',
-      'chasse_infos_duree_illimitee' => 0,
-    ]
-  );
+  $erreur = cat_valider_dates_chasse($dt_debut, $dt_fin, (bool) $illimitee);
+  if ($erreur) {
+    wp_send_json_error($erreur);
+  }
 
-  $ok1 = mettre_a_jour_sous_champ_group(
-    $post_id,
-    'caracteristiques',
-    'chasse_infos_date_debut',
-    $dt_debut->format('Y-m-d H:i:s')
-  );
+  $ok = cat_enregistrer_dates_chasse($post_id, $dt_debut, $dt_fin, (bool) $illimitee);
 
-  $ok2 = mettre_a_jour_sous_champ_group(
-    $post_id,
-    'caracteristiques',
-    'chasse_infos_duree_illimitee',
-    $illimitee ? 1 : 0
-  );
-
-  $ok3 = mettre_a_jour_sous_champ_group(
-    $post_id,
-    'caracteristiques',
-    'chasse_infos_date_fin',
-    $illimitee ? '' : $dt_fin->format('Y-m-d')
-  );
-
-  if ($ok1 && $ok2 && $ok3) {
+  if ($ok) {
     mettre_a_jour_statuts_chasse($post_id);
     wp_send_json_success([
       'date_debut' => $dt_debut->format('Y-m-d H:i:s'),
-      'date_fin'   => $illimitee ? '' : $dt_fin->format('Y-m-d'),
+      'date_fin'   => $illimitee ? '' : ($dt_fin ? $dt_fin->format('Y-m-d') : ''),
       'illimitee'  => $illimitee ? 1 : 0,
     ]);
   }

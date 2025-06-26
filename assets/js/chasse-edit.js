@@ -100,48 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // ==============================
   // 📅 Gestion Date de fin + Durée illimitée
   // ==============================
-  if (inputDateFin) {
-    if (checkboxIllimitee) {
-      inputDateFin.disabled = checkboxIllimitee.checked;
-      
-      const postId = inputDateFin.closest('.champ-chasse')?.dataset.postId;
-
-      checkboxIllimitee.addEventListener('change', function () {
-        inputDateFin.disabled = this.checked;
-
-        // Si la case est décochée et les dates incohérentes, corriger la date de fin
-        if (!this.checked) {
-          const debut = new Date(inputDateDebut.value);
-          const fin = new Date(inputDateFin.value);
-
-          if (!isNaN(debut) && !isNaN(fin) && debut >= fin) {
-            const nouvelleDateFin = new Date(debut);
-            nouvelleDateFin.setFullYear(nouvelleDateFin.getFullYear() + 2);
-
-            const yyyy = nouvelleDateFin.getFullYear();
-            const mm = String(nouvelleDateFin.getMonth() + 1).padStart(2, '0');
-            const dd = String(nouvelleDateFin.getDate()).padStart(2, '0');
-
-            const nouvelleValeur = `${yyyy}-${mm}-${dd}`;
-            inputDateFin.value = nouvelleValeur;
-        }
-      }
-
-        enregistrerDatesChasse();
-
-        mettreAJourAffichageDateFin();
-      });
-    }
-      // La logique d'enregistrement de la date de fin est gérée
-      // globalement par `date-fields.js` via `initChampDate()`.
-      // On se limite ici à mettre à jour l'affichage lorsqu'on
-      // modifie la case « illimitée ».
-  }
-  if (inputDateDebut) {
-    // L'enregistrement et la validation sont gérés par `date-fields.js`.
-    // Ce fichier ne fait que fournir les messages d'erreur via
-    // `validerDatesAvantEnvoi` appelé par `initChampDate()`.
-  }
+  initGestionDatesChasse();
 
 
 
@@ -701,3 +660,34 @@ function enregistrerDatesChasse() {
     });
 }
 window.enregistrerDatesChasse = enregistrerDatesChasse;
+
+// ================================
+// 🔄 Initialisation gestion dates
+// ================================
+function initGestionDatesChasse() {
+  if (!inputDateFin || !checkboxIllimitee) return;
+
+  inputDateFin.disabled = checkboxIllimitee.checked;
+
+  checkboxIllimitee.addEventListener('change', () => {
+    inputDateFin.disabled = checkboxIllimitee.checked;
+
+    if (!checkboxIllimitee.checked) {
+      const debut = new Date(inputDateDebut.value);
+      const fin = new Date(inputDateFin.value);
+
+      if (!isNaN(debut) && (isNaN(fin) || debut >= fin)) {
+        const nouvelle = new Date(debut);
+        nouvelle.setFullYear(nouvelle.getFullYear() + 2);
+        const yyyy = nouvelle.getFullYear();
+        const mm = String(nouvelle.getMonth() + 1).padStart(2, '0');
+        const dd = String(nouvelle.getDate()).padStart(2, '0');
+        inputDateFin.value = `${yyyy}-${mm}-${dd}`;
+      }
+    }
+
+    enregistrerDatesChasse();
+    mettreAJourAffichageDateFin();
+  });
+}
+window.initGestionDatesChasse = initGestionDatesChasse;
