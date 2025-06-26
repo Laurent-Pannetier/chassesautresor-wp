@@ -173,6 +173,105 @@ add_action('template_redirect', 'creer_chasse_et_rediriger_si_appel');
 add_action('wp_ajax_modifier_champ_chasse', 'modifier_champ_chasse');
 
 /**
+ * 🔹 modifier_dates_chasse() → Mise à jour groupée des dates et du mode illimité.
+ */
+add_action('wp_ajax_modifier_dates_chasse', 'modifier_dates_chasse');
+
+function modifier_dates_chasse()
+{
+  if (!is_user_logged_in()) {
+    wp_send_json_error('non_connecte');
+  }
+
+  $post_id     = isset($_POST['post_id']) ? (int) $_POST['post_id'] : 0;
+  $date_debut  = sanitize_text_field($_POST['date_debut'] ?? '');
+  $date_fin    = sanitize_text_field($_POST['date_fin'] ?? '');
+  $illimitee   = isset($_POST['illimitee']) ? (int) $_POST['illimitee'] : 0;
+
+  if (!$post_id || get_post_type($post_id) !== 'chasse') {
+    wp_send_json_error('post_invalide');
+  }
+
+  $auteur = (int) get_post_field('post_author', $post_id);
+  if ($auteur !== get_current_user_id()) {
+    wp_send_json_error('acces_refuse');
+  }
+
+  if (!utilisateur_peut_editer_champs($post_id)) {
+    wp_send_json_error('acces_refuse');
+  }
+
+  $dt_debut = convertir_en_datetime($date_debut, [
+    'Y-m-d\TH:i',
+    'Y-m-d H:i:s',
+    'Y-m-d H:i',
+    'Y-m-d'
+  ]);
+  if (!$dt_debut) {
+    wp_send_json_error('format_debut_invalide');
+  }
+
+  $dt_fin = null;
+  if (!$illimitee) {
+    $dt_fin = convertir_en_datetime($date_fin, [
+      'Y-m-d',
+      'Y-m-d H:i:s',
+      'Y-m-d\TH:i'
+    ]);
+    if (!$dt_fin) {
+      wp_send_json_error('format_fin_invalide');
+    }
+    if ($dt_fin->getTimestamp() <= $dt_debut->getTimestamp()) {
+      wp_send_json_error('date_fin_avant_debut');
+    }
+  }
+
+  mettre_a_jour_sous_champ_group(
+    $post_id,
+    'caracteristiques',
+    '',
+    [],
+    [
+      'chasse_infos_date_debut'      => '',
+      'chasse_infos_date_fin'        => '',
+      'chasse_infos_duree_illimitee' => 0,
+    ]
+  );
+
+  $ok1 = mettre_a_jour_sous_champ_group(
+    $post_id,
+    'caracteristiques',
+    'chasse_infos_date_debut',
+    $dt_debut->format('Y-m-d H:i:s')
+  );
+
+  $ok2 = mettre_a_jour_sous_champ_group(
+    $post_id,
+    'caracteristiques',
+    'chasse_infos_duree_illimitee',
+    $illimitee ? 1 : 0
+  );
+
+  $ok3 = mettre_a_jour_sous_champ_group(
+    $post_id,
+    'caracteristiques',
+    'chasse_infos_date_fin',
+    $illimitee ? '' : $dt_fin->format('Y-m-d')
+  );
+
+  if ($ok1 && $ok2 && $ok3) {
+    mettre_a_jour_statuts_chasse($post_id);
+    wp_send_json_success([
+      'date_debut' => $dt_debut->format('Y-m-d H:i:s'),
+      'date_fin'   => $illimitee ? '' : $dt_fin->format('Y-m-d'),
+      'illimitee'  => $illimitee ? 1 : 0,
+    ]);
+  }
+
+  wp_send_json_error('echec_mise_a_jour');
+}
+
+/**
  * 🔸 Enregistrement AJAX d’un champ ACF ou natif du CPT chasse.
  *
  * Autorise :

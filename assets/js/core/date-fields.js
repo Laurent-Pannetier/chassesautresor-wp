@@ -94,16 +94,33 @@ function initChampDate(input) {
       }
     }
 
-    modifierChampSimple(champ, valeur, postId, cpt).then(success => {
-      if (success) {
-        input.dataset.previous = valeurBrute;
-        if (typeof window.onDateFieldUpdated === 'function') {
-          window.onDateFieldUpdated(input, valeurBrute);
+    if (
+      cpt === 'chasse' &&
+      typeof window.enregistrerDatesChasse === 'function' &&
+      (champ.endsWith('_date_debut') || champ.endsWith('_date_fin'))
+    ) {
+      window.enregistrerDatesChasse().then(success => {
+        if (success) {
+          input.dataset.previous = valeurBrute;
+          if (typeof window.onDateFieldUpdated === 'function') {
+            window.onDateFieldUpdated(input, valeurBrute);
+          }
+        } else {
+          input.value = input.dataset.previous || '';
         }
-      } else {
-        input.value = input.dataset.previous || '';
-      }
-    });
+      });
+    } else {
+      modifierChampSimple(champ, valeur, postId, cpt).then(success => {
+        if (success) {
+          input.dataset.previous = valeurBrute;
+          if (typeof window.onDateFieldUpdated === 'function') {
+            window.onDateFieldUpdated(input, valeurBrute);
+          }
+        } else {
+          input.value = input.dataset.previous || '';
+        }
+      });
+    }
   };
 
   input.addEventListener('change', enregistrer);

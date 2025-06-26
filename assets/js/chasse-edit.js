@@ -124,49 +124,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const nouvelleValeur = `${yyyy}-${mm}-${dd}`;
             inputDateFin.value = nouvelleValeur;
-
-            fetch(ajaxurl, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-              body: new URLSearchParams({
-                action: 'modifier_champ_chasse',
-                champ: 'caracteristiques.chasse_infos_date_fin',
-                valeur: nouvelleValeur,
-                post_id: postId
-              })
-            })
-              .then(r => r.json())
-              .then(res => {
-                if (!res.success) {
-                  console.error('❌ Erreur lors de l’enregistrement de la date de fin auto-corrigée');
-                }
-              });
-            rafraichirStatutChasse(postId);
-          }
         }
+      }
 
-        // Enregistrement de la case "illimité"
-        fetch(ajaxurl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: new URLSearchParams({
-            action: 'modifier_champ_chasse',
-            champ: 'caracteristiques.chasse_infos_duree_illimitee',
-            valeur: this.checked ? 1 : 0,
-            post_id: postId
-          })
-        })
-          .then(r => r.json())
-          .then(res => {
-            if (res.success) {
-              rafraichirStatutChasse(postId);
-            } else {
-              console.error('❌ Erreur serveur durée illimitée:', res.data);
-            }
-          })
-          .catch(err => {
-            console.error('❌ Erreur réseau durée illimitée:', err);
-          });
+        enregistrerDatesChasse();
 
         mettreAJourAffichageDateFin();
       });
@@ -701,3 +662,42 @@ function rafraichirStatutChasse(postId) {
       console.error('❌ Erreur réseau recalcul statut chasse', err);
     });
 }
+
+// ================================
+// 💾 Enregistrement groupé des dates de chasse
+// ================================
+function enregistrerDatesChasse() {
+  if (!inputDateDebut || !inputDateFin) return Promise.resolve(false);
+
+  const postId = inputDateDebut.closest('.champ-chasse')?.dataset.postId;
+  if (!postId) return Promise.resolve(false);
+
+  const params = new URLSearchParams({
+    action: 'modifier_dates_chasse',
+    post_id: postId,
+    date_debut: inputDateDebut.value.trim(),
+    date_fin: checkboxIllimitee?.checked ? '' : inputDateFin.value.trim(),
+    illimitee: checkboxIllimitee?.checked ? 1 : 0
+  });
+
+  return fetch(ajaxurl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: params
+  })
+    .then(r => r.json())
+    .then(res => {
+      if (res.success) {
+        rafraichirStatutChasse(postId);
+        mettreAJourAffichageDateFin();
+        return true;
+      }
+      console.error('❌ Erreur sauvegarde dates:', res.data);
+      return false;
+    })
+    .catch(err => {
+      console.error('❌ Erreur réseau sauvegarde dates:', err);
+      return false;
+    });
+}
+window.enregistrerDatesChasse = enregistrerDatesChasse;
