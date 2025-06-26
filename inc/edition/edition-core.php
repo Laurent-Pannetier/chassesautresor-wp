@@ -808,7 +808,13 @@ function mettre_a_jour_sous_champ_group(int $post_id, string $group_key_or_name,
       $dt_read = convertir_en_datetime((string) $valeur_relue, ['Y-m-d H:i:s', 'Y-m-d\TH:i']);
       if ($dt_new && $dt_read) {
         cat_debug('[DEBUG] dt_new=' . $dt_new->format('c') . ' dt_read=' . $dt_read->format('c'));
-        return $dt_new->getTimestamp() === $dt_read->getTimestamp();
+
+        // Compare en UTC pour éviter les divergences dues au fuseau horaire
+        $tz = new DateTimeZone('UTC');
+        $dt_new->setTimezone($tz);
+        $dt_read->setTimezone($tz);
+
+        return $dt_new->format('Y-m-d H:i:s') === $dt_read->format('Y-m-d H:i:s');
       }
       cat_debug('[DEBUG] Impossible de convertir les dates pour comparaison');
 
