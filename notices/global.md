@@ -37,7 +37,7 @@ extensions actives :
 - LiteSpeed Cache
 - Hostinger Tools
 - Hostinger Easy Onboarding
-- Firelight Lightbox
+- Fancybox 3 (remplace Firelight Lightbox)
 - Imagify 
 - MC4WP : Mailchimp pour WordPress
 
@@ -1090,7 +1090,7 @@ Le fichier est injecté ou mis à jour par la fonction `injecter_htaccess_protec
 
 - Appelée depuis le template `single-enigme.php`
 - Affiche l’image principale dans une `<a>` cliquable, avec `rel="lightbox-enigme"` et `class="fancybox image"`
-- Utilise Firelight Lightbox (ancien Easy Fancybox)
+- Utilise Fancybox 3 (ancien Firelight/Easy Fancybox)
 - Toutes les images sont servies via `/voir-image-enigme?id=...`
 - Les vignettes permettent de changer l’image principale (JS), sans déclencher la lightbox
 - Le conteneur `.image-principale` utilise `min-height` pour éviter le scroll au changement
