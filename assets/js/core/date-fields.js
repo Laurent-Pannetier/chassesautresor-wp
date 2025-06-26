@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // 📅 Formatage des dates Y-m-d ➔ d/m/Y
 // ==============================
 function formatDateFr(dateStr) {
+  console.log('[formatDateFr] input=', dateStr);
   if (!dateStr) return '';
   if (dateStr.includes('T')) {
     const [datePart] = dateStr.split('T');
@@ -31,6 +32,7 @@ function formatDateFr(dateStr) {
 // 📅 Mise à jour affichage Date Fin
 // ==============================
 function mettreAJourAffichageDateFin() {
+  console.log('[mettreAJourAffichageDateFin]');
   const spanDateFin = document.querySelector('.chasse-date-plage .date-fin');
   const inputDateFin = document.getElementById('chasse-date-fin');
   const checkboxIllimitee = document.getElementById('duree-illimitee');

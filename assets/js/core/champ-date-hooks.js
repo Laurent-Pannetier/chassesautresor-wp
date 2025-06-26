@@ -3,6 +3,7 @@
 var DEBUG = window.DEBUG || false;
 
 window.onDateFieldUpdated = function(input, valeur) {
+  console.log('[onDateFieldUpdated]', input, valeur);
   const champ = input.closest('[data-champ]')?.dataset.champ;
   if (!champ) return;
 

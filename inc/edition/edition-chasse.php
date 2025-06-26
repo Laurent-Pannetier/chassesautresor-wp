@@ -188,6 +188,8 @@ function modifier_dates_chasse()
   $date_fin    = sanitize_text_field($_POST['date_fin'] ?? '');
   $illimitee   = isset($_POST['illimitee']) ? (int) $_POST['illimitee'] : 0;
 
+  error_log("[modifier_dates_chasse] post_id={$post_id} date_debut={$date_debut} date_fin={$date_fin} illimitee={$illimitee}");
+
   if (!$post_id || get_post_type($post_id) !== 'chasse') {
     wp_send_json_error('post_invalide');
   }
@@ -210,6 +212,7 @@ function modifier_dates_chasse()
   if (!$dt_debut) {
     wp_send_json_error('format_debut_invalide');
   }
+  error_log('[modifier_dates_chasse] dt_debut=' . $dt_debut->format('c'));
 
   $dt_fin = null;
   if (!$illimitee) {
@@ -224,6 +227,7 @@ function modifier_dates_chasse()
     if ($dt_fin->getTimestamp() <= $dt_debut->getTimestamp()) {
       wp_send_json_error('date_fin_avant_debut');
     }
+    error_log('[modifier_dates_chasse] dt_fin=' . $dt_fin->format('c'));
   }
 
   mettre_a_jour_sous_champ_group(
@@ -244,6 +248,7 @@ function modifier_dates_chasse()
     'chasse_infos_date_debut',
     $dt_debut->format('Y-m-d H:i:s')
   );
+  error_log('[modifier_dates_chasse] update chasse_infos_date_debut=' . var_export($ok1, true));
 
   $ok2 = mettre_a_jour_sous_champ_group(
     $post_id,
@@ -251,6 +256,7 @@ function modifier_dates_chasse()
     'chasse_infos_duree_illimitee',
     $illimitee ? 1 : 0
   );
+  error_log('[modifier_dates_chasse] update chasse_infos_duree_illimitee=' . var_export($ok2, true));
 
   $ok3 = mettre_a_jour_sous_champ_group(
     $post_id,
@@ -258,9 +264,11 @@ function modifier_dates_chasse()
     'chasse_infos_date_fin',
     $illimitee ? '' : $dt_fin->format('Y-m-d')
   );
+  error_log('[modifier_dates_chasse] update chasse_infos_date_fin=' . var_export($ok3, true));
 
   if ($ok1 && $ok2 && $ok3) {
     mettre_a_jour_statuts_chasse($post_id);
+    error_log('[modifier_dates_chasse] mise a jour reussie');
     wp_send_json_success([
       'date_debut' => $dt_debut->format('Y-m-d H:i:s'),
       'date_fin'   => $illimitee ? '' : $dt_fin->format('Y-m-d'),
@@ -268,6 +276,7 @@ function modifier_dates_chasse()
     ]);
   }
 
+  error_log('[modifier_dates_chasse] echec mise a jour');
   wp_send_json_error('echec_mise_a_jour');
 }
 
