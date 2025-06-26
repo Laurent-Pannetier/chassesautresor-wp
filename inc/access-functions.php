@@ -298,7 +298,7 @@ function utilisateur_peut_creer_post($post_type, $chasse_id = null)
             }
 
             // ✅ Vérifier que la chasse est en "création"
-            $validation = get_field('champs_caches_chasse_cache_statut_validation', $chasse_id);
+            $validation = get_field('chasse_cache_statut_validation', $chasse_id);
             return trim($validation ?? '') === 'creation';
     }
 
@@ -403,7 +403,7 @@ function utilisateur_peut_voir_enigme(int $enigme_id, ?int $user_id = null): boo
 
     // ✅ Exception organisateur : accès si chasse en création, correction
     //    ou en attente de validation
-    $statut_validation = get_field('champs_caches_chasse_cache_statut_validation', $chasse_id);
+    $statut_validation = get_field('chasse_cache_statut_validation', $chasse_id);
     error_log("🧪 [voir énigme] chasse #$chasse_id → statut_validation = $statut_validation");
 
     if (in_array($statut_validation, ['creation', 'correction', 'en_attente'], true)) {
@@ -449,8 +449,8 @@ function utilisateur_peut_ajouter_enigme(int $chasse_id, ?int $user_id = null): 
         return false;
     }
 
-    $statut_validation = get_field('champs_caches_chasse_cache_statut_validation', $chasse_id);
-    $statut_metier     = get_field('champs_caches_chasse_cache_statut', $chasse_id);
+    $statut_validation = get_field('chasse_cache_statut_validation', $chasse_id);
+    $statut_metier     = get_field('chasse_cache_statut', $chasse_id);
 
     if ($statut_metier !== 'revision') {
         error_log("❌ [ajout énigme] chasse #$chasse_id statut metier : $statut_metier");
@@ -501,7 +501,7 @@ function utilisateur_peut_modifier_enigme(int $enigme_id, ?int $user_id = null):
     if (!$chasse_id || get_post_type($chasse_id) !== 'chasse') return false;
 
     // Récupérer l'état de validation de la chasse
-    $statut_validation = get_field('champs_caches_chasse_cache_statut_validation', $chasse_id);
+    $statut_validation = get_field('chasse_cache_statut_validation', $chasse_id);
 
 
     // L'utilisateur doit être associé à l'organisateur de la chasse
@@ -539,8 +539,8 @@ function utilisateur_peut_supprimer_enigme(int $enigme_id, ?int $user_id = null)
         return false;
     }
 
-    $statut_validation = get_field('champs_caches_chasse_cache_statut_validation', $chasse_id);
-    $statut_metier     = get_field('champs_caches_chasse_cache_statut', $chasse_id);
+    $statut_validation = get_field('chasse_cache_statut_validation', $chasse_id);
+    $statut_metier     = get_field('chasse_cache_statut', $chasse_id);
 
     if ($statut_metier !== 'revision') {
         return false;
@@ -626,7 +626,7 @@ function utilisateur_peut_voir_panneau(int $post_id): bool
             return in_array($status, ['publish', 'pending'], true);
 
         case 'chasse':
-            $val = get_field('champs_caches_chasse_cache_statut_validation', $post_id) ?? '';
+            $val = get_field('chasse_cache_statut_validation', $post_id) ?? '';
 
             return in_array($status, ['publish', 'pending'], true) && $val !== 'banni';
 
@@ -665,8 +665,8 @@ function utilisateur_peut_editer_champs(int $post_id): bool
             return in_array(ROLE_ORGANISATEUR_CREATION, $roles, true) && $status === 'pending';
 
         case 'chasse':
-            $val     = get_field('champs_caches_chasse_cache_statut_validation', $post_id) ?? '';
-            $stat    = get_field('champs_caches_chasse_cache_statut', $post_id) ?? '';
+            $val     = get_field('chasse_cache_statut_validation', $post_id) ?? '';
+            $stat    = get_field('chasse_cache_statut', $post_id) ?? '';
             $complet = (bool) get_field('chasse_cache_complet', $post_id);
             $complet = (bool) get_field('chasse_cache_complet', $post_id);
 
@@ -687,8 +687,8 @@ function utilisateur_peut_editer_champs(int $post_id): bool
             }
 
             $chasse_status = get_post_status($chasse_id);
-            $val           = get_field('champs_caches_chasse_cache_statut_validation', $chasse_id) ?? '';
-            $stat          = get_field('champs_caches_chasse_cache_statut', $chasse_id) ?? '';
+            $val           = get_field('chasse_cache_statut_validation', $chasse_id) ?? '';
+            $stat          = get_field('chasse_cache_statut', $chasse_id) ?? '';
             $etat          = get_field('enigme_cache_etat_systeme', $post_id);
 
             return $chasse_status === 'pending'
@@ -1135,7 +1135,7 @@ function chasse_est_visible_pour_utilisateur(int $chasse_id, int $user_id): bool
         return false;
     }
 
-    $validation = get_field('champs_caches_chasse_cache_statut_validation', $chasse_id) ?? '';
+    $validation = get_field('chasse_cache_statut_validation', $chasse_id) ?? '';
 
     if ($status === 'pending') {
         $assoc = utilisateur_est_organisateur_associe_a_chasse($user_id, $chasse_id);

@@ -137,9 +137,9 @@ function creer_chasse_et_rediriger_si_appel()
   update_field('chasse_infos_date_fin', $in_two_years, $post_id);
   update_field('chasse_infos_duree_illimitee', false, $post_id);
 
-  update_field('champs_caches_chasse_cache_statut', 'revision', $post_id);
-  update_field('champs_caches_chasse_cache_statut_validation', 'creation', $post_id);
-  update_field('champs_caches_chasse_cache_organisateur', [$organisateur_id], $post_id);
+  update_field('chasse_cache_statut', 'revision', $post_id);
+  update_field('chasse_cache_statut_validation', 'creation', $post_id);
+  update_field('chasse_cache_organisateur', [$organisateur_id], $post_id);
 
   // 🚀 Redirection vers la prévisualisation frontale avec panneau ouvert
   $preview_url = add_query_arg('edition', 'open', get_preview_post_link($post_id));
@@ -411,7 +411,7 @@ function modifier_champ_chasse()
 
   // 🔹 Validation manuelle (par admin)
   if ($champ === 'champs_caches.chasse_cache_statut_validation' || $champ === 'chasse_cache_statut_validation') {
-    $ok = update_field('champs_caches_chasse_cache_statut_validation', sanitize_text_field($valeur), $post_id);
+    $ok = update_field('chasse_cache_statut_validation', sanitize_text_field($valeur), $post_id);
     if ($ok !== false) $champ_valide = true;
   }
 
@@ -477,10 +477,9 @@ function assigner_organisateur_a_chasse($post_id, $post)
   if (!empty($organisateur_id)) {
     $resultat = mettre_a_jour_relation_acf(
       $post_id,                       // ID du post (chasse)
-      'organisateur_chasse',          // Nom du champ relation
+      'chasse_cache_organisateur',    // Nom du champ relation
       $organisateur_id,               // ID du post cible (organisateur)
-      'field_67cfcba8c3bec',          // Clé ACF du champ
-      'champs_caches_'                // Groupe ACF (préfixe)
+      'field_67cfcba8c3bec'
     );
 
     // Vérification après mise à jour

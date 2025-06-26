@@ -54,8 +54,8 @@ function chasse_get_champs($chasse_id) {
         'date_fin' => get_field('chasse_infos_date_fin', $chasse_id),
         'illimitee' => get_field('chasse_infos_duree_illimitee', $chasse_id) ?? false,
         'nb_max' => get_field('chasse_infos_nb_max_gagants', $chasse_id) ?? 0,
-        'date_decouverte' => get_field('champs_caches_chasse_cache_date_decouverte', $chasse_id),
-        'current_stored_statut' => get_field('champs_caches_chasse_cache_statut', $chasse_id),
+        'date_decouverte' => get_field('chasse_cache_date_decouverte', $chasse_id),
+        'current_stored_statut' => get_field('chasse_cache_statut', $chasse_id),
     ];
 }
 
@@ -310,8 +310,8 @@ function peut_valider_chasse(int $chasse_id, int $user_id): bool
         return false;
     }
 
-    $statut_validation = get_field('champs_caches_chasse_cache_statut_validation', $chasse_id);
-    $statut_metier     = get_field('champs_caches_chasse_cache_statut', $chasse_id);
+    $statut_validation = get_field('chasse_cache_statut_validation', $chasse_id);
+    $statut_metier     = get_field('chasse_cache_statut', $chasse_id);
 
     if (!in_array($statut_validation ?? '', ['creation', 'correction'], true)) {
         return false;
