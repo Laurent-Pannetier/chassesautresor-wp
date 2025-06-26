@@ -697,6 +697,8 @@ function mettre_a_jour_sous_champ_group(int $post_id, string $group_key_or_name,
 
   error_log("[mettre_a_jour_sous_champ_group] post_id={$post_id} group={$group_key_or_name} subfield={$subfield_name} valeur=" . (is_array($new_value) ? json_encode($new_value) : $new_value));
 
+  error_log("[mettre_a_jour_sous_champ_group] post_id={$post_id} group={$group_key_or_name} subfield={$subfield_name} valeur=" . (is_array($new_value) ? json_encode($new_value) : $new_value));
+
 
 
   $group_object = get_field_object($group_key_or_name, $post_id);
@@ -733,9 +735,11 @@ function mettre_a_jour_sous_champ_group(int $post_id, string $group_key_or_name,
 
   foreach ($group_object['sub_fields'] as $sub_field) {
     $name = $sub_field['name'];
+    $key  = $sub_field['key'] ?? $name; // Utiliser la clé exacte si disponible
     $type = $sub_field['type'];
     if ($name === $subfield_name) {
       $sub_field_type = $type;
+      error_log("[mettre_a_jour_sous_champ_group] mapping {$subfield_name} -> {$key}");
     }
 
     $valeur = $groupe[$name] ?? '';
@@ -765,7 +769,7 @@ function mettre_a_jour_sous_champ_group(int $post_id, string $group_key_or_name,
     if ($name === $subfield_name) {
       $valeur = $new_value;
     }
-    $champ_a_enregistrer[$name] = $valeur;
+    $champ_a_enregistrer[$key] = $valeur;
   }
 
   cat_debug('[DEBUG] Données envoyées à update_field() pour groupe ' . $group_object['name'] . ' : ' . json_encode($champ_a_enregistrer));
@@ -773,6 +777,7 @@ function mettre_a_jour_sous_champ_group(int $post_id, string $group_key_or_name,
   $ok = update_field($group_object['name'], $champ_a_enregistrer, $post_id);
   cat_debug('[DEBUG] update_field() retourne : ' . var_export($ok, true));
   error_log('[mettre_a_jour_sous_champ_group] update_field ok=' . var_export($ok, true));
+
 
   // L'écriture ACF pouvant être asynchrone, on laisse une
   // petite marge avant de relire pour vérification
@@ -820,9 +825,9 @@ function mettre_a_jour_sous_champ_group(int $post_id, string $group_key_or_name,
         $result = $dt_new->format('Y-m-d H:i:s') === $dt_read->format('Y-m-d H:i:s');
         error_log('[mettre_a_jour_sous_champ_group] compare datetime result=' . var_export($result, true));
         return $result;
-
       }
       cat_debug('[DEBUG] Impossible de convertir les dates pour comparaison');
+
 
     }
 
@@ -839,3 +844,4 @@ function mettre_a_jour_sous_champ_group(int $post_id, string $group_key_or_name,
   error_log('[mettre_a_jour_sous_champ_group] verification failed for ' . $subfield_name);
   return false;
 }
+
