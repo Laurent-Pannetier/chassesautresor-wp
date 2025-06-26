@@ -45,7 +45,9 @@ if (!function_exists('update_field')) {
                     $converted[$name] = $value[$key];
                 }
             }
-            $mock_fields[$post_id][$group['name']] = $converted;
+            foreach ($converted as $name => $val) {
+                $mock_fields[$post_id][$name] = $val;
+            }
         } else {
             $mock_fields[$post_id][$selector] = $value;
         }
@@ -144,8 +146,15 @@ if (!function_exists('get_field')) {
             }
         }
 
-        if ($group && isset($mock_fields[$post_id][$group['name']])) {
-            return $mock_fields[$post_id][$group['name']];
+        if ($group && isset($group['sub_fields'])) {
+            $values = [];
+            foreach ($group['sub_fields'] as $sub) {
+                $name = $sub['name'];
+                if (array_key_exists($name, $mock_fields[$post_id] ?? [])) {
+                    $values[$name] = $mock_fields[$post_id][$name];
+                }
+            }
+            return $values ?: null;
         }
 
         return $mock_fields[$post_id][$key] ?? null;
@@ -163,11 +172,7 @@ if (!function_exists('recuperer_id_chasse_associee')) {
 }
 if (!function_exists('get_organisateur_from_chasse')) {
     function get_organisateur_from_chasse($chasse_id) {
-        $cache = get_field('champs_caches', $chasse_id);
-        if (!$cache || !isset($cache['chasse_cache_organisateur'])) {
-            return null;
-        }
-        $id = $cache['chasse_cache_organisateur'];
+        $id = get_field('chasse_cache_organisateur', $chasse_id);
         if (is_array($id)) {
             $id = reset($id);
         } elseif ($id instanceof WP_Post) {
