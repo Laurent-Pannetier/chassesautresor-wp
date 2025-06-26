@@ -570,7 +570,7 @@ L enregistrement se fait automatiquement à la saisie ou après délai (debounce
 En revanche, les champs obligatoires ou facultatifs sont masqués derrière un résumé. Ils s’ouvrent via un bouton ✏️ (stylo) et déclenchent un panneau latéral ou une édition inline avec affichage progressif (champ-affichage + champ-edition).
 <!-- Nombre de gagnants -->
 <li class="champ-chasse champ-nb-gagnants <?= empty($nb_max) ? 'champ-vide' : 'champ-rempli'; ?>"
-    data-champ="caracteristiques.chasse_infos_nb_max_gagants"
+    data-champ="chasse_infos_nb_max_gagants"
     data-cpt="chasse"
     data-post-id="<?= esc_attr($chasse_id); ?>">
 
@@ -589,7 +589,7 @@ En revanche, les champs obligatoires ou facultatifs sont masqués derrière un r
             id="nb-gagnants-illimite"
             name="nb-gagnants-illimite"
             <?= ($nb_max == 0 ? 'checked' : ''); ?>
-            data-champ="caracteristiques.chasse_infos_nb_max_gagants">
+            data-champ="chasse_infos_nb_max_gagants">
     <label for="nb-gagnants-illimite">Illimité</label>
   </div>
 
@@ -622,9 +622,9 @@ defined('ABSPATH') || exit;
 $chasse_id = $args['chasse_id'] ?? null;
 if (!$chasse_id || get_post_type($chasse_id) !== 'chasse') return;
 
-$caracteristiques = get_field('caracteristiques', $chasse_id);
-$texte_recompense = $caracteristiques['chasse_infos_recompense_texte'] ?? '';
-$valeur_recompense = $caracteristiques['chasse_infos_recompense_valeur'] ?? '';
+$texte_recompense = get_field('chasse_infos_recompense_texte', $chasse_id) ?: '';
+$valeur_recompense = get_field('chasse_infos_recompense_valeur', $chasse_id) ?: '';
+$titre_recompense = get_field('chasse_infos_recompense_titre', $chasse_id) ?: '';
 ?>
 
 
@@ -639,7 +639,7 @@ $valeur_recompense = $caracteristiques['chasse_infos_recompense_valeur'] ?? '';
     <div class="champ-wrapper" style="display: flex; flex-direction: column; gap: 20px;">
         
       <label for="champ-recompense-titre">Titre de la récompense <span class="champ-obligatoire">*</span></label>
-      <input id="champ-recompense-titre" type="text" maxlength="40" placeholder="Ex : Un papillon en cristal..." value="<?= esc_attr($caracteristiques['chasse_infos_recompense_titre'] ?? ''); ?>">
+      <input id="champ-recompense-titre" type="text" maxlength="40" placeholder="Ex : Un papillon en cristal..." value="<?= esc_attr($titre_recompense); ?>">
 
       <label for="champ-recompense-texte">Descripton de la récompense <span class="champ-obligatoire">*</span></label>
       <textarea id="champ-recompense-texte" rows="4" placeholder="Ex : Un coffret cadeau comprenant..."><?= esc_textarea(wp_strip_all_tags($texte_recompense)); ?></textarea>
@@ -800,9 +800,9 @@ Hook global onDateFieldUpdated() mis à jour pour gérer :
 
 enigme_acces.date
 
-caracteristiques.chasse_infos_date_debut
+chasse_infos_date_debut
 
-caracteristiques.chasse_infos_date_fin
+chasse_infos_date_fin
 
 👉 Préciser dans la section que :
 
@@ -1160,7 +1160,7 @@ Ne jamais déduire qu’un champ est un repeater ou un groupe sans analyse concr
 
 Chaque champ ciblé par un module JS (inline, conditionnel, panneau, etc.) doit contenir :
 
-- `data-champ="nom_acf_complet"` (ex : `caracteristiques.chasse_infos_cout_points`)
+- `data-champ="nom_acf_complet"` (ex : `chasse_infos_cout_points`)
 - `data-cpt="chasse"` (ou `organisateur`, `enigme`)
 - `data-post-id="ID"` (toujours requis pour AJAX)
 
