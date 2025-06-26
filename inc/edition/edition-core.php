@@ -820,6 +820,7 @@ function mettre_a_jour_sous_champ_group(int $post_id, string $group_key_or_name,
         $result = $dt_new->format('Y-m-d H:i:s') === $dt_read->format('Y-m-d H:i:s');
         error_log('[mettre_a_jour_sous_champ_group] compare datetime result=' . var_export($result, true));
         return $result;
+
       }
       cat_debug('[DEBUG] Impossible de convertir les dates pour comparaison');
 
