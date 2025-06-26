@@ -695,6 +695,8 @@ function mettre_a_jour_sous_champ_group(int $post_id, string $group_key_or_name,
     return false;
   }
 
+  error_log("[mettre_a_jour_sous_champ_group] post_id={$post_id} group={$group_key_or_name} subfield={$subfield_name} valeur=" . (is_array($new_value) ? json_encode($new_value) : $new_value));
+
 
 
   $group_object = get_field_object($group_key_or_name, $post_id);
@@ -731,9 +733,11 @@ function mettre_a_jour_sous_champ_group(int $post_id, string $group_key_or_name,
 
   foreach ($group_object['sub_fields'] as $sub_field) {
     $name = $sub_field['name'];
+    $key  = $sub_field['key'] ?? $name; // Utiliser la clé exacte si disponible
     $type = $sub_field['type'];
     if ($name === $subfield_name) {
       $sub_field_type = $type;
+      error_log("[mettre_a_jour_sous_champ_group] mapping {$subfield_name} -> {$key}");
     }
 
     $valeur = $groupe[$name] ?? '';
@@ -763,13 +767,14 @@ function mettre_a_jour_sous_champ_group(int $post_id, string $group_key_or_name,
     if ($name === $subfield_name) {
       $valeur = $new_value;
     }
-    $champ_a_enregistrer[$name] = $valeur;
+    $champ_a_enregistrer[$key] = $valeur;
   }
 
   cat_debug('[DEBUG] Données envoyées à update_field() pour groupe ' . $group_object['name'] . ' : ' . json_encode($champ_a_enregistrer));
 
   $ok = update_field($group_object['name'], $champ_a_enregistrer, $post_id);
   cat_debug('[DEBUG] update_field() retourne : ' . var_export($ok, true));
+  error_log('[mettre_a_jour_sous_champ_group] update_field ok=' . var_export($ok, true));
 
   // L'écriture ACF pouvant être asynchrone, on laisse une
   // petite marge avant de relire pour vérification
@@ -808,7 +813,15 @@ function mettre_a_jour_sous_champ_group(int $post_id, string $group_key_or_name,
       $dt_read = convertir_en_datetime((string) $valeur_relue, ['Y-m-d H:i:s', 'Y-m-d\TH:i']);
       if ($dt_new && $dt_read) {
         cat_debug('[DEBUG] dt_new=' . $dt_new->format('c') . ' dt_read=' . $dt_read->format('c'));
-        return $dt_new->getTimestamp() === $dt_read->getTimestamp();
+
+        // Compare en UTC pour éviter les divergences dues au fuseau horaire
+        $tz = new DateTimeZone('UTC');
+        $dt_new->setTimezone($tz);
+        $dt_read->setTimezone($tz);
+
+        $result = $dt_new->format('Y-m-d H:i:s') === $dt_read->format('Y-m-d H:i:s');
+        error_log('[mettre_a_jour_sous_champ_group] compare datetime result=' . var_export($result, true));
+        return $result;
       }
       cat_debug('[DEBUG] Impossible de convertir les dates pour comparaison');
 
@@ -818,9 +831,12 @@ function mettre_a_jour_sous_champ_group(int $post_id, string $group_key_or_name,
     $str_relue = is_array($valeur_relue) ? implode(',', $valeur_relue) : (string) $valeur_relue;
     cat_debug('[DEBUG] str_new=' . $str_new . ' str_relue=' . $str_relue);
 
-    return wp_strip_all_tags($str_new) === wp_strip_all_tags($str_relue);
+    $result = wp_strip_all_tags($str_new) === wp_strip_all_tags($str_relue);
+    error_log('[mettre_a_jour_sous_champ_group] compare generic result=' . var_export($result, true));
+    return $result;
   }
 
   cat_debug("❌ Échec de vérification pour $subfield_name dans {$group_object['name']}");
+  error_log('[mettre_a_jour_sous_champ_group] verification failed for ' . $subfield_name);
   return false;
 }
