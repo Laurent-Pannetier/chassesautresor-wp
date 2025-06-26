@@ -723,10 +723,15 @@ function mettre_a_jour_sous_champ_group(int $post_id, string $group_key_or_name,
   }
 
   $champ_a_enregistrer = [];
+  
+  $sub_field_type = null;
 
   foreach ($group_object['sub_fields'] as $sub_field) {
     $name = $sub_field['name'];
     $type = $sub_field['type'];
+    if ($name === $subfield_name) {
+      $sub_field_type = $type;
+    }
 
     $valeur = $groupe[$name] ?? '';
     if ($name === $subfield_name) {
@@ -791,7 +796,15 @@ function mettre_a_jour_sous_champ_group(int $post_id, string $group_key_or_name,
       }
     }
 
-    $str_new = is_array($new_value) ? implode(',', $new_value) : (string) $new_value;
+    if ($sub_field_type === 'date_time_picker') {
+      $ts_new  = strtotime((string) $new_value);
+      $ts_read = strtotime((string) $valeur_relue);
+      if ($ts_new !== false && $ts_read !== false) {
+        return $ts_new === $ts_read;
+      }
+    }
+
+    $str_new  = is_array($new_value) ? implode(',', $new_value) : (string) $new_value;
     $str_relue = is_array($valeur_relue) ? implode(',', $valeur_relue) : (string) $valeur_relue;
 
     return wp_strip_all_tags($str_new) === wp_strip_all_tags($str_relue);
