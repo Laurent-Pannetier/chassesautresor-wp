@@ -312,6 +312,7 @@ function initLiensChasse(bloc) {
 // 🔎 Validation logique entre date de début et date de fin
 // ==============================
 function validerDatesAvantEnvoi(champModifie) {
+  console.log('[validerDatesAvantEnvoi] champModifie=', champModifie);
   // ✅ Si illimité, on n'applique aucun contrôle
   if (checkboxIllimitee?.checked) return true;
 
@@ -379,6 +380,7 @@ function validerDatesAvantEnvoi(champModifie) {
 // 🔥 Affichage d'un message global temporaire
 // ==============================
 function afficherErreurGlobale(message) {
+  console.log('[afficherErreurGlobale]', message);
   const erreurGlobal = document.getElementById('erreur-global');
   if (!erreurGlobal) return;
 
@@ -611,6 +613,7 @@ document.addEventListener('acf/submit_success', function (e) {
 // 🔁 Rafraîchissement dynamique du statut de la chasse
 // ================================
 function rafraichirStatutChasse(postId) {
+  console.log('[rafraichirStatutChasse] postId=', postId);
   if (!postId) return;
 
   fetch(ajaxurl, {
@@ -667,6 +670,7 @@ function rafraichirStatutChasse(postId) {
 // 💾 Enregistrement groupé des dates de chasse
 // ================================
 function enregistrerDatesChasse() {
+  console.log('[enregistrerDatesChasse]');
   if (!inputDateDebut || !inputDateFin) return Promise.resolve(false);
 
   const postId = inputDateDebut.closest('.champ-chasse')?.dataset.postId;
