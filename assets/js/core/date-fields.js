@@ -15,10 +15,10 @@ document.addEventListener('DOMContentLoaded', () => {
 function formatDateFr(dateStr) {
   if (!dateStr) return '';
   if (dateStr.includes('T')) {
-    const [datePart, timePart] = dateStr.split('T');
+    const [datePart] = dateStr.split('T');
     const parts = datePart.split('-');
     if (parts.length !== 3) return dateStr;
-    return `${parts[2]}/${parts[1]}/${parts[0]} ${timePart}`;
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
   }
   const parts = dateStr.split('-');
   if (parts.length !== 3) return dateStr;
