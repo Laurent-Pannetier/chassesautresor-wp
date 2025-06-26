@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
+  console.log('✅ date-fields.js chargé');
   // On cible de manière plus large les champs de date pour prendre en charge
   // les inputs générés dynamiquement ou ceux dont le type peut varier (text,
   // date, datetime-local...). L'important est qu'ils possèdent la classe
@@ -127,6 +128,12 @@ function initChampDate(input) {
   const enregistrer = () => {
     const valeurBrute = input.value.trim();
     console.log('[🧪 initChampDate]', champ, '| valeur saisie :', valeurBrute);
+    console.log('📤 Tentative d\'enregistrement', {
+      champ,
+      valeur: valeurBrute,
+      postId,
+      cpt
+    });
     const regexDate = /^\d{4}-\d{2}-\d{2}$/;
     const regexDateTime = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
     if (!regexDate.test(valeurBrute) && !regexDateTime.test(valeurBrute)) {
