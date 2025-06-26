@@ -12,22 +12,18 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
 
 
 // Champs ACF principaux
-$caracteristiques = get_field('caracteristiques', $chasse_id);
-$champs_caches = get_field('champs_caches', $chasse_id);
-
-// Champs individuels
-$lot = $caracteristiques['chasse_infos_recompense_texte'] ?? '';
-$titre_recompense = $caracteristiques['chasse_infos_recompense_titre'] ?? '';
-$valeur_recompense = $caracteristiques['chasse_infos_recompense_valeur'] ?? '';
-$cout_points = $caracteristiques['chasse_infos_cout_points'] ?? 0;
-$date_debut = $caracteristiques['chasse_infos_date_debut'] ?? null;
-$date_fin = $caracteristiques['chasse_infos_date_fin'] ?? null;
-$illimitee = $caracteristiques['chasse_infos_duree_illimitee'] ?? false;
-$nb_max = $caracteristiques['chasse_infos_nb_max_gagants'] ?? 0;
+$lot               = get_field('chasse_infos_recompense_texte', $chasse_id);
+$titre_recompense  = get_field('chasse_infos_recompense_titre', $chasse_id);
+$valeur_recompense = get_field('chasse_infos_recompense_valeur', $chasse_id);
+$cout_points       = get_field('chasse_infos_cout_points', $chasse_id) ?: 0;
+$date_debut        = get_field('chasse_infos_date_debut', $chasse_id);
+$date_fin          = get_field('chasse_infos_date_fin', $chasse_id);
+$illimitee         = get_field('chasse_infos_duree_illimitee', $chasse_id);
+$nb_max            = get_field('chasse_infos_nb_max_gagants', $chasse_id) ?: 0;
 
 // Champs cachés
-$date_decouverte = $champs_caches['chasse_cache_date_decouverte'] ?? null;
-$current_stored_statut = $champs_caches['chasse_cache_statut'] ?? null;
+$date_decouverte      = get_field('chasse_cache_date_decouverte', $chasse_id);
+$current_stored_statut = get_field('chasse_cache_statut', $chasse_id);
 
 // Données supplémentaires
 $description = get_field('chasse_principale_description', $chasse_id);
@@ -59,7 +55,7 @@ $organisateur_nom = $organisateur_id ? get_the_title($organisateur_id) : get_the
 if (current_user_can('administrator')) {
   $chasse_id = get_the_ID();
 
-  error_log("📦 [TEST] Statut stocké (admin) : " . get_field('champs_caches')['chasse_cache_statut']);
+  error_log("📦 [TEST] Statut stocké (admin) : " . get_field('chasse_cache_statut', $chasse_id));
 
   verifier_ou_recalculer_statut_chasse($chasse_id);
 
@@ -82,8 +78,7 @@ if ($edition_active && !$est_complet) {
 
   <div class="chasse-fiche-container flex-row">
     <?php
-    $cache = get_field('champs_caches', $chasse_id);
-    $statut = get_field('champs_caches')['chasse_cache_statut'] ?? 'revision';
+    $statut = get_field('chasse_cache_statut', $chasse_id) ?? 'revision';
     ?>
       <span class="badge-statut statut-<?= esc_attr($statut); ?>" data-post-id="<?= esc_attr($chasse_id); ?>">
         <?= ucfirst(str_replace('_', ' ', $statut)); ?>
