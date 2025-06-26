@@ -28,7 +28,7 @@ defined('ABSPATH') || exit;
     /**
      * Affiche une galerie d’images d’une énigme si l’utilisateur y a droit.
      *
-     * Compatible Firelight Lightbox (ancien Easy Fancybox) via `rel="lightbox-enigme"`.
+     * Compatible Fancybox 3 (ancien Firelight/Easy Fancybox) via `rel="lightbox-enigme"`.
      * Les images sont servies via proxy (/voir-image-enigme) avec tailles adaptées.
      *
      * @param int $enigme_id ID du post de type énigme
