@@ -670,9 +670,16 @@ function utilisateur_peut_editer_champs(int $post_id): bool
             return in_array(ROLE_ORGANISATEUR_CREATION, $roles, true) && $status === 'pending';
 
         case 'chasse':
-            $cache = get_field('champs_caches', $post_id);
-            $val   = $cache['chasse_cache_statut_validation'] ?? '';
-            $stat  = $cache['chasse_cache_statut'] ?? '';
+            $cache   = get_field('champs_caches', $post_id);
+            $val     = $cache['chasse_cache_statut_validation'] ?? '';
+            $stat    = $cache['chasse_cache_statut'] ?? '';
+            $complet = (bool) get_field('chasse_cache_complet', $post_id);
+
+            // Les organisateurs en cours de création peuvent éditer toute chasse
+            // incomplète tant qu'elle est en attente de validation.
+            if (in_array(ROLE_ORGANISATEUR_CREATION, $roles, true)) {
+                return $status === 'pending' && !$complet;
+            }
 
             return $status === 'pending'
                 && $stat === 'revision'
