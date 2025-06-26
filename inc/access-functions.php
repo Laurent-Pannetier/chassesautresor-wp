@@ -671,8 +671,8 @@ function utilisateur_peut_editer_champs(int $post_id): bool
 
         case 'chasse':
             $cache = get_field('champs_caches', $post_id);
-            $val   = $cache['chasse_cache_statut_validation'] ?? '';
-            $stat  = $cache['chasse_cache_statut'] ?? '';
+            $val   = $cache['chasse_cache_statut_validation'] ?? 'creation';
+            $stat  = $cache['chasse_cache_statut'] ?? 'revision';
 
             return $status === 'pending'
                 && $stat === 'revision'
