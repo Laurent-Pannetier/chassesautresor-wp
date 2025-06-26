@@ -770,6 +770,7 @@ function mettre_a_jour_sous_champ_group(int $post_id, string $group_key_or_name,
 
   $ok = update_field($group_object['name'], $champ_a_enregistrer, $post_id);
   cat_debug('[DEBUG] update_field() retourne : ' . var_export($ok, true));
+
   // L'écriture ACF pouvant être asynchrone, on laisse une
   // petite marge avant de relire pour vérification
   sleep(1);
@@ -810,6 +811,7 @@ function mettre_a_jour_sous_champ_group(int $post_id, string $group_key_or_name,
         return $dt_new->getTimestamp() === $dt_read->getTimestamp();
       }
       cat_debug('[DEBUG] Impossible de convertir les dates pour comparaison');
+
     }
 
     $str_new  = is_array($new_value) ? implode(',', $new_value) : (string) $new_value;
