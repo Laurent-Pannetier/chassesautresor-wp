@@ -693,6 +693,9 @@ function enregistrerDatesChasse() {
         return true;
       }
       console.error('❌ Erreur sauvegarde dates:', res.data);
+      if (typeof afficherErreurGlobale === 'function') {
+        afficherErreurGlobale('❌ ' + res.data);
+      }
       return false;
     })
     .catch(err => {

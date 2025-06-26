@@ -177,6 +177,33 @@ add_action('wp_ajax_modifier_champ_chasse', 'modifier_champ_chasse');
  */
 add_action('wp_ajax_modifier_dates_chasse', 'modifier_dates_chasse');
 
+/**
+ * Met à jour en une seule opération les trois champs ACF liés aux dates
+ * d'une chasse : date de début, date de fin et case illimitée.
+ *
+ * @param int        $post_id   ID de la chasse.
+ * @param DateTime   $debut     Date de début.
+ * @param DateTime|null $fin    Date de fin, null si illimitée.
+ * @param bool       $illimitee Mode illimité.
+ * @return bool      True si la mise à jour a réussi, false sinon.
+ */
+function mettre_a_jour_dates_chasse_acf(int $post_id, DateTime $debut, ?DateTime $fin, bool $illimitee): bool
+{
+  $valeurs = [
+    'chasse_infos_date_debut'      => $debut->format('Y-m-d H:i:s'),
+    'chasse_infos_date_fin'        => $illimitee ? '' : ($fin ? $fin->format('Y-m-d') : ''),
+    'chasse_infos_duree_illimitee' => $illimitee ? 1 : 0,
+  ];
+
+  return mettre_a_jour_sous_champ_group(
+    $post_id,
+    'caracteristiques',
+    '',
+    $valeurs,
+    $valeurs
+  );
+}
+
 function modifier_dates_chasse()
 {
   if (!is_user_logged_in()) {
@@ -226,40 +253,9 @@ function modifier_dates_chasse()
     }
   }
 
-  mettre_a_jour_sous_champ_group(
-    $post_id,
-    'caracteristiques',
-    '',
-    [],
-    [
-      'chasse_infos_date_debut'      => '',
-      'chasse_infos_date_fin'        => '',
-      'chasse_infos_duree_illimitee' => 0,
-    ]
-  );
+  $ok = mettre_a_jour_dates_chasse_acf($post_id, $dt_debut, $dt_fin, (bool) $illimitee);
 
-  $ok1 = mettre_a_jour_sous_champ_group(
-    $post_id,
-    'caracteristiques',
-    'chasse_infos_date_debut',
-    $dt_debut->format('Y-m-d H:i:s')
-  );
-
-  $ok2 = mettre_a_jour_sous_champ_group(
-    $post_id,
-    'caracteristiques',
-    'chasse_infos_duree_illimitee',
-    $illimitee ? 1 : 0
-  );
-
-  $ok3 = mettre_a_jour_sous_champ_group(
-    $post_id,
-    'caracteristiques',
-    'chasse_infos_date_fin',
-    $illimitee ? '' : $dt_fin->format('Y-m-d')
-  );
-
-  if ($ok1 && $ok2 && $ok3) {
+  if ($ok) {
     mettre_a_jour_statuts_chasse($post_id);
     wp_send_json_success([
       'date_debut' => $dt_debut->format('Y-m-d H:i:s'),
