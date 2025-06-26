@@ -86,15 +86,8 @@ function creer_organisateur_pour_utilisateur($user_id)
   $user_data = get_userdata($user_id);
   $email = $user_data ? $user_data->user_email : '';
 
-  $profil_public = get_field('profil_public', $post_id);
-  if (!is_array($profil_public)) {
-    $profil_public = [];
-  }
-
-  $profil_public['logo_organisateur'] = 3927;
-  $profil_public['email_contact'] = $email;
-
-  update_field('profil_public', $profil_public, $post_id);
+  update_field('profil_public_logo_organisateur', 3927, $post_id);
+  update_field('profil_public_email_contact', $email, $post_id);
 
   cat_debug("✅ Organisateur créé (pending) pour user $user_id : post ID $post_id");
 
@@ -254,17 +247,14 @@ function ajax_modifier_champ_organisateur()
     $iban = sanitize_text_field($donnees['iban'] ?? '');
     $bic  = sanitize_text_field($donnees['bic'] ?? '');
 
-    $ok = update_field('field_67d6715f90045', [
-      'iban' => $iban,
-      'bic'  => $bic,
-    ], $post_id);
+    $ok1 = update_field('gagnez_de_largent_iban', $iban, $post_id);
+    $ok2 = update_field('gagnez_de_largent_bic', $bic, $post_id);
 
-    // 🔍 Vérifie même si update_field retourne false
-    $enregistre = get_field('coordonnees_bancaires', $post_id);
-    $sameIban = ($enregistre['iban'] ?? '') === $iban;
-    $sameBic  = ($enregistre['bic'] ?? '') === $bic;
-
-    if ($ok || ($sameIban && $sameBic)) {
+    $enregistre_iban = get_field('gagnez_de_largent_iban', $post_id);
+    $enregistre_bic  = get_field('gagnez_de_largent_bic', $post_id);
+    $sameIban = $enregistre_iban === $iban;
+    $sameBic  = $enregistre_bic === $bic;
+    if (($ok1 !== false && $ok2 !== false) || ($sameIban && $sameBic)) {
       wp_send_json_success([
         'champ'  => $champ,
         'valeur' => ['iban' => $iban, 'bic' => $bic]

@@ -62,11 +62,10 @@ function get_organisateur_chasse($chasse_id)
  */
 function get_organisateur_from_chasse($chasse_id)
 {
-  // ✅ Lecture directe via ACF du groupe
-  $champs_caches = get_field('champs_caches', $chasse_id);
+  // ✅ Lecture directe
+  $relation = get_field('champs_caches_chasse_cache_organisateur', $chasse_id);
 
-  if (!empty($champs_caches['chasse_cache_organisateur'])) {
-    $relation = $champs_caches['chasse_cache_organisateur'];
+  if (!empty($relation)) {
 
     // Gère tableau ou objet
     if (is_array($relation)) {
@@ -322,8 +321,7 @@ function recuperer_enigmes_associees(int $chasse_id): array
     return [];
   }
 
-  $groupe = get_field('champs_caches', $chasse_id);
-  $liste_brute = $groupe['chasse_cache_enigmes'] ?? [];
+  $liste_brute = get_field('champs_caches_chasse_cache_enigmes', $chasse_id) ?? [];
 
   // Extraction des IDs (objet ou int)
   $ids = [];
@@ -742,8 +740,7 @@ function forcer_relation_enigme_dans_chasse_si_absente(int $enigme_id): void
     return;
   }
 
-  $groupe = get_field('champs_caches', $chasse_id);
-  $liste = is_array($groupe['chasse_cache_enigmes'] ?? null) ? array_map('intval', $groupe['chasse_cache_enigmes']) : [];
+  $liste = is_array(get_field('champs_caches_chasse_cache_enigmes', $chasse_id) ?? null) ? array_map('intval', get_field('champs_caches_chasse_cache_enigmes', $chasse_id)) : [];
 
   if (!in_array($enigme_id, $liste, true)) {
     $ok = modifier_relation_acf(
