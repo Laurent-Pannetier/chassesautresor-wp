@@ -143,7 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // ==============================
   // 💰 Affichage dynamique tentatives (message coût)
   // ==============================
-  const blocCout = document.querySelector('[data-champ="enigme_tentative.enigme_tentative_cout_points"]');
+  const blocCout = document.querySelector('[data-champ="enigme_tentative_cout_points"]');
   if (blocCout && typeof window.onCoutPointsUpdated === 'function') {
     const champ = blocCout.dataset.champ;
     const valeur = parseInt(blocCout.querySelector('.champ-input')?.value || '0', 10);
@@ -378,7 +378,7 @@ document.querySelector('#panneau-images-enigme .panneau-fermer')?.addEventListen
 // 🔢 Initialisation champ enigme_tentative_max (tentatives/jour)
 // ================================
 function initChampNbTentatives() {
-  const bloc = document.querySelector('[data-champ="enigme_tentative.enigme_tentative_max"]');
+  const bloc = document.querySelector('[data-champ="enigme_tentative_max"]');
   if (!bloc) return;
 
   const input = bloc.querySelector('.champ-input');
@@ -401,7 +401,7 @@ function initChampNbTentatives() {
 
   // 🔄 Fonction centralisée
   function mettreAJourAideTentatives() {
-    const coutInput = document.querySelector('[data-champ="enigme_tentative.enigme_tentative_cout_points"] .champ-input');
+    const coutInput = document.querySelector('[data-champ="enigme_tentative_cout_points"] .champ-input');
     if (!coutInput) return;
 
     const cout = parseInt(coutInput.value.trim(), 10);
@@ -429,7 +429,7 @@ function initChampNbTentatives() {
       input.value = '1';
     }
 
-    const coutInput = document.querySelector('[data-champ="enigme_tentative.enigme_tentative_cout_points"] .champ-input');
+    const coutInput = document.querySelector('[data-champ="enigme_tentative_cout_points"] .champ-input');
     const cout = parseInt(coutInput?.value.trim() || '0', 10);
     const estGratuit = isNaN(cout) || cout === 0;
 
@@ -448,8 +448,8 @@ function initChampNbTentatives() {
   mettreAJourAideTentatives();
 
   // 🔁 Lié aux modifs de coût (input + checkbox)
-  const coutInput = document.querySelector('[data-champ="enigme_tentative.enigme_tentative_cout_points"] .champ-input');
-  const checkbox = document.querySelector('[data-champ="enigme_tentative.enigme_tentative_cout_points"] input[type="checkbox"]');
+  const coutInput = document.querySelector('[data-champ="enigme_tentative_cout_points"] .champ-input');
+  const checkbox = document.querySelector('[data-champ="enigme_tentative_cout_points"] input[type="checkbox"]');
   if (coutInput) coutInput.addEventListener('input', mettreAJourAideTentatives);
   if (checkbox) checkbox.addEventListener('change', mettreAJourAideTentatives);
 
@@ -463,8 +463,8 @@ function initChampNbTentatives() {
 // 💰 Hook personnalisé – Réaction au champ coût (CPT énigme uniquement)
 // ================================
 window.onCoutPointsUpdated = function (bloc, champ, valeur, postId, cpt) {
-  if (champ === 'enigme_tentative.enigme_tentative_cout_points') {
-    const champMax = document.querySelector('[data-champ="enigme_tentative.enigme_tentative_max"] .champ-input');
+  if (champ === 'enigme_tentative_cout_points') {
+    const champMax = document.querySelector('[data-champ="enigme_tentative_max"] .champ-input');
     if (champMax) {
       const valeurActuelle = parseInt(champMax.value, 10);
 
@@ -475,7 +475,7 @@ window.onCoutPointsUpdated = function (bloc, champ, valeur, postId, cpt) {
         // Si supérieur, on ramène à 24 (ou 5 selon logique métier ? à vérifier)
         if (valeurActuelle > 24) {
           champMax.value = '24';
-          modifierChampSimple('enigme_tentative.enigme_tentative_max', 24, postId, cpt);
+          modifierChampSimple('enigme_tentative_max', 24, postId, cpt);
         }
       } else {
         // Mode payant → aucune limite
@@ -740,7 +740,7 @@ window.onDateFieldUpdated = function (input, nouvelleValeur) {
   const bloc = input.closest('[data-champ]');
   const champ = bloc?.dataset.champ;
 
-  if (champ !== 'enigme_acces.date') return;
+  if (champ !== 'enigme_acces_date') return;
 
   const valeur = input.value?.trim() || '';
 

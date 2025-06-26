@@ -165,9 +165,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!confirm('Voulez-vous vraiment supprimer la récompense ?')) return;
 
       const champsASupprimer = [
-        'caracteristiques.chasse_infos_recompense_titre',
-        'caracteristiques.chasse_infos_recompense_texte',
-        'caracteristiques.chasse_infos_recompense_valeur'
+        'chasse_infos_recompense_titre',
+        'chasse_infos_recompense_texte',
+        'chasse_infos_recompense_valeur'
       ];
 
       Promise.all(
@@ -223,7 +223,7 @@ document.addEventListener('DOMContentLoaded', () => {
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
           action: 'modifier_champ_chasse',
-          champ: 'caracteristiques.chasse_infos_recompense_titre',
+          champ: 'chasse_infos_recompense_titre',
           valeur: titre,
           post_id: postId
         })
@@ -239,7 +239,7 @@ document.addEventListener('DOMContentLoaded', () => {
               headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
               body: new URLSearchParams({
                 action: 'modifier_champ_chasse',
-                champ: 'caracteristiques.chasse_infos_recompense_texte',
+                champ: 'chasse_infos_recompense_texte',
                 valeur: texte,
                 post_id: postId
               })
@@ -259,7 +259,7 @@ document.addEventListener('DOMContentLoaded', () => {
               headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
               body: new URLSearchParams({
                 action: 'modifier_champ_chasse',
-                champ: 'caracteristiques.chasse_infos_recompense_valeur',
+                champ: 'chasse_infos_recompense_valeur',
                 valeur: valeur,
                 post_id: postId
               })
@@ -445,7 +445,7 @@ document.querySelectorAll('.champ-cout-points .champ-enregistrer').forEach(bouto
 
     modifierChampSimple(champ, valeur, postId, 'chasse');
 
-    if (champ === 'caracteristiques.chasse_infos_cout_points') {
+    if (champ === 'chasse_infos_cout_points') {
       mettreAJourAffichageCout(postId, valeur);
       rafraichirStatutChasse(postId);
     }
@@ -504,12 +504,12 @@ function initChampNbGagnants() {
     if (checkboxIllimite.checked) {
       inputNb.disabled = true;
       inputNb.value = '0';
-      modifierChampSimple('caracteristiques.chasse_infos_nb_max_gagants', 0, postId, 'chasse');
+      modifierChampSimple('chasse_infos_nb_max_gagants', 0, postId, 'chasse');
     } else {
       inputNb.disabled = false;
       if (parseInt(inputNb.value.trim(), 10) === 0 || inputNb.value.trim() === '') {
         inputNb.value = '1';
-        modifierChampSimple('caracteristiques.chasse_infos_nb_max_gagants', 1, postId, 'chasse');
+        modifierChampSimple('chasse_infos_nb_max_gagants', 1, postId, 'chasse');
       }
     }
     // 🔥 Mise à jour dynamique après changement illimité
@@ -527,7 +527,7 @@ function initChampNbGagnants() {
         valeur = 1;
         inputNb.value = '1';
       }
-      modifierChampSimple('caracteristiques.chasse_infos_nb_max_gagants', valeur, postId, 'chasse');
+      modifierChampSimple('chasse_infos_nb_max_gagants', valeur, postId, 'chasse');
       mettreAJourAffichageNbGagnants(postId, valeur); // ✅ ici, APRES avoir défini valeur
     }, 500);
   });

@@ -41,7 +41,7 @@ window.mettreAJourResumeInfos = function () {
       const champ = ligne.dataset.champ;
 
       // 🎯 [NOUVEAU] Ignorer les champs du groupe caractéristiques
-      if (champ.startsWith('caracteristiques.') && champ !== 'caracteristiques_chasse_infos_recompense_valeur') {
+      if (champ.startsWith('chasse_infos_') && champ !== 'chasse_infos_recompense_valeur') {
         return; // On saute toutes sauf la récompense
       }
 
@@ -76,7 +76,7 @@ window.mettreAJourResumeInfos = function () {
         estRempli = ul && ul.children.length > 0;
       }
 
-      if (champ === 'caracteristiques_chasse_infos_recompense_valeur') {
+      if (champ === 'chasse_infos_recompense_valeur') {
         const titre = document.getElementById('champ-recompense-titre')?.value.trim();
         const texte = document.getElementById('champ-recompense-texte')?.value.trim();
         const valeur = parseFloat(document.getElementById('champ-recompense-valeur')?.value || '0');
@@ -125,12 +125,12 @@ window.mettreAJourResumeInfos = function () {
         estRempli = !!checked;
       }
 
-      if (champ === 'enigme_tentative.enigme_tentative_cout_points') {
+      if (champ === 'enigme_tentative_cout_points') {
         const val = parseInt(blocEdition?.querySelector('input')?.value || '', 10);
         estRempli = !isNaN(val);
       }
 
-      if (champ === 'enigme_tentative.enigme_tentative_max') {
+      if (champ === 'enigme_tentative_max') {
         const val = parseInt(blocEdition?.querySelector('input')?.value || '', 10);
         estRempli = !isNaN(val) && val > 0;
       }
@@ -214,16 +214,16 @@ window.onChampSimpleMisAJour = function (champ, postId, valeur, cpt) {
     if (champ === 'post_title' && typeof window.mettreAJourTitreHeader === 'function') {
       window.mettreAJourTitreHeader(cpt, valeur);
     }
-    if (champ === 'profil_public_logo_organisateur') {
+    if (champ === 'logo_organisateur') {
       const bloc = document.querySelector(`.champ-organisateur[data-champ="${champ}"][data-post-id="${postId}"]`);
       if (bloc && typeof bloc.__ouvrirMedia === 'function') bloc.__ouvrirMedia();
     }
     const champsResume = [
       'post_title',
       'description_longue',
-      'profil_public_logo',
-      'profil_public_logo_organisateur',
-      'profil_public_email_contact',
+      'logo',
+      'logo_organisateur',
+      'email_contact',
       'coordonnees_bancaires',
       'liens_publics'
     ];
@@ -242,12 +242,12 @@ window.onChampSimpleMisAJour = function (champ, postId, valeur, cpt) {
       if (bloc && typeof bloc.__ouvrirMedia === 'function') bloc.__ouvrirMedia();
     }
     const champsStatut = [
-      'caracteristiques.chasse_infos_date_debut',
-      'caracteristiques.chasse_infos_date_fin',
-      'caracteristiques.chasse_infos_duree_illimitee',
-      'caracteristiques.chasse_infos_cout_points',
-      'champs_caches.chasse_cache_statut',
-      'champs_caches.chasse_cache_statut_validation'
+      'chasse_infos_date_debut',
+      'chasse_infos_date_fin',
+      'chasse_infos_duree_illimitee',
+      'chasse_infos_cout_points',
+      'chasse_cache_statut',
+      'chasse_cache_statut_validation'
     ];
     if (champsStatut.includes(champ)) {
       rafraichirStatutChasse(postId);
@@ -261,8 +261,8 @@ window.onChampSimpleMisAJour = function (champ, postId, valeur, cpt) {
       'enigme_visuel_legende',
       'enigme_visuel_texte',
       'enigme_mode_validation',
-      'enigme_tentative.enigme_tentative_cout_points',
-      'enigme_tentative.enigme_tentative_max',
+      'enigme_tentative_cout_points',
+      'enigme_tentative_max',
       'enigme_reponse_bonne',
       'enigme_reponse_casse',
       'enigme_acces_condition',

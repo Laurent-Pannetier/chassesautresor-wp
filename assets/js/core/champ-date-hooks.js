@@ -8,15 +8,15 @@ window.onDateFieldUpdated = function(input, valeur) {
   if (!champ) return;
 
   const handlers = {
-    'enigme_acces.date': (val) => {
+    'enigme_acces_date': (val) => {
       const span = document.querySelector('.date-deblocage');
       if (span) span.textContent = formatDateFr(val);
     },
-    'caracteristiques.chasse_infos_date_debut': (val) => {
+    'chasse_infos_date_debut': (val) => {
       const span = document.querySelector('.date-debut');
       if (span) span.textContent = formatDateFr(val);
     },
-    'caracteristiques.chasse_infos_date_fin': (val) => {
+    'chasse_infos_date_fin': (val) => {
       const span = document.querySelector('.date-fin');
       if (span) span.textContent = formatDateFr(val);
     }
