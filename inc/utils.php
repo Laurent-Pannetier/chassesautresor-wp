@@ -11,6 +11,7 @@ defined('ABSPATH') || exit;
  * @param bool $force    Force logging regardless of settings.
  * @return void
  */
+if (!function_exists('cat_debug')) {
 function cat_debug($message, bool $force = false): void {
     $enabled = defined('CAT_DEBUG_VERBOSE') && CAT_DEBUG_VERBOSE;
     $enabled = apply_filters('cat_debug_enabled', $enabled);
@@ -22,3 +23,5 @@ function cat_debug($message, bool $force = false): void {
         error_log($message);
     }
 }
+}
+
