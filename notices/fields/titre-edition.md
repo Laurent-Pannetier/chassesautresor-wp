@@ -112,7 +112,7 @@ Exemple dans JS :
 ```js
 if (champ === 'post_title') {
   const valeurTitre = bloc?.querySelector('.champ-input')?.value.trim().toLowerCase();
-  const titreParDefaut = window.CHP_ENIGME_DEFAUT?.titre || 'nouvelle énigme';
+  const titreParDefaut = window.CHP_ENIGME_DEFAUT?.titre || 'en création';
   estRempli = valeurTitre && valeurTitre !== titreParDefaut;
 }
 ```

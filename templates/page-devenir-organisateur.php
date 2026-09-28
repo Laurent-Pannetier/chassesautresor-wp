@@ -38,41 +38,69 @@ if (has_post_thumbnail()) {
   $image_url = get_the_post_thumbnail_url(null, 'full'); // ou 'large' si besoin
 }
 
+$separator_icon_markup = get_svg_icon('separateur-avec-icone');
+
+$inject_separator_icon = static function (string $content) use ($separator_icon_markup): string {
+    if ($separator_icon_markup === '') {
+        return $content;
+    }
+
+    $pattern = '#(<div[^>]*class="[^"]*\\bseparateur-avec-icone\\b[^"]*"[^>]*>.*?<span[^>]*class="[^"]*\\bicone-svg\\b[^"]*"[^>]*>)(.*?)(</span>)#si';
+    $updated = preg_replace_callback(
+        $pattern,
+        static function (array $matches) use ($separator_icon_markup): string {
+            return $matches[1] . $separator_icon_markup . $matches[3];
+        },
+        $content
+    );
+
+    if (is_string($updated)) {
+        return $updated;
+    }
+
+    return $content;
+};
+
 get_header(); ?>
-<?php if (isset($_GET['notice']) && $_GET['notice'] === 'profil_verification') : ?>
-<div class="woocommerce-message" role="alert">
-  ✉️ Un email de vérification vous a été envoyé. Veuillez cliquer sur le lien pour confirmer votre demande.
-</div>
-<?php endif; ?>
 <section class="bandeau-hero">
   <div class="hero-overlay" style="background-image: url('<?php echo esc_url($image_url); ?>');">
     <div class="contenu-hero">
-      <h1><?php the_title(); ?></h1>
-      <p class="sous-titre">Créez, publiez et partagez vos aventures interactives.</p>
-      <?php $cta = get_cta_devenir_organisateur(); ?>
-      <a href="<?php echo $cta['url'] ? esc_url($cta['url']) : '#'; ?>" class="bouton-cta" id="creer-profil-btn" data-event="clic_creer_profil" <?php echo $cta['disabled'] ? 'style="pointer-events:none;opacity:0.6"' : ''; ?>>
+      <h1 class="hero-title"><?php the_title(); ?></h1>
+      <p class="hero-subtitle">Créez, publiez et partagez vos aventures interactives.</p>
+      <?php
+      $cta = get_cta_devenir_organisateur();
+      $cta_class = 'bouton-cta';
+      if (!$cta['disabled']) {
+          $cta_class .= ' bouton-cta--color';
+      }
+      ?>
+      <a href="<?php echo $cta['url'] ? esc_url($cta['url']) : '#'; ?>" class="<?php echo esc_attr($cta_class); ?>" id="creer-profil-btn" data-event="clic_creer_profil" <?php echo $cta['disabled'] ? 'style="pointer-events:none;opacity:0.6"' : ''; ?>>
         <?php echo esc_html($cta['label']); ?>
       </a>
     </div>
   </div>
 </section>
+<section class="msg-important"><?php print_site_messages(); ?></section>
 <main id="primary" class="site-main conteneur-devenir-organisateur">
     <?php
       while ( have_posts() ) :
         the_post();
-        the_content();
+        $content = apply_filters('the_content', get_the_content());
+        echo $inject_separator_icon($content); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
       endwhile;
 
       // Ajout de la section "comment-ca-fonctionne"
       $fonctionnement_post = get_page_by_path('comment-ca-fonctionne', OBJECT, 'section_editoriale');
       if ($fonctionnement_post) {
-        echo apply_filters('the_content', $fonctionnement_post->post_content);
+        $content = apply_filters('the_content', $fonctionnement_post->post_content);
+        echo $inject_separator_icon($content); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
       }
 
       // Ajout de la section "temoignages-organisateurs"
       $temoignages_post = get_page_by_path('temoignages-organisateurs', OBJECT, 'section_editoriale');
       if ($temoignages_post) {
-         echo apply_filters('the_content', $temoignages_post->post_content);
+         $content = apply_filters('the_content', $temoignages_post->post_content);
+         echo $inject_separator_icon($content); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
       }
       // Ajout de la section "cta-final"
       $cta_final_post = get_page_by_path('cta-final-devenir-organisateur', OBJECT, 'section_editoriale');
@@ -81,7 +109,10 @@ get_header(); ?>
          $cta     = get_cta_devenir_organisateur();
          $content = str_replace('/creer-mon-profil/', $cta['url'], $content);
          $content = str_replace('Créer mon profil', $cta['label'], $content);
-         echo $content;
+         if (!$cta['disabled']) {
+             $content = str_replace('bouton-cta"', 'bouton-cta bouton-cta--color"', $content);
+         }
+         echo $inject_separator_icon($content); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
       }
     ?>
 </main>

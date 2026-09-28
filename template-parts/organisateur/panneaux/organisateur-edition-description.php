@@ -1,6 +1,6 @@
 <!-- 🎯 Panneau WYSIWYG ACF -->
 <?php
-defined( 'ABSPATH' ) || exit;
+defined('ABSPATH') || exit;
 $organisateur_id = $args['organisateur_id'] ?? null;
 
 ?>
@@ -22,7 +22,18 @@ $organisateur_id = $args['organisateur_id'] ?? null;
             'html_submit_button'  => '<div class="panneau-lateral__actions"><button type="submit" class="bouton-enregistrer-description bouton-enregistrer-liens">%s</button></div>',
             'html_before_fields'  => '<div class="champ-wrapper">',
             'html_after_fields'   => '</div>',
-            'return'              => get_permalink() . '#presentation', // ✅ ajout de l’ancre
+            // Après sauvegarde, on revient sur la même page en ouvrant
+            // automatiquement le panneau principal grâce au paramètre
+            // ?edition=open. L'ancre #presentation permet de scroller
+            // directement sur la section description.
+            'return' => add_query_arg(
+                [
+                    'edition' => 'open',
+                    'panel'   => 'organisateur',
+                ],
+                remove_query_arg(['acf'], get_permalink())
+            ) . '#presentation',
+
             'updated_message'     => false
         ]);
         ?>

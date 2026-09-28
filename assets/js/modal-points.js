@@ -1,31 +1,53 @@
 document.addEventListener("DOMContentLoaded", function () {
     const openModalButtons = document.querySelectorAll(".open-points-modal");
-    const closeModal = document.querySelector(".close-modal");
+    const closeModalButton = document.querySelector(".close-modal");
     const modal = document.getElementById("points-modal");
-    const overlay = document.createElement("div");
-    overlay.classList.add("modal-overlay");
+    let overlay = document.querySelector(".modal-overlay");
+    let lastFocusedElement;
 
-    // Ajouter l'overlay au body (caché par défaut)
-    document.body.appendChild(overlay);
+    if (!overlay) {
+        overlay = document.createElement("div");
+        overlay.classList.add("modal-overlay");
+        overlay.setAttribute("aria-hidden", "true");
+        document.body.appendChild(overlay);
+    }
+
+    function handleEscape(event) {
+        if (event.key === "Escape") {
+            closeModal();
+        }
+    }
+
+    function openModal() {
+        lastFocusedElement = document.activeElement;
+        modal.classList.add("is-open");
+        overlay.classList.add("is-open");
+        modal.setAttribute("aria-hidden", "false");
+        modal.setAttribute("tabindex", "-1");
+        modal.focus();
+        document.addEventListener("keydown", handleEscape);
+    }
+
+    function closeModal() {
+        modal.classList.remove("is-open");
+        overlay.classList.remove("is-open");
+        modal.setAttribute("aria-hidden", "true");
+        document.removeEventListener("keydown", handleEscape);
+        if (lastFocusedElement) {
+            lastFocusedElement.focus();
+        }
+    }
 
     if (modal) {
+        modal.setAttribute("aria-hidden", "true");
         openModalButtons.forEach(button => {
-            button.addEventListener("click", function () {
-                modal.style.display = "block";
-                overlay.style.display = "block";
-            });
+            button.addEventListener("click", openModal);
         });
 
-        if (closeModal) {
-            closeModal.addEventListener("click", function () {
-                modal.style.display = "none";
-                overlay.style.display = "none";
-            });
+        if (closeModalButton) {
+            closeModalButton.addEventListener("click", closeModal);
         }
 
-        overlay.addEventListener("click", function () {
-            modal.style.display = "none";
-            overlay.style.display = "none";
-        });
+        overlay.addEventListener("click", closeModal);
     }
 });

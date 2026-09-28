@@ -3,7 +3,7 @@
 $log_prefix = '[voir-fichier.php]';
 
 function logf($message) {
-    error_log("[voir-fichier.php] $message");
+    cat_debug("[voir-fichier.php] $message");
 }
 
 // Vérifier l'utilisateur connecté
@@ -14,37 +14,44 @@ if (!$user_id) {
     exit('Accès refusé (non connecté).');
 }
 
-$enigme_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
-logf("Requête reçue pour énigme ID : $enigme_id");
-logf("✅ [$user_id] a consulté la solution de l’énigme #$enigme_id");
+$post_id   = isset($_GET['id']) ? intval($_GET['id']) : 0;
+$post_type = get_post_type($post_id);
+logf("Requête reçue pour post ID : $post_id (type $post_type)");
+logf("✅ [$user_id] a consulté la solution du post #$post_id");
 
-if (!$enigme_id || get_post_type($enigme_id) !== 'enigme') {
-    logf("ID invalide ou post non de type 'enigme' → 404");
+if (!$post_id || !in_array($post_type, ['enigme', 'chasse'], true)) {
+    logf("ID invalide ou post non supporté → 404");
     status_header(404);
-    exit('Fichier introuvable (ID).');
+    exit(__('Fichier introuvable (ID).', 'chassesautresor-com'));
+}
+
+// Récupérer la solution liée
+$solution = solution_recuperer_par_objet($post_id, $post_type);
+if (!$solution) {
+    logf("Aucune solution liée trouvée → 404");
+    status_header(404);
+    exit(__('Solution introuvable.', 'chassesautresor-com'));
 }
 
 // Vérifie les droits d'accès
-if (!function_exists('utilisateur_peut_voir_solution_enigme')) {
-    logf("Fonction d'autorisation manquante → 403");
+if (
+    ($post_type === 'enigme' && !utilisateur_peut_voir_solution_enigme($post_id, $user_id)) ||
+    ($post_type === 'chasse' && function_exists('utilisateur_peut_voir_solution_chasse')
+        && !utilisateur_peut_voir_solution_chasse($post_id, $user_id))
+) {
+    logf("Utilisateur $user_id non autorisé à voir le post $post_id → 403");
     status_header(403);
-    exit('Fonction d’autorisation non disponible.');
-}
-
-if (!utilisateur_peut_voir_solution_enigme($enigme_id, $user_id)) {
-    logf("Utilisateur $user_id non autorisé à voir l’énigme $enigme_id → 403");
-    status_header(403);
-    exit('Accès non autorisé à cette solution.');
+    exit(__('Accès non autorisé à cette solution.', 'chassesautresor-com'));
 }
 
 logf("Utilisateur $user_id autorisé.");
 
-// Récupérer l'ID du fichier depuis le champ ACF
-$fichier_id = get_field('enigme_solution_fichier', $enigme_id, false);
+// Récupérer l'ID du fichier depuis le post solution
+$fichier_id = get_field('solution_fichier', $solution->ID, false);
 if (!$fichier_id) {
-    logf("Aucun fichier trouvé dans enigme_solution_fichier → 404");
+    logf("Aucun fichier trouvé dans solution_fichier → 404");
     status_header(404);
-    exit('Aucun fichier PDF lié à cette énigme.');
+    exit(__('Aucun fichier PDF lié à cette solution.', 'chassesautresor-com'));
 }
 
 // Obtenir le chemin physique

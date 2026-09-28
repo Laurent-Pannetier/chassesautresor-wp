@@ -1,0 +1,36 @@
+.csa-modal {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(var(--color-black-rgb, 0, 0, 0), 0.6);
+  z-index: 9999;
+
+  &.is-hidden,
+  &[hidden],
+  &.masque {
+    display: none;
+  }
+
+  &__content {
+    background: var(--color-white);
+    color: var(--color-text-fond-clair);
+    padding: 2rem;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+    border-radius: 8px;
+    position: relative;
+  }
+
+  &__close {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+  }
+}

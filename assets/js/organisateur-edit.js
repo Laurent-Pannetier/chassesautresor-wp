@@ -4,22 +4,28 @@ DEBUG && console.log('✅ organisateur-edit.js chargé');
 document.addEventListener('DOMContentLoaded', () => {
   if (typeof initZonesClicEdition === 'function') initZonesClicEdition();
 
-  // 🟢 Champs inline
+  // ==============================
+  // 🟢 Initialisation des champs
+  // ==============================
   document.querySelectorAll('.champ-organisateur[data-champ]').forEach((bloc) => {
     const champ = bloc.dataset.champ;
+
     if (bloc.classList.contains('champ-img')) {
       if (typeof initChampImage === 'function') initChampImage(bloc);
     } else if (champ === 'liens_publics') {
-      if (typeof initLiensOrganisateur === 'function') initLiensOrganisateur(bloc);
+      const bouton = bloc.querySelector('.champ-modifier');
+      if (bouton && typeof initLiensOrganisateur === 'function') {
+        initLiensOrganisateur(bloc);
+      }
     } else {
       if (typeof initChampTexte === 'function') initChampTexte(bloc);
     }
   });
 
-  // 🟠 Déclencheurs de résumé
-  document.querySelectorAll('.resume-infos .champ-modifier[data-champ]').forEach((btn) => {
-    if (typeof initChampDeclencheur === 'function') initChampDeclencheur(btn);
-  });
+    // 🟠 Déclencheurs de résumé
+    document.querySelectorAll('.resume-infos .champ-modifier[data-champ]').forEach((btn) => {
+      if (typeof initChampDeclencheur === 'function') initChampDeclencheur(btn);
+    });
 
   // 🔗 Panneau liens
   document.addEventListener('click', (e) => {
@@ -27,6 +33,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ✅ Ce bouton existe ET il est contenu dans le panneau organisateur
     if (!btn || !btn.closest('.panneau-organisateur')) return;
+
+    e.preventDefault();
 
     if (typeof window.openPanel === 'function') {
       window.openPanel('panneau-liens-publics');
@@ -38,12 +46,14 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('toggle-mode-edition')?.addEventListener('click', () => {
     document.body.classList.toggle('edition-active');
     document.body.classList.toggle('panneau-ouvert');
+    document.body.classList.toggle('mode-edition');
   });
 
   // ✖ Fermeture du panneau organisateur
   document.querySelector('.panneau-organisateur .panneau-fermer')?.addEventListener('click', () => {
     document.body.classList.remove('edition-active');
     document.body.classList.remove('panneau-ouvert');
+    document.body.classList.remove('mode-edition');
     document.activeElement?.blur();
   });
 
@@ -52,6 +62,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const panneauCoord = document.getElementById('panneau-coordonnees');
   const formCoord = document.getElementById('formulaire-coordonnees');
   const boutonOuvrirCoord = document.getElementById('ouvrir-coordonnees');
+  const labelAddCoord = boutonOuvrirCoord?.dataset.labelAdd;
+  const labelEditCoord = boutonOuvrirCoord?.dataset.labelEdit;
+  const ariaAddCoord = boutonOuvrirCoord?.dataset.ariaAdd;
+  const ariaEditCoord = boutonOuvrirCoord?.dataset.ariaEdit;
   const boutonFermerCoord = panneauCoord?.querySelector('.panneau-fermer');
   const champIban = document.getElementById('champ-iban');
   const champBic = document.getElementById('champ-bic');
@@ -61,13 +75,28 @@ document.addEventListener('DOMContentLoaded', () => {
   const validerIban = (iban) => /^[A-Z]{2}\d{2}[A-Z0-9]{11,30}$/.test(iban.replace(/\s/g, '').toUpperCase());
   const validerBic = (bic) => /^[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/.test(bic.toUpperCase());
 
-  boutonOuvrirCoord?.addEventListener('click', () => {
+  const ouvrirCoordonnees = (e, fromModal = false) => {
+    e.preventDefault();
+    if (fromModal) {
+      const modal = document.getElementById('conversion-modal');
+      if (modal) modal.style.display = 'none';
+      document.querySelectorAll('.modal-overlay').forEach((ov) => {
+        ov.style.display = 'none';
+      });
+    }
     if (typeof window.openPanel === 'function') {
       window.openPanel('panneau-coordonnees');
     } else {
       panneauCoord?.classList.add('ouvert');
       document.body.classList.add('panneau-ouvert');
       panneauCoord?.setAttribute('aria-hidden', 'false');
+    }
+  };
+
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('#ouvrir-coordonnees, #ouvrir-coordonnees-modal');
+    if (btn) {
+      ouvrirCoordonnees(e, btn.id === 'ouvrir-coordonnees-modal');
     }
   });
 
@@ -125,6 +154,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (res.success) {
           feedbackIban.textContent = '✔️ Coordonnées enregistrées.';
           feedbackIban.classList.add('champ-confirmation');
+          if (boutonOuvrirCoord) {
+            const label = iban && bic ? labelEditCoord : labelAddCoord;
+            const aria = iban && bic ? ariaEditCoord : ariaAddCoord;
+            if (label) boutonOuvrirCoord.textContent = label;
+            if (aria) boutonOuvrirCoord.setAttribute('aria-label', aria);
+          }
           setTimeout(() => {
             if (typeof window.closePanel === 'function') {
               window.closePanel('panneau-coordonnees');
@@ -136,6 +171,7 @@ document.addEventListener('DOMContentLoaded', () => {
             feedbackIban.textContent = '';
             feedbackIban.className = 'champ-feedback';
             if (typeof window.mettreAJourResumeInfos === 'function') window.mettreAJourResumeInfos();
+            if (typeof window.mettreAJourCarteConversion === 'function') window.mettreAJourCarteConversion();
           }, 800);
         } else {
           feedbackIban.textContent = '❌ La sauvegarde a échoué.';
@@ -147,6 +183,33 @@ document.addEventListener('DOMContentLoaded', () => {
         feedbackIban.classList.add('champ-error');
       });
   });
+
+  // 🔑 Ouverture automatique via les paramètres d'URL
+  const params = new URLSearchParams(window.location.search);
+
+  const postType = params.get('post_type');
+  const panel = params.get('panel');
+  if (
+    params.get('edition') === 'open' &&
+    !params.has('tab') &&
+    (panel === 'organisateur' || (!panel && (!postType || postType === 'organisateur')))
+  ) {
+    const toggle = document.getElementById('toggle-mode-edition');
+    toggle?.click();
+
+    if (params.get('onglet') === 'revenus') {
+      const tabBtn = document.querySelector(
+        '.edition-tab[data-target="organisateur-tab-revenus"]'
+      );
+      tabBtn?.click();
+
+      if (params.get('highlight') === 'coordonnees') {
+        document
+          .getElementById('ligne-coordonnees')
+          ?.classList.add('champ-vide-obligatoire');
+      }
+    }
+  }
 
   if (typeof window.mettreAJourResumeInfos === 'function') {
     window.mettreAJourResumeInfos();
@@ -160,7 +223,7 @@ function initLiensOrganisateur(bloc) {
     initLiensPublics(bloc, {
       panneauId: 'panneau-liens-publics',
       formId: 'formulaire-liens-publics',
-      action: 'modifier_champ_organisateur'
+      action: 'modifier_champ_organisateur',
     });
   }
 }
@@ -194,11 +257,13 @@ window.mettreAJourCarteAjoutChasse = function () {
   DEBUG && console.log('🧩 Vérif carte-ajout → champs vides détectés :', incomplets);
   DEBUG && console.log('🧩 carte actuelle :', carte);
 
-  let overlay = carte.querySelector('.overlay-message');
+  const message = carte.querySelector('.carte-ajout-message');
 
   if (incomplets.length === 0) {
     carte.classList.remove('disabled');
-    overlay?.remove();
+    if (message) {
+      message.textContent = '';
+    }
   } else {
     carte.classList.add('disabled');
 
@@ -209,15 +274,31 @@ window.mettreAJourCarteAjoutChasse = function () {
       return 'champ requis';
     }).join(', ');
 
-    if (!overlay) {
-      overlay = document.createElement('div');
-      overlay.className = 'overlay-message';
-      carte.appendChild(overlay);
+    if (message) {
+      message.textContent = `Complétez d’abord : ${texte}`;
     }
-
-    overlay.innerHTML = `
-      <i class="fa-solid fa-circle-info"></i>
-      <p>Complétez d’abord : ${texte}</p>
-    `;
   }
+};
+
+// 🔄 Met à jour l'état (active/désactivée) de la carte de conversion
+window.mettreAJourCarteConversion = function () {
+  const carte = document.querySelector('.dashboard-card[data-stat="conversion"]');
+  if (!carte) return;
+
+  fetch('/wp-admin/admin-ajax.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ action: 'conversion_modal_content' }),
+  })
+    .then(res => res.json())
+    .then(res => {
+      if (!res.success) return;
+      const access = res.data?.access;
+      if (access) {
+        carte.classList.remove('disabled');
+      } else {
+        carte.classList.add('disabled');
+      }
+    })
+    .catch(() => {});
 };

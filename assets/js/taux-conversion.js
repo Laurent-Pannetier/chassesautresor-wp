@@ -34,11 +34,10 @@ document.addEventListener("DOMContentLoaded", function () {
     function activerModal() {
         const openModal = document.getElementById("open-taux-modal");
         const modal = document.getElementById("conversion-modal");
-        const closeModal = modal ? modal.querySelector(".close-modal") : null;
+        const closeButtons = modal ? modal.querySelectorAll(".close-modal") : [];
         const overlay = document.querySelector(".modal-overlay");
 
-        if (!modal) {
-            console.error("❌ ERREUR : Le modal #conversion-modal est introuvable !");
+        if (!modal || !overlay) {
             return;
         }
 
@@ -49,10 +48,12 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         }
 
-        if (closeModal) {
-            closeModal.addEventListener("click", function () {
-                modal.style.display = "none";
-                overlay.style.display = "none";
+        if (closeButtons.length > 0) {
+            closeButtons.forEach(function (btn) {
+                btn.addEventListener("click", function () {
+                    modal.style.display = "none";
+                    overlay.style.display = "none";
+                });
             });
         }
 

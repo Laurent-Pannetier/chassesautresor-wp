@@ -1,0 +1,357 @@
+.accueil-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+body.accueil-fullscreen {
+    margin: 0;
+}
+
+.accueil-bg .login-icon {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    font-size: 2.5rem;
+    color: var(--color-white);
+    z-index: 10;
+}
+
+.home.has-hero .hero-overlay {
+    height: 500px;
+}
+
+.home.has-hero #content {
+    padding-top: 500px;
+}
+
+.home-hunts__toolbar {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: var(--space-lg);
+    margin-bottom: var(--space-xl);
+}
+
+.home-hunts__toolbar-toggles {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    width: 100%;
+}
+
+.home-hunts__toolbar--enhanced .home-hunts__toolbar-toggles {
+    display: flex;
+}
+
+.home-hunts__toolbar-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    padding: 0;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--color-white);
+    cursor: pointer;
+    transition: background-color var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast);
+}
+
+.home-hunts__toolbar-toggle:hover,
+.home-hunts__toolbar-toggle:focus-visible {
+    background: rgba(255, 255, 255, 0.16);
+    border-color: rgba(255, 255, 255, 0.35);
+    transform: translateY(-1px);
+    outline: none;
+}
+
+.home-hunts__toolbar-toggle[aria-expanded="true"] {
+    background: rgba(255, 255, 255, 0.24);
+    border-color: rgba(255, 255, 255, 0.45);
+}
+
+.home-hunts__toolbar-toggle-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.35rem;
+    height: 1.35rem;
+}
+
+.home-hunts__toolbar-toggle-icon svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    fill: currentColor;
+}
+
+.home-hunts-filters,
+.home-hunts__filters,
+.home-hunts__search {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+    padding: var(--space-lg);
+    background-color: rgba(var(--color-black-rgb), 0.45);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 18px;
+    box-shadow: 0 18px 36px rgba(var(--color-black-rgb), 0.35);
+    color: var(--color-white);
+    grid-column: 1 / -1;
+    transition: box-shadow var(--transition-medium), transform var(--transition-medium);
+    flex: 1 1 280px;
+    min-width: 0;
+}
+
+.home-hunts__filters {
+    flex: 1 1 420px;
+    max-width: 52rem;
+    min-width: 0;
+}
+
+.home-hunts__search {
+    flex: 1 1 320px;
+    max-width: 34rem;
+    min-width: 0;
+    margin-left: 0;
+    
+    .table-search__controls {
+        flex-direction: row;
+        align-items: stretch;
+        gap: var(--space-sm);
+    }
+
+    .table-search__field {
+        flex: 1 1 auto;
+    }
+
+    .table-search__submit {
+        align-self: stretch;
+    }
+
+    .table-search__reset {
+        align-self: center;
+    }
+}
+
+.home-hunts-filters:focus-within,
+.home-hunts__filters:focus-within,
+.home-hunts__search:focus-within {
+    box-shadow: 0 22px 40px rgba(var(--color-black-rgb), 0.45);
+    transform: translateY(-2px);
+}
+
+.home-hunts__filters-form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-lg);
+    width: 100%;
+}
+
+.home-hunts__search {
+    align-self: stretch;
+}
+
+.home-hunts__search .table-search {
+    width: 100%;
+}
+
+.home-hunts-filters label,
+.home-hunts__filters label,
+.home-hunts__search label,
+.home-hunts-filters legend,
+.home-hunts__filters legend,
+.home-hunts__search legend {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-white);
+}
+
+.home-hunts__filters-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    min-width: 0;
+    flex: 1 1 220px;
+}
+
+.home-hunts__filters-group--cost {
+    border: 0;
+    margin: 0;
+    padding: 0;
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+}
+
+.home-hunts__filters select {
+    width: 100%;
+    min-height: 48px;
+    padding: 0.65rem 0.85rem;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    background-color: rgba(var(--color-black-rgb), 0.65);
+    color: var(--color-white);
+    font-size: 1rem;
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.home-hunts__filters select:focus,
+.home-hunts__filters select:focus-visible {
+    border-color: var(--color-filter-accent);
+    box-shadow: 0 0 0 2px var(--color-filter-accent-glow);
+    outline: none;
+}
+
+.home-hunts__filters-checkbox {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.home-hunts__filters-checkbox input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    accent-color: var(--color-filter-accent);
+}
+
+.home-hunts__filters-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.home-hunts__filters-reset {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    padding: 0;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--color-white);
+    transition: background-color var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast);
+}
+
+.home-hunts__filters-reset:hover,
+.home-hunts__filters-reset:focus-visible {
+    background: rgba(255, 255, 255, 0.16);
+    border-color: rgba(255, 255, 255, 0.35);
+    transform: translateY(-1px);
+    outline: none;
+}
+
+.home-hunts__filters-reset-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+.home-hunts__filters-reset-icon svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    fill: currentColor;
+}
+
+.home-hunts__filters-reset:disabled,
+.home-hunts__filters-reset[aria-disabled="true"] {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.home-hunts__filters-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    padding: 0.35rem 1rem;
+    border-radius: 999px;
+    background: rgba(var(--color-black-rgb), 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--color-white);
+    white-space: nowrap;
+}
+
+.home-hunts__toolbar--enhanced [data-home-hunts-panel][data-collapsed="true"] {
+    display: none;
+}
+
+.home-hunts__toolbar--enhanced [data-home-hunts-panel][data-collapsed="false"] {
+    display: flex;
+}
+
+@media (--bp-desktop) {
+    .home-hunts__toolbar {
+        margin-bottom: var(--space-2xl);
+    }
+
+    .home-hunts__toolbar--enhanced .home-hunts__toolbar-toggles {
+        display: none;
+    }
+
+    .home-hunts__toolbar--enhanced [data-home-hunts-panel] {
+        display: flex;
+    }
+
+    .home-hunts__search {
+        margin-left: auto;
+    }
+
+    .home-hunts__filters-group--cost {
+        flex: 0 1 auto;
+    }
+}
+
+.home-hunts__feedback {
+    margin-top: var(--space-lg);
+    min-height: 1.5rem;
+    font-size: 0.95rem;
+    color: var(--color-white);
+}
+
+.home-hunts__feedback--error {
+    color: var(--color-error);
+    font-weight: 600;
+}
+
+.home-hunts--loading .home-hunts__filters,
+.home-hunts--loading .home-hunts__search,
+.home-hunts--loading .organisateur-chasse,
+.home-hunts--loading .home-hunts__feedback {
+    opacity: 0.65;
+    transition: opacity var(--transition-fast);
+}
+
+.home-hunts--loading .home-hunts__filters,
+.home-hunts--loading .home-hunts__filters select,
+.home-hunts--loading .home-hunts__filters input,
+.home-hunts--loading .home-hunts__filters button,
+.home-hunts--loading .home-hunts__search,
+.home-hunts--loading .home-hunts__search select,
+.home-hunts--loading .home-hunts__search input,
+.home-hunts--loading .home-hunts__search button {
+    cursor: progress;
+}

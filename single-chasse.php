@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Template: single-chasse.php (refactorisé)
  * Affichage de la fiche chasse avec header organisateur, statuts dynamiques,
@@ -9,23 +10,31 @@ defined('ABSPATH') || exit;
 // 🧠 LOGIQUE MÉTIER
 $chasse_id = get_the_ID();
 if (!$chasse_id) {
-  wp_die('Chasse introuvable.');
+    wp_die(__('Chasse introuvable.', 'chassesautresor-com'));
 }
 
-verifier_ou_recalculer_statut_chasse($chasse_id);
-verifier_et_synchroniser_cache_enigmes_si_autorise($chasse_id);
-verifier_ou_mettre_a_jour_cache_complet($chasse_id);
+// Utilisateur courant et rôle organisateur
+$user_id          = get_current_user_id();
+$est_orga_associe = utilisateur_est_organisateur_associe_a_chasse($user_id, $chasse_id);
 
-$edition_active = utilisateur_peut_modifier_post($chasse_id);
-$user_id = get_current_user_id();
-if (!current_user_can('manage_options') && !chasse_est_visible_pour_utilisateur($chasse_id, $user_id)) {
-  wp_redirect(home_url('/'));
-  exit;
+// Mise à jour des statuts réservée aux administrateurs ou organisateurs
+if (current_user_can('manage_options') || $est_orga_associe) {
+    verifier_ou_recalculer_statut_chasse($chasse_id);
+    verifier_et_synchroniser_cache_enigmes_si_autorise($chasse_id);
+    verifier_ou_mettre_a_jour_cache_complet($chasse_id);
+    chasse_clear_infos_affichage_cache($chasse_id);
 }
+
 $points_utilisateur = get_user_points($user_id);
+$est_engage_chasse  = utilisateur_est_engage_dans_chasse($user_id, $chasse_id);
+$peut_voir_aside    = $est_engage_chasse
+    || current_user_can('manage_options')
+    || $est_orga_associe;
 
+// Récupération centralisée des infos
+$infos_chasse = preparer_infos_affichage_chasse($chasse_id, $user_id);
 // Champs principaux
-$champs = chasse_get_champs($chasse_id);
+$champs = $infos_chasse['champs'];
 $lot = $champs['lot'];
 $titre_recompense = $champs['titre_recompense'];
 $valeur_recompense = $champs['valeur_recompense'];
@@ -37,9 +46,11 @@ $nb_max = $champs['nb_max'];
 $date_decouverte = $champs['date_decouverte'];
 $current_stored_statut = $champs['current_stored_statut'];
 
-$date_debut_formatee = formater_date($date_debut);
-$date_fin_formatee = $illimitee ? 'Illimitée' : ($date_fin ? formater_date($date_fin) : 'Non spécifiée');
-$date_decouverte_formatee = $date_decouverte ? formater_date($date_decouverte) : '';
+$date_debut_formatee       = formater_date($date_debut);
+$date_fin_formatee         = $illimitee
+    ? __('Illimitée', 'chassesautresor-com')
+    : ($date_fin ? formater_date($date_fin) : __('Non spécifiée', 'chassesautresor-com'));
+$date_decouverte_formatee = $date_decouverte ? formater_date_heure($date_decouverte) : '';
 
 $timestamp_debut = convertir_en_timestamp($date_debut);
 $timestamp_fin = (!$illimitee && $date_fin) ? convertir_en_timestamp($date_fin) : false;
@@ -49,135 +60,243 @@ $timestamp_decouverte = convertir_en_timestamp($date_decouverte);
 $organisateur_id = get_organisateur_from_chasse($chasse_id);
 $organisateur_nom = $organisateur_id ? get_the_title($organisateur_id) : get_the_author();
 
+
+
 // Contenu
-$description = get_field('chasse_principale_description', $chasse_id);
-$extrait = wp_trim_words(wp_strip_all_tags($description), 30, '...');
+$description = $infos_chasse['description'];
+$extrait = wp_trim_words($infos_chasse['texte_complet'], 30, '...');
 
-$image_raw = get_field('chasse_principale_image', $chasse_id);
-$image_id = is_array($image_raw) ? ($image_raw['ID'] ?? null) : $image_raw;
-$image_url = $image_id ? wp_get_attachment_image_src($image_id, 'large')[0] : null;
+$image_raw = $infos_chasse['image_raw'];
+$image_id  = $infos_chasse['image_id'];
+$image_url = $infos_chasse['image_url'];
 
-$enigmes_associees = recuperer_enigmes_associees($chasse_id);
-$total_enigmes = count($enigmes_associees);
-$enigmes_resolues = compter_enigmes_resolues($chasse_id, $user_id);
 
-$statut = get_field('champs_caches')['chasse_cache_statut'] ?? 'revision';
-$cache_global = get_field('champs_caches', $chasse_id);
-$statut_validation = $cache_global['chasse_cache_statut_validation'] ?? '';
-$nb_joueurs = 0;
+$progression      = $infos_chasse['progression'];
+$enigmes_resolues = $progression['resolues'];
+$total_enigmes    = $progression['total'];
+$nb_resolvables   = $progression['resolvables'];
+$nb_engagees      = $progression['engagees'];
+
+$has_solutions = (bool) get_field('chasse_cache_has_solutions', $chasse_id);
+$has_indices   = (bool) get_field('chasse_cache_has_indices', $chasse_id);
+
+$titre_chasse   = get_the_title($chasse_id);
+$enigmes_intro  = '';
+
+$mode_fin = get_field('chasse_mode_fin', $chasse_id) ?: 'automatique';
+$statut = $infos_chasse['statut'];
+$title_filled = trim(get_the_title($chasse_id)) !== '';
+$image_filled = !empty($image_id);
+$description_filled = !empty(trim($description));
+$required_fields_filled = $title_filled && $image_filled && $description_filled;
+
+$needs_validatable_message = $statut === 'revision'
+    && $mode_fin === 'automatique'
+    && !chasse_has_validatable_enigme($chasse_id)
+    && $required_fields_filled;
+
+$statut_validation = $infos_chasse['statut_validation'];
+$nb_joueurs = $infos_chasse['nb_joueurs'];
+$sidebar_data = sidebar_prepare_chasse_nav(
+    $chasse_id,
+    $user_id,
+    0
+);
+
+$solved_label  = _n('énigme résolue', 'énigmes résolues', $enigmes_resolues, 'chassesautresor-com');
+$engaged_label = _n('engagée', 'engagées', $nb_engagees, 'chassesautresor-com');
+
+if ($statut === 'termine') {
+    $enigmes_intro = ($has_solutions || $has_indices)
+        ? esc_html__('La chasse est terminée. Vous pouvez revoir toutes les énigmes ainsi que leurs solutions et indices.', 'chassesautresor-com')
+        : esc_html__('La chasse est terminée. Les énigmes restent consultables.', 'chassesautresor-com');
+} elseif ($statut === 'a_venir') {
+    $enigmes_intro = sprintf(
+        esc_html__('Les énigmes seront affichées au début de la chasse, le %s.', 'chassesautresor-com'),
+        esc_html($date_debut_formatee)
+    );
+} elseif (in_array($statut, ['en_cours', 'payante'], true) && $statut_validation === 'valide') {
+    $est_engage = utilisateur_est_engage_dans_chasse($user_id, $chasse_id);
+    if (!$est_engage) {
+        if ($est_orga_associe) {
+            if ($titre_recompense) {
+                $enigmes_intro = sprintf(
+                    esc_html__('Voici les énigmes de cette chasse. Résolvez-les pour tenter de remporter %s.', 'chassesautresor-com'),
+                    esc_html($titre_recompense)
+                );
+            } else {
+                $enigmes_intro = esc_html__('Voici les énigmes de cette chasse.', 'chassesautresor-com');
+            }
+        } else {
+            $enigmes_intro = esc_html__('L\'accès aux énigmes est réservé aux participants de chasse. Inscrivez-vous !', 'chassesautresor-com');
+        }
+    } else {
+        if ($nb_engagees === 0) {
+            $enigmes_intro = esc_html__(
+                'commencez par consulter des énigmes parmi celles ci-dessous. Bonne chasse !',
+                'chassesautresor-com'
+            );
+        } else {
+            $enigmes_intro = sprintf(
+                esc_html__('Progression : %1$d/%2$d %3$s — %4$d/%5$d %6$s.', 'chassesautresor-com'),
+                $enigmes_resolues,
+                $nb_resolvables,
+                esc_html($solved_label),
+                $nb_engagees,
+                $total_enigmes,
+                esc_html($engaged_label)
+            );
+        }
+    }
+} elseif ($est_orga_associe && in_array($statut_validation, ['creation', 'correction'], true)) {
+    $enigmes_intro = esc_html__(
+        'Voici vos énigmes : ajoutez, modifiez ou supprimez celles dont vous n’avez plus besoin !',
+        'chassesautresor-com'
+    );
+}
+
+if (!is_user_logged_in()) {
+    $redirect_url     = get_permalink($chasse_id);
+    $registration_url = add_query_arg('redirect_to', rawurlencode($redirect_url), wp_registration_url());
+    $login_url        = wp_login_url($redirect_url);
+    $enigmes_intro    = sprintf(
+        wp_kses(
+            /* translators: 1: registration URL, 2: login URL */
+            __('Énigmes accessibles uniquement pour les joueurs connectés. Nouveau ? <a href="%1$s">S\'enregistrer</a> Déjà inscrit ? <a href="%2$s">Se connecter</a>', 'chassesautresor-com'),
+            ['a' => ['href' => []]]
+        ),
+        esc_url($registration_url),
+        esc_url($login_url)
+    );
+}
 
 get_header();
+cat_debug("🧪 test organisateur_associe : " . ($est_orga_associe ? 'OUI' : 'NON'));
 
-$can_validate = peut_valider_chasse($chasse_id, $user_id);
-$validation_envoyee = !empty($_GET['validation_demandee']);
+$can_validate     = peut_valider_chasse($chasse_id, $user_id);
+echo '<div class="container container--xl-full chasse-layout">';
+$sidebar_sections = ['navigation' => '', 'stats' => ''];
+if ($peut_voir_aside) {
+    $sidebar_sections = render_sidebar(
+        'chasse',
+        0,
+        $chasse_id,
+        $sidebar_data['menu_items'],
+        $sidebar_data['peut_ajouter_enigme'],
+        $sidebar_data['total_enigmes'],
+        $sidebar_data['has_incomplete_enigme']
+    );
+}
 ?>
 
-<div id="primary" class="content-area">
-    <main id="main" class="site-main">
+<?php
+if ($peut_voir_aside) {
+    echo '<header class="enigme-mobile-header">';
+    echo '<div aria-hidden="true"></div>';
+    echo '<div class="enigme-mobile-actions">';
+    echo '<button type="button" class="enigme-mobile-panel-toggle" aria-controls="enigme-mobile-panel" aria-expanded="false" aria-label="'
+        . esc_attr__('Menu de navigation', 'chassesautresor-com') . '">';
+    echo '<span class="screen-reader-text">' . esc_html__('Menu de navigation', 'chassesautresor-com') . '</span>';
+    echo '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>';
+    echo '</button>';
+    echo '</div>';
+    echo '</header>';
 
-      <?php
-      // 🧭 Header organisateur (dans le flux visible)
-      if ($organisateur_id) {
-        get_template_part('template-parts/organisateur/organisateur-header', null, [
-          'organisateur_id' => $organisateur_id
-        ]);
-      }
-      ?>
+    echo '<div id="enigme-mobile-panel" class="enigme-mobile-panel" hidden>';
+    echo '<div class="enigme-mobile-panel__overlay" tabindex="-1"></div>';
+    echo '<div class="enigme-mobile-panel__sheet" role="dialog" aria-modal="true" aria-labelledby="enigme-mobile-panel-title">';
+    echo '<h2 id="enigme-mobile-panel-title" class="screen-reader-text">' . esc_html__('Navigation de la chasse', 'chassesautresor-com') . '</h2>';
+    echo '<div class="enigme-mobile-panel__content">' . ($sidebar_sections['navigation'] ?? '') . '</div>';
+    echo '</div>';
+    echo '</div>';
+}
+?>
 
-      <?php
-      if ($can_validate) {
-        echo '<div class="cta-chasse">';
-        echo '<p>Lorsque vous avez finalisé votre chasse, demandez sa validation :</p>';
-        echo render_form_validation_chasse($chasse_id);
-        echo '</div>';
-      }
-      if ($validation_envoyee) {
-        echo '<p class="message-succes">✅ Votre demande de validation a bien été envoyée. Elle sera traitée par l’équipe.</p>';
-      }
-      ?>
+<div id="primary" class="content-area page-chasse-wrapper">
+  <main id="main" class="site-main">
 
-      <?php
-      if (current_user_can('administrator') && $statut_validation === 'en_attente') {
-        get_template_part('template-parts/chasse/chasse-validation-actions', null, [
-          'chasse_id' => $chasse_id,
-        ]);
-      }
-      ?>
+    <?php
+    // 🧭 Fil d'Ariane
+    $breadcrumb_items = [
+      [
+        'label'      => esc_html__('Accueil', 'chassesautresor-com'),
+        'label_html' => '<i class="fa-solid fa-house" aria-hidden="true"></i><span class="screen-reader-text">' . esc_html__('Accueil', 'chassesautresor-com') . '</span>',
+        'url'        => home_url('/'),
+      ],
+    ];
+    if ($organisateur_id) {
+      $breadcrumb_items[] = [
+        'label' => get_the_title($organisateur_id),
+        'url'   => get_permalink($organisateur_id),
+      ];
+    }
+    $breadcrumb_items[] = [
+      'label'   => get_the_title($chasse_id),
+      'current' => true,
+    ];
+    get_template_part('template-parts/common/breadcrumb', null, ['items' => $breadcrumb_items]);
+    ?>
 
-      <?php if (!empty($_GET['erreur']) && $_GET['erreur'] === 'points_insuffisants') : ?>
-        <div class="message-erreur" role="alert" style="color:red; margin-bottom:1em;">
-          ❌ Vous n’avez pas assez de points pour engager cette énigme.
-          <a href="<?= esc_url(home_url('/boutique')); ?>">Accéder à la boutique</a>
-        </div>
-      <?php endif; ?>
-
-      <!-- 📦 Fiche complète (images + méta + actions) -->
-      <?php
-      get_template_part('template-parts/chasse/chasse-affichage-complet', null, [
-        'chasse_id' => $chasse_id
+    <?php
+    if (current_user_can('administrator') && $statut_validation === 'en_attente') {
+      get_template_part('template-parts/chasse/chasse-validation-actions', null, [
+        'chasse_id' => $chasse_id,
       ]);
-      ?>
+    }
+    ?>
 
-      <div class="separateur-avec-icone"></div>
-
-      <!-- 🧩 Liste des énigmes -->
-      <section class="chasse-enigmes-wrapper" id="chasse-enigmes-wrapper">
-        <header class="chasse-enigmes-header">
-          <div class="barre-progression">
-            <div class="remplissage" style="width: <?= ($total_enigmes ? round(100 * $enigmes_resolues / $total_enigmes) : 0); ?>%;"></div>
-          </div>
-
-          <?php if (!empty($date_decouverte_formatee)) : ?>
-            <div class="meta-etiquette">🕵️‍♂️ Trouvée le <?= esc_html($date_decouverte_formatee); ?></div>
-          <?php endif; ?>
-
-          <?php
-          $liens = get_field('chasse_principale_liens', $chasse_id);
-          $liens = is_array($liens) ? $liens : [];
-          $vide  = empty($liens);
-          ?>
-          <div class="champ-chasse champ-liens champ-fiche-publication <?= $vide ? 'champ-vide' : 'champ-rempli'; ?>"
-               data-champ="chasse_principale_liens"
-               data-cpt="chasse"
-               data-post-id="<?= esc_attr($chasse_id); ?>">
-            <div class="champ-donnees"
-                 data-valeurs='<?= json_encode($liens, JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT); ?>'></div>
-            <div class="champ-affichage">
-              <?= render_liens_publics($liens, 'chasse', ['afficher_titre' => false, 'wrap' => false]); ?>
+    <?php if (!empty($_GET['erreur'])) : ?>
+        <?php $error_message = sanitize_text_field(wp_unslash($_GET['erreur'])); ?>
+        <?php if ($error_message === 'points_insuffisants') : ?>
+            <div class="message-erreur" role="alert" aria-live="assertive">
+                ❌ <?= esc_html__('Vous n’avez pas assez de points pour engager cette énigme.', 'chassesautresor-com'); ?>
+                <a href="<?= esc_url(home_url('/boutique')); ?>"><?= esc_html__('Accéder à la boutique', 'chassesautresor-com'); ?></a>
             </div>
-            <div class="champ-feedback"></div>
-          </div>
-        </header>
+        <?php else : ?>
+            <div class="message-erreur" role="alert" aria-live="assertive">
+                <?= esc_html($error_message); ?>
+            </div>
+        <?php endif; ?>
+    <?php endif; ?>
 
-        <h2>Énigmes</h2>
-        <div class="chasse-enigmes-liste">
-          <?php
-          get_template_part('template-parts/enigme/chasse-partial-boucle-enigmes', null, [
-            'chasse_id' => $chasse_id
-          ]);
-          ?>
+    <!-- 📦 Fiche complète (images + méta + actions) -->
+    <?php
+    get_template_part('template-parts/chasse/chasse-affichage-complet', null, [
+      'chasse_id'   => $chasse_id,
+      'infos_chasse'=> $infos_chasse,
+    ]);
+    ?>
+
+    <!-- 🧩 Liste des énigmes -->
+    <section class="chasse-enigmes-wrapper" id="chasse-enigmes-wrapper">
+        <div class="titre-enigmes-wrapper">
+            <h2><?php printf(esc_html__('Énigmes de %s', 'chassesautresor-com'), esc_html($titre_chasse)); ?></h2>
+            <?php if ($enigmes_intro !== '') : ?>
+                <p class="enigmes-intro"><?= $enigmes_intro; ?></p>
+            <?php endif; ?>
+            <div class="separateur-3"></div>
+        </div>
+        <div id="liste-enigmes" class="chasse-enigmes-liste">
+            <?php
+            get_template_part('template-parts/enigme/chasse-partial-boucle-enigmes', null, [
+                'chasse_id'        => $chasse_id,
+                'est_orga_associe' => $est_orga_associe,
+                'infos_chasse'     => $infos_chasse,
+                'show_help_icon'   => $est_orga_associe && $needs_validatable_message,
+            ]);
+            ?>
         </div>
 
         <footer class="chasse-enigmes-footer">
-          
+
         </footer>
-      </section>
+    </section>
 
-      <!-- 📜 Description finale -->
-      <?php
-      get_template_part('template-parts/chasse/chasse-partial-description', null, [
-        'description' => $description,
-        'titre_recompense' => $titre_recompense,
-        'lot' => $lot,
-        'valeur_recompense' => $valeur_recompense,
-        'nb_max' => $nb_max,
-        'chasse_id' => $chasse_id,
-        'mode' => 'complet'
-      ]);
-      ?>
+    <?php render_chasse_solutions($chasse_id, $user_id); ?>
 
-    </main>
-    </div>
+  </main>
+</div>
+</div>
 
 <?php
 // 💬 Modale d’introduction (affichée une seule fois)
@@ -188,7 +307,24 @@ if (!$modal_deja_vue) :
   if ($post_bienvenue && $post_bienvenue->post_status === 'publish') :
     update_post_meta($chasse_id, 'chasse_modal_bienvenue_vue', '1');
     $contenu = apply_filters('the_content', $post_bienvenue->post_content);
-    ?>
+    $dom = new DOMDocument();
+    libxml_use_internal_errors(true);
+    $dom->loadHTML('<?xml encoding="utf-8" ?>' . $contenu);
+    libxml_clear_errors();
+
+    foreach ($dom->getElementsByTagName('h1') as $node) {
+        $node->setAttribute('class', trim('modal-title ' . $node->getAttribute('class')));
+    }
+    foreach ($dom->getElementsByTagName('h2') as $node) {
+        $node->setAttribute('class', trim('modal-subtitle ' . $node->getAttribute('class')));
+    }
+
+    $body = $dom->getElementsByTagName('body')->item(0);
+    $contenu = '';
+    foreach ($body->childNodes as $child) {
+        $contenu .= $dom->saveHTML($child);
+    }
+?>
     <div class="modal-bienvenue-wrapper" role="dialog" aria-modal="true" aria-labelledby="modal-titre">
       <div class="modal-bienvenue-inner">
         <button class="modal-close-top" aria-label="Fermer la fenêtre">&times;</button>
@@ -228,6 +364,7 @@ if (!$modal_deja_vue) :
         /* S'assure de passer au-dessus du panneau d'édition (z-index 10000) */
         z-index: 11001;
       }
+
       .modal-bienvenue-inner {
         background: #fff;
         padding: 2rem;
@@ -238,6 +375,7 @@ if (!$modal_deja_vue) :
         overflow-y: auto;
         position: relative;
       }
+
       .modal-close-top {
         position: absolute;
         top: 1rem;

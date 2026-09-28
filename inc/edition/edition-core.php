@@ -40,9 +40,15 @@ defined('ABSPATH') || exit;
 add_action('wp_enqueue_scripts', 'forcer_chargement_acf_scripts_chasse');
 function forcer_chargement_acf_scripts_chasse()
 {
-  if (is_singular('chasse')) {
-    acf_enqueue_scripts();
+  if (!is_singular('chasse') || !function_exists('acf_enqueue_scripts')) {
+    return;
   }
+
+  if (!current_user_can('edit_post', get_the_ID())) {
+    return;
+  }
+
+  acf_enqueue_scripts();
 }
 
 /**
@@ -75,43 +81,73 @@ add_filter('tiny_mce_before_init', function ($init) {
  */
 function enqueue_core_edit_scripts(array $additional = [])
 {
-  static $versions = [];
+    static $versions = [];
 
-  $theme_uri = get_stylesheet_directory_uri();
-  $theme_dir = get_stylesheet_directory();
+    $theme_uri = get_stylesheet_directory_uri();
+    $theme_dir = get_stylesheet_directory();
+    $lang_dir  = get_template_directory() . '/languages';
 
-  // Déclare les fichiers dans l’ordre des dépendances internes
-  $core_scripts = [
-    'helpers'          => 'helpers.js',
-    'ajax'             => 'ajax.js',
-    'ui'               => 'ui.js',
-    'resume'           => 'resume.js',
-    'image-utils'      => 'image-utils.js',
-    'date-fields'      => 'date-fields.js',
-    'champ-init'       => 'champ-init.js',
-    'champ-date-hooks' => 'champ-date-hooks.js',
-    'modal-tabs'       => 'modal-tabs.js',
-  ];
+    $uses_i18n = static function ($file) {
+        return file_exists($file) && strpos(file_get_contents($file), 'wp.i18n') !== false;
+    };
 
-  $previous_handle = null;
+    // Déclare les fichiers dans l’ordre des dépendances internes
+    $core_scripts = [
+        'helpers'          => 'helpers.js',
+        'ajax'             => 'ajax.js',
+        'ui'               => 'ui.js',
+        'resume'           => 'resume.js',
+        'image-utils'      => 'image-utils.js',
+        'date-fields'      => 'date-fields.js',
+        'champ-init'       => 'champ-init.js',
+        'champ-date-hooks' => 'champ-date-hooks.js',
+        'modal-tabs'       => 'modal-tabs.js',
+        'pager'            => 'pager.js',
+    ];
 
-  foreach ($core_scripts as $handle => $filename) {
-    $path = "/assets/js/core/{$filename}";
-    $file = $theme_dir . $path;
+    $previous_handle = null;
 
-    if (!isset($versions[$handle])) {
-      $versions[$handle] = file_exists($file) ? filemtime($file) : null;
+    foreach ($core_scripts as $handle => $filename) {
+        $path = "/assets/js/core/{$filename}";
+        $file = $theme_dir . $path;
+
+        if (!isset($versions[$handle])) {
+            $versions[$handle] = file_exists($file) ? filemtime($file) : null;
+        }
+
+        $deps = $previous_handle ? [$previous_handle] : [];
+        if ($uses_i18n($file)) {
+            $deps[] = 'wp-i18n';
+        }
+
+        wp_enqueue_script(
+            $handle,
+            $theme_uri . $path,
+            $deps, // le script dépend du précédent
+            $versions[$handle],
+            true
+        );
+        wp_set_script_translations($handle, 'chassesautresor-com', $lang_dir);
+
+        $previous_handle = $handle; // pour chaîner la dépendance
     }
 
-    wp_enqueue_script(
-      $handle,
-      $theme_uri . $path,
-      $previous_handle ? [$previous_handle] : [], // le script dépend du précédent
-      $versions[$handle],
-      true
-    );
+  // Expose locale and common texts to JS (for date formatting, etc.).
+  // Use WordPress current locale and convert underscore to hyphen for Intl APIs.
+  $locale = function_exists('get_locale') ? get_locale() : 'fr_FR';
+  $locale = str_replace('_', '-', $locale);
 
-    $previous_handle = $handle; // pour chaîner la dépendance
+  if (wp_script_is('date-fields', 'enqueued')) {
+      wp_localize_script(
+          'date-fields',
+          'catI18n',
+          [
+              'locale' => $locale,
+              'texts'  => [
+                  'unlimited' => __('Illimitée', 'chassesautresor-com'),
+              ],
+          ]
+      );
   }
 
   foreach ($additional as $handle) {
@@ -122,13 +158,86 @@ function enqueue_core_edit_scripts(array $additional = [])
       $versions[$handle] = file_exists($file) ? filemtime($file) : null;
     }
 
+    $deps = ['helpers', 'ajax', 'ui', 'champ-init'];
+    if ($uses_i18n($file)) {
+      $deps[] = 'wp-i18n';
+    }
+
     wp_enqueue_script(
       $handle,
       $theme_uri . $path,
-      ['helpers', 'ajax', 'ui', 'champ-init'],
+      $deps,
       $versions[$handle],
       true
     );
+    wp_set_script_translations($handle, 'chassesautresor-com', $lang_dir);
+    if ($handle === 'indices-create') {
+      wp_localize_script(
+        'indices-create',
+        'indicesCreate',
+        [
+          'ajaxUrl' => admin_url('admin-ajax.php'),
+          'texts'   => [
+            'close'     => __('Fermer', 'chassesautresor-com'),
+            'image'     => __('Choisir une image', 'chassesautresor-com'),
+            'edit'      => __('Modifier', 'chassesautresor-com'),
+            'remove'    => __('Supprimer', 'chassesautresor-com'),
+            'contenu'   => __('Texte de l’indice', 'chassesautresor-com'),
+            'immediate' => __('Immédiate', 'chassesautresor-com'),
+            'differe'   => __('Différée', 'chassesautresor-com'),
+            'valider'   => __('Valider', 'chassesautresor-com'),
+            'mediaTitle'=> __('Sélectionner une image', 'chassesautresor-com'),
+            'indiceTitre' => __('Indice #%d', 'chassesautresor-com'),
+            'lieeA'            => __('liée à', 'chassesautresor-com'),
+            'laChasse'         => __('la chasse', 'chassesautresor-com'),
+            'lenigme'          => __('l’énigme', 'chassesautresor-com'),
+            'enigmeLabel'      => __('Énigme', 'chassesautresor-com'),
+            'enigmePlaceholder'=> __('Sélectionner une énigme', 'chassesautresor-com'),
+            'needEnigme'       => __('Sélectionnez une énigme', 'chassesautresor-com'),
+            'loading'          => __('Chargement…', 'chassesautresor-com'),
+            'needContent' => __('Au moins une image ou un texte nécessaire', 'chassesautresor-com'),
+            'needDate'    => __('Date et heure requises', 'chassesautresor-com'),
+            'invalidDate' => __('Date invalide', 'chassesautresor-com'),
+            'ajaxError'   => __('Erreur réseau', 'chassesautresor-com'),
+          ],
+        ]
+      );
+    }
+    if ($handle === 'solutions-create') {
+      wp_localize_script(
+        'solutions-create',
+        'solutionsCreate',
+        [
+          'ajaxUrl' => admin_url('admin-ajax.php'),
+          'texts'   => [
+            'close'      => __('Fermer', 'chassesautresor-com'),
+            'contenu'    => __('Texte de la solution', 'chassesautresor-com'),
+            'fichier'    => __('Fichier', 'chassesautresor-com'),
+            'disponibilite' => __('Disponibilité', 'chassesautresor-com'),
+            'finChasse'  => __('Fin de la chasse', 'chassesautresor-com'),
+            'differee'   => __('Différée', 'chassesautresor-com'),
+            'days'       => __('jours', 'chassesautresor-com'),
+            'valider'    => __('Valider', 'chassesautresor-com'),
+            'addTitre'   => __('Ajouter une solution', 'chassesautresor-com'),
+            'editTitre'  => __('Modifier', 'chassesautresor-com'),
+            'success'    => __('Solution enregistrée.', 'chassesautresor-com'),
+            'ajaxError'  => __('Erreur réseau', 'chassesautresor-com'),
+            'enigmeLabel'       => __('Énigme', 'chassesautresor-com'),
+            'enigmePlaceholder' => __('Sélectionner une énigme', 'chassesautresor-com'),
+            'needEnigme'        => __('Sélectionnez une énigme', 'chassesautresor-com'),
+            'loading'           => __('Chargement…', 'chassesautresor-com'),
+            'needContent'      => __('Ajoutez un fichier ou un texte', 'chassesautresor-com'),
+            'lieeA'            => __('liée à', 'chassesautresor-com'),
+            'laChasse'         => __('la chasse', 'chassesautresor-com'),
+            'lenigme'          => __('l’énigme', 'chassesautresor-com'),
+            'chooseFile'       => __('Choisir un fichier', 'chassesautresor-com'),
+            'noFile'           => __('Aucun fichier choisi', 'chassesautresor-com'),
+            'removeFile'       => __('Supprimer le fichier', 'chassesautresor-com'),
+            'needDate'         => __('Date et heure requises', 'chassesautresor-com'),
+          ],
+        ]
+      );
+    }
   }
 }
 
@@ -324,7 +433,7 @@ function masquer_admin_interface_pour_non_admins()
     }, 999);
 
     // 🔹 Liste des pages autorisées + AJAX WordPress (ajout de async-upload.php)
-    $pages_autorisees = ['post.php', 'post-new.php', 'edit.php', 'edit.php?post_type=trophee', 'admin-ajax.php', 'async-upload.php'];
+    $pages_autorisees = ['post.php', 'post-new.php', 'edit.php', 'admin-ajax.php', 'async-upload.php'];
 
     // 🔹 Redirige les utilisateurs non-admins s'ils essaient d'aller ailleurs
     add_action('admin_init', function () use ($pages_autorisees) {
@@ -420,74 +529,152 @@ add_action('admin_head', 'ajouter_barre_progression_top');
  * @param array $classes Liste actuelle des classes du <body>
  * @return array Liste modifiée avec ou sans "edition-active"
  */
-add_filter('body_class', 'injection_classe_edition_active');
-function injection_classe_edition_active(array $classes): array
+add_filter( 'body_class', 'injection_classe_edition_active' );
+function injection_classe_edition_active( array $classes ): array
 {
+    if ( ! is_user_logged_in() ) {
+        return $classes;
+    }
 
-  if (!is_user_logged_in()) return $classes;
+    $uri = $_SERVER['REQUEST_URI'] ?? '';
+    if ( preg_match( '#^/mon-compte(?:/|$|\?)#', $uri ) ) {
+        $classes[] = 'mode-edition';
+    }
 
-  global $post;
-  if (!$post || !isset($post->post_type)) return $classes;
+    global $post;
+    if ( ! $post || ! isset( $post->post_type ) ) {
+        return $classes;
+    }
 
-  $user_id = get_current_user_id();
-  $roles = wp_get_current_user()->roles;
+    $user_id = get_current_user_id();
+    $roles   = wp_get_current_user()->roles;
 
-  // === ORGANISATEUR ===
-  if (
-    $post->post_type === 'organisateur' &&
-    (int) get_post_field('post_author', $post->ID) === $user_id &&
-    in_array(ROLE_ORGANISATEUR_CREATION, $roles, true) &&
-    !get_field('organisateur_cache_complet', $post->ID)
-  ) {
-    verifier_ou_mettre_a_jour_cache_complet($post->ID);
-
+    // === ORGANISATEUR ===
     if (
-      get_post_status($post) === 'pending' &&
-      !get_field('organisateur_cache_complet', $post->ID)
+        $post->post_type === 'organisateur' &&
+        (int) get_post_field( 'post_author', $post->ID ) === $user_id &&
+        in_array( ROLE_ORGANISATEUR_CREATION, $roles, true ) &&
+        ! get_field( 'organisateur_cache_complet', $post->ID )
     ) {
-      $classes[] = 'edition-active';
+        verifier_ou_mettre_a_jour_cache_complet( $post->ID );
+
+        if (
+            get_post_status( $post ) === 'pending' &&
+            ! get_field( 'organisateur_cache_complet', $post->ID )
+        ) {
+            $classes[] = 'edition-active';
+            $classes[] = 'mode-edition';
+        }
     }
-  }
 
-  // === CHASSE ===
-  if (
-    $post->post_type === 'chasse' &&
-    in_array(ROLE_ORGANISATEUR_CREATION, $roles, true)
-  ) {
-    $organisateur_id = get_organisateur_from_chasse($post->ID);
-    $associes = get_field('utilisateurs_associes', $organisateur_id, false);
-    $associes = is_array($associes) ? array_map('strval', $associes) : [];
+    // === CHASSE ===
+    if (
+        $post->post_type === 'chasse' &&
+        ( in_array( ROLE_ORGANISATEUR_CREATION, $roles, true ) || in_array( ROLE_ORGANISATEUR, $roles, true ) )
+    ) {
+        $organisateur_id = get_organisateur_from_chasse( $post->ID );
+        $associes        = get_field( 'utilisateurs_associes', $organisateur_id, false );
+        $associes        = is_array( $associes ) ? array_map( 'strval', $associes ) : [];
 
-    if (in_array((string) $user_id, $associes, true)) {
-      verifier_ou_mettre_a_jour_cache_complet($post->ID);
+        if ( in_array( (string) $user_id, $associes, true ) ) {
+            verifier_ou_mettre_a_jour_cache_complet( $post->ID );
 
-      if (
-        get_post_status($post) === 'pending' &&
-        !get_field('chasse_cache_complet', $post->ID)
-      ) {
-        $classes[] = 'edition-active-chasse';
-      }
+            $validation = get_field( 'chasse_cache_statut_validation', $post->ID );
+            $statut     = get_field( 'chasse_cache_statut', $post->ID );
+
+            if (
+                $statut === 'revision' &&
+                in_array( $validation, [ 'creation', 'correction' ], true ) &&
+                ! get_field( 'chasse_cache_complet', $post->ID )
+            ) {
+                $mode_fin        = get_field( 'chasse_mode_fin', $post->ID ) ?: 'automatique';
+                $titre_ok        = trim( get_the_title( $post->ID ) ) !== '';
+                $image_ok        = (bool) get_field( 'chasse_principale_image', $post->ID );
+                $desc_raw        = get_field( 'chasse_principale_description', $post->ID );
+                $desc_ok         = ! empty( trim( (string) $desc_raw ) );
+                $has_validatable = chasse_has_validatable_enigme( $post->ID );
+
+                if ( $mode_fin === 'automatique' && $titre_ok && $image_ok && $desc_ok && ! $has_validatable ) {
+                    $classes[] = 'scroll-to-enigmes';
+                } else {
+                    $classes[] = 'edition-active-chasse';
+                    $classes[] = 'mode-edition';
+                }
+            }
+        }
     }
-  }
 
-  return $classes;
+    return $classes;
 }
 
 
 /**
  * 📅 Formate une date au format `d/m/Y` ou retourne "Non spécifiée".
  *
- * @param string|null $date La date à formater.
+ * @param mixed $date La date à formater.
  * @return string La date formatée ou "Non spécifiée" si invalide.
  */
-function formater_date(?string $date): string
+function formater_date($date): string
 {
-  if (!$date) return 'Non spécifiée';
-  if (preg_match('/^\d{2}\/\d{2}\/\d{4}$/', $date)) return $date; // Déjà formatée
+    if (empty($date)) {
+        return __('Non spécifiée', 'chassesautresor-com');
+    }
 
-  $timestamp = strtotime($date);
-  return ($timestamp !== false) ? date_i18n('d/m/Y', $timestamp) : 'Non spécifiée';
+    if ($date instanceof DateTimeInterface) {
+        $timestamp = $date->getTimestamp();
+    } elseif (is_array($date) && isset($date['date'])) {
+        $timestamp = convertir_en_timestamp($date['date']);
+    } else {
+        $timestamp = convertir_en_timestamp((string) $date);
+    }
+
+    if ($timestamp === false) {
+        return __('Non spécifiée', 'chassesautresor-com');
+    }
+
+    $format = _x('j F Y', 'formatting for dates', 'chassesautresor-com');
+
+    return wp_date($format, $timestamp);
 }
+
+
+/**
+ * 📅⏰ Formate une date avec l'heure ou retourne "Non spécifiée".
+ *
+ * @param mixed $date La date à formater.
+ * @return string La date/heure formatée ou "Non spécifiée" si invalide.
+ */
+function formater_date_heure($date): string
+{
+    if (empty($date)) {
+        return __('Non spécifiée', 'chassesautresor-com');
+    }
+
+    $original = '';
+    if ($date instanceof DateTimeInterface) {
+        $timestamp = $date->getTimestamp();
+        $original  = $date->format('Y-m-d H:i:s');
+    } elseif (is_array($date) && isset($date['date'])) {
+        $original  = $date['date'];
+        $timestamp = convertir_en_timestamp($original);
+    } else {
+        $original  = (string) $date;
+        $timestamp = convertir_en_timestamp($original);
+    }
+
+    if ($timestamp === false) {
+        return __('Non spécifiée', 'chassesautresor-com');
+    }
+
+    if (!preg_match('/\d{1,2}:\d{2}/', $original)) {
+        return formater_date($date);
+    }
+
+    $format = _x('j F Y à H:i', 'formatting for datetime', 'chassesautresor-com');
+
+    return wp_date($format, $timestamp);
+}
+
 
 /**
  * 🗓️ Convertit une date string en objet DateTime en testant plusieurs formats.
@@ -503,12 +690,21 @@ function convertir_en_datetime(?string $date_string, array $formats = [
   'd/m/Y',
   'Y-m-d H:i:s',
   'Y-m-d\TH:i',
-  'Y-m-d'
+  'Y-m-d',
+  'Ymd',
+  'YmdHis'
 ]): ?DateTime
 {
   if (empty($date_string)) {
     cat_debug("🚫 Date vide ou non fournie.");
     return null;
+  }
+
+  if (preg_match('/^\d{9,10}$/', $date_string)) {
+    $timezone = function_exists('wp_timezone') ? wp_timezone() : new DateTimeZone('UTC');
+    $dt = new DateTime('@' . $date_string);
+    $dt->setTimezone($timezone);
+    return $dt;
   }
 
   $timezone = function_exists('wp_timezone') ? wp_timezone() : new DateTimeZone('UTC');
@@ -534,7 +730,24 @@ function convertir_en_datetime(?string $date_string, array $formats = [
  */
 function convertir_en_timestamp(?string $date)
 {
-  return $date ? strtotime(str_replace('/', '-', $date)) : false;
+  if (!$date) {
+    return false;
+  }
+
+  $date = (string) $date;
+
+  if (preg_match('/^\d{9,10}$/', $date)) {
+    return (int) $date;
+  }
+
+  if (preg_match('/^\d{8}$/', $date)) {
+    $dt = DateTime::createFromFormat('Ymd', $date);
+    if ($dt) {
+      return $dt->getTimestamp();
+    }
+  }
+
+  return strtotime(str_replace('/', '-', $date));
 }
 
 /**
@@ -695,9 +908,9 @@ function mettre_a_jour_sous_champ_group(int $post_id, string $group_key_or_name,
     return false;
   }
 
-  error_log("[mettre_a_jour_sous_champ_group] post_id={$post_id} group={$group_key_or_name} subfield={$subfield_name} valeur=" . (is_array($new_value) ? json_encode($new_value) : $new_value));
+  cat_debug("[mettre_a_jour_sous_champ_group] post_id={$post_id} group={$group_key_or_name} subfield={$subfield_name} valeur=" . (is_array($new_value) ? json_encode($new_value) : $new_value));
 
-  error_log("[mettre_a_jour_sous_champ_group] post_id={$post_id} group={$group_key_or_name} subfield={$subfield_name} valeur=" . (is_array($new_value) ? json_encode($new_value) : $new_value));
+  cat_debug("[mettre_a_jour_sous_champ_group] post_id={$post_id} group={$group_key_or_name} subfield={$subfield_name} valeur=" . (is_array($new_value) ? json_encode($new_value) : $new_value));
 
 
 
@@ -730,7 +943,7 @@ function mettre_a_jour_sous_champ_group(int $post_id, string $group_key_or_name,
   }
 
   $champ_a_enregistrer = [];
-  
+
   $sub_field_type = null;
 
   foreach ($group_object['sub_fields'] as $sub_field) {
@@ -739,7 +952,7 @@ function mettre_a_jour_sous_champ_group(int $post_id, string $group_key_or_name,
     $type = $sub_field['type'];
     if ($name === $subfield_name) {
       $sub_field_type = $type;
-      error_log("[mettre_a_jour_sous_champ_group] mapping {$subfield_name} -> {$key}");
+      cat_debug("[mettre_a_jour_sous_champ_group] mapping {$subfield_name} -> {$key}");
     }
 
     $valeur = $groupe[$name] ?? '';
@@ -776,7 +989,7 @@ function mettre_a_jour_sous_champ_group(int $post_id, string $group_key_or_name,
 
   $ok = update_field($group_object['name'], $champ_a_enregistrer, $post_id);
   cat_debug('[DEBUG] update_field() retourne : ' . var_export($ok, true));
-  error_log('[mettre_a_jour_sous_champ_group] update_field ok=' . var_export($ok, true));
+  cat_debug('[mettre_a_jour_sous_champ_group] update_field ok=' . var_export($ok, true));
 
 
   // L'écriture ACF pouvant être asynchrone, on laisse une
@@ -823,12 +1036,10 @@ function mettre_a_jour_sous_champ_group(int $post_id, string $group_key_or_name,
         $dt_read->setTimezone($tz);
 
         $result = $dt_new->format('Y-m-d H:i:s') === $dt_read->format('Y-m-d H:i:s');
-        error_log('[mettre_a_jour_sous_champ_group] compare datetime result=' . var_export($result, true));
+        cat_debug('[mettre_a_jour_sous_champ_group] compare datetime result=' . var_export($result, true));
         return $result;
       }
       cat_debug('[DEBUG] Impossible de convertir les dates pour comparaison');
-
-
     }
 
     $str_new  = is_array($new_value) ? implode(',', $new_value) : (string) $new_value;
@@ -836,12 +1047,11 @@ function mettre_a_jour_sous_champ_group(int $post_id, string $group_key_or_name,
     cat_debug('[DEBUG] str_new=' . $str_new . ' str_relue=' . $str_relue);
 
     $result = wp_strip_all_tags($str_new) === wp_strip_all_tags($str_relue);
-    error_log('[mettre_a_jour_sous_champ_group] compare generic result=' . var_export($result, true));
+    cat_debug('[mettre_a_jour_sous_champ_group] compare generic result=' . var_export($result, true));
     return $result;
   }
 
   cat_debug("❌ Échec de vérification pour $subfield_name dans {$group_object['name']}");
-  error_log('[mettre_a_jour_sous_champ_group] verification failed for ' . $subfield_name);
+  cat_debug('[mettre_a_jour_sous_champ_group] verification failed for ' . $subfield_name);
   return false;
 }
-

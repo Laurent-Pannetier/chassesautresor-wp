@@ -6,8 +6,8 @@ $organisateur_id = $args['organisateur_id']
     ?? get_query_var('organisateur_id_force')
     ?? get_organisateur_from_user(get_current_user_id());
 
-$iban = get_field('coordonnees_bancaires_iban', $organisateur_id);
-$bic  = get_field('coordonnees_bancaires_bic', $organisateur_id);
+$iban = get_field('iban', $organisateur_id);
+$bic  = get_field('bic', $organisateur_id);
 ?>
 
 <div id="panneau-coordonnees" class="panneau-lateral-liens" aria-hidden="true" role="dialog">

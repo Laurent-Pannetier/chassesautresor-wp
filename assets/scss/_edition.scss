@@ -1,0 +1,2705 @@
+/* ==========================================================
+📌 Orgy – Panneaux d'édition frontaux
+========================================================== */
+
+/* 🌐 GLOBAL */
+
+/* ✅ Affichage dynamique de complétion */
+/* 📂 Toggle panneau édition */
+/* 🖊️ Champs éditables */
+/* 🖼️ Image modifiable */
+/* 🔗 Liens */
+/* 🖊️ Champs de saisie */
+/* 🎯 Compteur de caractères – position fixe sous input */
+/* 🎯 Bouton ✏️ Édition de contenu */
+/* 💾 Boutons édition : enregistrer / annuler */
+/* ✔️ Animation de confirmation */
+/* 📅 Champs dates — affichage et comportement */
+/* ➕ bouton d'ajout d'énigme et de chasse */
+
+/* 📱 Responsive global */
+
+
+/* 🧭 HEADER */
+
+/* 📱 Responsive header */
+
+
+/* 🪟 PANNEAU D’ÉDITION GLOBAL */
+
+/* 🧱 Structure */
+/* 🔤 Typographie */
+/* 🧪 Placeholder */
+/* ✏️ Champs particuliers */
+/* 📱 Responsive panneau édition */
+
+
+/* 🧭 PANNEAU LATÉRAL */
+
+
+
+/* ==================================================
+   🌐 GLOBAL
+   ================================================== */
+
+
+/* ========== ✅ AFFICHAGE DYNAMIQUE DE COMPLÉTION ========== */
+
+.resume-infos .champ-rempli .icon-attente {
+  display: none;
+}
+
+.resume-infos .icon-attente {
+  color: var(--color-editor-error);
+}
+
+.resume-infos .icone-check {
+  color: var(--color-editor-success);
+}
+
+/* Hauteur et alignement par défaut des lignes de paramètres */
+.resume-infos > li {
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-md);
+}
+
+.resume-infos > li:last-child {
+  margin-bottom: 0;
+}
+
+.resume-infos > li > label,
+.resume-infos > li > .champ-edition > label,
+.resume-infos > li > .champ-affichage > label {
+  min-width: var(--editor-label-width);
+  flex-shrink: 0;
+}
+
+.resume-infos > li > .champ-affichage {
+  display: flex;
+  align-items: center;
+  min-height: 40px;
+  flex: 1;
+}
+
+.resume-infos > li > .champ-edition {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  width: 100%;
+  margin-top: 0;
+}
+
+.resume-infos > li > .champ-feedback {
+  width: 100%;
+}
+
+/* 🧩 Lignes d'édition réutilisables */
+.edition-row { 
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  min-height: 40px;
+}
+
+li.edition-row {
+  border-top: 1px solid var(--color-editor-border);
+  padding-top: var(--space-xs);
+}
+
+.edition-row-label {
+  min-width: var(--editor-label-width);
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+@media not all and (--bp-tablet) {
+  .edition-row-label {
+    min-width: unset;
+    width: var(--editor-label-width);
+  }
+}
+
+.edition-row-icon {
+  width: var(--editor-icon-width);
+  flex: 0 0 var(--editor-icon-width);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.edition-row-content {
+  flex: 1;
+}
+
+#chasse-tab-param .edition-row-label label {
+  font-style: italic;
+  color: var(--color-editor-text-muted);
+}
+
+.edition-row.champ-attention .edition-row-label label {
+  color: var(--color-editor-error);
+}
+
+@media not all and (--bp-mobile) {
+  li.edition-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  li.edition-row .edition-row-label,
+  li.edition-row .edition-row-content {
+    width: 100%;
+  }
+}
+
+.resume-blocs-grid > .resume-bloc + .resume-bloc {
+  margin-top: var(--space-xl);
+}
+
+.cache {
+  display: none;
+}
+
+/* ========== 🧾 QR CODE CHASSE ========== */
+.resume-visibilite .qr-code-wrapper {
+  margin-top: var(--space-xs);
+}
+
+.resume-visibilite .qr-code-wrapper img {
+  max-width: 150px;
+  height: auto;
+  display: block;
+  margin-bottom: var(--space-xs);
+}
+
+.qr-code-block {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: var(--space-xl);
+  row-gap: var(--space-md);
+  margin-top: var(--space-lg);
+}
+
+.qr-code-block .qr-code-url {
+  flex: 1 0 100%;
+  text-align: right;
+  word-break: break-all;
+  opacity: 0.5;
+}
+
+.qr-code-block .qr-code-image {
+  flex: 0 0 200px;
+}
+
+.qr-code-block .qr-code-image img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.qr-code-block .qr-code-image i {
+  display: block;
+  font-size: 200px;
+  line-height: 1;
+}
+
+.qr-code-block .qr-code-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.qr-code-block .qr-code-content h3 {
+  margin-top: 0;
+}
+
+@media not all and (--bp-desktop) {
+  .dashboard-card.champ-protection-solutions .qr-code-image,
+  .dashboard-card.champ-qr-code .qr-code-image {
+    flex: 0 0 150px;
+  }
+
+  .dashboard-card.champ-protection-solutions .qr-code-image img,
+  .dashboard-card.champ-qr-code .qr-code-image img {
+    width: 150px;
+  }
+
+  .dashboard-card.champ-protection-solutions .qr-code-image i,
+  .dashboard-card.champ-qr-code .qr-code-image i {
+    font-size: 150px;
+  }
+}
+
+@media not all and (--bp-tablet) {
+  .dashboard-card.champ-protection-solutions .qr-code-image,
+  .dashboard-card.champ-qr-code .qr-code-image {
+    flex: 0 0 100px;
+  }
+
+  .dashboard-card.champ-protection-solutions .qr-code-image i {
+    font-size: 100px;
+  }
+}
+
+@media not all and (--bp-mobile) {
+  .dashboard-card.champ-protection-solutions .qr-code-block,
+  .dashboard-card.champ-qr-code .qr-code-block {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .dashboard-card.champ-protection-solutions .qr-code-content,
+  .dashboard-card.champ-qr-code .qr-code-content {
+    align-items: center;
+    text-align: center;
+  }
+
+  .dashboard-card.champ-protection-solutions .qr-code-image,
+  .dashboard-card.champ-qr-code .qr-code-image {
+    width: 100px;
+    flex: none;
+  }
+
+  .dashboard-card.champ-protection-solutions .qr-code-image img,
+  .dashboard-card.champ-qr-code .qr-code-image img {
+    width: 100px;
+  }
+
+  .dashboard-card.champ-protection-solutions .qr-code-image i,
+  .dashboard-card.champ-qr-code .qr-code-image i {
+    font-size: 100px;
+  }
+}
+
+/* ========== 🖊️ CHAMPS ÉDITABLES ========== */
+
+.champ-edition {
+  display: flex;
+  align-items: baseline;
+  gap: 0.7rem;
+  margin-top: var(--space-md);
+}
+
+.champ-organisateur.champ-vide {
+  border: 1px dashed var(--color-border-header-organisateur);
+  background-color: rgba(255, 255, 255, 0.02);
+  border-radius: 0.5rem;
+  padding: 0.3rem var(--space-xs);
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+
+body.edition-active .champ-organisateur.champ-vide {
+  opacity: 0.7;
+}
+
+body.edition-active .champ-organisateur.champ-vide:hover {
+  background-color: rgba(255, 255, 255, 0.04);
+  opacity: 1;
+  cursor: pointer;
+}
+
+.champ-vide-obligatoire {
+  animation: clignoteTitre 1s infinite alternate;
+}
+
+@keyframes clignoteTitre {
+  0% {
+    box-shadow: 0 0 0px var(--color-editor-error);
+  }
+
+  100% {
+    box-shadow: 0 0 8px var(--color-editor-error);
+  }
+}
+
+body.edition-active .champ-organisateur[data-champ],
+body.edition-active-chasse .champ-chasse[data-champ],
+body.edition-active-enigme .champ-enigme[data-champ] {
+  cursor: pointer;
+}
+
+body.edition-active .resume-infos li,
+body.edition-active-chasse .resume-infos li,
+body.edition-active-enigme .resume-infos li {
+  cursor: pointer;
+}
+
+body.edition-active .champ-desactive,
+body.edition-active-chasse .champ-desactive,
+body.edition-active-enigme .champ-desactive {
+  cursor: default;
+}
+
+
+/* ========== 📂 Toggle panneau édition ========== */
+section.enigme-wrapper {
+  position: relative;
+}
+
+.bouton-edition-toggle {
+  border: 1px solid rgba(255, 215, 0, 0.6);
+  background: none;
+  color: #fff;
+  font-size: 1rem;
+  transition: background-color 0.2s ease;
+}
+
+.bouton-edition-toggle:hover,
+.bouton-edition-toggle:focus {
+  background-color: rgba(255, 215, 0, 0.15);
+}
+
+.bouton-edition-toggle:active {
+  background-color: rgba(255, 215, 0, 0.3);
+}
+
+.bouton-edition-toggle--clair {
+  color: var(--color-text-fond-clair);
+}
+
+
+/* ========== 🖼️ IMAGE MODIFIABLE ========== */
+body:not(.edition-active-chasse) .chasse-fiche-container .champ-img .champ-modifier .icone-modif,
+body:not(.edition-active) .header-organisateur .champ-img .champ-modifier .icone-modif {
+  display: none;
+}
+
+body:not(.edition-active-chasse) .chasse-fiche-container .champ-img .champ-modifier,
+body:not(.edition-active) .header-organisateur .champ-img .champ-modifier {
+  opacity: 1;
+  filter: none;
+  pointer-events: none;
+  /* empêche les clics accidentels */
+}
+
+body.edition-active-chasse .chasse-fiche-container .champ-img .champ-modifier,
+body.edition-active .header-organisateur .champ-img .champ-modifier,
+body.edition-active-enigme .single-enigme-main .champ-img .champ-modifier {
+  transform: translateY(0);
+}
+
+.champ-img.champ-vide img {
+  display: none;
+}
+
+.champ-img:not(.champ-vide) .champ-ajout-image {
+  display: none;
+}
+
+.champ-img .champ-affichage {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.champ-img .champ-modifier {
+  position: relative;
+  display: inline-block;
+  margin: 0;
+  padding: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.champ-img .champ-modifier img {
+  display: block;
+}
+
+.champ-img .champ-modifier img.vignette-enigme {
+  display: inline-block;
+  max-width: 60px;
+  margin-right: var(--space-xxs);
+}
+
+.champ-img .champ-modifier .icone-modif {
+  position: absolute;
+  top: 0.2rem;
+  right: 0.2rem;
+  font-size: 0.9rem;
+  color: var(--color-secondary);
+  background-color: rgba(0, 0, 0, 0.6);
+  width: 1.4rem;
+  height: 1.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: transform 0.2s;
+}
+
+.champ-img .champ-modifier:hover .icone-modif {
+  transform: scale(1.1);
+}
+
+.champ-img.champ-vide .champ-modifier .icone-modif {
+  position: static;
+  display: inline;
+  width: auto;
+  height: auto;
+  margin-left: var(--space-xxs);
+  background: none;
+}
+
+.edition-panel .champ-img img {
+  max-width: 80px;
+  height: auto;
+  border-radius: 0.25rem;
+}
+
+.media-modal.wp-core-ui button.media-modal-close:hover {
+  color: white;
+}
+
+/* ========== 🖼 LOGO CLIQUABLE ========== */
+
+body .header-img-modifiable {
+  position: relative;
+  display: inline-block;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  transform: translateY(0%);
+  opacity: 1;
+}
+
+body .header-img-modifiable .icone-modif {
+  display: none;
+}
+
+.header-img-modifiable img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+}
+
+.header-img-modifiable .icone-modif {
+  position: absolute;
+  top: 0.3rem;
+  right: 0.3rem;
+  font-size: 1rem;
+  color: var(--color-secondary);
+  background-color: rgba(0, 0, 0, 0.6);
+  padding: 0.2rem 0.3rem;
+  border-radius: 0.3rem;
+  transition: transform 0.2s;
+}
+
+.header-img-modifiable:hover .icone-modif {
+  transform: scale(1.1);
+}
+
+
+/* ========== 🔗 LIENS ========== */
+
+.champ-liens .champ-affichage-liens {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dashboard-card.champ-liens .icone-defaut {
+  display: none;
+}
+
+.dashboard-card.champ-liens.champ-vide .champ-affichage-liens {
+  display: none;
+}
+
+.dashboard-card.champ-liens.champ-vide .icone-defaut {
+  display: block;
+}
+
+.dashboard-card.champ-liens.champ-vide,
+.champ-liens.champ-vide.carte-orgy {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08),
+    0 0 0 3px hsl(var(--editor-error-hsl) / 0.3);
+}
+
+.champ-indices.champ-vide.carte-orgy,
+.champ-solutions.champ-vide.carte-orgy {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08),
+    0 0 0 3px hsl(var(--editor-error-hsl) / 0.3);
+}
+
+.dashboard-card.champ-liens .liste-liens-publics {
+  display: flex;
+  gap: var(--space-xs);
+  justify-content: center;
+  flex-wrap: nowrap;
+}
+
+.dashboard-card.champ-liens .lien-public {
+  padding: 0;
+  font-size: 2rem;
+  line-height: 1;
+  background: none;
+  gap: 0;
+}
+
+.dashboard-card.champ-liens .lien-public i {
+  font-size: inherit;
+}
+
+.dashboard-card.champ-liens .texte-lien {
+  display: none;
+}
+
+.liens-placeholder {
+  text-align: center;
+}
+
+.liens-placeholder-message {
+  font-size: 0.85rem;
+  font-style: italic;
+  margin-top: var(--space-xs);
+  opacity: 0.7;
+}
+
+
+/* ========== 🖊️ CHAMPS DE SAISIE ========== */
+
+.champ-edition .champ-input-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.edition-panel-body input.champ-input,
+.edition-panel-body input[type="date"],
+.edition-panel-body input[type="datetime-local"] {
+  background-color: white;
+  border: 1px solid var(--color-editor-border);
+  color: var(--color-editor-text);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: 4px;
+  font-size: 1.1rem;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+@media not all and (--bp-tablet) {
+  .edition-panel-body input.champ-input,
+  .edition-panel-body input[type="date"],
+  .edition-panel-body input[type="datetime-local"] {
+    font-size: 0.85rem;
+  }
+}
+
+.edition-panel-body input.champ-number {
+  width: 100px;
+}
+
+@media (min-width: 768px) {
+  .edition-panel-body input.champ-texte-edit {
+    width: 260px;
+  }
+}
+
+
+.champ-groupe-reponse-automatique {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.champ-groupe-reponse-automatique.cache {
+  display: none;
+}
+
+.champ-nb-tentatives.cache {
+  display: none;
+}
+
+#champ-bonne-reponse {
+  width: auto;
+}
+
+.bonnes-reponses-wrapper {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  align-items: center;
+}
+
+.champ-casse {
+  display: inline-flex;
+  align-items: center;
+  margin-left: var(--space-md);
+}
+
+.bonne-reponse-etiquette {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.bonne-reponse-etiquette button {
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.bonne-reponse-annuler {
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  color: var(--color-editor-error);
+}
+
+.bonne-reponse-valider.btn-obligatoire {
+  background-color: var(--color-editor-error);
+  color: #fff;
+  border-radius: 0.3rem;
+}
+
+.bonne-reponse-valider,
+.bonne-reponse-ajouter {
+  font-size: 0.85rem;
+  padding: 0.1rem var(--space-xs);
+}
+
+.champ-edition input.champ-input::placeholder {
+  color: var(--color-editor-placeholder);
+}
+
+.champ-edition input.champ-input:focus {
+  outline: none;
+  border-color: var(--color-editor-accent);
+  background-color: var(--color-editor-field-hover);
+}
+
+.champ-status {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 4px;
+}
+
+.champ-status .fa-check {
+  color: var(--color-editor-success);
+}
+
+/* ========== 🎯 COMPTEUR DE CARACTÈRES – POSITION FIXE SOUS INPUT ========== */
+
+.champ-edition .champ-compteur,
+.champ-edition .champ-instructions {
+  margin-top: 0.4rem;
+  font-size: 0.85rem;
+  opacity: 0.7;
+  color: var(--color-editor-placeholder);
+  text-align: left;
+}
+
+/* ========== 🎯 BOUTON ✏️ ÉDITION DE CONTENU ========== */
+
+
+/* Boutons d’édition */
+body[class*="edition-active"] .champ-modifier:not(.bouton-cta) {
+  background: none;
+  border: none;
+  color: var(--color-editor-accent);
+  font-size: 0.85rem;
+  padding: 0;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity 0.2s;
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Harmonisation de l'alignement pour le champ sous-titre dans le panneau Énigme */
+.single-enigme-main [data-champ="enigme_visuel_legende"] {
+  display: inline-flex;
+  align-items: center;
+}
+
+.single-enigme-main [data-champ="enigme_visuel_legende"] .champ-affichage {
+  padding-left: 5px;
+}
+
+body.edition-active-enigme .champ-modifier .icone-modif {
+  display: unset;
+}
+
+body[class*="edition-active"] .champ-modifier:not(.bouton-cta):hover {
+  opacity: 1;
+}
+
+body[class*="edition-active"] .champ-modifier:not(.bouton-cta):focus {
+  outline: 2px solid var(--color-editor-accent);
+  outline-offset: 2px;
+}
+
+body[class*="edition-active"] .champ-img .champ-modifier:focus {
+  outline: none;
+  outline-offset: 0;
+}
+
+
+/* ========== 💾 BOUTONS ÉDITION : ENREGISTRER / ANNULER ========== */
+
+.champ-organisateur .champ-enregistrer,
+.champ-organisateur .champ-annuler {
+  border: none;
+  background-color: var(--color-action);
+  color: white;
+  padding: 0.4rem 0.6rem;
+  font-size: 1rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.75;
+}
+
+.champ-organisateur .champ-enregistrer:hover,
+.champ-organisateur .champ-annuler:hover {
+  opacity: 1;
+}
+
+.champ-edition .champ-enregistrer {
+  background-color: var(--color-editor-success);
+}
+
+.champ-edition .champ-annuler {
+  background-color: var(--color-editor-error);
+}
+
+.champ-edition .champ-inline-actions {
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  display: flex;
+  gap: 0 var(--space-md);
+}
+
+.champ-edition .champ-inline-actions {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+
+
+/* ========== ✔️ ANIMATION DE CONFIRMATION ========== */
+
+.champ-feedback.champ-confirmation {
+  color: var(--color-editor-success);
+  opacity: 1;
+  transition: opacity 0.5s ease;
+  font-size: 1.1rem;
+  margin-left: var(--space-xs);
+}
+
+.champ-feedback.champ-confirmation.fade-out {
+  opacity: 0;
+}
+
+/* ========== 📅 CHAMPS DATES — AFFICHAGE ET COMPORTEMENT ========== */
+input[type=date].champ-date-edit,
+input[type=datetime-local].champ-date-edit {
+  width: auto;
+}
+
+input[disabled].champ-inline-date,
+input[disabled].champ-inline-nb,
+input[disabled].champ-cout,
+input[disabled].champ-nb-tentatives,
+input[disabled][name="champ-bonne-reponse"],
+input[disabled]#champ-soustitre-enigme,
+input[disabled].champ-texte-edit {
+  background-color: var(--color-editor-background);
+  /* Fond gris clair neutre */
+  border: 1px solid var(--color-editor-border);
+  /* Bordure standard */
+  color: var(--color-editor-placeholder);
+  /* Texte grisé façon placeholder */
+  cursor: not-allowed;
+  opacity: 1;
+  /* Important pour ne pas rendre semi-transparent */
+}
+
+/* Styles communs pour les champs verrouillés */
+.champ-desactive label {
+  color: var(--color-editor-placeholder);
+  font-style: italic;
+}
+
+body[class*="edition-active"] .champ-desactive .champ-modifier,
+.champ-desactive .champ-modifier {
+  display: none;
+}
+
+.edition-panel-section .champ-option-illimitee {
+  display: inline-block;
+  margin-left: var(--space-md);
+}
+
+
+
+/* ➕ bouton d'ajout d'énigme et de chasse */
+
+
+
+/* ========== 📱 RESPONSIVE GLOBAL ========== */
+
+/* Empilage à partir de tablette */
+@media not all and (--bp-tablet) {
+  .edition-panel-body {
+    flex-direction: column;
+  }
+}
+
+
+
+/* ==================================================
+   🧭 HEADER
+   ================================================== */
+
+
+.header-coordonnees.champ-vide {
+  border: 1px dashed var(--color-border-header-organisateur);
+  padding: 0.2rem var(--space-xs);
+  border-radius: 0.4rem;
+  background-color: rgba(255, 255, 255, 0.03);
+  color: var(--color-secondary);
+  opacity: 0.85;
+  transition: all 0.3s ease;
+}
+
+.header-coordonnees.champ-vide:hover {
+  background-color: rgba(255, 255, 255, 0.06);
+  opacity: 1;
+}
+
+
+/* ========== 🔠 TITRE ========== */
+.champ-txt-editable {
+  margin-right: 125px;
+}
+
+.champ-txt-editable .champ-affichage {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  flex-wrap: wrap;
+}
+
+.champ-txt-editable.champ-titre .champ-edition {
+  padding-right: 60px;
+}
+
+
+/* ========== 📱 RESPONSIVE HEADER ========== */
+
+/* Empilage à partir de tablette */
+@media not all and (--bp-tablet) {
+  .edition-panel-body {
+    flex-direction: column;
+  }
+}
+
+
+
+/* ==================================================
+   🪟 PANNEAU D’ÉDITION GLOBAL
+   ================================================== */
+
+/* ========== 🧱 STRUCTURE ========== */
+
+.edition-panel {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  padding: 0;
+  transition: max-height 0.4s ease, opacity 0.3s ease, transform 0.3s ease;
+  transform: translateY(-10px);
+  border: 0;
+  pointer-events: none;
+}
+
+body.edition-active .panneau-organisateur,
+body.edition-active-chasse .edition-panel-chasse,
+body.edition-active-enigme .edition-panel-enigme,
+body.edition-active-indice .edition-panel-indice {
+  height: 90vh;
+  max-height: 90vh;
+  opacity: 1;
+  transform: translateY(0);
+  background-color: var(--color-editor-background);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+  padding: var(--space-md);
+  pointer-events: auto;
+  border-bottom: 1px solid var(--color-editor-border);
+  overflow-y: auto;
+  color: var(--color-editor-text);
+}
+
+body.edition-active .panneau-organisateur.edition-panel-modal,
+body.edition-active-chasse .edition-panel-chasse.edition-panel-modal,
+body.edition-active-enigme .edition-panel-enigme.edition-panel-modal,
+body.edition-active-indice .edition-panel-indice.edition-panel-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 95%;
+  height: 90vh;
+  max-height: 90vh;
+  border-radius: 8px;
+  z-index: 10000;
+}
+
+
+.edition-panel > .edition-panel-header {
+  padding: var(--space-xs) 0;
+  border-bottom: 1px solid var(--color-editor-border);
+  margin-bottom: var(--space-md);
+  position: sticky;
+  top: 0;
+  background-color: var(--color-editor-background);
+  z-index: 10;
+}
+
+.edition-panel-header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-xs);
+}
+
+.edition-panel .panneau-fermer {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  color: var(--color-editor-text-muted);
+  cursor: pointer;
+  padding: var(--space-xxs);
+  line-height: 1;
+  transition: color 0.2s ease;
+  opacity: 0.75;
+}
+
+.edition-panel .panneau-fermer:hover {
+  opacity: 1;
+}
+
+.edition-panel-body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: var(--space-md) var(--space-2xl);
+  height: auto;
+  min-height: 300px;
+  box-sizing: border-box;
+}
+
+.edition-panel-section {
+  display: flex;
+  flex-direction: column;
+  /* ✅ affichage en colonne par défaut */
+  flex-wrap: wrap;
+  gap: var(--space-2xl);
+  margin-bottom: var(--space-2xl);
+  border: 1px solid var(--color-editor-border);
+  padding: var(--space-md);
+  border-radius: 8px;
+  color: var(--color-editor-text-muted);
+}
+
+.edition-panel-section .resume-technique,
+.edition-panel-section .resume-reglages {
+  width: 100%;
+}
+
+
+.resume-infos .champ-valeur {
+  display: inline-block;
+}
+
+.edition-panel-section .resume-technique input.inline-date,
+.edition-panel-section .resume-reglages input.inline-date {
+  width: 180px;
+}
+
+.edition-panel-section .resume-reglages input.champ-nb-tentatives {
+  width: 80px;
+}
+
+.edition-panel-section .resume-technique .champ-select-heure,
+.edition-panel-section .resume-reglages .champ-select-heure {
+  width: auto;
+}
+
+/* ========== 🔤 TYPOGRAPHIE ========== */
+
+body.edition-active .edition-panel {
+  color: var(--color-editor-text);
+}
+
+.edition-panel-header h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--color-editor-heading);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.edition-panel h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--color-editor-heading);
+  /* ou une variable spécifique si besoin */
+  margin-top: 0;
+  margin-bottom: var(--space-md);
+  letter-spacing: 0.02em;
+}
+
+.edition-panel button {
+  color: var(--color-editor-text);
+  opacity: 0.75;
+  box-shadow: none;
+}
+
+.edition-panel button:focus,
+.edition-panel button:hover {
+  opacity: 1;
+  background: none;
+}
+
+.edition-panel .bouton-cta:focus,
+.edition-panel .bouton-cta:hover {
+  opacity: 1;
+  background: none;
+}
+
+.mce-menu .mce-container-body {
+  color: var(--color-editor-text);
+}
+
+.edition-panel .mce-btn.mce-active button,
+.edition-panel .mce-btn.mce-active:hover button,
+.edition-panel .mce-btn.mce-active i,
+.edition-panel .mce-btn.mce-active:hover i,
+.edition-panel .mce-container,
+.edition-panel .mce-container *,
+.edition-panel .mce-widget,
+.edition-panel .mce-widget * {
+  color: var(--color-editor-text);
+}
+
+.edition-panel label {
+  color: var(--color-editor-text-muted);
+  font-size: 1rem;
+}
+
+@media not all and (--bp-mobile) {
+  .edition-panel label {
+    font-size: 0.9rem;
+  }
+}
+
+@media not all and (--bp-small) {
+  .edition-panel label {
+    font-size: 0.8rem;
+  }
+}
+
+/* ========== 🧪 PLACEHOLDER ========== */
+
+.edition-placeholder {
+  border: 1px dashed var(--color-editor-border);
+  background-color: var(--color-editor-background);
+  font-size: 0.95rem;
+  color: var(--color-editor-text-muted);
+}
+
+.info-a-suivre {
+  margin-top: var(--space-sm);
+  font-style: italic;
+  color: var(--color-editor-text-muted);
+}
+
+
+
+/* ========== ✏️ CHAMPS PARTICULIERS ========== */
+
+.champ-enigme.champ-texte[data-champ="enigme_visuel_legende"] {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+li.ligne-email.champ-organisateur.champ-vide,
+li.ligne-coordonnees.champ-organisateur.champ-vide,
+li.ligne-logo.champ-organisateur.champ-vide {
+  border: 0;
+  background-color: transparent;
+  border-radius: 0;
+  padding: 0;
+  opacity: 1;
+}
+
+li.ligne-logo,
+li.champ-titre,
+li.ligne-email {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+li.ligne-logo .champ-modifier {
+  margin: 0;
+}
+
+/* WYSIWYG résumé blocks */
+
+.resume-infos li.champ-description,
+.resume-infos li.champ-wysiwyg {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+
+.resume-infos li.champ-description .champ-texte,
+.resume-infos li.champ-wysiwyg .champ-texte {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  min-height: 40px;
+}
+
+.resume-infos li.champ-description .champ-texte-contenu,
+.resume-infos li.champ-wysiwyg .champ-texte-contenu {
+  display: inline;
+}
+
+.resume-infos li.champ-description .champ-ajouter,
+.resume-infos li.champ-wysiwyg .champ-ajouter {
+  display: flex;
+  align-items: center;
+  height: 40px;
+}
+
+
+.resume-infos li.champ-description .champ-texte .champ-modifier,
+.resume-infos li.champ-wysiwyg .champ-texte .champ-modifier {
+  transform: none;
+  margin-left: 0.3rem;
+}
+
+.resume-infos li.champ-description.champ-vide .champ-texte,
+.resume-infos li.champ-wysiwyg.champ-vide .champ-texte {
+  color: var(--color-editor-text-muted);
+}
+
+.champ-img.champ-vide .champ-modifier {
+  display: flex;
+  align-items: center;
+  height: 40px;
+}
+
+.resume-infos li.champ-recompense {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-xs);
+}
+
+.recompense-valeur__label,
+.recompense-valeur__devise {
+  font-size: 0.75em;
+  opacity: 0.8;
+}
+
+.recompense-valeur__label {
+  margin-right: var(--space-xxs);
+}
+
+.recompense-valeur__devise {
+  margin-left: 0.15rem;
+}
+
+
+.resume-infos li.champ-recompense .champ-texte {
+  flex: 1;
+}
+
+.resume-infos li.champ-recompense .champ-texte-contenu {
+  display: inline;
+}
+
+.resume-infos li.champ-recompense .champ-modifier {
+  transform: none;
+  margin-left: 0.3rem;
+}
+
+.resume-infos li.champ-recompense.champ-vide .champ-texte {
+  color: var(--color-editor-text-muted);
+}
+
+li.ligne-email > i.fa-envelope {
+  opacity: 0.6;
+  margin-right: 0.3rem;
+}
+
+li.ligne-email .champ-affichage {
+  justify-content: flex-start;
+  text-align: unset;
+}
+
+/* Champs délai et heure de solution en ligne */
+.champ-solution-timing {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: var(--space-xs);
+  white-space: nowrap;
+  color: var(--color-editor-text-muted);
+}
+
+.champ-solution-timing .champ-delai-inline {
+  width: 45px;
+  padding: 0.2rem 0.3rem;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.champ-solution-timing .champ-select-heure {
+  width: 60px;
+  padding: 0.2rem 0.3rem;
+  font-size: 0.9rem;
+}
+
+.edition-panel-section .champ-badge-cout {
+  margin: 0 var(--space-md);
+}
+
+.edition-panel-section .resume-technique .champ-cout-points .champ-edition,
+.edition-panel-section .resume-reglages .champ-cout-points .champ-edition {
+  gap: 0 5px;
+}
+
+
+
+/* ========== 📱 RESPONSIVE PANNEAU EDITION ========== */
+@media not all and (--bp-tablet) {
+  .edition-tab-content {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .edition-panel-body {
+    flex-direction: column;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .edition-panel-section {
+    border: 0;
+    padding-left: 0;
+    padding-right: 0;
+  }
+}
+
+@media not all and (--bp-small) {
+  .edition-panel-body {
+    flex-direction: column;
+  }
+}
+
+/* ==================================================
+    🧭 PANNEAU LATÉRAL 
+   -------------------------------------------------- */
+
+/* 🧭 Panneau latéral – animation et position */
+.panneau-lateral-liens {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: 100%;
+  max-width: 420px;
+  background-color: var(--color-editor-background);
+  z-index: 10000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+  overflow-y: auto;
+  transform: translateX(100%);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.4s ease, opacity 0.4s ease;
+  border: 1px solid var(--color-editor-border);
+  border-radius: 8px;
+  color: var(--color-editor-text);
+}
+
+.panneau-lateral-liens.ouvert {
+  transform: translateX(0%);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+body.panneau-ouvert::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 9998;
+}
+
+
+.panneau-lateral__contenu {
+  padding: var(--space-2xl) var(--space-2xl) var(--space-2xl) var(--space-3xl);
+}
+
+.panneau-lateral__contenu #bouton-supprimer-recompense{
+  color:var(--color-text-fond-clair)
+}
+
+#bouton-ajouter-variante {
+  background-color: var(--color-editor-button);
+  color: var(--color-white);
+}
+
+#bouton-ajouter-variante:hover {
+  background-color: var(--color-editor-button-hover);
+}
+
+.champ-variantes-resume {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.champ-variantes-resume .variantes-table {
+  margin: 0;
+  width: auto;
+  display: inline-table;
+  border-collapse: collapse;
+  font-size: 0.85em;
+}
+
+.champ-variantes-resume .variantes-table th,
+.champ-variantes-resume .variantes-table td {
+  padding: 0 4px 0 0;
+  font-weight: normal;
+  border: none;
+}
+
+.champ-variantes-resume .variantes-table th {
+  color: var(--color-editor-text-muted);
+}
+
+.champ-variantes-resume .variantes-table .variante-texte {
+  color: var(--color-editor-text);
+}
+
+.champ-variantes-resume .variantes-table .variante-message {
+  color: var(--color-editor-text-muted);
+}
+
+/* Alignement commun des headers dans les panneaux */
+.panneau-lateral__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-md);
+  border-bottom: 1px solid var(--color-editor-border);
+  position: sticky;
+  top: 0;
+  background-color: var(--color-editor-background);
+  z-index: 10;
+}
+
+.panneau-lateral__header h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--color-editor-heading);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.panneau-lateral-liens.ouvert .panneau-lateral__header h2 {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* 🧭 Bouton de fermeture */
+.panneau-fermer {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  color: var(--color-editor-text-muted);
+  cursor: pointer;
+  padding: var(--space-xxs);
+  line-height: 1;
+  transition: color 0.2s ease;
+  opacity: 0.75;
+}
+
+.panneau-fermer:hover {
+  opacity: 1;
+}
+
+/* 🧭 Liste sans puces */
+.liste-liens-formulaires {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* 🧭 Affichage propre des labels */
+#panneau-recompense-chasse label {
+  margin-bottom: -13px;
+}
+
+.panneau-lateral__contenu label {
+  font-size: unset;
+  color: var(--color-editor-text-muted);
+}
+
+.acf-hide-label > .acf-label {
+  display: none;
+}
+
+.ligne-lien-formulaire label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-weight: 500;
+  margin-bottom: 0.4rem;
+  color: var(--color-editor-text);
+}
+
+.ligne-lien-formulaire label::before {
+  display: none;
+}
+
+
+/* 🧭 Espacement des champs */
+.ligne-lien-formulaire {
+  margin-bottom: var(--space-xl);
+}
+
+/* 🧭 Champ input */
+.ligne-lien-formulaire input[type="url"] {
+  width: 100%;
+  font-size: 1rem;
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: 0.5rem;
+  background-color: white;
+  color: var(--color-editor-text);
+  box-sizing: border-box;
+}
+
+/* 🧭 Bouton enregistrer */
+.panneau-lateral__actions {
+  margin-top: var(--space-2xl);
+}
+
+.bouton-enregistrer-liens {
+  background-color: var(--color-editor-success);
+  color: white;
+  padding: var(--space-xs) var(--space-md);
+  border: none;
+  font-weight: bold;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.bouton-enregistrer-liens:hover {
+  background-color: var(--color-editor-success-hover);
+}
+
+.zone-chasses,
+.bloc-presentation-organisateur {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.4s ease, visibility 0.4s ease;
+}
+
+.panneau-lateral-large {
+  width: 100%;
+  max-width: 1000px;
+}
+
+.zone-chasses.masque,
+.bloc-presentation-organisateur.masque {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.bloc-toggle {
+  overflow: hidden;
+  transition: opacity 0.4s ease, max-height 0.4s ease;
+  opacity: 1;
+  max-height: 1000px;
+  /* suffisant pour la plupart des cas */
+}
+
+.bloc-toggle.masque {
+  opacity: 0;
+  max-height: 0;
+  pointer-events: none;
+}
+
+/* 🖼️ Masquer l'option de tri dans la galerie d'images de l’énigme */
+#panneau-images-enigme .acf-gallery-sort {
+  display: none;
+}
+
+
+
+
+
+/* ==================================================
+  🗺️ GRILLE DE CHASSES
+  ================================================== */
+
+.carte-ajout-chasse.disabled {
+  pointer-events: none;
+  opacity: 0.5;
+  filter: grayscale(100%);
+}
+
+/* ==================================================
+   🗂️ ONGLET MODAL D'ÉDITION
+   ================================================== */
+
+.edition-tabs {
+  display: flex;
+  gap: var(--space-xs);
+}
+
+.edition-tab {
+  background: none;
+  border: none;
+  padding: var(--space-xs) var(--space-md);
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--color-editor-text);
+}
+
+.edition-tab.active {
+  border-bottom: 3px solid var(--color-primary);
+}
+
+@media not all and (--bp-mobile) {
+  .edition-tab {
+    font-size: 16px;
+  }
+}
+
+@media not all and (--bp-small) {
+  .edition-tab {
+    font-size: 16px;
+  }
+}
+
+
+.edition-tab-content {
+  display: none;
+  min-height: 180px;
+  padding: var(--space-md);
+  background-color: var(--color-editor-background);
+  position: relative;
+}
+
+@media not all and (--bp-mobile) {
+  .edition-tab-content {
+    padding-left: 0;
+    padding-right: 0;
+  }
+}
+
+.edition-tab-content.active {
+  display: block;
+}
+
+.edition-tab-content .tab-watermark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 10rem;
+  color: var(--color-editor-border);
+  opacity: 0.08;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.edition-tab-content > :not(.tab-watermark) {
+  position: relative;
+  z-index: 1;
+}
+
+
+/* Table des tentatives de réponse */
+.table-tentatives {
+  margin-top: var(--space-md);
+}
+
+.table-tentatives th,
+.table-tentatives td {
+  border-bottom: 1px solid var(--color-editor-border);
+  color: var(--color-editor-text);
+}
+
+.table-tentatives th {
+  background-color: rgba(0, 0, 0, 0.04);
+  color: var(--color-editor-heading);
+}
+
+.table-tentatives th:nth-child(1),
+.table-tentatives td:nth-child(1),
+.table-tentatives th:nth-child(2),
+.table-tentatives td:nth-child(2) {
+  white-space: nowrap;
+  width: 1%;
+}
+
+.table-tentatives td:nth-child(3) {
+  word-break: break-word;
+}
+
+.table-tentatives button {
+  margin-right: 4px;
+}
+
+.table-tentatives .bouton-cta {
+  background-color: var(--color-editor-success);
+  color: var(--color-text-fond-clair);
+}
+
+.table-tentatives .bouton-cta:hover {
+  background-color: var(--color-editor-success-hover);
+}
+
+.table-tentatives .bouton-secondaire {
+  background-color: var(--color-editor-error);
+  color: var(--color-text-fond-clair);
+  border-color: var(--color-editor-error);
+}
+
+.table-tentatives .bouton-secondaire:hover {
+  background-color: var(--color-editor-error);
+  filter: brightness(0.9);
+}
+
+
+.table-tentatives tr.tentative-pending {
+  background-color: var(--color-editor-field-hover);
+  font-weight: bold;
+}
+
+/* ====== Filtres de statistiques ====== */
+
+.stats-filtres {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  background-color: var(--color-editor-background);
+  border: 1px solid var(--color-editor-border);
+  border-radius: 4px;
+}
+
+.stats-filtres label {
+  white-space: nowrap;
+}
+
+/* ====== Cartes de statistiques ====== */
+
+.stats-cards {
+  display: grid;
+  gap: 24px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  margin: var(--space-md) 0 var(--space-3xl);
+}
+
+.dashboard-grid {
+  display: grid;
+  gap: 24px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  margin-top: 20px;
+}
+
+.dashboard-card {
+  background-color: var(--color-editor-background);
+  border: 1px solid var(--color-editor-border);
+  border-radius: 8px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+  color: var(--color-editor-text);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  position: relative;
+}
+
+.carte-orgy {
+  @extend .dashboard-card;
+
+  .bouton-cta {
+    line-height: 1.4;
+  }
+}
+
+.carte-check {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: var(--color-editor-success);
+  display: none;
+  align-items: center;
+  justify-content: center;
+
+  i {
+    color: #fff;
+    font-size: 0.6rem;
+    line-height: 1;
+  }
+}
+
+.carte-orgy.champ-rempli .carte-check {
+  display: flex;
+}
+
+.dashboard-grid > .dashboard-card:only-child {
+  max-width: var(--dashboard-card-max-width);
+  width: 100%;
+  justify-self: center;
+}
+
+.dashboard-card.disabled {
+  opacity: 0.5;
+  filter: grayscale(100%);
+  pointer-events: none;
+  cursor: not-allowed;
+}
+
+.dashboard-card.disabled h3,
+.dashboard-card.disabled i,
+.dashboard-card.disabled .stat-value {
+  color: var(--color-editor-text-muted);
+}
+
+.dashboard-card i {
+  font-size: 2rem;
+  color: var(--color-editor-heading);
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.1));
+}
+
+.dashboard-card .carte-check i {
+  font-size: 0.6rem;
+  color: #fff;
+  line-height: 1;
+  filter: none;
+}
+
+.dashboard-card img {
+  width: 2rem;
+  height: 2rem;
+}
+
+.dashboard-card.champ-qr-code,
+.dashboard-card.champ-protection-solutions {
+  width: 75%;
+  margin: var(--space-4xl) auto;
+}
+
+@media not all and (--bp-desktop) {
+  .dashboard-card.champ-qr-code,
+  .dashboard-card.champ-protection-solutions {
+    width: 100%;
+    margin: var(--space-xl) auto;
+  }
+}
+
+.dashboard-card.solution-option {
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s, opacity 0.2s;
+}
+
+.dashboard-card.solution-option.active {
+  border-color: var(--color-editor-button);
+  background-color: rgba(26, 115, 232, 0.1);
+  opacity: 1;
+}
+
+.dashboard-card.solution-option:not(.active) {
+  opacity: 0.6;
+}
+
+.dashboard-card h3 {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-editor-heading);
+}
+
+.dashboard-card.champ-indices .stat-value {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.dashboard-card.champ-indices .stat-value .bouton-cta {
+  display: block;
+  width: 100%;
+  /*margin-top: 0;*/
+}
+
+.dashboard-card.champ-indices .cta-indice-options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  opacity: 0;
+  max-height: 0;
+  overflow: hidden;
+  pointer-events: none;
+  transition: opacity 0.3s ease, max-height 0.3s ease;
+}
+
+.dashboard-card.champ-indices.show-options .cta-indice-options {
+  opacity: 1;
+  max-height: 10rem;
+  pointer-events: auto;
+}
+
+.dashboard-card.champ-indices.show-options .cta-indice-pour {
+  display: none;
+}
+
+.dashboard-card.champ-indices .cta-indice-chasse {
+  background-color: var(--color-editor-button);
+  color: var(--color-white);
+}
+
+.dashboard-card.champ-indices .cta-indice-chasse:hover {
+  background-color: var(--color-editor-button-hover);
+}
+
+.dashboard-card.champ-indices .cta-indice-enigme {
+  background-color: var(--color-editor-success);
+  color: var(--color-white);
+}
+
+.dashboard-card.champ-indices .cta-indice-enigme:hover {
+  background-color: var(--color-editor-success-hover);
+}
+
+.dashboard-card.champ-solutions .stat-value {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.dashboard-card.champ-solutions .stat-value .bouton-cta {
+  display: block;
+  width: 100%;
+}
+
+.dashboard-card.champ-solutions .cta-solution-options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  opacity: 0;
+  max-height: 0;
+  overflow: hidden;
+  pointer-events: none;
+  transition: opacity 0.3s ease, max-height 0.3s ease;
+}
+
+.dashboard-card.champ-solutions.show-options .cta-solution-options {
+  opacity: 1;
+  max-height: 10rem;
+  pointer-events: auto;
+}
+
+.dashboard-card.champ-solutions.show-options .cta-solution-pour {
+  display: none;
+}
+
+.dashboard-card.champ-solutions .cta-solution-chasse {
+  background-color: var(--color-editor-button);
+  color: var(--color-white);
+}
+
+.dashboard-card.champ-solutions .cta-solution-chasse:hover {
+  background-color: var(--color-editor-button-hover);
+}
+
+.dashboard-card.champ-solutions .cta-solution-enigme {
+  background-color: var(--color-editor-success);
+  color: var(--color-white);
+}
+
+.dashboard-card.champ-solutions .cta-solution-enigme:hover {
+  background-color: var(--color-editor-success-hover);
+}
+
+.dashboard-card.champ-solutions .cta-solution-chasse.disabled,
+.dashboard-card.champ-solutions .cta-solution-enigme.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.dashboard-card .solution-reset {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  background: none;
+  border: none;
+  color: var(--color-editor-text-muted);
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  font-size: 1rem;
+}
+
+.dashboard-card .solution-reset:hover {
+  color: var(--color-editor-text);
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.dashboard-card.solution-delai .stat-value {
+  display: flex;
+  flex-direction: line;
+  gap: var(--space-xxs);
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.dashboard-card.solution-delai .stat-value span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xxs);
+}
+
+.dashboard-card.solution-reassurance {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  text-align: left;
+  gap: var(--space-2xl);
+  padding: var(--space-2xl) var(--space-4xl);
+  width: 90%;
+  max-width: 900px;
+  margin: 4rem auto 0;
+}
+
+.dashboard-card.solution-reassurance .reassurance-icon {
+  font-size: 5rem;
+  color: var(--color-editor-heading);
+}
+
+.dashboard-card.solution-reassurance ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+}
+
+.dashboard-card.solution-reassurance ul li {
+  margin-bottom: var(--space-xs);
+  font-size: 1.25rem;
+  line-height: 1.5;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+}
+
+.dashboard-card.solution-reassurance ul li i {
+  color: var(--color-editor-success);
+  font-size: 1.2rem;
+  margin-top: 0.3rem;
+}
+
+.dashboard-card.solution-reassurance ul li strong {
+  font-size: 1.4rem;
+}
+
+.dashboard-card.graph-card {
+  align-items: stretch;
+  text-align: left;
+  margin: var(--space-md) 0 var(--space-3xl);
+}
+
+.dashboard-card.graph-card h3 {
+  text-align: center;
+}
+
+.stats-disabled-list {
+  list-style: disc inside;
+  margin: var(--space-xs) 0 var(--space-3xl);
+  color: var(--color-editor-text-muted);
+  font-size: 0.9rem;
+}
+
+/* ====== Résumé chasse ====== */
+
+.chasse-stats-header {
+  margin: var(--space-2xl) 0 var(--space-md);
+}
+
+.chasse-stats-header h3 {
+  margin: 0 0 var(--space-xs);
+}
+
+.chasse-stats-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+#chasse-tab-stats > div.edition-panel-body > table > thead > tr:nth-child(2) > th:nth-child(1),
+#organisateur-tab-stats > div.edition-panel-body > table > thead > tr:nth-child(2) > th:nth-child(1) {
+  text-align: right;
+}
+
+/* 🏷️ Aspect étiquette pour les valeurs */
+.etiquette {
+  display: inline-block;
+  padding: 2px 6px;
+  border: 1px solid var(--color-editor-border);
+  border-radius: 4px;
+  background-color: var(--color-editor-background);
+  font-size: 0.85em;
+  white-space: nowrap;
+}
+
+.etiquette-grande {
+  padding: 4px 8px;
+  font-size: 1rem;
+}
+
+/* ====== Mode de fin ====== */
+.champ-mode-fin {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.champ-mode-options {
+  display: flex;
+  flex-direction: row;
+  gap: var(--space-md);
+  align-items: center;
+}
+
+.champ-mode-options.segmented-control {
+  gap: 0;
+  border: 1px solid var(--color-editor-border);
+  border-radius: var(--space-xs);
+  overflow: hidden;
+}
+
+.champ-mode-options.segmented-control input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+}
+
+.champ-mode-options.segmented-control label {
+  flex: 1;
+  padding: var(--space-xs) var(--space-sm);
+  text-align: center;
+  cursor: pointer;
+  background: var(--color-editor-background);
+  border-right: 1px solid var(--color-editor-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xxs);
+  user-select: none;
+}
+
+.champ-mode-options.segmented-control label:last-of-type {
+  border-right: none;
+}
+
+.champ-mode-options.segmented-control input[type="radio"]:checked + label {
+  background: var(--color-editor-accent);
+  color: var(--color-editor-background);
+}
+
+.champ-mode-options.segmented-control input[type="radio"]:disabled + label {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.champ-mode-fin label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xxs);
+}
+
+.champ-mode-options .toggle-option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xxs);
+}
+
+.champ-mode-options .switch-control {
+  position: relative;
+  width: 42px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.champ-mode-options .switch-control input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.champ-mode-options .switch-slider {
+  position: absolute;
+  inset: 0;
+  background-color: var(--color-editor-border);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.champ-mode-options .switch-slider::before {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  left: 2px;
+  top: 2px;
+  background-color: var(--color-editor-background);
+  border-radius: 50%;
+  transition: transform var(--transition-fast);
+  box-shadow: 0 0 2px rgba(var(--color-black-rgb), 0.4);
+}
+
+.champ-mode-options .switch-control input:checked + .switch-slider {
+  background-color: var(--color-editor-accent);
+}
+
+.champ-mode-options .switch-control input:checked + .switch-slider::before {
+  transform: translateX(18px);
+}
+
+.champ-mode-options .switch-control input:disabled + .switch-slider {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+#champ-enigme-date {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+#champ-enigme-pre-requis {
+  display: flex;
+  gap: var(--space-xs);
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+#champ-enigme-pre-requis.champ-vide {
+  border: 2px dashed var(--color-editor-error);
+  padding: var(--space-xs);
+  border-radius: 4px;
+}
+
+#champ-enigme-date.cache,
+#champ-enigme-pre-requis.cache,
+#champ-enigme-cout.cache {
+  display: none;
+}
+
+.zone-validation-fin {
+  margin-top: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.zone-validation-fin .valider-fin-chasse-btn {
+  font-size: 1.1rem;
+  padding: 12px 20px;
+}
+
+.zone-validation-fin .valider-fin-chasse-btn:not(:disabled) {
+  color: var(--color-text-primary);
+  opacity: 1;
+}
+
+.zone-validation-fin .valider-fin-chasse-btn:not(:disabled):hover {
+  background-color: var(--color-secondary);
+  color: var(--color-background-button);
+}
+
+.carte-arret-chasse {
+  .zone-validation-fin {
+    align-items: center;
+  }
+
+  .fin-chasse-actions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+}
+
+.help-icon-button,
+.mode-fin-aide {
+  background: none;
+  border: none;
+  cursor: pointer;
+  margin-left: 0.3em;
+  color: inherit;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.help-icon-button i,
+.mode-fin-aide i {
+  pointer-events: none;
+}
+
+.help-icon--aide,
+.help-icon--info,
+.help-icon--aide-small {
+  border-radius: 50%;
+  background-color: var(--color-gray-100, #eee);
+  width: 1.4em;
+  height: 1.4em;
+}
+
+.help-icon--info {
+  background-color: var(--color-white, #fff);
+  border: 1px solid var(--color-gray-300, #ccc);
+}
+
+.help-icon--bg-light {
+  color: var(--color-text-primary);
+}
+
+.help-icon--bg-dark {
+  color: var(--color-background);
+}
+
+.help-icon--aide-small {
+  width: 1em;
+  height: 1em;
+}
+
+.help-icon--aide-small i {
+  font-size: 0.7em;
+}
+
+/* 🎯 Pager de tableau */
+.pager {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+
+.pager button.etiquette {
+  cursor: pointer;
+  padding: 4px 8px;
+  font-size: 1rem;
+}
+
+.pager-info {
+  margin: 0 8px;
+  color: var(--color-editor-text);
+  font-size: 0.875rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pager-info .pager-select {
+  width: auto;
+}
+
+/* 📌 Actions de conversion en ligne */
+.liste-paiements .js-update-request {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  width: 100%;
+}
+
+.liste-paiements .js-update-request select {
+  flex: 0 0 auto;
+  width: auto;
+  font-size: 0.875rem;
+}
+
+.liste-paiements .js-update-request button {
+  flex: 0 0 auto;
+  padding: 2px 6px;
+}
+
+/* ========== ⚠️ ADMINISTRATION ACTIONS ========== */
+.edition-panel-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-xs);
+  padding: var(--space-md);
+}
+
+
+/* ========== 🧩 PRÉ-REQUIS – LISTE D'ÉNIGMES ========== */
+.champ-pre-requis .liste-pre-requis {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+    margin-top: var(--space-xs);
+}
+
+.champ-pre-requis .prerequis-item {
+    display: block;
+    cursor: pointer;
+}
+
+.champ-pre-requis .prerequis-item input {
+    display: none;
+}
+
+.champ-pre-requis .prerequis-mini {
+    display: block;
+    border: 1px solid var(--color-editor-border);
+    border-radius: 4px;
+    padding: var(--space-xs) calc(var(--space-xs) + 24px) var(--space-xs) var(--space-xs);
+    transition: background-color 0.2s, border-color 0.2s;
+    position: relative;
+}
+
+
+.champ-pre-requis .prerequis-check {
+    position: absolute;
+    top: 50%;
+    right: 4px;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    background-color: var(--color-editor-success);
+    border-radius: 50%;
+    color: var(--color-editor-background);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+}
+
+.champ-pre-requis .prerequis-item input:checked + .prerequis-mini {
+    border-color: var(--color-editor-accent);
+    background-color: var(--color-editor-field-hover);
+}
+
+.champ-pre-requis .prerequis-item input:checked + .prerequis-mini .prerequis-check {
+    display: flex;
+}
+
+.champ-pre-requis .prerequis-mini:hover {
+    border-color: var(--color-editor-accent);
+}
+
+/* 📌 Toggle de l'historique de conversion */
+
+.conversion-history .conversion-history-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0 6px;
+    height: 24px;
+}
+
+.conversion-history .conversion-history-toggle::before {
+    content: '\25B6'; /* triangle right */
+    font-size: 0.875rem;
+    line-height: 1;
+}
+
+.conversion-history .conversion-history-toggle[aria-expanded="true"]::before {
+    content: '\25BC'; /* triangle down */
+}
+
+.conversion-history .conversion-history-toggle-text {
+    font-size: 0.875rem;
+    line-height: 1;
+}
+
+/* 🔄 Loading spinner for conversion history */
+.conversion-history-loading {
+    display: none;
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--color-editor-border);
+    border-top-color: var(--color-editor-accent);
+    border-radius: 50%;
+    animation: conversion-history-spin 0.6s linear infinite;
+    margin-left: 0.5rem;
+}
+
+@keyframes conversion-history-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Overlay indice */
+
+.indice-modal-overlay,
+.solution-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(var(--color-black-rgb), 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 20000;
+}
+
+.indice-modal-overlay .indice-modal,
+.solution-modal-overlay .solution-modal {
+    background: var(--color-editor-background);
+    color: var(--color-editor-text);
+    padding: var(--space-lg);
+    border: 1px solid var(--color-editor-border);
+    border-radius: 8px;
+    max-width: 500px;
+    width: 90%;
+    box-sizing: border-box;
+    position: relative;
+    font-family: var(--font-main);
+    z-index: 20001;
+}
+
+.indice-modal-header {
+    border-bottom: 1px solid var(--color-editor-border);
+    margin-bottom: var(--space-md);
+    padding-bottom: var(--space-sm);
+}
+
+.indice-modal-header h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--color-editor-heading);
+}
+
+.indice-modal-header p {
+    margin: var(--space-xs) 0 0;
+    color: var(--color-editor-text-muted);
+    font-size: 0.875rem;
+}
+
+.solution-modal-header {
+    border-bottom: 1px solid var(--color-editor-border);
+    margin-bottom: var(--space-md);
+    padding-bottom: var(--space-sm);
+}
+
+.solution-modal-header h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--color-editor-heading);
+}
+
+.solution-modal-header p {
+    margin: var(--space-xs) 0 0;
+    color: var(--color-editor-text-muted);
+    font-size: 0.875rem;
+}
+
+.indice-modal-close,
+.solution-modal-close {
+    position: absolute;
+    top: var(--space-sm);
+    right: var(--space-sm);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.5rem;
+    color: var(--color-editor-heading);
+}
+
+.indice-modal-form label,
+.solution-modal-form label {
+    display: block;
+    margin-bottom: var(--space-sm);
+    color: var(--color-editor-text);
+}
+
+.indice-modal-form textarea,
+.solution-modal-form textarea {
+    width: 100%;
+    min-height: 100px;
+    background: var(--color-editor-background);
+    color: var(--color-editor-text);
+    border: 1px solid var(--color-editor-border);
+    border-radius: 4px;
+    padding: var(--space-sm);
+    box-sizing: border-box;
+}
+
+
+.indice-modal-form .select-image {
+    background: var(--color-editor-background);
+    color: var(--color-editor-text);
+    border: 1px solid var(--color-editor-border);
+    border-radius: 4px;
+    padding: var(--space-sm) var(--space-md);
+    cursor: pointer;
+    transition: background var(--transition-fast);
+}
+
+.indice-modal-form .select-image:hover {
+    background: var(--color-editor-background);
+}
+
+.indice-modal-form .indice-modal-validate,
+.solution-modal-form .solution-modal-validate {
+    background: var(--color-editor-button);
+    color: var(--color-white);
+    border: none;
+    border-radius: 4px;
+    padding: var(--space-sm) var(--space-md);
+    cursor: pointer;
+    transition: background var(--transition-fast);
+}
+
+.indice-modal-form .indice-modal-validate:hover,
+.solution-modal-form .solution-modal-validate:hover {
+    background: var(--color-editor-button-hover);
+}
+
+.indice-modal-form .indice-modal-validate:disabled,
+.solution-modal-form .solution-modal-validate:disabled {
+    cursor: not-allowed;
+}
+
+.indice-modal-form .indice-modal-footer,
+.solution-modal-form .solution-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: var(--space-md);
+    margin-top: var(--space-md);
+}
+
+.indice-modal-form .indice-state-message,
+.solution-modal-form .solution-state-message {
+    color: var(--color-editor-text-muted);
+    font-size: 0.875rem;
+}
+
+.indice-modal-form .date-wrapper input,
+.solution-modal-form .delai-wrapper input {
+    width: 100%;
+    background: var(--color-editor-background);
+    color: var(--color-editor-text);
+    border: 1px solid var(--color-editor-border);
+    border-radius: 4px;
+    padding: var(--space-sm);
+    box-sizing: border-box;
+}
+
+.solution-modal-form .delai-wrapper {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-top: var(--space-sm);
+}
+
+.indice-modal-form .image-field {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.indice-modal-form .image-preview {
+    position: relative;
+    display: inline-block;
+}
+
+.indice-modal-form .image-preview img {
+    max-height: 80px;
+    display: block;
+}
+
+.indice-modal-form .image-preview .image-actions {
+    position: absolute;
+    top: var(--space-xxs);
+    left: var(--space-xxs);
+    display: flex;
+    gap: var(--space-xxs);
+}
+
+.indice-modal-form .image-preview .image-actions button {
+    background-color: rgba(var(--color-black-rgb), 0.6);
+    border: none;
+    color: var(--color-white);
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.indice-modal-form .image-preview .image-actions button:hover {
+    background-color: rgba(var(--color-black-rgb), 0.8);
+}

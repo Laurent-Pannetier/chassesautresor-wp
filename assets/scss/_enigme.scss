@@ -1,0 +1,903 @@
+/* Layout for enigma pages */
+.enigme-layout {
+  display: block;
+}
+
+/* Display images stacked with full width */
+.enigme-images {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.enigme-images .enigme-image {
+  width: 100%;
+}
+
+.enigme-images picture,
+.enigme-images img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+
+.reponse-indices-separator {
+  margin-top: var(--space-xl);
+  margin-bottom: var(--space-lg);
+  border: 0;
+  border-top: 1px solid var(--color-gris-3);
+  opacity: 0.5;
+}
+
+.zone-indices {
+  margin-top: 0;
+  font-size: 0.9rem;
+  opacity: 0.85;
+
+  .indice-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    justify-content: flex-start;
+    flex: 1 1 auto;
+  }
+
+  .indice-link,
+  .indice-label {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: calc(var(--space-xs) / 2) var(--space-sm);
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    border: 2px solid transparent;
+  }
+
+  .indice-link {
+    text-decoration: none;
+
+    &--locked,
+    &--unlocked,
+    &--upcoming {
+      background-color: var(--color-gris-3);
+      color: var(--color-white);
+    }
+
+    &--active {
+      background-color: var(--color-secondary);
+      border-color: var(--color-secondary);
+      color: var(--color-white);
+    }
+  }
+
+  .indice-label.indice-link--upcoming {
+    background-color: var(--color-gris-3);
+    color: var(--color-white);
+  }
+
+  .btn-debloquer-indice {
+    display: inline-block;
+    padding: var(--space-sm) var(--space-md);
+    background-color: var(--color-primary);
+    color: var(--color-text-fond-clair);
+    border: 0;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  .indice-display {
+    display: none;
+
+    &:not(:empty) {
+      display: block;
+      margin-top: var(--space-md);
+      position: relative;
+      padding: var(--space-sm);
+      border: 1px solid var(--color-gris-3);
+      border-radius: 4px;
+      text-align: left;
+    }
+
+    .indice-close {
+      position: absolute;
+      top: var(--space-xs);
+      right: var(--space-xs);
+      background: none;
+      border: 0;
+      cursor: pointer;
+    }
+  }
+
+  .zone-indices-line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-sm);
+    justify-content: flex-start;
+
+    &:not(:first-of-type) {
+      margin-top: var(--space-sm);
+    }
+
+    &__label {
+      font-weight: 600;
+      flex: 0 0 140px;
+      line-height: 1.2;
+      font-size: 0.875rem;
+    }
+  }
+
+  .indice-contenu {
+    display: flex;
+    gap: var(--space-md);
+    align-items: flex-start;
+
+    &__image {
+      flex: 0 0 auto;
+      position: relative;
+
+      .eyebox-trigger {
+        display: inline-block;
+        position: relative;
+      }
+
+      .eyebox-icon {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 2rem;
+        color: var(--color-white);
+        opacity: 0;
+        transition: opacity 0.2s;
+        pointer-events: none;
+      }
+
+      .eyebox-trigger:hover .eyebox-icon,
+      .eyebox-trigger:focus .eyebox-icon {
+        opacity: 1;
+      }
+
+      img {
+        width: 150px;
+        height: 150px;
+        object-fit: cover;
+        display: block;
+      }
+    }
+
+    &__texte {
+      flex: 1 1 auto;
+    }
+  }
+}
+
+.eyebox-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+
+  img {
+    max-width: 90%;
+    max-height: 90%;
+  }
+}
+
+.menu-lateral .stats-bar-chart .bar-value,
+.menu-lateral .stats-bar-chart .bar-value--outside {
+  font-size: 1rem;
+  font-weight: 700;
+  color: rgba(var(--color-white-rgb, 255, 255, 255), 0.8);
+}
+
+.menu-lateral .stats-bar-chart .bar-row + .bar-row {
+  margin-top: 0;
+}
+
+.menu-lateral .stats-bar-chart .bar-label {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+/* Menu status styles */
+
+.enigme-menu {
+  margin-top: var(--space-lg);
+  margin-bottom: var(--space-lg);
+  list-style: none;
+  padding: 0;
+}
+
+/* Stylised bullets and indentation */
+.enigme-menu li {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  margin-bottom: var(--space-xxs);
+  padding-left: calc(var(--space-md) + 16px);
+  --bullet-fill: var(--etat-enigme-menu-en-cours);
+}
+
+.enigme-menu li::before {
+  position: absolute;
+  top: 50%;
+  left: 16px;
+  transform: translateY(-50%);
+  font-family: "Font Awesome 6 Free";
+  font-weight: 900;
+  font-size: 0.75rem;
+  color: var(--bullet-fill);
+  content: "\f111";
+}
+
+.enigme-menu li > a:not(.enigme-menu__edit) {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  padding: var(--space-xxs) calc(var(--space-sm) + 1.5em);
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: inherit;
+  text-decoration: none;
+  border-radius: 4px;
+  min-height: 44px;
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+}
+
+.enigme-menu li > a:not(.enigme-menu__edit):focus-visible {
+  outline-color: var(--color-accent);
+}
+
+.enigme-menu li > a:not(.enigme-menu__edit):visited {
+  color: inherit;
+}
+
+
+.enigme-menu li:not(.active):hover > a:not(.enigme-menu__edit) {
+  background-color: rgba(255, 215, 0, 0.1);
+}
+
+.enigme-menu li.bloquee {
+  --bullet-fill: var(--etat-enigme-menu-bloquee);
+}
+
+
+.enigme-menu__edit {
+  position: absolute;
+  top: 50%;
+  right: var(--space-sm);
+  transform: translateY(-50%);
+  font-size: 0.7em;
+  color: var(--color-accent);
+  opacity: 0;
+  transition: opacity 0.2s, font-size 0.2s;
+  background: none;
+  border: 0;
+  padding: 0;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+
+li.active .enigme-menu__edit {
+  top: 30%;
+}
+
+.enigme-menu li:hover .enigme-menu__edit {
+  opacity: 1;
+}
+
+.enigme-menu li.active .enigme-menu__edit {
+  opacity: 1;
+  font-size: 0.9em;
+  animation: enigme-menu-pulse 2s ease-in-out infinite;
+}
+
+@keyframes enigme-menu-pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+.enigme-menu li.en-attente {
+  --bullet-fill: var(--etat-enigme-menu-en-attente);
+}
+
+.enigme-menu li.en-attente::before {
+  content: '';
+  box-sizing: border-box;
+  width: 8px;
+  height: 8px;
+  border: 2px solid var(--etat-enigme-menu-en-attente);
+  border-top-color: transparent;
+  border-radius: 50%;
+  background-color: transparent;
+  animation: enigme-menu-spin 0.6s linear infinite;
+}
+
+.enigme-menu li.succes {
+  --bullet-fill: var(--etat-enigme-menu-succes);
+}
+
+.enigme-menu li.succes::before,
+.enigme-menu li.complete::before {
+  content: "\f00c";
+}
+
+.enigme-menu li.incomplete::before {
+  content: "\f044";
+}
+
+.enigme-menu li.bloquee-date::before {
+  content: "\f254";
+}
+
+.enigme-menu li.bloquee-pre-requis::before {
+  content: "\f023";
+}
+
+.enigme-menu li.validation-auto::before {
+  content: "\f0e7";
+}
+
+.enigme-menu li.validation-manuelle::before {
+  content: "\f0e0";
+}
+
+.enigme-menu li.validation-aucune::before {
+  content: "\f06e";
+}
+
+
+.enigme-menu li.non-engagee > a:not(.enigme-menu__edit) {
+  font-weight: 600;
+}
+
+.enigme-menu li.non-engagee {
+  --bullet-fill: var(--etat-enigme-menu-non-engagee);
+}
+.enigme-menu li.non-engagee:not(.validation-auto):not(.validation-manuelle):not(.validation-aucune):not(.complete):not(.incomplete):not(.bloquee-date):not(.bloquee-pre-requis)::before {
+  content: none;
+}
+
+.enigme-menu li.non-engagee.validation-auto,
+.enigme-menu li.non-engagee.validation-manuelle,
+.enigme-menu li.non-engagee.validation-aucune,
+.enigme-menu li.non-engagee.complete {
+  --bullet-fill: var(--etat-enigme-menu-en-cours);
+}
+
+.enigme-menu li.non-engagee.incomplete {
+  --bullet-fill: var(--etat-enigme-menu-incomplete);
+}
+
+.enigme-menu li.incomplete {
+  --bullet-fill: var(--etat-enigme-menu-incomplete);
+}
+
+.menu-lateral.chasse-en-attente .enigme-menu li::before {
+  content: "\f111";
+  color: var(--etat-enigme-menu-en-attente);
+}
+.menu-lateral.joueur .enigme-menu li > a:not(.enigme-menu__edit) {
+  font-weight: 400;
+}
+
+.menu-lateral.joueur .enigme-menu li.non-engagee > a:not(.enigme-menu__edit),
+.menu-lateral.joueur .enigme-menu li.active > a:not(.enigme-menu__edit) {
+  font-weight: 600;
+}
+
+
+
+.enigme-menu li.active > a:not(.enigme-menu__edit) {
+  background-color: rgba(255, 215, 0, 0.2);
+  font-weight: 600;
+}
+
+.cards-grid.dragging {
+  outline: 2px dashed var(--color-accent);
+  outline-offset: -2px;
+  background-color: rgba(255, 215, 0, 0.05);
+  cursor: grabbing;
+}
+
+.carte-enigme {
+  position: relative;
+
+  &-handle {
+    position: absolute;
+    top: var(--space-xs);
+    left: var(--space-xs);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background-color: var(--color-grey-light);
+    color: var(--color-text-fond-clair);
+    font-size: 0.875rem;
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  @media (--bp-tablet) {
+    &-handle {
+      width: 28px;
+      height: 28px;
+      font-size: 1rem;
+    }
+  }
+
+  @media (--bp-desktop) {
+    &-handle {
+      width: 32px;
+      height: 32px;
+      font-size: 1.125rem;
+    }
+  }
+}
+
+.carte-enigme[draggable='true'] {
+  cursor: grab;
+  user-select: none;
+}
+
+.cards-grid.dragging .carte-enigme:not(.dragging) {
+  opacity: 0.7;
+}
+
+.carte-enigme.dragging {
+  opacity: 0.6;
+  cursor: grabbing;
+  transform: scale(0.95);
+  box-shadow: 0 0 0 4px var(--color-accent);
+  z-index: 2;
+}
+
+.carte-enigme.drag-over {
+  outline: 2px dashed var(--color-accent);
+  outline-offset: -4px;
+  background-color: rgba(255, 215, 0, 0.15);
+  transform: scale(1.03);
+  box-shadow: 0 0 0 4px var(--color-accent);
+}
+
+.enigme-menu--overflow {
+  margin-top: 0;
+}
+
+.enigme-menu__toggle {
+  margin-top: var(--space-sm);
+  background: none;
+  border: 0;
+  color: var(--color-accent);
+  font-weight: 600;
+  cursor: pointer;
+  position: relative;
+  transition: color 0.2s;
+}
+
+.enigme-menu__toggle[aria-expanded='true'] {
+  color: var(--color-primary);
+}
+
+.enigme-menu--overflow[hidden] + .enigme-menu__toggle::before {
+  content: '';
+  position: absolute;
+  top: -16px;
+  left: 0;
+  width: 100%;
+  height: 16px;
+  background: linear-gradient(to bottom, rgba(11, 19, 43, 0), var(--color-background));
+  pointer-events: none;
+}
+
+@keyframes enigme-menu-spin {
+  from {
+    transform: translateY(-50%) rotate(0deg);
+  }
+  to {
+    transform: translateY(-50%) rotate(360deg);
+  }
+}
+
+
+
+.page-enigme {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xl);
+  text-align: center;
+  margin-top: var(--space-md);
+}
+
+
+/* Titre + sous-titre */
+.page-enigme .enigme-header {
+  max-width: var(--container-max-width);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--space-md);
+  padding-right: var(--space-md);
+  padding-bottom: var(--space-md);
+  border-bottom: 1px solid var(--color-accent);
+}
+
+.page-enigme .enigme-header .enigme-titre {
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  font-size: clamp(26px, 8vw, 64px);
+}
+
+.page-enigme .enigme-header .enigme-soustitre {
+  margin-top: var(--space-xs);
+  color: var(--color-text-secondary);
+  font-size: 32px;
+}
+
+@media not all and (--bp-tablet) {
+  .page-enigme {
+    gap: var(--space-xl);
+  }
+
+  .page-enigme .enigme-header {
+    text-align: center;
+    padding-bottom: var(--space-sm);
+  }
+
+  .page-enigme .enigme-header .enigme-soustitre {
+    font-size: 1rem;
+  }
+}
+
+@media not all and (--bp-small) {
+  .page-enigme {
+    gap: var(--space-lg);
+  }
+
+  .page-enigme .enigme-header {
+    padding-bottom: var(--space-xs);
+  }
+
+  .page-enigme .enigme-header .enigme-soustitre {
+    font-size: 0.9rem;
+  }
+}
+
+.hero-visuel img {
+  /*width: 100%;*/
+  object-fit: cover;
+  /*max-height: 300px;*/
+}
+
+/* Ensure small images keep their natural width */
+.enigme-image--limited {
+  width: auto;
+  max-width: 100%;
+}
+
+.participation {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  background-color: rgba(
+    var(--aside-bg-rgb, 238, 238, 238),
+    var(--aside-opacity, 0.4)
+  );
+  padding: var(--space-xl);
+  border-radius: 6px;
+  justify-content: center;
+  width: 100%;
+  max-width: 700px;
+  margin: auto;
+  text-align: center;
+
+  h3 {
+    margin-top: 0;
+  }
+}
+
+@media (--bp-tablet) {
+  .participation {
+    width: 70%;
+  }
+}
+
+.participation-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.zone-reponse form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.solution details {
+  background: var(--bg-solution, var(--ca-color-bg, #f5f5f5));
+  padding: var(--space-md);
+  border-radius: 6px;
+  color: var(--color-text-fond-clair);
+  text-align: left;
+}
+
+.solution summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--color-text-fond-clair);
+}
+
+.solution > details > summary {
+  text-align: center;
+}
+
+.solution-content {
+  .solution-text {
+    max-width: 1024px;
+    margin-inline: auto;
+    padding: var(--space-lg);
+    margin-bottom: var(--space-xl);
+  }
+
+  .solution-enigme {
+    margin-bottom: var(--space-xl);
+
+    p {
+      padding-inline: var(--space-xl);
+
+      @media (--bp-tablet) {
+        padding-inline: var(--space-3xl);
+      }
+    }
+  }
+}
+
+/* 📝 Mise en forme du texte d'énigme */
+.enigme-texte {
+  max-width: 65ch;
+  margin-inline: auto;
+  padding-inline: var(--space-md);
+  font-size: clamp(1rem, 1.2vw + 0.9rem, 1.25rem);
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+  text-align: left;
+
+  ul {
+    list-style: disc;
+    padding-left: var(--space-lg);
+
+    li::marker {
+      color: currentColor;
+    }
+  }
+}
+
+.enigme-texte > * + * {
+  margin-top: var(--space-lg);
+}
+
+.enigme-texte h2,
+.enigme-texte h3 {
+  margin-top: var(--space-2xl);
+}
+
+.enigme-texte blockquote {
+  margin-left: var(--space-lg);
+  padding-left: var(--space-lg);
+  border-left: 4px solid var(--color-accent);
+}
+
+.enigme-texte img,
+.enigme-texte iframe,
+.enigme-texte video {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin-inline: auto;
+}
+
+.enigme-mobile-header {
+  display: none;
+}
+
+.enigme-edit-toggle--desktop {
+  position: fixed;
+  top: calc(var(--space-md) + var(--space-4xl));
+  right: var(--space-md);
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: var(--space-xs);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.enigme-edit-toggle--desktop svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+@media not all and (--bp-desktop) {
+  .enigme-layout .menu-lateral {
+    display: none;
+  }
+
+  .enigme-mobile-header {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: var(--space-md);
+    padding-top: calc(var(--space-sm) + env(safe-area-inset-top));
+    padding-right: calc(var(--space-md) + env(safe-area-inset-right));
+    padding-bottom: 0;
+    background-color: transparent;
+  }
+
+  .enigme-mobile-actions {
+    display: flex;
+    gap: var(--space-md);
+  }
+
+  .enigme-mobile-header a,
+  .enigme-mobile-header button {
+    width: 2.5rem;
+    height: 2.5rem;
+    padding: var(--space-xs);
+    color: var(--color-primary);
+    text-decoration: none;
+    background: none;
+    border: 1px solid rgba(255, 215, 0, 0.5);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .enigme-mobile-header svg {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .enigme-edit-toggle--desktop {
+    display: none;
+  }
+
+  .enigme-mobile-panel {
+    position: fixed;
+    inset: 0;
+    display: none;
+    z-index: 1000;
+  }
+
+  .enigme-mobile-panel.open {
+    display: block;
+  }
+
+  .enigme-mobile-panel__overlay {
+    position: absolute;
+    inset: 0;
+    background-color: rgba(var(--color-black-rgb, 0, 0, 0), 0.5);
+    backdrop-filter: blur(2px);
+  }
+
+  .enigme-mobile-panel__sheet {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    color: var(--color-text-primary);
+    background-color: var(--color-background-dark);
+    border-top: 1px solid rgba(var(--color-black-rgb, 0, 0, 0), 0.2);
+    border-radius: var(--space-md) var(--space-md) 0 0;
+    padding-top: calc(var(--space-lg) + env(safe-area-inset-top));
+    padding-bottom: calc(var(--space-lg) + env(safe-area-inset-bottom));
+    padding-left: calc(var(--space-lg) + env(safe-area-inset-left));
+    padding-right: calc(var(--space-lg) + env(safe-area-inset-right));
+    box-shadow: 0 -4px 16px rgba(var(--color-black-rgb, 0, 0, 0), 0.3);
+    max-height: 80vh;
+    overflow-y: auto;
+    transition: box-shadow var(--transition-medium);
+  }
+
+  .enigme-mobile-panel__sheet::before {
+    content: '';
+    display: block;
+    width: 3rem;
+    height: var(--space-xxs);
+    margin: 0 auto var(--space-md);
+    background-color: var(--color-grey-medium);
+    border-radius: var(--space-xs);
+  }
+
+  .enigme-mobile-panel.full .enigme-mobile-panel__sheet {
+    top: 0;
+    bottom: 0;
+    border-radius: 0;
+    max-height: 100vh;
+  }
+
+  .enigme-mobile-panel__tabs {
+    display: flex;
+    gap: var(--space-xs);
+    margin-bottom: var(--space-md);
+    position: sticky;
+    top: 0;
+    background-color: var(--color-background);
+    z-index: 1;
+  }
+
+  .panel-tab {
+    flex: 1;
+    background: none;
+    border: 1px solid transparent;
+    border-radius: var(--space-xs);
+    padding: var(--space-sm);
+    color: var(--color-text-primary);
+    cursor: pointer;
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    font-weight: 500;
+    transition: background-color var(--transition-fast), color var(--transition-fast);
+  }
+
+  .panel-tab:hover {
+    background-color: rgba(var(--color-black-rgb, 0, 0, 0), 0.2);
+  }
+
+  .panel-tab[aria-selected="true"] {
+    background-color: var(--color-primary);
+    color: var(--color-text-fond-clair);
+    font-weight: 600;
+    box-shadow: 0 0 0 1px var(--color-primary);
+  }
+
+  .panel-tab:focus-visible {
+    outline-color: var(--color-accent);
+  }
+
+  .panel-tab-content[hidden] {
+    display: none;
+  }
+
+  .enigme-mobile-panel__content {
+    max-height: calc(80vh - var(--space-xl));
+    overflow-y: auto;
+  }
+
+  .enigme-mobile-panel.full .enigme-mobile-panel__content {
+    max-height: calc(100vh - var(--space-xl));
+  }
+
+  .page-enigme {
+    margin-top: 0;
+  }
+}
+
+body.no-scroll {
+  overflow: hidden;
+}

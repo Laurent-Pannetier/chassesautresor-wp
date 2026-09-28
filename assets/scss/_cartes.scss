@@ -1,0 +1,1051 @@
+/* ==================================================
+   🎴 CARTES ET GRILLES
+   ================================================== */
+
+/* ========== 🃏 Carte de base ========== */
+.carte {
+  background: var(--color-background);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-secondary);
+  border-radius: 8px;
+  padding: var(--space-md);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.carte:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* ========== 🗂️ Grilles utilitaires ========== */
+.grille-liste {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-xl);
+}
+
+.liste-pleine-largeur {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
+
+  > * {
+    width: 100%;
+  }
+}
+
+// Grille responsive pour cartes (compactes ou énigmes)
+.cards-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: calc(var(--space-4xl) + var(--space-md));
+  justify-content: center;
+
+  @media (--bp-tablet) {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 300px));
+  }
+
+  .carte-enigme {
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
+  }
+}
+
+/* ========== 🃏 Carte compacte ========== */
+.carte-compact-card {
+  width: 100%;
+  max-width: 300px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-xs);
+}
+
+.carte-compact {
+  --carte-compact-lot-height: 2.5rem;
+  width: 100%;
+  padding: 0;
+  overflow: hidden;
+
+  .carte-compact__lien {
+    display: flex;
+    flex-direction: column;
+    color: inherit;
+    text-decoration: none;
+    height: 100%;
+  }
+
+  .carte-compact__image-wrapper {
+    position: relative;
+  }
+
+  .carte-compact__image {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    display: block;
+  }
+
+  .carte-badges-stack {
+    top: var(--space-xs);
+    left: var(--space-xs);
+  }
+
+  .carte-compact__contenu {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    gap: var(--space-sm);
+    padding: var(--space-md);
+  }
+
+  .carte-compact__lot {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: var(--carte-compact-lot-height);
+  }
+
+  .carte-compact__lot--empty {
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  .carte-compact__titre {
+    margin: 0;
+  }
+
+  .carte-compact__meta {
+    font-size: 0.875rem;
+    margin-top: auto;
+  }
+}
+
+.carte-compact__progression-wrapper {
+  width: 100%;
+}
+
+.carte-compact__progression {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  max-width: 50%;
+
+  .meta-etiquette {
+    font-size: 0.75rem;
+  }
+}
+
+.carte-compact__progression-label {
+  letter-spacing: 0.02em;
+  padding: 0;
+  background-color: transparent;
+  color: var(--color-grey-medium);
+}
+
+/* ========== 🆕 Carte format CART ========== */
+.carte-cart {
+  width: 100%;
+  max-width: 300px;
+  padding: 0;
+  overflow: hidden;
+  margin: 0 auto;
+
+  .carte-cart__lien {
+    display: flex;
+    flex-direction: column;
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .carte-cart__image-wrapper {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    --carte-cart-compact-aspect-ratio: 4 / 3;
+    --carte-cart-compact-padding: 75%;
+    --carte-cart-effective-aspect: var(
+      --carte-cart-compact-aspect-ratio,
+      var(--carte-cart-aspect-ratio, 4 / 3)
+    );
+    --carte-cart-effective-padding: var(
+      --carte-cart-compact-padding,
+      var(--carte-cart-padding, 75%)
+    );
+    aspect-ratio: var(--carte-cart-effective-aspect, 4 / 3);
+
+    &::before {
+      content: "";
+      display: block;
+      width: 100%;
+      padding-top: var(--carte-cart-effective-padding, 75%);
+    }
+
+    @media (--bp-desktop) {
+      --carte-cart-effective-aspect: var(
+        --carte-cart-aspect-ratio,
+        4 / 3
+      );
+      --carte-cart-effective-padding: var(
+        --carte-cart-padding,
+        75%
+      );
+    }
+  }
+
+  @supports (aspect-ratio: 1 / 1) {
+    .carte-cart__image-wrapper::before {
+      display: none;
+      content: none;
+      padding-top: 0;
+    }
+  }
+
+  .carte-cart__image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    object-position: center;
+    position: absolute;
+    inset: 0;
+  }
+
+  .carte-badges-stack {
+    top: var(--space-xs);
+    left: var(--space-xs);
+  }
+
+  .carte-cart__contenu {
+    padding: var(--space-md);
+    text-align: center;
+  }
+
+  .carte-cart__titre {
+    margin: 0 0 var(--space-xs);
+  }
+
+}
+
+/* ========== 🎁 Récompense dans les cartes compactes ========== */
+.carte-compact .chasse-lot,
+.carte-cart .chasse-lot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xxs);
+  font-size: 0.875rem;
+  color: var(--color-text-primary);
+}
+
+.carte-compact .chasse-lot .badge-recompense,
+.carte-cart .chasse-lot .badge-recompense {
+  margin-left: 0;
+  color: var(--color-text-primary);
+}
+
+.carte-compact .chasse-lot__title,
+.carte-cart .chasse-lot__title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.carte-compact .chasse-lot__icon svg,
+.carte-cart .chasse-lot__icon svg {
+  width: 20px;
+  height: 20px;
+  color: var(--color-grey-light);
+}
+
+/* ========== 🌟 Carte mise en avant ========== */
+.carte-featured {
+  position: relative;
+  overflow: hidden;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+
+  .carte-featured__label {
+    position: absolute;
+    top: var(--space-xs);
+    left: var(--space-xs);
+    background: var(--color-accent);
+    color: var(--color-text-primary);
+    padding: var(--space-xxs) var(--space-xs);
+    border-radius: 4px;
+    font-size: 0.875rem;
+  }
+
+  .carte-featured__image {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    display: block;
+  }
+
+  .carte-featured__content {
+    padding: var(--space-md);
+  }
+
+  .carte-featured__title {
+    margin: 0 0 var(--space-xs);
+  }
+
+  .carte-featured__excerpt {
+    margin: 0 0 var(--space-md);
+  }
+}
+
+/* ========== 🎴 Cartes d\'énigme et de chasse ========== */
+.carte-enigme {
+  background: var(--color-text-primary);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-secondary);
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+  min-height: 350px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+}
+
+
+
+.carte-enigme:hover,
+.carte-chasse:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+.carte-core {
+  padding: var(--space-md);
+  text-align: center;
+}
+
+/* Ajustements pour les cartes énigme */
+.carte-enigme .carte-core {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  flex: 1;
+  position: relative;
+}
+
+.etat-bloquee_chasse .carte-core,
+.etat-bloquee_date .carte-core,
+.etat-bloquee_pre_requis .carte-core,
+.etat-invalidee .carte-core,
+.etat-cache_invalide .carte-core {
+  background-color: var(--color-gris-carte);
+}
+
+.carte-enigme .carte-core svg {
+  color: var(--color-gris-3);
+}
+
+.carte-enigme .carte-core .enigme-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.carte-enigme .carte-core .enigme-placeholder svg {
+  width: 60%;
+}
+
+.carte-enigme-image {
+  width: 100%;
+  height: 180px;
+  overflow: hidden;
+  position: relative;
+  flex: 2;
+}
+
+
+
+.carte-enigme-lien {
+  display: flex;
+  flex-direction: column;
+  color: inherit;
+  text-decoration: none;
+  position: relative;
+  height: 100%;
+  flex: 1;
+}
+
+.carte-enigme-overlay {
+  position: absolute;
+  inset: 0;
+  display: none;
+}
+
+@media (--bp-tablet) {
+  .carte-enigme-overlay {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(
+      to top,
+      rgba(var(--color-black-rgb), 0.6),
+      rgba(var(--color-black-rgb), 0)
+    );
+    opacity: 0;
+    transition: opacity var(--transition-medium);
+  }
+
+  .carte-enigme-lien:hover .carte-enigme-overlay,
+  .carte-enigme-lien:focus .carte-enigme-overlay {
+    opacity: 1;
+  }
+}
+
+.carte-ligne__image {
+  width: 300px;
+  height: auto;
+  overflow: hidden;
+  position: relative;
+  flex-shrink: 0;
+}
+
+/* ========== 🗺️ Carte chasse large ========== */
+.carte-wide__image {
+  position: relative;
+
+  .badge-statut {
+    position: absolute;
+    top: var(--space-xs);
+    left: var(--space-xs);
+  }
+
+  .badge-cout {
+    position: absolute;
+    top: var(--space-xs);
+    right: var(--space-xs);
+    background: var(--color-grey-light);
+    color: var(--color-text-fond-clair);
+  }
+
+  .badge-validation {
+    position: absolute;
+    bottom: var(--space-xs);
+    left: var(--space-xs);
+  }
+
+  .mode-fin-icone {
+    position: absolute;
+    bottom: var(--space-xs);
+    right: var(--space-xs);
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--color-grey-light);
+    color: var(--color-text-fond-clair);
+    font-size: 0.75rem;
+    z-index: 1;
+  }
+
+  .mode-fin-icone svg,
+  .mode-fin-icone i {
+    width: 0.75rem;
+    height: 0.75rem;
+  }
+
+  .carte-wide__image-link {
+    display: block;
+    height: 100%;
+    overflow: hidden;
+
+    img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      transition: transform var(--transition-medium);
+    }
+
+    &:hover img {
+      transform: scale(1.05);
+    }
+  }
+}
+
+.carte-enigme h3 {
+  margin: 0;
+  padding: 0 var(--space-md);
+  text-align: center;
+  height: 3em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.carte-enigme h3 .carte-enigme-titre {
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-transform: none;
+}
+
+
+.carte-enigme-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-xs) var(--space-sm);
+  font-size: 0.95rem;
+  color: var(--color-text-secondary);
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.carte-enigme-footer .footer-icons {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.carte-enigme-footer .footer-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xxs);
+  opacity: 0.8;
+  line-height: 1;
+}
+
+.carte-enigme-footer .footer-item--participants,
+.carte-enigme-footer .footer-item--resolutions {
+  display: none;
+}
+
+.carte-enigme:hover .footer-item--participants,
+.carte-enigme:focus-within .footer-item--participants,
+.carte-enigme:hover .footer-item--resolutions,
+.carte-enigme:focus-within .footer-item--resolutions {
+  display: flex;
+}
+
+.carte-enigme-footer i,
+.carte-enigme-footer svg {
+  width: 1.1em;
+  height: 1.1em;
+  fill: currentColor;
+  display: block;
+}
+
+.carte-enigme-footer .footer-item--points {
+  color: var(--color-secondary);
+  opacity: 1;
+}
+
+.carte-enigme-footer .fa-circle-info {
+  color: inherit;
+  opacity: 0.8;
+}
+
+.carte-enigme-footer--texte {
+  justify-content: center;
+}
+
+.carte-enigme-footer--texte .footer-texte {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.carte-enigme-image img,
+.carte-ligne__image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+  max-height: 350px;
+}
+
+.carte-ligne {
+  display: flex;
+  align-items: stretch;
+}
+
+.carte-ligne__contenu {
+  padding: var(--space-md) var(--space-2xl);
+  flex: 1;
+}
+
+.carte-ligne__contenu .cta-div {
+  justify-content: center;
+}
+
+.carte-ligne__contenu .chasse-intro-extrait {
+  margin: 15px 0
+}
+
+.carte-ligne__contenu h3 {
+  margin: 0;
+}
+
+
+.carte-ligne__footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: var(--space-md);
+  padding: 7px 25px;
+}
+
+.carte-ligne__footer .footer-icones {
+  display: flex;
+  gap: var(--space-md);
+}
+
+.carte-ligne__footer .footer-icones svg {
+  color: var(--color-gris-3);
+  width: 20px;
+  height: 20px;
+}
+
+.carte-ligne__footer .liste-liens-publics {
+  gap: var(--space-xs);
+}
+
+.carte-ligne__footer .liste-liens-publics.liens-sans-intitule {
+  gap: var(--space-sm);
+}
+
+.carte-ligne__footer .liste-liens-publics.liens-sans-intitule .texte-lien {
+  display: none;
+}
+
+.carte-ligne__footer .liste-liens-publics.liens-sans-intitule .lien-public {
+  padding: 0.3em;
+  gap: 0;
+  border-radius: 50%;
+}
+
+/* ========== 🧿 Carte wide ========== */
+.carte-wide {
+  display: flex;
+  flex-direction: column;
+}
+
+.carte-wide__image {
+  width: 100%;
+  height: 400px;
+  overflow: hidden;
+}
+
+.carte-wide__image img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+
+.carte-wide__contenu {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding: 0 var(--space-2xl) var(--space-md);
+  height: 100%;
+}
+
+.carte-wide__content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.carte-wide__header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-sm);
+}
+
+
+.carte-wide__metas {
+  margin-top: auto;
+  padding-top: var(--space-sm);
+}
+
+.carte-wide__metas .meta-regular {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xxs);
+}
+
+.carte-wide__metas .meta-label {
+  font-weight: 600;
+}
+
+.carte-wide__organisateur {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xxs);
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  color: var(--color-gris-3);
+}
+
+.carte-wide__organisateur-label {
+  font-style: italic;
+}
+
+.carte-wide__organisateur-logo-link {
+  display: inline-flex;
+  align-items: center;
+}
+
+.carte-wide__organisateur-logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  filter: grayscale(1);
+  transition: filter 0.3s;
+}
+
+.carte-wide__organisateur-logo-link:hover .carte-wide__organisateur-logo {
+  filter: none;
+}
+
+.carte-wide__organisateur-nom {
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.carte-wide__organisateur-nom:hover {
+  text-decoration: underline;
+}
+
+.carte-wide__reward {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-weight: 700;
+  margin-bottom: var(--space-sm);
+}
+
+.carte-wide__reward .fa-trophy {
+  color: var(--color-gris-3);
+}
+
+.carte-wide__description {
+  margin-bottom: var(--space-sm);
+}
+
+.carte-wide__description .chasse-intro-extrait {
+  margin: 0;
+}
+
+
+.carte-wide__titre {
+  margin: 0;
+}
+
+
+@media (--bp-desktop) {
+  .carte-wide {
+    flex-direction: row;
+    height: 320px;
+    align-items: center;
+  }
+
+  .carte-wide__image {
+    flex: 0 0 300px;
+    width: 300px;
+    height: 300px;
+  }
+
+  .carte-wide__contenu {
+    justify-content: center;
+  }
+
+  .carte-wide__content {
+    flex: 0 1 auto;
+  }
+
+  .carte-wide__header {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-lg);
+  }
+
+  .carte-wide__organisateur {
+    justify-content: flex-end;
+    text-align: right;
+  }
+
+  .carte-wide__metas {
+    flex-wrap: nowrap;
+    margin-top: auto;
+    padding-top: 0;
+    max-height: 0;
+    opacity: 0;
+    visibility: hidden;
+    overflow: hidden;
+    pointer-events: none;
+    transition:
+      opacity var(--transition-medium),
+      max-height var(--transition-medium),
+      padding-top var(--transition-medium);
+  }
+
+  .carte-wide:hover .carte-wide__metas,
+  .carte-wide:focus-within .carte-wide__metas {
+    padding-top: var(--space-sm);
+    max-height: 200px;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+}
+
+/* ========== ➕ Cartes d'ajout d'énigme et de chasse ========== */
+.carte-ajout-chasse {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  padding: var(--space-xl);
+  min-height: 140px;
+  text-align: center;
+  border: 2px dashed var(--color-gris-3);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  position: relative;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.carte-ajout-enigme,
+.carte-ajout-chasse {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  border: 2px dashed var(--color-gris-3);
+  background: var(--color-text-primary);
+  color: var(--color-background);
+  position: relative;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+}
+
+.carte-ajout-enigme:hover,
+.carte-ajout-chasse:hover {
+  background: var(--color-text-primary);
+  color: var(--color-background);
+  border-style: solid;
+  border-color: var(--color-gris-3);
+  transform: translateY(-4px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+}
+
+.carte-ajout-enigme:focus-visible,
+.carte-ajout-chasse:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.carte-ajout-enigme.disabled,
+.carte-ajout-chasse.disabled,
+.carte-ajout-enigme[disabled],
+.carte-ajout-chasse[disabled] {
+  cursor: not-allowed;
+}
+
+.carte-ajout-enigme .carte-core,
+.carte-ajout-chasse .carte-core {
+  border: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  height: 100%;
+  position: relative;
+  z-index: 1;
+}
+
+.carte-ajout-enigme .carte-core i,
+.carte-ajout-chasse .carte-core i {
+  color: var(--color-gris-3);
+  font-size: 28px;
+}
+
+@media (min-width: 768px) {
+  .carte-ajout-enigme .carte-core i,
+  .carte-ajout-chasse .carte-core i {
+    font-size: 32px;
+  }
+}
+
+.carte-ajout-enigme .carte-ajout-libelle,
+.carte-ajout-chasse .carte-ajout-libelle {
+  font-weight: 600;
+}
+
+.carte-ajout-enigme::after,
+.carte-ajout-chasse::after {
+  content: '';
+  position: absolute;
+  bottom: var(--space-sm);
+  left: 50%;
+  width: 80px;
+  height: 80px;
+  transform: translateX(-50%);
+  background: url('../assets/svg/compass-rose.svg') no-repeat center;
+  background-size: 80px 80px;
+  opacity: 0.08;
+  pointer-events: none;
+}
+
+.carte-ajout-chasse .carte-ajout-message {
+  color: var(--color-gris-4);
+  font-size: 0.875rem;
+  line-height: 1.3;
+  text-align: center;
+  margin-top: var(--space-xxs);
+}
+
+.carte-ajout-chasse .carte-ajout-message:empty {
+  display: none;
+}
+
+
+/* ========== ✅ Indicateurs de complétion ========== */
+.carte-complete {
+  border: 2px solid var(--color-success);
+}
+
+.carte-incomplete {
+  border: 2px dashed var(--color-error);
+  animation: clignoteTitre 1s infinite alternate;
+}
+
+.carte-engagee {
+  box-shadow: 0 0 0 3px var(--color-accent), 0 4px 15px rgba(255, 255, 255, 0.4);
+}
+
+.carte-engagee:hover {
+  box-shadow: 0 0 0 3px var(--color-accent), 0 6px 20px rgba(255, 255, 255, 0.5);
+}
+
+.warning-icon {
+  position: absolute;
+  top: var(--space-xs);
+  right: var(--space-xs);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: var(--color-accent);
+  color: var(--color-text-primary);
+  font-size: 0.875rem;
+  animation: clignoteTitre 1s infinite alternate;
+  z-index: 2;
+}
+
+@media (--bp-tablet) {
+  .warning-icon {
+    width: 28px;
+    height: 28px;
+    font-size: 1rem;
+  }
+}
+
+.carte-icons {
+  position: absolute;
+  top: var(--space-xs);
+  right: var(--space-xs);
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  z-index: 2;
+}
+
+.carte-icons .warning-icon {
+  position: static;
+  top: auto;
+  right: auto;
+}
+
+.settings-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: var(--color-grey-light);
+  color: var(--color-text-fond-clair);
+  font-size: 0.875rem;
+}
+
+@media (--bp-tablet) {
+  .settings-icon {
+    width: 28px;
+    height: 28px;
+    font-size: 1rem;
+  }
+}
+
+.validation-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: var(--color-success);
+  color: var(--color-text-primary);
+  font-size: 0.875rem;
+}
+
+@media (--bp-tablet) {
+  .validation-icon {
+    width: 28px;
+    height: 28px;
+    font-size: 1rem;
+  }
+}
+
+@media (--bp-desktop) {
+  .settings-icon,
+  .validation-icon {
+    width: 32px;
+    height: 32px;
+    font-size: 1.125rem;
+  }
+}
+
+@media (--bp-desktop) {
+  .warning-icon {
+    width: 32px;
+    height: 32px;
+    font-size: 1.125rem;
+  }
+}

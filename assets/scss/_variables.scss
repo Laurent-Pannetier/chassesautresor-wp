@@ -1,0 +1,136 @@
+/* 🎨 Variables globales */
+@custom-media --bp-xs (min-width: 374px);
+@custom-media --bp-small (min-width: 480px);
+@custom-media --bp-mobile (min-width: 600px);
+@custom-media --bp-tablet (min-width: 768px);
+@custom-media --bp-desktop (min-width: 1024px);
+@custom-media --bp-wide (min-width: 1280px);
+@custom-media --bp-xxl (min-width: 1440px);
+@custom-media --bp-xxxl (min-width: 1920px);
+/* Legacy aliases */
+@custom-media --bp-sm (--bp-small);
+@custom-media --bp-600 (--bp-mobile);
+@custom-media --bp-md (--bp-tablet);
+@custom-media --bp-lg (--bp-desktop);
+@custom-media --bp-xl (--bp-wide);
+
+:root {
+  /* Typographie et breakpoints */
+  --font-main: 'Poppins', sans-serif; /* Police principale */
+  --bp-xs: 374px;
+  --bp-small: 480px;
+  --bp-mobile: 600px;
+  --bp-tablet: 768px;
+  --bp-desktop: 1024px;
+  --bp-wide: 1280px;
+  --bp-xxl: 1440px;
+  --bp-xxxl: 1920px;
+
+  /* Legacy variables */
+  --bp-sm: var(--bp-small);
+  --bp-600: var(--bp-mobile);
+  --bp-540: var(--bp-mobile);
+  --bp-md: var(--bp-tablet);
+  --bp-lg: var(--bp-desktop);
+  --bp-921: var(--bp-desktop);
+  --bp-922: var(--bp-desktop);
+  --bp-xl: var(--bp-wide);
+
+  /* Couleurs globales */
+  --color-primary: #FFD700;   /* 🟡 Couleur principale : jaune or */
+  --color-secondary: #E1A95F; /* 🟠 Couleur secondaire : lien */
+  --color-accent: #CD7F32;    /* 🟤 Accent : bronze */
+
+  --color-text-primary: #F5F5DC;   /* 📜 Texte principal : beige clair */
+  --color-text-secondary: #555555; /* 🎨 Texte secondaire : gris foncé */
+  --color-titre-enigme: #E5C07B;   /* 🏆 Titre des énigmes : or vieilli */
+
+  --color-background: #0B132B;               /* 🎭 Fond général */
+  --color-background-button: #880000;        /* 🔘 Fond des boutons : rouge profond */
+  --color-background-button-hover: #a00000;  /* 🔘 Survol des boutons : rouge foncé */
+  --color-background-button-inactive: #A9A9A9; /* 🔘 Boutons inactifs : gris */
+  --color-success: #228B22;                  /* ✅ Barre de progression */
+
+  --color-filter-accent: #1F3E63;            /* 🔵 Mise en avant discrète des filtres */
+  --color-filter-accent-glow: rgba(31, 62, 99, 0.45); /* 🔵 Halo léger pour les interactions des filtres */
+
+  --color-error: #D93025;                    /* ⚠️ Messages d'erreur */
+
+  --color-white: #FFFFFF;                    /* ⚪ Blanc */
+  --color-black: #000000;                    /* ⚫ Noir */
+  --color-black-rgb: 0, 0, 0;                /* ⚫ Noir en RGB */
+  --color-grey-light: #EEEEEE;               /* 🌫️ Gris clair */
+  --color-grey-medium: #CCCCCC;              /* 🌫️ Gris moyen */
+  --color-grey-dark: #333333;                /* 🌫️ Gris foncé */
+  --input-placeholder-color: #8A8876;        /* ✏️ Texte de placeholder lisible sur fonds clairs ou foncés */
+
+  --color-primary-dark: #B8860B;             /* 🟡 Or sombre (dégradé) */
+  --color-background-dark: #060A1F;          /* 🎭 Fond sombre profond */
+
+  --color-gris-3: #adadad;                  /* ⚪ Gris neutre n°3 */
+  --color-text-fond-clair: #1c1c1c;         /* noir clair */
+  --color-text-fond-clair-rgb: 28, 28, 28;  /* noir clair en RGB */
+  --color-gris-carte: #c2c2c2;              /* 🧩 Fond de carte énigme : gris bleuté doux */
+  --color-blue-grey-light: #C9D1E0;       /* 💠 Bleu-gris clair */
+
+  /* Groupe d'état : etat-enigme-menu */
+  --etat-enigme-menu-en-cours: currentColor;             /* état par défaut */
+  --etat-enigme-menu-bloquee: var(--color-grey-medium);
+  --etat-enigme-menu-en-attente: var(--color-grey-medium); /* tentative manuelle en cours */
+  --etat-enigme-menu-succes: var(--color-success);
+  --etat-enigme-menu-non-engagee: transparent;
+  --etat-enigme-menu-incomplete: var(--color-error);
+  --etat-enigme-menu-eligible: var(--color-primary); /* chasse éligible à validation */
+
+  /* Asides */
+  --aside-bg-rgb: 238, 238, 238;            /* 🎨 Couleur de fond des asides : gris clair du nuancier (var(--color-grey-light)) */
+  --aside-border-color: var(--color-grey-medium); /* 🖊 Couleur de bordure des asides */
+  --aside-opacity: 0.15;                     /* ⚙️ Opacité standard des fonds d'aside */
+
+  /* Grille */
+  --container-max-width-default: 1200px;
+  --container-max-width: var(--container-max-width-default);
+  --container-max-width-narrow: 800px;
+  --grid-gap: 1rem;
+  --grid-columns: 4;
+  --dashboard-card-max-width: 420px; /* 🔲 Largeur max des dashboard-card isolées */
+
+  /* Espacements */
+  --space-0: 0;
+  --space-xxs: 0.25rem; /* 4px */
+  --space-xs: 0.5rem;   /* 8px */
+  --space-sm: 0.75rem;  /* 12px */
+  --space-md: 1rem;     /* 16px */
+  --space-lg: 1.25rem;  /* 20px */
+  --space-xl: 1.5rem;   /* 24px */
+  --space-2xl: 2rem;    /* 32px */
+  --space-3xl: 2.5rem;  /* 40px */
+  --space-4xl: 3rem;    /* 48px */
+
+  /* Transitions globales */
+  --transition-fast: 0.15s ease-in-out;
+  --transition-medium: 0.3s ease;
+  --transition-slow: 0.6s ease;
+
+  /* Breakpoints layout */
+  --breakpoint-small: 480px;
+  --breakpoint-mobile: 600px;
+  --breakpoint-tablet: 768px;
+  --breakpoint-desktop: 1024px;
+  --breakpoint-wide: 1280px;
+}
+
+@media (--bp-xxl) {
+  :root {
+    --container-max-width: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --transition-fast: 0s;
+    --transition-medium: 0s;
+    --transition-slow: 0s;
+  }
+}
+

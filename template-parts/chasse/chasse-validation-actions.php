@@ -3,6 +3,7 @@ defined('ABSPATH') || exit;
 
 $chasse_id = $args['chasse_id'] ?? null;
 if (!$chasse_id || get_post_type($chasse_id) !== 'chasse') {
+    cat_debug('[chasse-validation-actions] appel invalide, chasse_id=' . var_export($chasse_id, true));
     return;
 }
 
@@ -19,10 +20,10 @@ $titre_bloc = $org_status === 'pending'
     <input type="hidden" name="action" value="traiter_validation_chasse">
     <input type="hidden" name="chasse_id" value="<?php echo esc_attr($chasse_id); ?>">
     <div class="boutons">
-      <button type="submit" name="validation_admin_action" value="valider" class="btn btn-valider">✅ Valider la chasse</button>
-      <button type="submit" name="validation_admin_action" value="correction" class="btn btn-correction">✍️ Correction</button>
-      <button type="submit" name="validation_admin_action" value="bannir" class="btn btn-bannir">❌ Bannir</button>
-      <button type="submit" name="validation_admin_action" value="supprimer" class="btn btn-warning" onclick="return confirm('Supprimer cette chasse ?');">🗑️ Supprimer</button>
+      <button type="submit" name="validation_admin_action" value="valider" class="bouton-cta">✅ Valider la chasse</button>
+      <button type="submit" name="validation_admin_action" value="correction" class="bouton-tertiaire btn-correction">✍️ Correction</button>
+      <button type="submit" name="validation_admin_action" value="bannir" class="btn-danger">❌ Bannir</button>
+      <button type="submit" name="validation_admin_action" value="supprimer" class="btn-danger" onclick="return confirm('Supprimer cette chasse ?');">🗑️ Supprimer</button>
     </div>
   </form>
 </section>

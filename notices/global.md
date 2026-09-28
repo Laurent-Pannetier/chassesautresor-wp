@@ -53,6 +53,8 @@ extensions actives :
 - Réponses courtes et fonctionnelles : éviter les formules, les paraphrases, les répétitions.
 - Historique de développement : le développement initial a largement été modifié. Quasiment tout a été revu, mais il se peut qu’on rencontre des résidus dans le code, il faut en avoir conscience.
 
+- Traductions : ne jamais fournir les fichiers `.mo` (binaires). Seuls les fichiers `.po` doivent être versionnés.
+
 ### 🚫 Suppressions obligatoires
 Toute évolution ou migration de logique (ex. déplacement d’un champ vers champ-init.js) doit impérativement inclure l’identification et la suppression des doublons ou fonctions redondantes (dans les fichiers JS ou PHP concernés).
 Le code ancien ne doit jamais rester actif ou latent, même s’il n’est “plus appelé”.
@@ -103,12 +105,19 @@ Le dossier `notices/` contient la documentation technique et fonctionnelle du th
 - `titre-edition.md`
 - `wysiwyg-panneau-lateral.md`
 
+### Styles d'affichage
+
+- **Style par défaut** : utilisé sur l'ensemble des pages publiques. Il repose sur un système de grille `.container`, `.row`, `.col-*` et propose l'option `--boxed` pour limiter la largeur à un format contenu classique.
+- **Orgy** : appliqué uniquement aux panneaux d'édition des CPT et aux pages `mon-compte/*`. Il charge des feuilles spécifiques (`edition.css`, `mon-compte.css`) sans la grille globale.
+
+
 
 🧩 Types de contenus personnalisés (CPT)
 
 - organisateur : référence un ou plusieurs utilisateurs (organisateurs) + infos classiques. Structure pivot d identification
 - chasse : reliée au cpt organisateur, reliée au minimum à une énigme
 - enigme : obligatoirement reliée à une seule chasse
+- solution : publie la solution d’une chasse ou d’une énigme
 
 
 🧑‍🤝‍🧑 Rôles & accès (joueur, organisateur, organisateur_creation, admin)
@@ -165,15 +174,14 @@ Dossier inc/
   ├── chasse-functions.php
   ├── edition-functions.php
   ├── enigme-functions.php
-  ├── gamify-functions.php
-  ├── layout-functions.php
-  ├── organisateur-functions.php
-  ├── relations-functions.php
-  ├── shortcodes-init.php
-  ├── stat-functions-old.php
-  ├── statut-functions.php
-  ├── user-functions.php
-  ├── handlers/
+    ├── gamify-functions.php
+    ├── layout-functions.php
+    ├── organisateur-functions.php
+    ├── relations-functions.php
+    ├── shortcodes-init.php
+    ├── statut-functions.php
+    ├── user-functions.php
+    ├── handlers/
   │   ├── voir-fichier.php
   └── utils/
       ├── liens.php
@@ -191,6 +199,16 @@ template-parts/
         ├── vintage/
         │   └── images.php
         ...
+
+structure des templates possibles pour les chasses
+template-parts/
+└── chasse/
+    ├── chasse-card.php
+    ├── chasse-affichage-complet.php
+    ├── chasse-partial-ajout-chasse.php
+    ├── chasse-partial-description.php
+    ├── chasse-validation-actions.php
+    └── panneaux/
 
         
 
@@ -217,7 +235,7 @@ dans le dossier inc
   - sommaire de fichier, exemple
       //
       //  📦 CHARGEMENT ET CONTROLE DONNÉES
-      //  🧩 APPARENCE EN MODE ÉDITION
+      //  🧩 APPARENCE EN ORGY
       //  🧩 FONCTIONS GLOBALES DE FORMATAGE
       //  🧩 GESTION DE CHAMPS ACF PARTICULIERS
       //  🏗️ CRÉATION & ÉDITION ORGANISATEUR
@@ -319,127 +337,127 @@ ACF – Champs personnalisés par CPT
 CPT : organisateur
 Groupe : Paramètres organisateur
 
-* message\_acf\_organisateur (group)
-
-  * (message vide)
-
-* profil\_public (group)
-
-  * logo\_organisateur (image)
-  * description\_courte (text)
-  * email\_contact (email)
-
-* liens\_publics (repeater)
-
-  * type\_de\_lien (select)
-  * url\_lien (url)
-
-* coordonnees\_bancaires (group)
-
-  * iban (text)
-  * bic (text)
-
-* utilisateurs\_associes (select)
-
-* description\_longue (wysiwyg)
+* email_contact (email)
+* logo_organisateur (image)
+* liens_publics (repeater)
+  * type_de_lien (select)
+  * url_lien (url)
+* iban (text)
+* bic (text)
+* utilisateurs_associes (select)
+* description_longue (wysiwyg)
+* organisateur_cache_complet (true_false)
 
 CPT : chasse
 Groupe : paramètre de la chasse
 
-* chasse\_principale\_image (image)
-
-* chasse\_principale\_description (wysiwyg)
-
-* chasse\_principale\_liens (repeater)
-
-  * chasse\_principale\_liens\_type (select)
-  * chasse\_principale\_liens\_url (url)
-
-* caracteristiques (group)
-
-  * chasse\_infos\_recompense\_titre (text)
-  * chasse\_infos\_recompense\_texte (wysiwyg)
-  * chasse\_infos\_recompense\_valeur (number)
-  * chasse\_infos\_cout\_points (number)
-  * chasse\_infos\_date\_debut (date\_picker)
-  * chasse\_infos\_duree\_illimitee (true\_false)
-  * chasse\_infos\_date\_fin (date\_picker)
-  * chasse\_infos\_nb\_max\_gagants (number)
-
-* champs\_caches (group)
-
-  * chasse\_cache\_gagnants (user)
-  * chasse\_cache\_date\_decouverte (date\_picker)
-  * chasse\_cache\_statut (select)
-  * chasse\_cache\_statut\_validation (select)
-  * chasse\_cache\_commentaire (textarea)
-  * chasse\_cache\_enigmes (relationship)
-  * chasse\_cache\_organisateur (relationship)
+* chasse_principale_image (image)
+* chasse_principale_description (wysiwyg)
+* chasse_infos_recompense_titre (text)
+* chasse_infos_recompense_valeur (number)
+* chasse_infos_cout_points (number)
+* chasse_infos_recompense_texte (wysiwyg)
+* chasse_infos_date_debut (date_time_picker)
+* chasse_infos_date_fin (date_picker)
+* chasse_infos_duree_illimitee (true_false)
+* chasse_principale_liens (repeater)
+  * chasse_principale_liens_type (select)
+  * chasse_principale_liens_url (url)
+* chasse_mode_fin (radio)
+* chasse_infos_nb_max_gagants (number)
+* chasse_cache_gagnants (text)
+* chasse_cache_date_decouverte (date_time_picker)
+* chasse_cache_enigmes (relationship)
+* chasse_cache_organisateur (relationship)
+* chasse_cache_statut_validation (select)
+* chasse_cache_statut (select)
+* chasse_cache_complet (true_false)
+* chasse_region (taxonomy) — référence la taxonomie des régions de chasse
+* chasse_theme (taxonomy) — référence la taxonomie des thèmes de chasse
 
 CPT : enigme
 Groupe : Paramètres de l’énigme
 
-* enigme\_visuel\_image (gallery)
+* enigme_visuel_image (gallery)
+* enigme_visuel_texte (wysiwyg)
+* enigme_mode_validation (radio)
+* enigme_visuel_legende (text)
+* enigme_style_affichage (select)
+* enigme_tentative_cout_points (number)
+* enigme_tentative_max (number)
+* enigme_reponse_bonne (textarea)
+* enigme_reponse_casse (true_false)
+* texte_1 (text)
+* message_1 (text)
+* respecter_casse_1 (true_false)
+* texte_2 (text)
+* message_2 (text)
+* respecter_casse_2 (true_false)
+* texte_3 (text)
+* message_3 (text)
+* respecter_casse_3 (true_false)
+* texte_4 (text)
+* message_4 (text)
+* respecter_casse_4 (true_false)
+* enigme_acces_condition (radio)
+* enigme_acces_date (date_picker)
+* enigme_acces_pre_requis (relationship)
+* enigme_chasse_associee (relationship)
+* enigme_solution_mode (radio)
+* enigme_solution_delai (number)
+* enigme_solution_heure (time_picker)
+* enigme_solution_fichier (file)
+* enigme_solution_explication (wysiwyg)
+* enigme_cache_etat_systeme (select)
+* enigme_cache_complet (true_false)
 
-* enigme\_visuel\_texte (wysiwyg)
+CPT : indice
+Groupe : paramètres indices
 
-* enigme\_visuel\_legende (text)
+* indice_image (image)
+* indice_contenu (wysiwyg)
+* indice_cible_type (radio)
+* indice_disponibilite (radio)
+* indice_date_disponibilite (date_time_picker, retour d/m/Y g:i a)
+* indice_cout_points (number)
+* indice_enigme_linked (relationship)
+* indice_chasse_linked (relationship)
+* indice_cache_etat_systeme (select, accessible/programme/invalide/desactive)
+* indice_cache_complet (true_false)
 
-* enigme\_mode\_validation (radio)
+États possibles pour `indice_cache_etat_systeme` :
 
-* enigme\_tentative (group)
+| Valeur    | Description                                   |
+|-----------|-----------------------------------------------|
+| accessible| Indice visible immédiatement                  |
+| programme | Disponible à une date ultérieure              |
+| invalide  | Indice marqué comme invalide                  |
+| desactive | Indice incomplet ou désactivé                 |
 
-  * enigme\_tentative\_cout\_points (number)
-  * enigme\_tentative\_max (number)
+CPT : solution
+Groupe : paramètres solution
 
-* enigme\_reponse\_texte\_manuelle (textarea)  \[a supprimer]
+* solution_cible_type (radio, chasse/enigme)
+* solution_chasse_linked (relationship)
+* solution_enigme_linked (relationship)
+* solution_fichier (file)
+* solution_explication (wysiwyg)
+* solution_disponibilite (radio, fin_chasse/differee)
+* solution_decalage_jours (number)
+* solution_heure_publication (time_picker)
+* solution_cache_etat_systeme (select, INVALIDE/FIN_CHASSE/FIN_CHASSE_DIFFERE/A_VENIR/EN_COURS/DESACTIVE) – voir les constantes définies dans `inc/constants.php`
+* solution_cache_complet (true_false)
 
-* enigme\_reponse\_bonne (text)
+États possibles pour `solution_cache_etat_systeme` :
 
-* enigme\_reponse\_casse (true\_false)
-
-* enigme\_reponse\_variantes (group)
-
-  * variante\_1 (group)
-
-    * texte\_1 (text)
-    * message\_1 (text)
-    * respecter\_casse\_1 (true\_false)
-  * variante\_2 (group)
-
-    * texte\_2 (text)
-    * message\_2 (text)
-    * respecter\_casse\_2 (true\_false)
-  * variante\_3 (group)
-
-    * texte\_3 (text)
-    * message\_3 (text)
-    * respecter\_casse\_3 (true\_false)
-  * variante\_4 (group)
-
-    * texte\_4 (text)
-    * message\_4 (text)
-    * respecter\_casse\_4 (true\_false)
-
-
-* enigme\_acces\_condition (radio)
-* enigme\_acces\_pre\_requis (relationship)
-* enigme\_acces\_date (date\_time\_picker)
-
-* enigme\_style\_affichage (select)
-
-* enigme\_solution (group)
-
-  * enigme\_solution\_mode (radio)
-  * enigme\_solution\_delai (number)
-  * enigme\_solution\_date (date\_time\_picker)
-  * enigme\_solution\_explication (wysiwyg)
-
-* enigme\_chasse\_associee (relationship)
-
-* enigme\_cache\_etat\_systeme (select)
-
-* enigme\_statut\_utilisateur (select)
+| Valeur            | Description               |
+|-------------------|---------------------------|
+| INVALIDE          | INVALIDE                  |
+| FIN_CHASSE        | fin de chasse             |
+| FIN_CHASSE_DIFFERE| différé                   |
+| A_VENIR           | à venir                   |
+| EN_COURS          | en cours                  |
+| DESACTIVE         | désactivé                 |
 
 liste avec tous les détails des groupes de champs ACF dans champs-acf-liste.md
 
@@ -470,8 +488,8 @@ $champ_valide = true; // Toujours marquer comme traité, même si update_field r
 
 ### 📌 À retenir : cas confirmés dans le projet
 
-* `coordonnees_bancaires` (organisateur) : effacé si pas de protection contre le fallback
-* `enigme_reponse_variantes` (énigme) : supprimé si on clique sur "Enregistrer" sans modification réelle
+* `iban` / `bic` (organisateur) : champs actuels pour les coordonnées bancaires
+* `enigme_reponse_variantes` (ancien champ groupe) : retiré du projet pour éviter toute suppression accidentelle
 
 ---
 
@@ -580,20 +598,58 @@ En revanche, les champs obligatoires ou facultatifs sont masqués derrière un r
           id="chasse-nb-gagnants"
           name="chasse-nb-gagnants"
           value="<?= esc_attr($nb_max); ?>"
-          min="1"
-          class="champ-inline-nb champ-nb-edit" 
-          <?= ($nb_max == 0 ? 'disabled' : ''); ?> />
-
-  <div class="champ-option-illimitee ">
-    <input type="checkbox"
-            id="nb-gagnants-illimite"
-            name="nb-gagnants-illimite"
-            <?= ($nb_max == 0 ? 'checked' : ''); ?>
-            data-champ="chasse_infos_nb_max_gagants">
-    <label for="nb-gagnants-illimite">Illimité</label>
+  <div class="champ-mode-options">
+    <span class="toggle-option">Illimité</span>
+    <label class="switch-control">
+      <input
+        id="nb-gagnants-limite"
+        type="checkbox"
+        <?= $nb_max != 0 ? 'checked' : ''; ?>
+        <?= $peut_editer ? '' : 'disabled'; ?>>
+      <span class="switch-slider"></span>
+    </label>
+    <span class="toggle-option">Limité</span>
+    <div class="nb-gagnants-actions" style="<?= $nb_max != 0 ? '' : 'display:none;'; ?>">
+      <input type="number"
+            id="chasse-nb-gagnants"
+            name="chasse-nb-gagnants"
+            value="<?= esc_attr($nb_max); ?>"
+            min="1"
+            class="champ-inline-nb champ-nb-edit champ-input champ-number"
+            <?= ($peut_editer && $nb_max != 0) ? '' : 'disabled'; ?> />
+      <div id="erreur-nb-gagnants" class="message-erreur" role="alert" aria-live="assertive" style="display:none; color:red; font-size:0.9em; margin-top:5px;"></div>
+    </div>
   </div>
+</li>
 
-  <div id="erreur-nb-gagnants" class="message-erreur" style="display:none; color:red; font-size:0.9em; margin-top:5px;"></div>
+
+<!-- Date de début -->
+<li class="champ-chasse champ-date-debut <?= $peut_editer ? '' : ' champ-desactive'; ?>"
+    data-champ="chasse_infos_date_debut"
+    data-cpt="chasse"
+    data-post-id="<?= esc_attr($chasse_id); ?>">
+
+  <label for="chasse-date-debut">Début</label>
+
+  <div class="champ-mode-options">
+    <span class="toggle-option">Now</span>
+    <label class="switch-control">
+      <input
+        id="date-debut-differee"
+        type="checkbox"
+        <?= $debut_differe ? 'checked' : ''; ?> <?= $peut_editer ? '' : 'disabled'; ?>>
+      <span class="switch-slider"></span>
+    </label>
+    <span class="toggle-option">Later</span>
+    <div class="date-debut-actions" style="<?= $debut_differe ? '' : 'display:none;'; ?>">
+      <input type="datetime-local"
+            id="chasse-date-debut"
+            name="chasse-date-debut"
+            value="<?= esc_attr($date_debut_iso); ?>"
+            class="champ-inline-date champ-date-edit" <?= ($peut_editer && $debut_differe) ? '' : 'disabled'; ?> />
+      <div id="erreur-date-debut" class="message-erreur" role="alert" aria-live="assertive" style="display:none; color:red; font-size:0.9em; margin-top:5px;"></div>
+    </div>
+  </div>
 </li>
 
 
@@ -772,9 +828,6 @@ initChampNbGagnants()
 mettreAJourResumeInfos()
 → Met à jour dynamiquement les indicateurs "champ-vide" / "champ-rempli" dans le résumé
 
-mettreAJourAffichageCout(postId, cout)
-→ Met à jour dynamiquement l’affichage du prix (ex : badge Gratuit / X pts)
-
 validerDatesAvantEnvoi(champModifie)
 → Contrôle logique cohérent entre date de début / fin d’une chasse
 
@@ -851,6 +904,74 @@ onDateFieldUpdated() est appelé automatiquement dès la réponse AJAX (pas beso
   --color-editor-placeholder:      #9AA0A6;   /* 💬 Placeholder ou aide contextuelle */
 }
 
+/* 🔗 Bridge HSL ↔️ nuancier existant (ne remplace rien) */
+:root {
+  /* dérivés HSL (triplets) de tes variables existantes */
+  --editor-background-hsl:      200 12% 95%; /* = #F1F3F4 → var(--color-editor-background) */
+  --editor-border-hsl:          220 09% 87%; /* = #DADCE0 → var(--color-editor-border) */
+  --editor-text-hsl:            225 06% 13%; /* = #202124 → var(--color-editor-text) */
+  --editor-text-muted-hsl:      213 05% 39%; /* = #5F6368 → var(--color-editor-text-muted) */
+  --editor-heading-hsl:           0 00% 12%; /* = #1F1F1F → var(--color-editor-heading) */
+
+  --editor-accent-hsl:          214 82% 51%; /* = #1A73E8 → var(--color-editor-accent) */
+  --editor-button-hsl:          214 82% 51%; /* = #1A73E8 → var(--color-editor-button) */
+  --editor-button-hover-hsl:    214 79% 39%; /* = #1558B0 → var(--color-editor-button-hover) */
+
+  --editor-error-hsl:             4 71% 50%; /* = #D93025 → var(--color-editor-error) */
+  --editor-success-hsl:         138 68% 30%; /* = #188038 → var(--color-editor-success) */
+
+  --editor-field-hover-hsl:     218 92% 95%; /* = #E8F0FE → var(--color-editor-field-hover) */
+  --editor-placeholder-hsl:     210 06% 63%; /* = #9AA0A6 → var(--color-editor-placeholder) */
+}
+
+/* 🎨 Tokens shadcn/ui attendus (utilisés comme hsl(var(--token))) */
+:root {
+  --background: var(--editor-background-hsl);
+  --foreground: var(--editor-text-hsl);
+
+  --card: 0 0% 100%;
+  --card-foreground: var(--editor-text-hsl);
+
+  --popover: 0 0% 100%;
+  --popover-foreground: var(--editor-text-hsl);
+
+  --primary: var(--editor-accent-hsl);        /* ou var(--editor-button-hsl) */
+  --primary-foreground: 0 0% 100%;
+
+  /* Secondary — choisis UNE des deux variantes */
+  /* Variante A (neutre) */
+  --secondary: var(--editor-background-hsl);
+  --secondary-foreground: var(--editor-text-hsl);
+  /* Variante B (bleuté) — décommente ces 2 lignes et commente celles de la variante A
+  --secondary: var(--editor-field-hover-hsl);
+  --secondary-foreground: var(--editor-button-hover-hsl);
+  */
+
+  --muted: var(--editor-background-hsl);
+  --muted-foreground: var(--editor-text-muted-hsl);
+
+  --accent: var(--editor-field-hover-hsl);
+  --accent-foreground: var(--editor-button-hover-hsl);
+
+  --destructive: var(--editor-error-hsl);
+  --destructive-foreground: 0 0% 100%;
+
+  --border: var(--editor-border-hsl);
+  --input: var(--editor-border-hsl);
+  --ring: var(--editor-accent-hsl);
+
+  /* utilitaires */
+  --placeholder: var(--editor-placeholder-hsl);
+  --heading: var(--editor-heading-hsl);
+
+  /* séries pour graphiques */
+  --chart-1: var(--editor-accent-hsl);
+  --chart-2: var(--editor-success-hsl);
+  --chart-3: var(--editor-error-hsl);
+  --chart-4: var(--editor-button-hover-hsl);
+  --chart-5: var(--editor-text-muted-hsl);
+}
+
 
 ### 🧾 Pages publiques des CPT (organisateur, chasse, énigme)
 
@@ -886,6 +1007,7 @@ page enigme
 L’affichage dynamique des boutons, statuts ou badges (sur les énigmes notamment)
 dépend du champ ACF `enigme_cache_etat_systeme` et du suivi individuel stocké
 dans la table `wp_enigme_statuts_utilisateur` :
+Structure détaillée : voir annexe « 🗄️ Tables personnalisées ».
 
 - `enigme_cache_etat_systeme` → état logique global, calculé automatiquement
 - `wp_enigme_statuts_utilisateur` → statut individuel du joueur
@@ -895,6 +1017,20 @@ Ces deux champs combines determinent :
 - la visibilite de l enigme
 - les messages d aide ou de verrouillage
 - le badge d etat
+
+### 🔎 Icônes de footer sur les cartes
+
+Chaque carte de chasse peut afficher des pictogrammes dans son pied de carte. Les fichiers SVG sont stockés dans `assets/svg/` du thème.
+
+| Fichier | Condition d’apparition |
+|---------|-----------------------|
+| `coins-points.svg` | Coût en points supérieur à 0 |
+| `reply-mail.svg` | Au moins une énigme en validation manuelle |
+| `reply-auto.svg` | Sinon, au moins une énigme en validation automatique |
+| `trophy.svg` | Récompense renseignée et valeur > 0 € |
+
+La fonction `preparer_infos_affichage_carte_chasse()` prépare ces icônes dans la clé `footer_icones`.
+Cette fonction sert de couche de présentation : elle regroupe toute la logique métier nécessaire avant affichage d’une carte.
 
 ### 🔄 enigme_cache_etat_systeme – statut logique global
 Definit si l enigme est techniquement disponible ou non.
@@ -907,6 +1043,8 @@ Definit si l enigme est techniquement disponible ou non.
 | bloquee_chasse     | La chasse liee est bloquee                       |
 | invalide           | Donnees manquantes ou mal configurees            |
 | cache_invalide     | Erreur technique, logique ACF cassee             |
+
+Structure détaillée : voir annexe « 🗄️ Tables personnalisées ».
 
 👤 Statut individuel du joueur (table `wp_enigme_statuts_utilisateur`)
 Definit le niveau de progression du joueur sur une enigme donnee.
@@ -1144,6 +1282,10 @@ organisateur-edit.js	Edition front organisateur (header + liens)	initLiensOrgani
 | `formulaire-liens-chasse`                | initLiensChasse               | Idem orga, côté chasse            |
 | `champ-recompense-*` (champ libre, chasse)| JS personnalisé (saisie + fetch séquencé) | ⚠️ Validation manuelle + reload |
 
+Nouveaux hooks PHP :
+- `soumettre_reponse_automatique()` (AJAX) – enregistre immédiatement la tentative sans envoyer d'email.
+- `traiter_tentative()` – logique commune d’insertion, mise à jour de statut et option d'envoi d'email.
+
 
 ### 🚫 Champs ACF désactivés ou ignorés
 
@@ -1166,6 +1308,101 @@ Chaque champ ciblé par un module JS (inline, conditionnel, panneau, etc.) doit 
 
 Cas particulier : les boutons déclencheurs de panneau doivent en plus avoir `.champ-modifier` et un `aria-label`.
 
+### 🗄️ Tables personnalisées
+
+Certaines fonctionnalités s'appuient sur cinq tables SQL dédiées.
+
+#### `wp_engagements`
+
+| Colonne | Type | Commentaire |
+|---------|------|-------------|
+| id | bigint unsigned AUTO_INCREMENT | clé primaire |
+| user_id | bigint unsigned | identifiant du joueur |
+| enigme_id | bigint unsigned | identifiant de l'énigme |
+| chasse_id | bigint NULL | identifiant de la chasse |
+| indice_id | bigint unsigned NULL | identifiant de l'indice |
+| date_engagement | datetime NULL DEFAULT CURRENT_TIMESTAMP | date d'engagement |
+
+Index :
+- `PRIMARY(id)`
+- `INDEX(enigme_id, user_id)`
+- `INDEX(chasse_id)`
+- `UNIQUE(user_id, indice_id)`
+- `INDEX(indice_id)`
+
+#### `wp_indices_deblocages`
+
+| Colonne | Type | Commentaire |
+|---------|------|-------------|
+| id | bigint unsigned AUTO_INCREMENT | clé primaire |
+| user_id | bigint unsigned | identifiant du joueur |
+| indice_id | bigint unsigned | identifiant de l'indice |
+| chasse_id | bigint unsigned NULL | chasse associée |
+| enigme_id | bigint unsigned NULL | énigme associée |
+| points_depenses | int unsigned | coût en points lors du déblocage |
+| date_deblocage | datetime | date de déblocage |
+
+Index :
+- `PRIMARY(id)`
+- `UNIQUE(user_id, indice_id)`
+- `INDEX(indice_id)`
+- `INDEX(chasse_id)`
+- `INDEX(enigme_id)`
+
+#### `wp_enigme_statuts_utilisateur`
+
+| Colonne | Type | Commentaire |
+|---------|------|-------------|
+| user_id | bigint unsigned | identifiant du joueur |
+| enigme_id | bigint unsigned | identifiant de l'énigme |
+| statut | enum('non_commencee','en_cours','abandonnee','echouee','resolue','terminee','soumis') DEFAULT 'non_commencee' | progression |
+| date_mise_a_jour | datetime NULL DEFAULT CURRENT_TIMESTAMP | dernière modification |
+
+#### `wp_enigme_tentatives`
+
+| Colonne | Type | Commentaire |
+|---------|------|-------------|
+| id | bigint unsigned AUTO_INCREMENT | clé primaire |
+| tentative_uid | varchar(64) | identifiant unique |
+| user_id | bigint unsigned | identifiant du joueur |
+| enigme_id | bigint unsigned | identifiant de l'énigme |
+| reponse_saisie | text NULL | texte saisi |
+| resultat | enum('bon','variante','faux','attente') DEFAULT 'attente' | résultat |
+| points_utilises | int unsigned NULL DEFAULT 0 | points consommés |
+| date_tentative | datetime NULL DEFAULT CURRENT_TIMESTAMP | date |
+| ip | varchar(45) NULL | adresse IP |
+| user_agent | text NULL | navigateur |
+| traitee | tinyint(1) NULL DEFAULT 0 | état de traitement |
+
+#### `wp_user_points`
+
+| Colonne   | Type         | Commentaire                       |
+|-----------|--------------|-----------------------------------|
+| id        | bigint unsigned AUTO_INCREMENT | clé primaire            |
+| user_id   | bigint unsigned | identifiant du joueur            |
+| balance   | int unsigned    | solde après l'opération          |
+| points    | int             | variation (crédit ou débit)      |
+| amount_eur | decimal(10,2) NULL | montant équivalent en euros |
+| reason    | varchar(255)    | motif de l'opération             |
+| origin_type | enum('admin','chasse','enigme','indice','tentative','achat','conversion') NULL DEFAULT 'admin' | catégorie |
+| origin_id | bigint unsigned NULL | identifiant lié (chasse, énigme, commande...) |
+| request_status | enum('pending','approved','paid','refused','cancelled') DEFAULT 'pending' | statut de la demande |
+| request_date | datetime DEFAULT CURRENT_TIMESTAMP | date de la demande |
+| settlement_date | datetime NULL | date de règlement |
+| cancelled_date | datetime NULL | date d'annulation/refus |
+| cancellation_reason | varchar(255) NULL | motif du refus/annulation |
+| created_at | datetime DEFAULT CURRENT_TIMESTAMP | date d'enregistrement |
+
+Index :
+- `PRIMARY(id)`
+- `INDEX(user_id)`
+- `INDEX(created_at)`
+
+`origin_type` indique la source de la variation de points :
+`admin`, `chasse`, `enigme`, `indice`, `tentative`, `achat` ou `conversion`.
+
+
+Les variantes sont comparées en tenant compte de leur option `respecter_casse_n`. Si la saisie correspond, le résultat enregistré est `variante` et le message défini est renvoyé via AJAX à chaque soumission, même identique.
 
 
 ### 📂 Références internes utiles (template-parts/, data-champ, etc.)

@@ -168,23 +168,41 @@ add_action('acf/save_post', 'verrouiller_visuels_enigme_si_nouveau_upload', 20);
  */
 function filtrer_visuels_enigme_front($images, $post_id, $field)
 {
-  cat_debug('[DEBUG] filtre gallery appelé pour post ID : ' . $post_id);
-  cat_debug("[✔️ filtre ACF gallery actif] post_id = $post_id | champ = " . ($field['name'] ?? 'inconnu'));
+    cat_debug('[DEBUG] filtre gallery appelé pour post ID : ' . $post_id);
+    cat_debug('[✔️ filtre ACF gallery actif] post_id = ' . $post_id . ' | champ = ' . ($field['name'] ?? 'inconnu'));
 
+    if (is_admin()) {
+        return $images;
+    }
+    if (!is_array($images)) {
+        return $images;
+    }
 
-  if (is_admin()) return $images;
-  if (!is_array($images)) return $images;
+    $taille = 'medium'; // peut être 'full', 'thumbnail', etc.
 
-  $taille = 'medium'; // peut être 'full', 'thumbnail', etc.
+    foreach ($images as &$image) {
+        if (!isset($image['ID'])) {
+            continue;
+        }
 
-  foreach ($images as &$image) {
-    if (!isset($image['ID'])) continue;
+        $image_id = $image['ID'];
+        $version  = null;
+        if (function_exists('trouver_chemin_image')) {
+            $finfo    = trouver_chemin_image($image_id, $taille);
+            $img_path = $finfo['path'] ?? null;
+            if ($img_path && file_exists($img_path)) {
+                $version = filemtime($img_path);
+            }
+        }
 
-    $image_id = $image['ID'];
-    $image['url'] = site_url('/voir-image-enigme?id=' . $image_id . '&taille=' . $taille);
-  }
+        $url = '/voir-image-enigme?id=' . $image_id . '&taille=' . $taille;
+        if ($version) {
+            $url .= '&v=' . $version;
+        }
+        $image['url'] = site_url($url);
+    }
 
-  return $images;
+    return $images;
 }
 add_filter('acf/format_value/type=gallery', 'filtrer_visuels_enigme_front', 20, 3);
 

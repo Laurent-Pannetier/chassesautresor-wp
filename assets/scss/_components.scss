@@ -1,0 +1,1463 @@
+
+@import "components/table-search";
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* 📋 Blocs */
+
+  /* ✨ Bloc élgégant */
+  
+
+/* 🎛️ Boutons */
+
+  /* 🔘 Bouton global */
+  /* 🚀 Bouton CTA */
+  /* 🎯 Bouton secondaire */
+  /* ➕ Bouton d’ajout */
+  /* 📖 Bouton "Lire plus" */
+  /* 🔙 Bouton retour aux chasses */
+
+
+/* 🏷️ Étiquettes */
+
+  /* 🏷️ Étiquette étape */
+  /* 🏷️ Étiquettes Métas */
+
+
+/* 🏷️ Badges */
+
+  /* 🟢 Badge rond */
+  /* 🏷️ Badges de statut */
+  /* 🎁 Badge récompense */
+
+
+/* ✨ ICÔNES SVG  */
+
+
+/* ========== 👤 Icônes du compte ========== */
+.ast-header-account-wrap .ast-header-account-type-icon {
+  color: #fff;
+}
+
+.ast-header-account-wrap .ast-header-account-type-icon .ahfb-svg-iconset svg {
+  height: 26px;
+  width: auto;
+}
+
+body:not(.logged-in) .ast-header-account-wrap .ast-header-account-type-icon {
+  color: #fff;
+}
+
+body:not(.logged-in) .ast-header-account-wrap .ast-header-account-type-icon .ahfb-svg-iconset svg {
+  fill: #fff;
+  stroke: #fff;
+}
+
+body.logged-in .ast-header-account-wrap .ast-header-account-type-icon {
+  color: #fff;
+}
+
+body.logged-in .ast-header-account-wrap .ast-header-account-type-icon .ahfb-svg-iconset svg {
+  fill: #fff;
+  stroke: #fff;
+}
+
+
+/* 🏷Séparateurs */
+
+  /* 🧭 Séparateur avec icône */
+  /* 🧭 Séparateur 1 */
+  /* 🧭 Séparateur 2 */
+
+
+/* 📝 Formulaires */
+
+  /* 📩 Formulaire de contact organisateur */
+ 
+
+/* 🧩 Composants */
+
+  /* 📊 Barre de progression */
+  /* ✨ Icônes universelles */
+  /* 🧩 Compte à rebours */
+  /* 📡 Encodage morse visuel */
+  /* 🧩 Accordéon générique */
+  /* 🔘 Effet pulsation */
+  /* 🚫 No-click */
+  /* ✅ Message succès */
+  /* 🖼️ Icones SVG */
+
+
+/* ==================================================
+   📋 BLOCS
+   ================================================== */
+/* ==========  ✨ Bloc élgégant ====== */
+
+.bloc-elegant p {
+    margin:0.8rem 0;
+}
+.bloc-elegant ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.bloc-elegant li {
+  position: relative;
+  padding-left: var(--space-xl);
+  margin-bottom: 0.6rem;
+}
+
+.bloc-elegant li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.4rem;
+  width: 0.6rem;
+  height: 0.6rem;
+  background-color: var(--color-primary, #FFD700); /* variable ou fallback */
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--color-background, #0B132B);
+}
+
+
+/* ==================================================
+   🎛️ BOUTONS
+   ================================================== */
+
+/* ========== 🔘 BOUTON GLOBAL ========== */
+
+button,
+.btn-lire-plus,
+.bouton-retour {
+  background-color: transparent;
+  font-family: var(--font-main);
+  font-size: 16px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: none;
+  text-decoration: none;
+  transition: background-color var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+button:focus,
+.menu-toggle:hover,
+button:hover,
+.ast-button:hover,
+.ast-custom-button:hover,
+.button:hover,
+input[type=reset]:hover,
+input[type=reset]:focus,
+input#submit:hover,
+input#submit:focus,
+input[type="button"]:hover,
+input[type="button"]:focus,
+input[type="submit"]:hover,
+input[type="submit"]:focus,
+form[class*="wp-block-search__"].wp-block-search .wp-block-search__inside-wrapper .wp-block-search__button:hover,
+form[class*="wp-block-search__"].wp-block-search .wp-block-search__inside-wrapper .wp-block-search__button:focus,
+body .wp-block-file .wp-block-file__button:hover,
+body .wp-block-file .wp-block-file__button:focus,
+.woocommerce-js a.button:hover,
+.woocommerce button.button:hover,
+.woocommerce .woocommerce-message a.button:hover,
+.woocommerce #respond input#submit:hover,
+.woocommerce #respond input#submit.alt:hover,
+.woocommerce input.button.alt:hover,
+.woocommerce input.button:hover,
+.woocommerce button.button.alt.disabled:hover,
+.wc-block-grid__products .wc-block-grid__product .wp-block-button__link:hover,
+[class*="wc-block"] button:hover,
+.woocommerce-js .astra-cart-drawer .astra-cart-drawer-content .woocommerce-mini-cart__buttons .button:not(.checkout):not(.ast-continue-shopping):hover,
+.woocommerce-js .astra-cart-drawer .astra-cart-drawer-content .woocommerce-mini-cart__buttons a.checkout:hover,
+.woocommerce button.button.alt.disabled.wc-variation-selection-needed:hover,
+[class*="wc-block"] .wc-block-components-button:hover,
+[class*="wc-block"] .wc-block-components-button:focus {
+  background-color: transparent;
+  color: inherit;
+  border-color: currentColor;
+}
+
+
+/* ========== 🚀 BOUTON CTA ========== */
+
+.bouton-cta {
+    display: inline-block;
+    padding: 6px 10px;
+    background-color: var(--color-gris-3);
+    color: var(--color-text-secondary);
+    border-radius: 5px;
+    text-decoration: none;
+    font-weight: bold;
+    margin-top: 10px;
+    transition: var(--transition-medium);
+    text-align: center;
+     width: fit-content;
+}
+
+.cta-reset-demo__button {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs, 0.5rem);
+}
+
+.cta-reset-demo__icon {
+    display: inline-flex;
+    flex-shrink: 0;
+
+    svg {
+        width: 1.25rem;
+        height: 1.25rem;
+        display: block;
+    }
+}
+
+.cta-reset-demo__label {
+    display: inline-flex;
+    align-items: center;
+}
+.bouton-cta:hover {
+    background-color: var(--color-gris-carte);
+    text-decoration: none;
+}
+.bouton-cta--color {
+    background-color: var(--color-background-button);
+    color: var(--color-text-primary);
+}
+.bouton-cta--color:hover {
+    background-color: var(--color-background-button-hover);
+}
+.bouton-cta:disabled {
+    background: var(--color-gris-3);
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.bouton-cta:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+.bouton-cta--pending {
+    cursor: not-allowed;
+    opacity: 0.6;
+    max-width: 220px;
+    white-space: normal;
+}
+
+/* ========== 🎯 BLOCS RÉPONSE ========== */
+.bloc-reponse {
+    position: relative;
+}
+
+.bloc-reponse h3 {
+    color: var(--color-primary);
+    font-weight: normal;
+}
+
+.bloc-reponse h3 .badge-validation {
+    margin-right: var(--space-xs);
+}
+
+.badge-cout {
+    display: inline-block;
+    padding: var(--space-xxs) var(--space-xs);
+    background: var(--color-secondary);
+    color: var(--color-text-primary);
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.bloc-reponse .reponse-cta-row {
+    display: flex;
+    justify-content: center;
+    margin-top: var(--space-sm);
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.bloc-reponse .reponse-cta-row .bouton-cta {
+    width: 100%;
+}
+
+.bloc-reponse .points-sousligne {
+    text-align: center;
+    margin-top: var(--space-xs);
+    font-size: 0.75rem;
+    opacity: 0.7;
+}
+
+@media (--bp-small) {
+    .bloc-reponse .reponse-cta-row {
+        flex-direction: row;
+    }
+    .bloc-reponse .reponse-cta-row .bouton-cta {
+        width: auto;
+    }
+    .bloc-reponse .points-sousligne {
+        margin-top: var(--space-xxs);
+    }
+    .bouton-cta {
+        padding: 8px 13px;
+    }
+}
+
+@media (--bp-tablet) {
+    .bouton-cta {
+        padding: 10px 15px;
+    }
+}
+
+/* ========== ⭐ BOUTON PRIMAIRE ========== */
+
+.bouton-primaire {
+    background: var(--color-primary);
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-primary);
+    transition: background 0.3s ease, transform 0.2s ease;
+    padding: 10px 15px;
+    border-radius: 3px;
+    margin: 6px 0;
+    display: inline-block;
+    text-align: center;
+    line-height: 16px;
+}
+
+.bouton-primaire:hover {
+    background: var(--color-secondary);
+    transform: scale(1.05);
+}
+
+.bouton-primaire:disabled {
+    background: var(--color-gris-3);
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.bouton-primaire:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+/* ========== 🎯 BOUTON SECONDAIRE ========== */
+
+.bouton-secondaire {
+    background: var(--color-secondary); /* Orange doré */
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-primary);
+    transition: background 0.3s ease, transform 0.2s ease;
+    padding: 10px 15px;
+    border-radius: 3px;
+    margin:6px 0;
+    display: inline-block;
+    text-align: center;
+    line-height: 16px;
+}
+
+.bouton-secondaire:hover {
+    background: var(--color-primary);
+    color: var(--color-text-primary);
+    transform: scale(1.05);
+}
+.bouton-secondaire.no-click {
+    background: var(--color-gris-3);
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 5px;
+    font-size: 1rem;
+    cursor: not-allowed;
+    pointer-events: none;
+    text-align: center;
+    width: fit-content;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.bouton-secondaire:disabled {
+    background: var(--color-gris-3);
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.bouton-secondaire:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+/* ========== 🔲 BOUTON TERTIAIRE ========== */
+
+.bouton-tertiaire {
+    background: transparent;
+    color: var(--color-text-primary);
+    border: 1px solid currentColor;
+    transition: background 0.3s ease, transform 0.2s ease;
+    padding: 10px 15px;
+    border-radius: 3px;
+    margin: 6px 0;
+    display: inline-block;
+    text-align: center;
+    line-height: 16px;
+}
+
+.bouton-tertiaire:hover {
+    background: var(--color-text-fond-clair);
+    color: var(--color-text-primary);
+    transform: scale(1.05);
+}
+
+.bouton-tertiaire:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.bouton-tertiaire:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+/* ========== ⚠️ BOUTON DANGER ========== */
+
+.btn-danger {
+    background: var(--color-editor-error);
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-editor-error);
+    transition: background 0.3s ease, transform 0.2s ease;
+    padding: 10px 15px;
+    border-radius: 3px;
+    margin: 6px 0;
+    display: inline-block;
+    text-align: center;
+    line-height: 16px;
+}
+
+.btn-danger:hover {
+    filter: brightness(1.1);
+    transform: scale(1.05);
+}
+
+.btn-danger:disabled {
+    background: var(--color-gris-3);
+    border-color: var(--color-gris-3);
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.btn-danger:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+/* ========== 🖱️ BOUTON ICÔNE ========== */
+
+.btn-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border-radius: 50%;
+}
+
+.btn-icon:focus {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+/* ========== 🔙 BOUTON RETOUR AUX CHASSES ========== */
+
+.bouton-retour-chasse {
+    margin-top: var(--space-lg);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    font-size: 1rem;
+}
+
+
+/* ========== ➕ BOUTON D’AJOUT ========== */
+
+a.ajout-link {
+    display: flex;
+    align-items: center; /* Centre verticalement l'icône et le texte */
+    justify-content: center; /* Centre horizontalement */
+    gap: 8px; /* Espacement entre l'icône et le texte */
+    padding: 8px 12px;
+    text-decoration: none;
+    font-size: 1rem;
+    font-weight: bold;
+    color: var(--color-primary);
+    background: var(--color-background);
+    border: 2px solid var(--color-primary);
+    border-radius: 8px;
+    transition: all 0.3s ease-in-out;
+}
+
+.ajout-link i {
+    font-size: 1.2rem;
+    display: flex; /* Évite les désalignements de FontAwesome */
+    align-items: center;
+}
+
+.ajout-link span {
+    display: flex; /* Force le texte à bien s'aligner */
+    align-items: center;
+}
+
+.ajout-link:hover {
+    background: var(--color-primary);
+    color: var(--color-background);
+    transform: scale(1.05);
+}
+
+a.ajout-link:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+
+/* ========== 📖 BOUTON "LIRE PLUS" ========== */
+
+.btn-lire-plus {
+  background-color: var(--color-background-button);
+  color: var(--color-text-primary);
+  margin-top: 10px;
+  width: 100%;
+}
+
+.btn-lire-plus:hover {
+  background-color: var(--color-background-button-inactive);
+  color: var(--color-background);
+}
+
+.btn-lire-plus:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+@media (--bp-tablet) {
+  .btn-lire-plus {
+    width: auto;
+  }
+}
+
+
+/* ========== 🔙 BOUTON RETOUR AUX CHASSES ========== */
+
+.retour-aux-chasses {
+  text-align: center;
+  margin: 40px 0 20px;
+}
+
+.bouton-retour {
+  background: none;
+  color: var(--color-gris-3);
+  padding: 0;
+  border: none;
+  box-shadow: none;
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.bouton-retour:hover {
+  color: var(--color-primary);
+  background: none;
+  transform: none;
+  box-shadow: none;
+}
+
+.bouton-retour:active {
+  transform: none;
+}
+
+.bouton-retour:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+@media (--bp-small) {
+  .bouton-retour {
+    font-size: 1.5rem;
+  }
+}
+
+
+
+/* ==================================================
+   🏷️ ÉTIQUETTES
+   ================================================== */
+
+/* ========== 🏷️ ÉTIQUETTE ÉTAPE ========== */
+
+.etiquette-etape {
+  display: inline-block;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  background-color: rgba(255, 255, 255, 0.05);
+  color: var(--color-accent); /* ou var(--color-secondary) */
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+  margin-bottom: var(--space-xs);
+  letter-spacing: 0.05em;
+  font-style: normal;
+}
+
+
+/* ========== 🏷️ ÉTIQUETTES Métas ========== */
+.bloc-metas-inline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  margin: 0.4rem 0;
+  font-size: 0.95rem;
+  opacity: 0.9;
+}
+.meta-etiquette {
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+  background: rgba(255,255,255,0.05);
+  padding: 0.3em 0.8em;
+  border-radius: 1.2em;
+  white-space: nowrap;
+  font-size: 85%;
+}
+.meta-etiquette a {
+  color: inherit;
+  text-decoration: none;
+  font-weight: 600;
+}
+.meta-etiquette a:hover,
+.meta-etiquette a:focus-visible {
+  text-decoration: underline;
+}
+.meta-etiquette svg {
+  margin-bottom: -5px;
+}
+.meta-etiquette span {
+  font-weight: 600;
+}
+.meta-etiquette__value {
+  font-weight: 400;
+}
+.meta-etiquette strong {
+  font-weight: 600;
+}
+.bloc-metas-inline--compact {
+  gap: 0.4rem;
+  font-size: 0.75rem;
+}
+
+.bloc-metas-inline--compact .meta-etiquette {
+  padding: 0.2em 0.6em;
+  font-size: 100%;
+}
+@media (--bp-small) {
+    .bloc-metas-inline {
+        gap:0.7rem;
+    }
+    .meta-etiquette {
+        font-size:100%;
+    }
+    .bloc-metas-inline--compact {
+        gap:0.5rem;
+    }
+}
+
+
+
+
+/* ==================================================
+   🏷️ BADGES
+   ================================================== */
+
+/* ========== ✔️ BADGE VALIDATION ========== */
+
+.badge-validation {
+    width: 24px;
+    height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    padding: 0;
+    border-radius: 50%;
+    background: var(--color-grey-light);
+    color: var(--color-text-fond-clair);
+    font-size: 0.75rem;
+    box-shadow: 0 0 0 1px var(--color-grey-dark), 0 2px 4px rgba(var(--color-text-fond-clair-rgb), 0.15);
+    cursor: pointer;
+    position: relative;
+    vertical-align: middle;
+
+    &:hover,
+    &:focus {
+        background: var(--color-grey-light);
+        color: var(--color-text-fond-clair);
+    }
+}
+
+.badge-validation__tooltip {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--color-grey-light);
+    color: var(--color-text-fond-clair);
+    padding: var(--space-xs);
+    font-size: 0.75rem;
+    line-height: 1.4;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(var(--color-text-fond-clair-rgb), 0.2);
+    width: max-content;
+    max-width: 220px;
+    z-index: 10;
+}
+
+.badge-validation.show-tooltip .badge-validation__tooltip {
+    display: block;
+}
+
+/* ========== 🟢 BADGE ROND ========== */
+
+.badge-rond {
+    margin: 0;
+    padding: 2px 0;
+    background-color: var(--color-primary); /* Jaune or */
+    transition: background 0.5s;
+    border-radius: 200px;
+    font-size: 12px;
+}
+
+
+/* ========== 🏷️ BADGES ========== */
+
+.carte-badges-stack {
+  position: absolute;
+  top: var(--space-xs);
+  left: var(--space-xs);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xxs);
+  z-index: 2;
+
+  .badge-statut,
+  .badge-demo {
+    position: static;
+  }
+}
+
+/* ========== 🏷️ BADGES DE STATUT ========== */
+
+.badge-statut {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  padding: 4px 8px;
+  font-size: 0.75rem;
+  font-weight: bold;
+  border-radius: 999px;
+  color: var(--color-text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  line-height: 1;
+  z-index: 1;
+}
+
+.badge-demo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xxs);
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1;
+  border-radius: 999px;
+  background: rgba(225, 169, 95, 0.85);
+  color: var(--color-text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  box-shadow: 0 6px 16px rgba(var(--color-black-rgb), 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.badge-demo__icon {
+  display: inline-flex;
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.badge-demo__icon svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.badge-demo__label {
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+@media (--bp-desktop) {
+  .badge-demo {
+    font-size: 0.8rem;
+  }
+}
+
+.badge-statut[data-tooltip] {
+  cursor: help;
+}
+
+.badge-statut[data-tooltip]::before,
+.badge-statut[data-tooltip]::after {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition-fast), transform var(--transition-fast);
+}
+
+.badge-statut[data-tooltip]::after {
+  content: attr(data-tooltip);
+  top: calc(100% + var(--space-xs));
+  left: 50%;
+  transform: translate(-50%, -8px);
+  background: rgba(var(--color-text-fond-clair-rgb), 0.95);
+  color: var(--color-text-primary);
+  padding: var(--space-xxs) var(--space-xs);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  line-height: 1.3;
+  white-space: normal;
+  text-align: center;
+  max-width: 220px;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
+  z-index: 5;
+}
+
+.badge-statut[data-tooltip]::before {
+  content: '';
+  top: calc(100% + 4px);
+  left: 50%;
+  transform: translate(-50%, -6px);
+  border: 6px solid transparent;
+  border-bottom-width: 0;
+  border-top-color: rgba(var(--color-text-fond-clair-rgb), 0.95);
+  z-index: 5;
+}
+
+.badge-statut[data-tooltip]:hover::before,
+.badge-statut[data-tooltip]:hover::after,
+.badge-statut[data-tooltip]:focus-visible::before,
+.badge-statut[data-tooltip]:focus-visible::after,
+.badge-statut[data-tooltip][data-tooltip-visible="true"]::before,
+.badge-statut[data-tooltip][data-tooltip-visible="true"]::after {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.badge-statut--format-icon {
+  padding: var(--space-xxs);
+  width: 2.5rem;
+  height: 2.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-transform: none;
+}
+
+.badge-statut__icon {
+  display: inline-flex;
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.badge-statut__icon svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.badge-statut--responsive {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-xxs);
+  width: 2.5rem;
+  height: 2.5rem;
+
+  .badge-statut__icon {
+    display: inline-flex;
+  }
+
+  .badge-statut__label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+}
+
+@media (--bp-desktop) {
+  .badge-statut--responsive {
+    width: auto;
+    height: auto;
+    padding: 4px 8px;
+  }
+
+  .badge-statut--responsive .badge-statut__icon {
+    display: none;
+  }
+
+  .badge-statut--responsive .badge-statut__label {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    padding: 0;
+    overflow: visible;
+    clip: auto;
+    white-space: normal;
+    border: 0;
+  }
+}
+
+/* Couleurs par statut (alignées sur le nuancier) */
+.badge-statut.statut-en_cours {
+  background-color: var(--color-success);
+}
+
+.badge-statut.statut-payante {
+  background-color: var(--color-primary);
+  color: var(--color-text-primary);
+}
+
+.badge-statut.statut-a_venir {
+  background-color: var(--color-grey-medium);
+}
+
+.badge-statut.statut-termine {
+  background-color: var(--color-text-secondary);
+}
+
+.badge-statut.statut-revision {
+  background-color: var(--color-error);
+}
+
+
+
+
+/* ========== 🎁 BADGE RÉCOMPENSE ========== */
+
+.badge-recompense {
+  margin-left: var(--space-md);
+  font-weight: 600;
+  padding: var(--space-xxs) var(--space-xs);
+  border-radius: 0.4rem;
+  background-color: rgba(255, 255, 255, 0.05);
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.badge-recompense__label,
+.badge-recompense__devise {
+  font-size: 0.75em;
+  opacity: 0.8;
+}
+
+.badge-recompense__label {
+  margin-right: var(--space-xxs);
+}
+
+.badge-recompense__devise {
+  margin-left: 0.15rem;
+}
+
+.badge-recompense.avec-recompense {
+  color: var(--color-primary);
+}
+
+.badge-recompense.sans-recompense {
+  color: var(--color-gris-3);
+}
+
+
+
+/* ========== ✨ ICÔNES SVG ========= */
+.svg-icone {
+    width: 32px;
+}
+.svg-xsmall svg {
+  width: 20px;
+  vertical-align: -4px;
+  color: var(--color-gris-3);
+}
+
+
+/* ==================================================
+   🧭 SÉPARATEURS 
+   ================================================== */
+
+/* ========== 🧭 SÉPARATEUR AVEC ICÔNE ========== */
+
+.separateur-avec-icone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-md);
+  margin: var(--space-4xl) 0;
+  opacity: 0.6;
+}
+.separateur-avec-icone .icone-svg {
+  width: 32px;
+  height: 32px;
+  background-image: url('data:image/svg+xml;utf8,<svg fill="FFD700" ...>');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+.trait-gauche,
+.trait-droite {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--color-primary));
+}
+
+.trait-droite {
+  background: linear-gradient(to left, transparent, var(--color-primary));
+}
+
+.icone-svg img {
+  width: 32px;
+  height: 32px;
+  display: block;
+  filter: brightness(1.2);
+}
+
+/* ========== 🧭 SÉPARATEUR 1 ========== */
+.separateur-1 {
+  border: none;
+  border-top: 1px dashed var(--color-accent);
+  margin: var(--space-2xl) auto;
+  max-width: 600px;
+  opacity: 0.4;
+}
+
+
+/* ========== 🧭 SÉPARATEUR 2 ========== */
+.separateur-2 {
+  height: 2px;
+  width: 40px;
+  background-color: var(--color-accent);
+  margin: 0 auto;
+}
+
+
+/* ========== 🧭 SÉPARATEUR 3 ========== */
+.separateur-3 {
+  height: 1px;
+  width: 100%;
+  background-color: var(--color-text-primary);
+  opacity: 0.25;
+  margin:0.5em 0 0;
+}
+
+/* ========== 📱 RESPONSIVE ========== */
+@media (--bp-small) {
+    .separateur-2 {
+        margin: var(--space-xs) 0 var(--space-xl);
+    }
+}
+
+
+
+/* ==================================================
+   📝 FORMULAIRES
+   ================================================== */
+
+/* ========== 📩 FORMULAIRE DE CONTACT ORGANISATEUR ========== */
+
+.formulaire-contact-wrapper {
+  margin:var(--space-2xl) auto;
+  max-width: 600px;
+  padding-left: var(--space-md);
+  padding-right: var(--space-md);
+
+  .wpforms-field-label,
+  .wpforms-field-label-inline,
+  label {
+    color: var(--color-text-primary);
+  }
+
+  .wpforms-field-sublabel,
+  .wpforms-required-label,
+  .wpforms-field-description {
+    color: var(--color-text-primary);
+  }
+
+  .wpforms-required-label {
+    font-weight: 600;
+    color: var(--color-primary);
+  }
+}
+.titre-contact {
+  margin-bottom: 0.8rem;
+}
+@media (--bp-small) {
+  .formulaire-contact-wrapper {
+    padding-left: 0;
+    padding-right: 0;
+  }
+}
+#wpforms-8792-field_6-container {
+    /* Ce champ appartient au plugin WPForms : utilisation volontaire de !important */
+    display:none !important;
+}
+
+.wpforms-form .champ-attention {
+  border: 2px dashed var(--color-editor-error);
+  animation: pulse-attention 1.2s ease-in-out infinite;
+  background-color: #fff5f5;
+  color: var(--color-editor-text);
+  border-radius: 8px;
+  padding-left: 5px;
+}
+.champ-attention a {
+  color: var(--color-editor-text);
+  text-decoration: underline;
+}
+
+@keyframes pulse-attention {
+  0%   { background-color: #fff5f5; }
+  50%  { background-color: #ffecec; }
+  100% { background-color: #fff5f5; }
+}
+
+
+
+
+
+/* ==================================================
+   🎛️ COMPOSANTS
+   ================================================== */
+
+
+/* ========== 📊 BARRE DE PROGRESSION ========== */
+
+.progression-container {
+  background-color: var(--color-background-button-inactive);
+  border-radius: 10px;
+  height: 8px;
+  overflow: hidden;
+  margin-top: 5px;
+}
+
+.progression-bar {
+  background-color: var(--color-success);
+  height: 100%;
+  border-radius: 10px;
+  transition: width 0.4s ease;
+}
+
+/* ========== 🧩 COMPTE À REBOURS ========== */
+
+/* Compte à rebours + message */
+.message-deblocage, .countdown-container {
+    background-color: rgba(0, 0, 0, 0.6);
+    padding: 8px 16px;
+    border-radius: 12px;
+    margin-top: 8px;
+    margin-bottom: 15px;
+}
+
+/* 📝 Message sous le cadenas */
+.message-deblocage {
+    background: rgba(0, 0, 0, 0.6);
+    color: var(--color-text-primary);
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-size: 1rem;
+    max-width: 90%;
+}
+/* ⏳ Bloc du compte à rebours */
+.countdown-container {
+    background: rgba(0, 0, 0, 0.7);
+    color: var(--color-primary);
+    font-weight: bold;
+    font-size: 1rem;
+    padding: 10px 20px;
+    margin-top: 15px;
+    border-radius: 8px;
+    text-align: center;
+}
+
+@media (--bp-tablet) {
+    .countdown-container { font-size: 1.2rem; }
+}
+
+
+/* ========== 📡 ENCODAGE MORSE VISUEL ========== */
+
+.ligne-morse {
+  position: relative;
+  height: 2px;
+  overflow: hidden;
+}
+
+.morse-wrapper {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 0.4rem;
+  padding: 0 0.6rem; /* ✅ un peu plus de marge latérale */
+  height: 2px;
+  align-items: center;
+  white-space: nowrap;
+  overflow: hidden;
+  max-width: 90%;
+  opacity: 0.5;
+}
+
+.morse-wrapper .point,
+.morse-wrapper .tiret {
+  display: inline-block;
+  height: 2px;
+  background-color: var(--color-grey-medium);
+}
+
+.morse-wrapper .point {
+  width: 6px;
+}
+
+.morse-wrapper .tiret {
+  width: 16px;
+}
+
+/* ========== 🧩 ACCORDÉON GÉNÉRIQUE – OUVERTURE / FERMETURE DYNAMIQUE ========== */
+
+
+
+/* ========== 🔘 EFFET PULSATION ========== */
+
+/* EFFET PULSATION */
+@keyframes pulsePromo {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.02); opacity: 0.95; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.pulsation {
+    animation: pulsePromo 3s infinite ease-in-out;
+}
+
+
+/* ========== 🚫 NO-CLICK ========== */
+
+.no-click {
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+a.disabled,
+a[aria-disabled="true"] {
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+
+/* ========== ✅ MESSAGE SUCCÈS ========== */
+
+.message-succes {
+    text-align: center;
+    font-weight: bold;
+    color: var(--color-success);
+    font-size: 16px;
+    margin-top: 15px;
+}
+
+/* ========== ℹ️ MESSAGE INFO ========== */
+.message-info {
+    text-align: center;
+    font-weight: normal;
+    color: var(--color-text-secondary);
+    font-size: 16px;
+    margin-top: 15px;
+}
+
+/* ========== ❌ MESSAGE ERREUR ========== */
+.message-erreur {
+    text-align: center;
+    font-weight: bold;
+    color: var(--color-error);
+    font-size: 16px;
+    margin-top: 15px;
+}
+
+/* ========== ⚠️ MESSAGE WARNING ========== */
+.message-warning {
+    text-align: center;
+    font-weight: bold;
+    color: var(--color-accent);
+    font-size: 16px;
+    margin-top: 15px;
+}
+
+.message-close {
+    margin-left: 0.5rem;
+    background: var(--color-grey-light);
+    border: 0;
+    cursor: pointer;
+    font-size: 1em;
+    color: var(--color-error);
+}
+
+/* ========== 🖼️ ICONES SVG ========== */
+.icone-aces-casino, .icone-compass-rose {
+  color: var(--color-text-primary);
+  width: 60px;
+  height: 60px;
+  display: inline-block;
+}
+
+/* 🔗 Boutons de partage AddToAny */
+
+a.addtoany_share {
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+a.addtoany_share img,
+a.addtoany_share svg,
+a.addtoany_share span {
+  width: 30px;
+  height: 30px;
+  border: none;
+
+  border-radius: 0;
+}
+
+/* 🌐 Language switcher */
+
+.lang-switcher {
+    position: relative;
+    display: inline-block;
+    padding: 0;
+    margin: 0;
+}
+
+.lang-switcher__toggle {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    padding: 0.25rem 0.5rem;
+    margin: 0;
+    background: transparent;
+    border: 0;
+}
+
+.lang-switcher__icon {
+    font-size: 0.75rem;
+    margin-left: 0.25rem;
+}
+
+.lang-switcher__flag {
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.lang-switcher__options {
+    position: absolute;
+    right: 0;
+    top: 100%;
+    background: var(--color-background);
+    list-style: none;
+    margin: 0;
+    padding: 0.25rem 0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    display: none;
+    z-index: 10;
+    min-width: 6rem;
+    width: max-content;
+}
+
+.lang-switcher.is-open .lang-switcher__options {
+    display: block;
+}
+
+.lang-switcher__options li a,
+.lang-switcher__options li span {
+    display: flex;
+    align-items: center;
+    padding: 0.25rem 0.5rem;
+    color: var(--color-text-primary);
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.lang-switcher__options .lang-switcher__flag {
+    margin-right: 0.25rem;
+}
+
+.lang-switcher__options li.active span {
+    font-weight: 600;
+}
+
+/* ========== 🧭 FIL D'ARIANE ========== */
+
+.breadcrumb {
+  margin: var(--space-sm) 0;
+}
+
+.breadcrumb ol {
+  display: flex;
+  flex-wrap: wrap;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.875rem;
+}
+
+.breadcrumb li + li::before {
+  content: '›';
+  margin: 0 var(--space-xs);
+  color: var(--color-text-secondary);
+}
+
+.breadcrumb a {
+  color: var(--color-secondary);
+  text-decoration: none;
+}
+
+.breadcrumb a:hover,
+.breadcrumb a:focus {
+  text-decoration: underline;
+}
+

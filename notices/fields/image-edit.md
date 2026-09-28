@@ -58,6 +58,10 @@ fetch('/wp-admin/admin-ajax.php', {
 })
 ```
 
+La fonction stocke le déclencheur dans `bloc.__ouvrirMedia` pour être rappelé
+depuis d'autres modules. Aucun script inline n'est injecté dans le DOM : les
+attributs `data-image-init-*` ne sont plus utilisés.
+
 ---
 
 ## ✅ 3. PHP – Traitement dans `modifier_champ_enigme()`

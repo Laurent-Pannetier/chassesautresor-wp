@@ -71,8 +71,7 @@ if ($est_en_creation) :
 
     <div class="bloc-discret">
       <p class="txt-sous-titre">
-        Utilisez ce formulaire pour envoyer un message à l’organisateur.<br>
-        Pour toute question technique liée au site, <a href="https://chassesautresor.com/contact">utilisez ce formulaire</a>.
+        Utilisez ce formulaire pour envoyer un message à l’organisateur.
       </p>
 
       <?php

@@ -26,8 +26,11 @@ window.mettreAJourResumeInfos = function () {
 
       if (champ === 'liens_publics') {
         const ul = bloc?.querySelector('.liste-liens-publics');
-        estRempli = ul && ul.children.length > 0;
+        // ➕ Ajout d'une condition fallback sur le dataset ou la classe
+        const aDesLiens = bloc?.classList.contains('champ-rempli') || bloc?.dataset.valeurs?.length > 0;
+        estRempli = (ul && ul.children.length > 0) || aDesLiens;
       }
+
 
       // Mise à jour visuelle + marquage obligatoire
       mettreAJourLigneResume(ligne, champ, estRempli, 'organisateur');
@@ -61,11 +64,6 @@ window.mettreAJourResumeInfos = function () {
         estRempli = valeurTitre && valeurTitre !== titreParDefaut;
       }
 
-      if (champ === 'chasse_principale_description') {
-        const texte = document.querySelector('#panneau-description-chasse textarea')?.value?.trim();
-        estRempli = !!texte;
-      }
-
       if (champ === 'chasse_principale_image') {
         const image = blocEdition?.querySelector('img');
         estRempli = image && !image.src.includes('defaut-chasse');
@@ -96,12 +94,12 @@ window.mettreAJourResumeInfos = function () {
       const champ = ligne.dataset.champ;
       const blocEdition = document.querySelector(`.champ-enigme[data-champ="${champ}"]`);
 
-      let estRempli = false;
+      let estRempli = blocEdition && !blocEdition.classList.contains('champ-vide');
 
       // Règles spécifiques pour les énigmes
       if (champ === 'post_title') {
         const valeur = blocEdition?.querySelector('.champ-input')?.value.trim().toLowerCase();
-        const titreParDefaut = 'nouvelle énigme';
+        const titreParDefaut = 'en création';
         estRempli = valeur && valeur !== titreParDefaut;
       }
 
@@ -115,22 +113,17 @@ window.mettreAJourResumeInfos = function () {
         estRempli = !!val;
       }
 
-      if (champ === 'enigme_visuel_texte') {
-        const textarea = document.querySelector('#panneau-description-enigme textarea');
-        estRempli = textarea && textarea.value.trim().length > 0;
-      }
-
       if (champ === 'enigme_mode_validation') {
         const checked = document.querySelector('input[name="acf[enigme_mode_validation]"]:checked');
         estRempli = !!checked;
       }
 
-      if (champ === 'enigme_tentative_cout_points') {
+      if (champ.endsWith('enigme_tentative_cout_points')) {
         const val = parseInt(blocEdition?.querySelector('input')?.value || '', 10);
         estRempli = !isNaN(val);
       }
 
-      if (champ === 'enigme_tentative_max') {
+      if (champ.endsWith('enigme_tentative_max')) {
         const val = parseInt(blocEdition?.querySelector('input')?.value || '', 10);
         estRempli = !isNaN(val) && val > 0;
       }
@@ -145,8 +138,8 @@ window.mettreAJourResumeInfos = function () {
       }
 
       if (champ === 'enigme_reponse_variantes') {
-        const bouton = blocEdition?.querySelector('.champ-modifier');
-        estRempli = bouton && !bouton.textContent.includes('Créer');
+        const nbVar = blocEdition?.querySelectorAll('.variantes-table .variante-resume')?.length || 0;
+        estRempli = nbVar > 0;
       }
 
       if (champ === 'enigme_acces_condition') {
@@ -169,21 +162,6 @@ window.mettreAJourResumeInfos = function () {
         const select = blocEdition?.querySelector('select');
         estRempli = !!select?.value;
       }
-
-      if (champ === 'enigme_solution_mode') {
-        const checked = blocEdition?.querySelector('input[name="acf[enigme_solution_mode]"]:checked');
-        estRempli = !!checked;
-      }
-
-      if (champ === 'enigme_solution_delai') {
-        const val = parseInt(document.querySelector('#solution-delai')?.value || '', 10);
-        estRempli = !isNaN(val) && val >= 0;
-      }
-
-      if (champ === 'enigme_solution_heure') {
-        const val = document.querySelector('#solution-heure')?.value?.trim();
-        estRempli = !!val;
-      }
       mettreAJourLigneResume(ligne, champ, estRempli, 'enigme');
     });
     // ✅ Marquage spécial si bonne réponse manquante
@@ -201,19 +179,29 @@ window.mettreAJourResumeInfos = function () {
   if (typeof window.mettreAJourCarteAjoutEnigme === 'function') {
     window.mettreAJourCarteAjoutEnigme();
   }
+  if (typeof window.mettreAJourEtatIntroChasse === 'function') {
+    window.mettreAJourEtatIntroChasse();
+  }
 };
 
 // ==============================
 // ✅ Hook unifié – Réagit à toute modification simple de champ pour tous les CPTs
 // ==============================
-window.onChampSimpleMisAJour = function (champ, postId, valeur, cpt) {
+window.onChampSimpleMisAJour = function (champ, postId, valeur, cpt, extra) {
   cpt = cpt?.toLowerCase?.() || cpt;
 
-  // ✅ ORGANISATEUR : mise à jour titre + image
-  if (cpt === 'organisateur') {
-    if (champ === 'post_title' && typeof window.mettreAJourTitreHeader === 'function') {
+  if (champ === 'post_title') {
+    mettreAJourResumeTitre(cpt, valeur);
+    if (typeof window.mettreAJourTitreHeader === 'function') {
       window.mettreAJourTitreHeader(cpt, valeur);
     }
+    if (cpt === 'enigme' && typeof window.mettreAJourTitreMenuEnigme === 'function') {
+      window.mettreAJourTitreMenuEnigme(valeur);
+    }
+  }
+
+  // ✅ ORGANISATEUR : mise à jour image
+  if (cpt === 'organisateur') {
     if (champ === 'logo_organisateur') {
       const bloc = document.querySelector(`.champ-organisateur[data-champ="${champ}"][data-post-id="${postId}"]`);
       if (bloc && typeof bloc.__ouvrirMedia === 'function') bloc.__ouvrirMedia();
@@ -232,11 +220,8 @@ window.onChampSimpleMisAJour = function (champ, postId, valeur, cpt) {
     }
   }
 
-  // ✅ CHASSE : titre + image + statut
+  // ✅ CHASSE : image + statut
   if (cpt === 'chasse') {
-    if (champ === 'post_title' && typeof window.mettreAJourTitreHeader === 'function') {
-      window.mettreAJourTitreHeader(cpt, valeur);
-    }
     if (champ === 'chasse_principale_image') {
       const bloc = document.querySelector(`.champ-chasse[data-champ="${champ}"][data-post-id="${postId}"]`);
       if (bloc && typeof bloc.__ouvrirMedia === 'function') bloc.__ouvrirMedia();
@@ -251,6 +236,13 @@ window.onChampSimpleMisAJour = function (champ, postId, valeur, cpt) {
     ];
     if (champsStatut.includes(champ)) {
       rafraichirStatutChasse(postId);
+      if (champ === 'chasse_infos_cout_points' && typeof window.mettreAJourBadgeCoutChasse === 'function') {
+        window.mettreAJourBadgeCoutChasse(postId, parseInt(valeur, 10));
+      }
+    }
+    const champsResume = ['post_title', 'chasse_principale_image'];
+    if (champsResume.includes(champ) && typeof window.mettreAJourResumeInfos === 'function') {
+      window.mettreAJourResumeInfos();
     }
   }
 
@@ -262,33 +254,68 @@ window.onChampSimpleMisAJour = function (champ, postId, valeur, cpt) {
       'enigme_visuel_texte',
       'enigme_mode_validation',
       'enigme_tentative_cout_points',
+      'enigme_tentative.enigme_tentative_cout_points',
       'enigme_tentative_max',
+      'enigme_tentative.enigme_tentative_max',
       'enigme_reponse_bonne',
       'enigme_reponse_casse',
       'enigme_acces_condition',
       'enigme_acces_date',
       'enigme_acces_pre_requis',
-      'enigme_style_affichage',
-      'enigme_solution_mode',
-      'enigme_solution_delai',
-      'enigme_solution_heure'
+      'enigme_style_affichage'
     ];
 
-    if (champ === 'post_title' && typeof window.mettreAJourTitreHeader === 'function') {
-      window.mettreAJourTitreHeader(cpt, valeur);
+    if (champ === 'enigme_visuel_legende') {
+      if (typeof window.mettreAJourLegendeEnigme === 'function') {
+        window.mettreAJourLegendeEnigme(valeur);
+      }
     }
 
-    if (champ === 'enigme_visuel_legende') {
-      const legende = document.querySelector('.enigme-soustitre');
-      if (legende) legende.textContent = valeur;
+    if (champ === 'enigme_reponse_bonne' && typeof window.forcerRecalculStatutEnigme === 'function') {
+      window.forcerRecalculStatutEnigme(postId);
     }
 
     if (champsResume.includes(champ) && typeof window.mettreAJourResumeInfos === 'function') {
       window.mettreAJourResumeInfos();
     }
+    if (
+      extra &&
+      extra.complet_changed &&
+      window.sidebarAside &&
+      typeof window.sidebarAside.reload === 'function'
+    ) {
+      const cid = extra.chasse_id || document.querySelector('.enigme-navigation')?.dataset.chasseId;
+      window.sidebarAside.reload(cid);
+    }
   }
 
 };
+
+function mettreAJourResumeTitre(cpt, valeur) {
+  const span = document.querySelector(`.edition-panel-${cpt} .resume-infos li[data-champ="post_title"] .champ-valeur`);
+  if (!span) return;
+
+  const titre = valeur?.trim() || '';
+  let placeholder = '';
+  let defaut = '';
+
+  switch (cpt) {
+    case 'chasse':
+      placeholder = wp.i18n.__('renseigner le titre de la chasse', 'chassesautresor-com');
+      defaut = window.CHP_CHASSE_DEFAUT?.titre || 'nouvelle chasse';
+      break;
+    case 'enigme':
+      placeholder = 'renseigner le titre de l’énigme';
+      defaut = 'en création';
+      break;
+    default:
+      placeholder = 'renseigner le titre de l’organisateur';
+      defaut = 'votre nom d’organisateur';
+  }
+
+  const estVide = !titre || titre.toLowerCase() === defaut.toLowerCase();
+  span.textContent = estVide ? placeholder : titre;
+}
 
 
 
@@ -298,28 +325,64 @@ window.onChampSimpleMisAJour = function (champ, postId, valeur, cpt) {
 function mettreAJourLigneResume(ligne, champ, estRempli, type) {
   ligne.classList.toggle('champ-rempli', estRempli);
   ligne.classList.toggle('champ-vide', !estRempli);
-  const estObligatoire = ligne.closest('.resume-bloc')?.classList.contains('resume-obligatoire');
+  const estObligatoire =
+    ligne.closest('.resume-bloc')?.classList.contains('resume-obligatoire') &&
+    !(
+      (type === 'chasse' && champ === 'chasse_infos_recompense_valeur') ||
+      (type === 'enigme' && ['enigme_visuel_legende', 'enigme_visuel_texte'].includes(champ))
+    );
   ligne.classList.toggle('champ-attention', estObligatoire && !estRempli);
 
-  // Nettoyer anciennes icônes
-  ligne.querySelectorAll(':scope > .icone-check, :scope > .icon-attente').forEach((i) => i.remove());
+  const input = ligne.querySelector('input, textarea, select');
+  if (input) {
+    input.classList.toggle('champ-vide-obligatoire', estObligatoire && !estRempli);
+  }
 
-  // Ajouter nouvelle icône
-  const icone = document.createElement('i');
-  icone.className = estRempli
-    ? 'fa-solid fa-circle-check icone-check'
-    : 'fa-regular fa-circle icon-attente';
-  icone.setAttribute('aria-hidden', 'true');
-  ligne.prepend(icone);
+  const container = ligne.querySelector('.edition-row-label .edition-row-icon');
+
+  // Nettoyer anciennes icônes
+  if (container) {
+    container.innerHTML = '';
+  } else {
+    ligne
+      .querySelectorAll(':scope > .icone-check, :scope > .icon-attente')
+      .forEach((i) => i.remove());
+  }
+
+  // Ajouter nouvelle icône si autorisé
+  if (ligne.dataset.noIcon === undefined) {
+    const icone = document.createElement('i');
+    icone.className = estRempli
+      ? 'fa-solid fa-circle-check icone-check'
+      : 'fa-regular fa-circle icon-attente';
+    icone.setAttribute('aria-hidden', 'true');
+    if (container) {
+      container.appendChild(icone);
+    } else {
+      ligne.prepend(icone);
+    }
+  }
 
   // Ajouter bouton édition ✏️ si besoin
   const dejaBouton = ligne.querySelector('.champ-modifier');
+  const pasDEdition =
+    ligne.dataset.noEdit !== undefined ||
+    (champ === 'enigme_visuel_texte' && !estRempli);
 
-  if (!dejaBouton) {
+  if (pasDEdition) {
+    ligne.style.cursor = '';
+    // Ne supprimer le bouton existant que s'il a été ajouté automatiquement
+    if (ligne.dataset.noEdit === undefined) {
+      dejaBouton?.remove();
+    }
+    return;
+  }
+
+  if (!dejaBouton && !ligne.querySelector('.champ-ajouter')) {
     const bouton = document.createElement('button');
     bouton.type = 'button';
-    bouton.className = 'champ-modifier';
-    bouton.textContent = '✏️';
+    bouton.className = 'champ-modifier txt-small';
+    bouton.textContent = wp.i18n.__('modifier', 'chassesautresor-com');
     bouton.setAttribute('aria-label', 'Modifier le champ ' + champ);
 
     bouton.addEventListener('click', () => {
@@ -328,7 +391,12 @@ function mettreAJourLigneResume(ligne, champ, estRempli, type) {
       boutonInterne?.click();
     });
 
-    ligne.appendChild(bouton);
+    const champTexte = ligne.querySelector('.champ-texte');
+    if (champTexte) {
+      champTexte.appendChild(bouton);
+    } else {
+      ligne.appendChild(bouton);
+    }
     if (typeof initZoneClicEdition === 'function') initZoneClicEdition(bouton);
   }
 }

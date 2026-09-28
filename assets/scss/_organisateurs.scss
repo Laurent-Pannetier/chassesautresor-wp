@@ -1,0 +1,597 @@
+/* 👤 Header organisateur */
+
+  /* 🧱 Structure du header */
+  /* 📐 Classes générales header */
+  /* 🔠 Typographie spécifique au header */
+  /* 📐 Colonne logo & colonne texte */
+  /* 🖼 Logo cliquable */
+  /* 🧭 Menu de navigation */
+  /* 🧭 Modal bienvenue */
+  
+
+  /* 📱 Responsive – Tablettes (≤ 768px) */
+  /* 📱 Responsive – Tablettes (600px à 768px) */
+  /* 📱 Bascule en colonne (≤ 600px) */
+  /* 📱 Responsive – Mobile (≤ 480px) */
+
+/* 🧾 Présentation organisateur */
+
+  /* 🌐 Liens publics organisateur */
+  /* 🧾 Description organisateur */
+  /* 📱 Responsive */
+
+/* 🧭 Devenir organisateur */
+
+  /* 🎯 Axes d’engagement */
+  /* 🧩 Blocs étapes de fonctionnement */
+  /* 📱 Responsive */
+
+
+
+
+/* ==================================================
+   👤 HEADER ORGANISATEUR
+   ================================================== */
+
+/* ========== 🧱 STRUCTURE DU HEADER ========== */
+
+.header-organisateur {
+    border-radius: 0;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    box-sizing: border-box;
+    position: relative;
+    padding: 0.6rem 0 0;
+    background-color: rgba(255, 255, 255, 0.015);
+
+}
+button.bouton-edition-attention,
+a.bouton-edition-attention {
+  animation: bouton-pulse 1.2s ease-in-out infinite;
+  background: var(--color-text-primary, #fff4d4);
+
+}
+.bouton-edition-attention i{
+     color:var(--color-text-fond-clair, #fff4d4) ;
+}
+
+@keyframes bouton-pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+.cta-chasse {
+  background: var(--color-text-primary, #fff4d4);
+  border-left: 4px solid var(--color-secondary);
+  padding: 1.2rem;
+  margin: var(--space-2xl) auto;
+  text-align: center;
+  border-radius: 6px;
+  font-size: 1rem;
+  color: var(--color-text-fond-clair);
+}
+
+
+/* ========== 🔠 TYPOGRAPHIE SPÉCIFIQUE AU HEADER ========== */
+
+/* Titre principal */
+.header-organisateur__nom {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 0;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.15);
+  flex: 1;
+  min-width: 0;
+  padding-right: 0;
+}
+
+@media (--bp-mobile) {
+  .header-organisateur__nom {
+    font-size: 2.5rem;
+  }
+}
+
+
+/* ========== 📐 COLONNE LOGO & COLONNE TEXTE ========== */
+
+.conteneur-organisateur {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-lg);
+}
+
+.header-organisateur__col {
+  width: 100%;
+}
+
+.header-organisateur__col--logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  max-width: 90vw;
+  max-height: 300px;
+  margin: 0 auto;
+  overflow: hidden;
+  position: relative;
+  border-radius: 22px;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(0deg, rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.12));
+    pointer-events: none;
+  }
+}
+
+.header-organisateur__col--infos {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: var(--space-lg);
+}
+
+.header-organisateur__col--logo img {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  max-height: 300px;
+  object-fit: cover;
+  object-position: center;
+}
+
+.header-organisateur__logo--static {
+  cursor: default;
+}
+
+.description-modal__stats {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-sm);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.description-modal__stat {
+  background: var(--color-grey-light);
+  color: var(--color-text-fond-clair);
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.875rem;
+}
+
+/* ========== 📌 ICÔNES D'ACTIONS ========== */
+.header-organisateur__title-row {
+  display: flex;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.header-organisateur__actions {
+  display: flex;
+  gap: var(--space-xs);
+  align-items: center;
+  margin-left: auto;
+  color: var(--color-text-primary);
+}
+
+.header-organisateur__actions a,
+.header-organisateur__actions button {
+  background: none;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.header-organisateur__actions a,
+.header-organisateur__actions button:not(.bouton-edition-toggle) {
+  border: none;
+  font-size: 1.4rem;
+}
+
+.header-organisateur__actions a:hover,
+.header-organisateur__actions button:not(.bouton-edition-toggle):hover {
+  color: var(--color-accent);
+}
+
+.header-organisateur__actions .organisateur-share-button {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-primary);
+}
+
+.header-organisateur__actions .organisateur-share-button svg {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+@media (--bp-tablet) {
+  .header-organisateur__actions {
+    position: absolute;
+    top: 1.2rem;
+    right: var(--space-xs);
+  }
+
+  .header-organisateur__nom {
+    font-size: 3rem;
+    padding-right: var(--space-4xl);
+  }
+}
+
+/* ========== 🖼 LOGO CLIQUABLE ========== */
+
+
+/* Structure du contenu à droite */
+.header-organisateur__description {
+  max-width: 40rem;
+  font-size: 1.125rem;
+  line-height: 1.6;
+  color: var(--color-blue-grey-light);
+}
+
+.header-organisateur__voir-plus {
+  margin-left: var(--space-md);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.2rem;
+  color: inherit;
+}
+
+.header-organisateur__liens-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-lg);
+  width: 100%;
+}
+
+.header-organisateur__liens {
+  display: flex;
+  gap: var(--space-md);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.header-organisateur__liens a {
+  font-size: 1.6rem;
+}
+
+.header-organisateur__liens-row .lien-contact {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+}
+
+/* Modal description */
+.description-modal {
+  @extend .csa-modal;
+
+  &__content {
+    @extend .csa-modal__content;
+  }
+
+  &__close {
+    @extend .csa-modal__close;
+  }
+
+  &__title {
+    margin-top: 0;
+    text-align: center;
+  }
+
+  &__section {
+    margin-top: var(--space-lg);
+  }
+}
+
+@media (--bp-tablet) {
+  .conteneur-organisateur {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--space-3xl);
+  }
+
+  .header-organisateur__col--logo {
+    flex: 0 0 350px;
+    width: 350px;
+    aspect-ratio: 1 / 1;
+    max-height: none;
+  }
+
+  .header-organisateur__col--infos {
+    flex: 1;
+  }
+
+  .header-organisateur__col--logo img {
+    width: 100%;
+    height: 100%;
+    max-height: none;
+  }
+}
+
+@media (--bp-desktop) {
+  .header-organisateur__col--logo {
+    flex-basis: 420px;
+    width: 420px;
+  }
+}
+
+@media (--bp-wide) {
+  .header-organisateur__col--logo {
+    flex-basis: 500px;
+    width: 500px;
+  }
+}
+
+@media (--bp-xxl) {
+  .header-organisateur__col--logo {
+    flex-basis: 600px;
+    width: 600px;
+  }
+}
+
+
+
+/* ========== 🧭 MODAL BIENVENUE ========== */
+.boutons-modal {
+  margin-top: var(--space-2xl);
+  text-align: center;
+}
+
+.boutons-modal button {
+  padding: 0.6rem 1.4rem;
+  font-size: 1rem;
+  border-radius: 6px;
+  border: 1px solid var(--color-text-fond-clair);
+  background: none;
+  color: var(--color-text-fond-clair);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.boutons-modal button:hover {
+  background-color: var(--color-accent, #ffc400);
+  border-color: var(--color-accent, #ffc400);
+  color: var(--color-white);
+}
+
+/* ========== 🟢 MODAL CONFIRMATION VALIDATION CHASSE ========== */
+.modal-confirmation-validation-chasse {
+  position: fixed;
+  z-index: 9999;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  animation: fadeIn 0.3s ease-in-out;
+}
+.modal-confirmation-validation-chasse label {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: var(--space-md);
+  color: var(--color-text-fond-clair);
+}
+.modal-confirmation-validation-chasse input[type="checkbox"] {
+  transform: scale(1.2);
+  margin-top: 2px;
+}
+.modal-contenu button.header-bouton-edition {
+    color: var(--color-white);
+    background-color: var(--color-background, #ffc400);;
+    border-color: var(--color-background, #ffc400);;
+}
+.modal-tips {
+  margin-top: var(--space-2xl);
+  padding-top: 1.2rem;
+  border-top: 1px dashed var(--color-text-fond-clair);
+  font-size: 0.95rem;
+  opacity: 0.67;
+}
+.modal-tips p {
+  margin-bottom: var(--space-md);
+}
+
+    
+
+
+
+
+
+/* ==================================================
+   🧭 DEVENIR ORGANISATEUR
+   ================================================== */
+
+/* ========== 🎯 AXES D’ENGAGEMENT ========== */
+.bloc-axes-engagt .wp-block-column{
+  padding: var(--space-2xl);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  transition: box-shadow 0.3s ease;
+  text-align: center;
+}
+.bloc-axes-engagt .wp-block-column:hover {
+   background-color: rgba(255, 255, 255, 0.02);
+  box-shadow: 0 0 8px rgba(255,255,255,0.05);
+  transition: all 0.3s ease;
+}
+
+
+.bloc-intro-fonctionnement {
+  margin: var(--space-4xl) auto;
+  max-width: 800px;
+  text-align: center;
+  font-size: 1.1rem;
+  color: var(--color-text-primary);
+  opacity: 0.85;
+}
+
+
+/* ========== 🧩 BLOCS ÉTAPES FONCTIONNEMENT ========== */
+
+.bloc-etape {
+  position: relative;
+  background-color: rgba(255, 255, 255, 0.015);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: var(--space-2xl);
+  margin-bottom: var(--space-4xl);
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.bloc-etape::before {
+    content: '';
+    position: absolute;
+     top: -40px;
+  right: -20px;
+  width: 120px;
+  height: 120px;
+  opacity: 0.12; /* plus discret encore */
+    background-image: url(/wp-content/uploads/2025/compas-rose.svg);
+    background-size: contain;
+    background-repeat: no-repeat;
+    z-index: -10;
+}
+.bloc-etape ul.wp-block-list {
+    padding-left: var(--space-md);
+    margin-top: 0;
+}
+.bloc-bonus {
+  margin-top: var(--space-3xl);
+  padding-top: var(--space-4xl);
+  border-top: 1px dashed rgba(255, 255, 255, 0.08);
+  font-size: 0.95rem;
+  color: var(--color-text-primary);
+}
+.bloc-bonus h3 {
+  font-size: 1.2rem;
+  margin-bottom: var(--space-md);
+  color: var(--color-primary);
+}
+.bloc-bonus li {
+  margin-bottom: var(--space-sm);
+}
+.bloc-bonus.has-icon-casino {
+  position: relative;
+}
+
+.bloc-bonus.has-icon-casino::before {
+  content: '';
+  position: absolute;
+  top: 10px;
+  right: -10px;
+  width: 60px;
+  height: 60px;
+  background: url('/wp-content/uploads/2025/aces-cartes.svg') no-repeat center;
+  background-size: contain;
+  opacity: 0.12;
+  pointer-events: none;
+  z-index: 0;
+}
+
+
+/* ========== 📱 RESPONSIVE ========== */
+
+@media not all and (--bp-tablet) {
+    .separateur-avec-icone {
+        margin: 2.1rem 0;
+    }
+    .bloc-intro-fonctionnement {
+        font-size: 1rem;
+    }
+    .bloc-bonus {
+        margin-top: 1.7rem;
+        padding-top:var(--space-2xl);
+    }
+    .bloc-bonus.has-icon-casino::before {
+        width: 50px;
+        height: 50px;
+    }
+}
+@media not all and (--bp-small) {
+    .separateur-avec-icone {
+        margin: var(--space-xl) 0;
+    }
+    .bloc-intro-fonctionnement {
+        font-size: 0.95rem;
+    }
+    .bloc-bonus {
+        margin-top: var(--space-md);
+        padding-top: 1.2rem;
+    }
+    .bloc-bonus.has-icon-casino::before {
+        width: 40px;
+        height: 40px;
+    }
+}
+
+/* ========== ✍️ MODAL DEMANDE DE CORRECTION ========== */
+.modal-correction-chasse {
+  position: fixed;
+  z-index: 11000;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  animation: fadeIn 0.3s ease-in-out;
+}
+.modal-correction-chasse textarea {
+  width: 100%;
+  margin-top: var(--space-md);
+  padding: var(--space-xs);
+  font-size: 1rem;
+  resize: vertical;
+}
+
+/* 🗺️ Section chasses de l'organisateur */
+.chasses {
+  margin-top: var(--space-4xl);
+}
+
+/* Grille responsive pour les chasses (format CART) */
+.organisateur-chasses-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--space-xl);
+  justify-content: center;
+}
+
+.organisateur-chasse__desktop {
+  display: none;
+}
+
+@media (--bp-desktop) {
+  .organisateur-chasses-grid {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xl);
+  }
+
+  .organisateur-chasse__desktop {
+    display: block;
+  }
+
+  .organisateur-chasse__mobile {
+    display: none;
+  }
+}

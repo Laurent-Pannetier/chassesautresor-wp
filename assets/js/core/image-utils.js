@@ -6,14 +6,28 @@ function initChampImage(bloc) {
   const cpt = bloc.dataset.cpt;
   const postId = bloc.dataset.postId;
 
-  const input = bloc.querySelector('.champ-input');
-  const image = bloc.querySelector('img');
   const feedback = bloc.querySelector('.champ-feedback');
+  const bouton = bloc.querySelector('.champ-modifier');
 
-  if (!champ || !cpt || !postId || !input || !image) return;
+  if (!champ || !cpt || !postId) return;
+
+  const estBlocVerrouille = () =>
+    bloc.classList.contains('champ-desactive') ||
+    bloc.dataset.noEdit === '1' ||
+    bloc.dataset.noEdit === 'true' ||
+    bouton?.disabled ||
+    bouton?.getAttribute('aria-disabled') === 'true';
+
+  if (!bouton || estBlocVerrouille()) {
+    delete bloc.__ouvrirMedia;
+    return;
+  }
 
   // ✅ Création du frame à la volée quand appelé
   const ouvrirMedia = () => {
+    if (estBlocVerrouille()) {
+      return;
+    }
     // ✅ Empêcher double ouverture : reuse si déjà initialisé
     if (bloc.__mediaFrame) {
       bloc.__mediaFrame.open();
@@ -34,14 +48,35 @@ function initChampImage(bloc) {
     frame.on('select', () => {
       const selection = frame.state().get('selection').first();
       const id = selection?.id;
-      const url = selection?.attributes?.url;
-      if (!id || !url) return;
+      const fullUrl = selection?.attributes?.url;
+      const ficheUrl =
+        selection?.attributes?.sizes?.['chasse-fiche']?.url || fullUrl;
+      const mediumUrl = selection?.attributes?.sizes?.medium?.url || ficheUrl;
+      const thumbUrl = selection?.attributes?.sizes?.thumbnail?.url || mediumUrl;
+      if (!id || !fullUrl) return;
 
-      image.src = url;
-      input.value = id;
+      document
+        .querySelectorAll(`.champ-${cpt}[data-champ="${champ}"][data-post-id="${postId}"]`)
+        .forEach((el) => {
+          el.classList.remove('champ-vide');
+          el.classList.add('champ-rempli');
+          const imgEl = el.querySelector('img');
+          if (imgEl) {
+            imgEl.src = thumbUrl;
+            imgEl.srcset = thumbUrl;
+          }
+          const hidden = el.querySelector('.champ-input');
+          if (hidden) {
+            hidden.value = id;
+          }
+        });
+
+      if (typeof window.mettreAJourResumeInfos === 'function') {
+        window.mettreAJourResumeInfos();
+      }
 
       if (feedback) {
-        feedback.textContent = 'Enregistrement...';
+        feedback.innerHTML = '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i>';
         feedback.className = 'champ-feedback champ-loading';
       }
 
@@ -51,7 +86,8 @@ function initChampImage(bloc) {
         body: new URLSearchParams({
           action: (cpt === 'chasse') ? 'modifier_champ_chasse' :
             (cpt === 'enigme') ? 'modifier_champ_enigme' :
-              'modifier_champ_organisateur',
+              (cpt === 'indice') ? 'modifier_champ_indice' :
+                'modifier_champ_organisateur',
           champ,
           valeur: id,
           post_id: postId
@@ -60,19 +96,20 @@ function initChampImage(bloc) {
         .then(r => r.json())
         .then(res => {
           if (res.success) {
-            bloc.classList.remove('champ-vide');
             if (feedback) {
-              feedback.textContent = '';
+              feedback.innerHTML = '<i class="fa-solid fa-check" aria-hidden="true"></i>';
               feedback.className = 'champ-feedback champ-success';
+              setTimeout(() => { feedback.innerHTML = ''; feedback.className = 'champ-feedback'; }, 1000);
             }
             if (typeof window.mettreAJourResumeInfos === 'function') {
               window.mettreAJourResumeInfos();
             }
             if (typeof window.mettreAJourVisuelCPT === 'function') {
-              mettreAJourVisuelCPT(cpt, postId, url);
+              mettreAJourVisuelCPT(cpt, postId, ficheUrl, fullUrl);
             }
           } else {
             if (feedback) {
+              feedback.innerHTML = '';
               feedback.textContent = '❌ Erreur : ' + (res.data || 'inconnue');
               feedback.className = 'champ-feedback champ-error';
             }
@@ -80,6 +117,7 @@ function initChampImage(bloc) {
         })
         .catch(() => {
           if (feedback) {
+            feedback.innerHTML = '';
             feedback.textContent = '❌ Erreur réseau.';
             feedback.className = 'champ-feedback champ-error';
           }
@@ -89,8 +127,10 @@ function initChampImage(bloc) {
     frame.open();
   };
 
+  if (bouton && !bouton.classList.contains('ouvrir-panneau-images')) {
+    bouton.addEventListener('click', ouvrirMedia);
+  }
+
   // ✅ On expose la fonction pour la déclencher manuellement
-  bloc.dataset.imageInitReady = '1';
-  bloc.dataset.imageInitTrigger = ouvrirMedia;
   bloc.__ouvrirMedia = ouvrirMedia;
 }

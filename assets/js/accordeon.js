@@ -1,4 +1,4 @@
-document.querySelectorAll('.accordeon-bloc').forEach(bloc => {
+document.querySelectorAll('.accordeon-bloc').forEach((bloc) => {
   const toggle = bloc.querySelector('.accordeon-toggle');
   const contenu = bloc.querySelector('.accordeon-contenu');
 
@@ -12,7 +12,7 @@ document.querySelectorAll('.accordeon-bloc').forEach(bloc => {
     const estActuellementOuvert = toggle.getAttribute('aria-expanded') === 'true';
 
     // Ferme tous les autres blocs
-    document.querySelectorAll('.accordeon-bloc').forEach(otherBloc => {
+    document.querySelectorAll('.accordeon-bloc').forEach((otherBloc) => {
       const otherToggle = otherBloc.querySelector('.accordeon-toggle');
       const otherContenu = otherBloc.querySelector('.accordeon-contenu');
 
@@ -27,5 +27,13 @@ document.querySelectorAll('.accordeon-bloc').forEach(bloc => {
       toggle.setAttribute('aria-expanded', 'true');
       contenu.classList.remove('accordeon-ferme');
     }
+  });
+
+  toggle.addEventListener('mouseenter', () => {
+    toggle.classList.add('is-hovered');
+  });
+
+  toggle.addEventListener('mouseleave', () => {
+    toggle.classList.remove('is-hovered');
   });
 });

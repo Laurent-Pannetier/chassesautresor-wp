@@ -1,0 +1,1 @@
+<?php echo '<section><h1>Outils</h1><div class="dashboard-grid"><div class="dashboard-card"><h3>Protection globale</h3></div><div class="dashboard-card"><h3>Taux Conversion</h3></div><div class="dashboard-card"><h3>ACF</h3></div><div class="dashboard-card"><h3>Reset stats</h3></div></div></section>'; ?>

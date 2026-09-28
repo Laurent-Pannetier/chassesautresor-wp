@@ -6,10 +6,10 @@
 require_once get_stylesheet_directory() . '/inc/enigme-functions.php';
 
 $uid = sanitize_text_field($_GET['uid'] ?? '');
-if (!$uid) wp_die("Paramètre UID manquant.");
+if (!$uid) wp_die( __( 'Paramètre UID manquant.', 'chassesautresor-com' ) );
 
 $tentative = get_tentative_by_uid($uid);
-if (!$tentative) wp_die("Tentative introuvable.");
+if (!$tentative) wp_die( __( 'Tentative introuvable.', 'chassesautresor-com' ) );
 
 $enigme_id = (int) $tentative->enigme_id;
 $infos = recuperer_infos_tentative($uid);
@@ -26,7 +26,7 @@ if (
   !current_user_can('manage_options') &&
   !in_array($current_user_id, array_map('intval', $organisateur_user_ids), true)
 ) {
-  wp_die("⛔️ Accès refusé.");
+  wp_die( __( '⛔️ Accès refusé.', 'chassesautresor-com' ) );
 }
 
 // 💚 Réinitialisations
@@ -88,8 +88,8 @@ get_header();
         <input type="hidden" name="uid" value="<?= esc_attr($uid); ?>">
 
         <div class="boutons">
-          <button type="submit" name="action_traitement" value="valider" class="btn btn-valider">✅ Valider</button>
-          <button type="submit" name="action_traitement" value="invalider" class="btn btn-refuser">❌ Refuser</button>
+          <button type="submit" name="action_traitement" value="valider" class="bouton-cta">✅ Valider</button>
+          <button type="submit" name="action_traitement" value="invalider" class="btn-danger">❌ Refuser</button>
         </div>
       </form>
     <?php else: ?>
@@ -102,19 +102,19 @@ get_header();
   <div class="traitement-actions">
     <a href="<?= esc_url(add_query_arg('reset_statuts', '1')); ?>"
       onclick="return confirm('Supprimer tous les statuts utilisateurs pour cette énigme ?');"
-      class="btn btn-red">
+      class="btn-danger">
       🧹 Réinitialiser les statuts
     </a>
 
     <a href="<?= esc_url(add_query_arg('reset_tentatives', '1')); ?>"
       onclick="return confirm('Supprimer toutes les tentatives pour cette énigme ?');"
-      class="btn btn-dark">
+      class="btn-danger">
       ❌ Supprimer les tentatives
     </a>
 
     <a href="<?= esc_url(add_query_arg('reset_all', '1')); ?>"
       onclick="return confirm('Supprimer TOUT (statuts + tentatives) ?');"
-      class="btn btn-warning">
+      class="btn-danger">
       🔥 Tout supprimer
     </a>
   </div>

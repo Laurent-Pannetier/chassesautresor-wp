@@ -21,7 +21,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // 🛑 Vérification des éléments nécessaires
     if (!fileInput || !avatarImg) {
-        console.error("❌ Élément manquant : Vérifie que #upload-avatar et l'avatar existent.");
         return;
     }
 

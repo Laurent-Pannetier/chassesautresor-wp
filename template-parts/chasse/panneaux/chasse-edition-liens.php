@@ -12,28 +12,7 @@ if (!$chasse_id || get_post_type($chasse_id) !== 'chasse') return;
 
 $liens = get_field('chasse_principale_liens', $chasse_id);
 $liens = is_array($liens) ? $liens : [];
-$types_disponibles = [
-  'site_web' => [
-    'label' => 'Site Web',
-    'icone' => 'fa-solid fa-globe'
-  ],
-  'discord' => [
-    'label' => 'Discord',
-    'icone' => 'fa-brands fa-discord'
-  ],
-  'facebook' => [
-    'label' => 'Facebook',
-    'icone' => 'fa-brands fa-facebook-f'
-  ],
-  'twitter' => [
-    'label' => 'Twitter/X',
-    'icone' => 'fa-brands fa-x-twitter'
-  ],
-  'instagram' => [
-    'label' => 'Instagram',
-    'icone' => 'fa-brands fa-instagram'
-  ]
-];
+$types_disponibles = get_types_liens_publics();
 
 $liens_actifs = [];
 foreach ($liens as $entree) {
@@ -51,8 +30,8 @@ foreach ($liens as $entree) {
   <div class="panneau-lateral__contenu">
 
     <header class="panneau-lateral__header">
-      <h2>Configurer les liens de cette chasse</h2>
-      <button type="button" class="panneau-fermer" aria-label="Fermer le panneau">✖</button>
+      <h2><?php esc_html_e('Configurer les liens de cette chasse', 'chassesautresor-com'); ?></h2>
+      <button type="button" class="panneau-fermer" aria-label="<?php esc_attr_e('Fermer le panneau', 'chassesautresor-com'); ?>">✖</button>
     </header>
 
     <form id="formulaire-liens-chasse"
@@ -83,7 +62,7 @@ foreach ($liens as $entree) {
       </ul>
 
       <div class="panneau-lateral__actions">
-        <button type="submit" class="bouton-enregistrer-liens">📅 Enregistrer</button>
+        <button type="submit" class="bouton-enregistrer-liens"><?php esc_html_e('Enregistrer', 'chassesautresor-com'); ?></button>
       </div>
     </form>
 

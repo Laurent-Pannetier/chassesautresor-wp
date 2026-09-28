@@ -10,26 +10,40 @@ defined( 'ABSPATH' ) || exit;
  * - $args['titre'] : Titre principal
  * - $args['sous_titre'] : Sous-titre (optionnel)
  * - $args['image_fond'] : URL d'image de fond (optimisée en .webp par ex.)
+ * - $args['logo_id'] : ID du logo à afficher (optionnel)
  */
 
 if ( ! isset( $args ) || ! is_array( $args ) ) {
     return;
 }
 
-$titre       = isset( $args['titre'] ) ? esc_html( $args['titre'] ) : '';
-$sous_titre  = isset( $args['sous_titre'] ) ? esc_html( $args['sous_titre'] ) : '';
-$image_url   = isset( $args['image_fond'] ) ? esc_url( $args['image_fond'] ) : '';
+$titre           = isset( $args['titre'] ) ? wp_kses_post( $args['titre'] ) : '';
+$sous_titre      = isset( $args['sous_titre'] ) ? esc_html( $args['sous_titre'] ) : '';
+$image_url       = isset( $args['image_fond'] ) ? esc_url( $args['image_fond'] ) : '';
+$logo_id         = isset( $args['logo_id'] ) ? absint( $args['logo_id'] ) : 0;
+$overlay_classes = [ 'hero-overlay' ];
+$inline_style    = '';
+
+if ( $image_url ) {
+    $inline_style = sprintf( ' style="background-image: url(\'%s\');"', $image_url );
+} else {
+    $overlay_classes[] = 'hero-overlay--default';
+}
 ?>
 
 <section class="bandeau-hero fallback-header">
-  <div class="hero-overlay" <?php if ( $image_url ) : ?>style="background-image: url('<?php echo $image_url; ?>');"<?php endif; ?>>
+  <div class="<?php echo esc_attr( implode( ' ', $overlay_classes ) ); ?>"<?php echo $inline_style; ?>>
     <div class="contenu-hero">
+      <?php if ( $logo_id ) : ?>
+        <?php echo wp_get_attachment_image( $logo_id, 'full', false, [ 'class' => 'hero-logo' ] ); ?>
+      <?php endif; ?>
+
       <?php if ( $titre ) : ?>
-        <h1><?php echo $titre; ?></h1>
+        <h1 class="hero-title"><?php echo $titre; ?></h1>
       <?php endif; ?>
 
       <?php if ( $sous_titre ) : ?>
-        <p class="sous-titre"><?php echo $sous_titre; ?></p>
+        <p class="hero-subtitle"><?php echo $sous_titre; ?></p>
       <?php endif; ?>
     </div>
   </div>

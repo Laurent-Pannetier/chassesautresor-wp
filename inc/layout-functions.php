@@ -85,7 +85,7 @@ add_action('wp_head', 'ajouter_ajaxurl_script');
  * Charge FontAwesome pour les icônes réseaux sociaux.
  */
 function charger_fontawesome() {
-    wp_enqueue_style('fontawesome', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css', [], null);
+    wp_enqueue_style('fontawesome', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.css', [], null);
 }
 add_action('wp_enqueue_scripts', 'charger_fontawesome');
 
@@ -115,10 +115,68 @@ add_filter('admin_body_class', 'ajouter_classes_roles_admin');
  * 🖼️ Convertit une URL d'image vers son équivalent WebP.
  *
  * @param string|null $image_url URL de l'image source.
- * @return string URL en .webp ou vide si URL invalide.
+ * @return string URL en .webp (si disponible) ou URL originale.
  */
 function imagify_get_webp_url($image_url) {
-    return $image_url ? preg_replace('/\.(jpg|jpeg|png)$/i', '.webp', $image_url) : '';
+    if (empty($image_url)) {
+        return '';
+    }
+
+    $parsed_path = parse_url($image_url, PHP_URL_PATH);
+
+    if (!is_string($parsed_path)) {
+        return $image_url;
+    }
+
+    $extension = strtolower(pathinfo($parsed_path, PATHINFO_EXTENSION));
+    $supported_extensions = ['jpg', 'jpeg', 'png'];
+
+    if (!in_array($extension, $supported_extensions, true)) {
+        return $image_url;
+    }
+
+    $webp_url = preg_replace('/\.(jpg|jpeg|png)$/i', '.webp', $image_url);
+
+    if (!$webp_url || $webp_url === $image_url) {
+        return $image_url;
+    }
+
+    if (!function_exists('wp_get_upload_dir')) {
+        return $image_url;
+    }
+
+    $upload_dir = wp_get_upload_dir();
+    $baseurl = $upload_dir['baseurl'] ?? '';
+    $basedir = $upload_dir['basedir'] ?? '';
+
+    if (!$baseurl || !$basedir) {
+        return $image_url;
+    }
+
+    $base_variants = [$baseurl];
+
+    if (strpos($baseurl, 'https://') === 0) {
+        $base_variants[] = 'http://' . substr($baseurl, 8);
+    } elseif (strpos($baseurl, 'http://') === 0) {
+        $base_variants[] = 'https://' . substr($baseurl, 7);
+    }
+
+    foreach ($base_variants as $base_variant) {
+        if (0 !== strpos($webp_url, $base_variant)) {
+            continue;
+        }
+
+        $relative_path = ltrim(substr($webp_url, strlen($base_variant)), '/');
+        $file_path = rtrim($basedir, '/\\') . '/' . str_replace(['\\', '/'], DIRECTORY_SEPARATOR, $relative_path);
+
+        if (file_exists($file_path)) {
+            return $webp_url;
+        }
+
+        break;
+    }
+
+    return $image_url;
 }
 
 
@@ -131,6 +189,34 @@ function charger_scripts_personnalises() {
     // 📌 Chargement des scripts JS personnalisés
     wp_enqueue_script('toggle-text', $theme_dir . 'toggle-text.js', ['jquery'], null, true);
     wp_enqueue_script('toggle-tooltip', $theme_dir . 'toggle-tooltip.js', [], null, true);
+    wp_enqueue_script(
+        'badge-validation-tooltip',
+        $theme_dir . 'badge-validation-tooltip.js',
+        [],
+        filemtime(get_stylesheet_directory() . '/assets/js/badge-validation-tooltip.js'),
+        true
+    );
+    wp_enqueue_script(
+        'badge-statut-tooltips',
+        $theme_dir . 'badge-statut-tooltips.js',
+        [],
+        filemtime(get_stylesheet_directory() . '/assets/js/badge-statut-tooltips.js'),
+        true
+    );
+    wp_enqueue_script(
+        'meta-tap-info',
+        $theme_dir . 'meta-tap-info.js',
+        [],
+        filemtime(get_stylesheet_directory() . '/assets/js/meta-tap-info.js'),
+        true
+    );
+    wp_enqueue_script(
+        'chasse-description-toggle',
+        $theme_dir . 'chasse-description-toggle.js',
+        [],
+        filemtime(get_stylesheet_directory() . '/assets/js/chasse-description-toggle.js'),
+        true
+    );
     
     wp_enqueue_script(
       'encodage-morse',
@@ -153,6 +239,52 @@ function charger_scripts_personnalises() {
       $theme_dir . 'validation-admin.js',
       [],
       filemtime(get_stylesheet_directory() . '/assets/js/validation-admin.js'),
+      true
+    );
+    if (is_singular('chasse')) {
+      wp_enqueue_script(
+        'enigme-cards-reorder',
+        $theme_dir . 'enigme-cards-reorder.js',
+        ['wp-i18n'],
+        filemtime(get_stylesheet_directory() . '/assets/js/enigme-cards-reorder.js'),
+        true
+      );
+      wp_set_script_translations('enigme-cards-reorder', 'chassesautresor-com');
+    }
+    wp_enqueue_script(
+      'tri-organisateurs',
+      $theme_dir . 'tri-organisateurs.js',
+      [],
+      filemtime(get_stylesheet_directory() . '/assets/js/tri-organisateurs.js'),
+      true
+    );
+
+    wp_enqueue_script(
+      'pager',
+      $theme_dir . 'core/pager.js',
+      [],
+      filemtime(get_stylesheet_directory() . '/assets/js/core/pager.js'),
+      true
+    );
+    wp_enqueue_script(
+      'table-search',
+      $theme_dir . 'core/table-search.js',
+      [],
+      filemtime(get_stylesheet_directory() . '/assets/js/core/table-search.js'),
+      true
+    );
+    wp_enqueue_script(
+      'list-skeleton',
+      $theme_dir . 'core/skeleton.js',
+      ['pager'],
+      filemtime(get_stylesheet_directory() . '/assets/js/core/skeleton.js'),
+      true
+    );
+    wp_enqueue_script(
+      'organisateurs-pager',
+      $theme_dir . 'organisateurs-pager.js',
+      ['pager'],
+      filemtime(get_stylesheet_directory() . '/assets/js/organisateurs-pager.js'),
       true
     );
 }
@@ -213,6 +345,11 @@ function get_svg_icon($icone) {
             ';
 
         default:
+            $icone = preg_replace('/\.svg$/', '', $icone);
+            $path = get_stylesheet_directory() . '/assets/svg/' . $icone . '.svg';
+            if (file_exists($path)) {
+                return file_get_contents($path);
+            }
             return '';
     }
 }
@@ -224,10 +361,34 @@ function get_svg_icon($icone) {
 // 🧩 HEADERS
 // ==================================================
 /**
+ * 🔹 is_user_account_area → Vérifie si l’URL courante appartient à l’espace "Mon Compte".
  * 🔹 get_header_fallback → Affiche un header alternatif (style hero) pour les pages hors CPT organisateur.
  * 🔹 ajouter_class_has_hero_si_header_fallback → Ajoute la classe CSS "has-hero" au body si le header fallback est actif.
  * 🔹 filtrer_content_sans_titre → Supprime le <h1> du contenu s’il est identique au titre principal (évite les doublons SEO).
  */
+
+/**
+ * Vérifie si la requête actuelle cible une URL de l’espace utilisateur "Mon Compte".
+ *
+ * @return bool
+ */
+function is_user_account_area(): bool
+{
+    if (function_exists('is_account_page') && is_account_page()) {
+        return true;
+    }
+
+    $slugs  = ['mon-compte', 'my-account'];
+    $request = trim((string) parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH), '/');
+
+    foreach ($slugs as $slug) {
+        if (strpos($request, $slug) === 0) {
+            return true;
+        }
+    }
+
+    return false;
+}
 
 
 /**
@@ -242,6 +403,7 @@ function get_svg_icon($icone) {
  *     @type string $titre       Le titre principal (H1).
  *     @type string $sous_titre  Le sous-titre affiché sous le titre.
  *     @type int|string $image_fond  ID de média WordPress ou URL d'image directe.
+ *     @type int $logo_id        ID de l'image du logo affichée au-dessus du titre.
  * }
  */
 function get_header_fallback($args = []) {
@@ -249,6 +411,7 @@ function get_header_fallback($args = []) {
         'titre'      => '',
         'sous_titre' => '',
         'image_fond' => '', // URL déjà optimisée
+        'logo_id'    => 0,
     ];
     $args = wp_parse_args($args, $defaults);
 
@@ -256,6 +419,7 @@ function get_header_fallback($args = []) {
         'titre'      => $args['titre'],
         'sous_titre' => $args['sous_titre'],
         'image_fond' => esc_url( $args['image_fond'] ),
+        'logo_id'    => absint( $args['logo_id'] ),
     ]);
 }
 
@@ -265,11 +429,22 @@ function get_header_fallback($args = []) {
  * @param array $classes Classes actuelles du body.
  * @return array
  */
-function ajouter_class_has_hero_si_header_fallback( $classes ) {
-	if ( is_page() ) {
-		$classes[] = 'has-hero';
-	}
-	return $classes;
+function ajouter_class_has_hero_si_header_fallback(array $classes): array
+{
+    $is_account_area = function_exists('is_user_account_area') ? is_user_account_area() : false;
+    $is_organisation_page = function_exists('myaccount_is_organisation_page') ? myaccount_is_organisation_page() : false;
+
+    if ($is_account_area || $is_organisation_page) {
+        $classes = array_diff($classes, ['has-hero']);
+
+        return array_values(array_unique($classes));
+    }
+
+    if (is_front_page() || is_page()) {
+        $classes[] = 'has-hero';
+    }
+
+    return array_values(array_unique($classes));
 }
 add_filter( 'body_class', 'ajouter_class_has_hero_si_header_fallback' );
 
@@ -299,6 +474,51 @@ function filtrer_content_sans_titre($content) {
 // ==================================================
 // 🎯 AFFICHAGES SPÉCIFIQUES
 // ==================================================
+
+/**
+ * Trim HTML content to a given number of words while preserving tags.
+ *
+ * @param string $html  HTML to trim.
+ * @param int    $limit Number of words to retain.
+ * @param string $more  Optional string appended after trimming.
+ * @return string Trimmed HTML content.
+ */
+function cst_trim_html_words($html, $limit = 120, $more = '…') {
+    $wordCount = 0;
+    $output = '';
+    $openTags = [];
+
+    preg_match_all('/(<[^>]+>|\s+|[^<\s]+)/u', $html, $tokens);
+
+    foreach ($tokens[0] as $token) {
+        if ($token[0] === '<') {
+            if ($token[1] === '/') {
+                array_pop($openTags);
+            } elseif (substr($token, -2) !== '/>') {
+                $tagName = strtolower(preg_replace('/[\s>].*/', '', substr($token, 1)));
+                $openTags[] = $tagName;
+            }
+            $output .= $token;
+        } elseif (trim($token) === '') {
+            $output .= $token;
+        } else {
+            $wordCount++;
+            $output .= $token;
+
+            if ($wordCount >= $limit) {
+                $output = rtrim($output);
+                $output .= $more;
+                break;
+            }
+        }
+    }
+
+    while (!empty($openTags)) {
+        $output .= '</' . array_pop($openTags) . '>';
+    }
+
+    return $output;
+}
 /**
  * Limite l'affichage d'un texte à un certain nombre de caractères, avec un bouton "Lire la suite" pour afficher la totalité.
  *
@@ -348,42 +568,10 @@ function limiter_texte_avec_toggle($texte, $limite = 200, $label_plus = 'Lire la
     return ob_get_clean();
 }
 /**
- * Affiche un bandeau d'information global invitant l'organisateur
- * à valider sa chasse lorsque toutes les conditions sont réunies.
- *
- * @hook astra_header_after
+ * Previously displayed a banner encouraging organizers to validate their hunt.
+ * This feature has been removed and the function now performs no action.
  */
-function afficher_bandeau_validation_chasse_global() {
-    if (!is_user_logged_in()) {
-        return;
-    }
-
-    $user_id = get_current_user_id();
-    if (!$user_id) {
-        return;
-    }
-
-    if (!function_exists('trouver_chasse_a_valider')) {
-        return;
-    }
-
-    $chasse_id = trouver_chasse_a_valider($user_id);
-    if (!$chasse_id) {
-        return;
-    }
-
-    if (is_singular('chasse') && get_the_ID() === $chasse_id) {
-        return;
-    }
-
-    $titre = get_the_title($chasse_id);
-    $lien  = get_permalink($chasse_id);
-    echo '<div class="bandeau-info-chasse">';
-    printf(
-        '<span>Votre chasse : <a href="%s">%s</a> est en cours d\'édition</span>',
-        esc_url($lien),
-        esc_html($titre)
-    );
-    echo '</div>';
+function afficher_bandeau_validation_chasse_global()
+{
+    // Intentionally left blank.
 }
-add_action('astra_header_after', 'afficher_bandeau_validation_chasse_global');

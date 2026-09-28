@@ -1,0 +1,21 @@
+/* ========== 🛒 AJOUT AU PANIER ========== */
+
+.woocommerce a.button.add_to_cart_button {
+    font-weight: 500;
+    text-transform: uppercase;
+    color: var(--color-primary);
+    background-color: var(--color-background-button);
+    transition: all 0.8s;
+}
+.woocommerce a.button.add_to_cart_button:hover {
+    color: var(--color-background-button);
+    background-color: var(--color-primary);
+    border-color: var(--color-background-button);
+}
+
+.prix-devise {
+    font-size: 0.6em;
+    vertical-align: super;
+    display: inline-block;
+    margin-left: 1px;
+}

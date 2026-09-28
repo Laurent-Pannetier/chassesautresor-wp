@@ -15,17 +15,30 @@ if (!$enigme_id || get_post_type($enigme_id) !== 'enigme') return;
 
     <div class="champ-wrapper">
       <?php
+      $mode_field = acf_get_field('enigme_solution_mode');
+      $mode_key   = $mode_field['key'] ?? '';
+
+      $return_url = add_query_arg(
+        [
+          'maj'     => 'solution',
+          'edition' => 'open',
+          'tab'     => 'solution',
+        ],
+        get_permalink($enigme_id)
+      );
+
       acf_form([
-        'post_id' => $enigme_id,
-        'form' => true,
-        'field_groups' => false,
-        'fields' => [
+        'post_id'         => $enigme_id,
+        'form'            => true,
+        'field_groups'    => false,
+        'fields'          => [
           'enigme_solution_explication',
         ],
-        'submit_value' => '💾 Enregistrer la solution',
-        'return' => get_permalink($enigme_id) . '?maj=solution',
-        'uploader' => 'basic',
+        'submit_value'    => '💾 Enregistrer la solution',
+        'return'          => $return_url,
+        'uploader'        => 'basic',
         'label_placement' => 'top',
+        'html_after_fields' => $mode_key ? '<input type="hidden" name="acf[' . esc_attr($mode_key) . ']" value="texte" />' : '',
       ]);
       ?>
     </div>

@@ -17,7 +17,7 @@ $historique_taux = get_option('historique_taux_conversion', []);
                 $historique_taux = get_option('historique_taux_conversion', []);
                 
                 if (!is_array($historique_taux)) {
-                    error_log("❌ `historique_taux_conversion` n'est pas un tableau. Valeur actuelle : " . print_r($historique_taux, true));
+                    cat_debug("❌ `historique_taux_conversion` n'est pas un tableau. Valeur actuelle : " . print_r($historique_taux, true));
                     $historique_taux = []; // Éviter l'erreur en remplaçant par un tableau vide
                 }
                 ?>

@@ -2,26 +2,19 @@
 // 📁 header-organisateur-ui.js
 // Gère les interactions visuelles du header organisateur :
 // - Sliders édition 
-// - Affichage/masquage de la description via l’icône info
+// - Affichage du modal de description
 // - Panneau latéral ACF (présentation)
 // ========================================
 
 document.addEventListener('DOMContentLoaded', () => {
 
-  // ✅ Icône info : affichage/masquage de la description
-  document.querySelector('.bouton-toggle-description')?.addEventListener('click', () => {
-    const presentation = document.getElementById('presentation');
-    presentation?.classList.toggle('masque');
+  // ✅ Modal description : ouverture et fermeture
+  const descriptionModal = document.getElementById('description-modal');
+  document.querySelector('.header-organisateur__voir-plus')?.addEventListener('click', () => {
+    descriptionModal?.classList.remove('masque');
   });
-
-  // ✅ Hash auto (si présentation dans l’URL)
-  if (window.location.hash === '#presentation') {
-    document.getElementById('presentation')?.classList.remove('masque');
-  }
-
-  // ❌ Bouton de fermeture de la présentation
-  document.querySelector('#presentation .presentation-fermer')?.addEventListener('click', () => {
-    document.getElementById('presentation')?.classList.add('masque');
+  document.querySelector('#description-modal .description-modal__close')?.addEventListener('click', () => {
+    descriptionModal?.classList.add('masque');
     document.activeElement?.blur();
   });
 
