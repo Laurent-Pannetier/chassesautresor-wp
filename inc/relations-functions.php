@@ -1,6 +1,22 @@
 <?php
 defined('ABSPATH') || exit;
 
+if (!class_exists(ChassesAuTresor\Core\Relationships\OrganizerService::class, false)) {
+    require_once dirname(__DIR__, 3)
+        . '/plugins/chassesautresor-core/src/Relationships/OrganizerRepository.php';
+    require_once dirname(__DIR__, 3)
+        . '/plugins/chassesautresor-core/src/Relationships/OrganizerService.php';
+}
+
+function cat_get_organizer_service(): ChassesAuTresor\Core\Relationships\OrganizerService
+{
+    global $wpdb;
+
+    return new ChassesAuTresor\Core\Relationships\OrganizerService(
+        new ChassesAuTresor\Core\Relationships\OrganizerRepository($wpdb)
+    );
+}
+
 // 📚 SOMMAIRE DU FICHIER : relations-functions.php
 //  📦 RÉCUPÉRATION CPT ORGANISATEUR
 //  📦 RÉCUPÉRATION CPT CHASSE
@@ -31,21 +47,7 @@ defined('ABSPATH') || exit;
  */
 function get_organisateur_from_user($user_id)
 {
-  global $wpdb;
-
-  // Recherche l'ID du post organisateur actif lié à l'utilisateur
-  $post_id = $wpdb->get_var($wpdb->prepare(
-    "SELECT p.ID FROM $wpdb->posts p
-      INNER JOIN $wpdb->postmeta pm ON p.ID = pm.post_id
-      WHERE pm.meta_key = 'utilisateurs_associes'
-        AND pm.meta_value LIKE %s
-        AND p.post_type = 'organisateur'
-        AND p.post_status IN ('publish','pending','draft')
-      LIMIT 1",
-    '%"' . esc_sql($user_id) . '"%'
-  ));
-
-  return $post_id ? (int) $post_id : null;
+    return cat_get_organizer_service()->findIdForUser((int) $user_id);
 }
 
 function get_organisateur_chasse($chasse_id)

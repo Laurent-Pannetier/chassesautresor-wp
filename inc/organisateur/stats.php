@@ -22,16 +22,13 @@ function organisateur_compter_joueurs_uniques(int $organisateur_id): int
         return 0;
     }
 
-    global $wpdb;
-    $table        = $wpdb->prefix . 'engagements';
-    $placeholders = implode(',', array_fill(0, count($ids), '%d'));
+    $excluded = function_exists('get_users') ? get_users(['role' => 'administrator', 'fields' => 'ids']) : [];
+    if (function_exists('get_field')) {
+        $excluded = array_merge($excluded, (array) get_field('utilisateurs_associes', $organisateur_id));
+    }
+    $excluded = array_values(array_unique(array_filter(array_map('intval', $excluded))));
 
-    $sql = $wpdb->prepare(
-        "SELECT DISTINCT user_id FROM {$table} WHERE enigme_id IS NULL AND chasse_id IN ($placeholders)",
-        $ids
-    );
-
-    return count($wpdb->get_col($sql));
+    return cat_get_hunt_engagement_service()->countUniquePlayersForHunts($ids, $excluded);
 }
 
 /**

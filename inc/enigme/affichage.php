@@ -4,6 +4,24 @@ require_once __DIR__ . '/../sidebar.php';
 require_once __DIR__ . '/utils.php';
 require_once __DIR__ . '/indices.php';
 
+if (!class_exists(ChassesAuTresor\Core\Progress\RiddleStatisticsService::class, false)) {
+    require_once dirname(__DIR__, 4)
+        . '/plugins/chassesautresor-core/src/Progress/RiddleStatisticsRepository.php';
+    require_once dirname(__DIR__, 4)
+        . '/plugins/chassesautresor-core/src/Progress/RiddleStatisticsService.php';
+}
+
+if (!function_exists('cat_get_riddle_statistics_service')) {
+    function cat_get_riddle_statistics_service(): ChassesAuTresor\Core\Progress\RiddleStatisticsService
+    {
+        global $wpdb;
+
+        return new ChassesAuTresor\Core\Progress\RiddleStatisticsService(
+            new ChassesAuTresor\Core\Progress\RiddleStatisticsRepository($wpdb)
+        );
+    }
+}
+
     // ==================================================
     // 🎨 AFFICHAGE STYLISÉ DES ÉNIGMES
     // ==================================================
@@ -351,15 +369,7 @@ require_once __DIR__ . '/indices.php';
             $user_rate     = 0;
 
             if ($total_enigmes > 0) {
-                global $wpdb;
-                $table        = $wpdb->prefix . 'engagements';
-                $placeholders = implode(',', array_fill(0, count($enigme_ids), '%d'));
-                $sql          = $wpdb->prepare(
-                    "SELECT COUNT(DISTINCT enigme_id) FROM {$table} WHERE user_id = %d AND enigme_id IN ($placeholders)",
-                    $user_id,
-                    ...$enigme_ids
-                );
-                $engagees = (int) $wpdb->get_var($sql);
+                $engagees = cat_get_hunt_progress_service()->countEngagedRiddles($user_id, $enigme_ids);
                 $user_rate = (100 * $engagees) / $total_enigmes;
             }
 
@@ -408,26 +418,7 @@ require_once __DIR__ . '/indices.php';
         $rate      = wp_cache_get($cache_key, 'chassesautresor');
 
         if (!is_int($rate)) {
-            global $wpdb;
-            $table_engagements = $wpdb->prefix . 'engagements';
-            $table_statuts     = $wpdb->prefix . 'enigme_statuts_utilisateur';
-
-            $access_sql = $wpdb->prepare(
-                "SELECT COUNT(DISTINCT user_id) FROM {$table_engagements} WHERE enigme_id = %d",
-                $enigme_id
-            );
-            $accessed = (int) $wpdb->get_var($access_sql);
-
-            if ($accessed > 0) {
-                $solve_sql = $wpdb->prepare(
-                    "SELECT COUNT(DISTINCT user_id) FROM {$table_statuts} WHERE enigme_id = %d AND statut IN ('resolue','terminee','terminée')",
-                    $enigme_id
-                );
-                $solved = (int) $wpdb->get_var($solve_sql);
-                $rate   = (int) round((100 * $solved) / $accessed);
-            } else {
-                $rate = 0;
-            }
+            $rate = (int) round(cat_get_riddle_statistics_service()->calculateResolutionRate($enigme_id));
 
             wp_cache_set($cache_key, $rate, 'chassesautresor', HOUR_IN_SECONDS);
         }
@@ -567,15 +558,7 @@ require_once __DIR__ . '/indices.php';
         $deja_resolue = est_enigme_resolue_par_utilisateur($user_id, $enigme_id);
 
         if ($deja_resolue) {
-            global $wpdb;
-            $table           = $wpdb->prefix . 'enigme_statuts_utilisateur';
-            $resolution_date = $wpdb->get_var(
-                $wpdb->prepare(
-                    "SELECT date_mise_a_jour FROM $table WHERE user_id = %d AND enigme_id = %d",
-                    $user_id,
-                    $enigme_id
-                )
-            );
+            $resolution_date = cat_get_hunt_progress_service()->getRiddleResolutionDate($user_id, $enigme_id);
             if ($resolution_date) {
                 $formatted_date = wp_date('d/m/y \\à H:i', strtotime($resolution_date));
                 $message        = sprintf(
@@ -1147,5 +1130,3 @@ require_once __DIR__ . '/indices.php';
         );
     }
     add_action('wp_enqueue_scripts', 'enigme_enqueue_gagnants_scripts');
-
-

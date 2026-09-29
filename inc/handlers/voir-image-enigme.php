@@ -25,29 +25,19 @@ if (!function_exists('trouver_chemin_image')) {
 if (!function_exists('utilisateur_peut_voir_enigme')) {
     require_once get_stylesheet_directory() . '/inc/access-functions.php';
 }
+if (!class_exists(ChassesAuTresor\Core\Media\RiddleImageService::class, false)) {
+    require_once dirname(__DIR__, 4)
+        . '/plugins/chassesautresor-core/src/Media/RiddleImageRepository.php';
+    require_once dirname(__DIR__, 4)
+        . '/plugins/chassesautresor-core/src/Media/RiddleImageService.php';
+}
 
 // 🧩 Récupération de l'énigme associée à cette image
 global $wpdb;
-$enigme_id = 0;
-
-$table = $wpdb->prefix . 'acf_enigme_visuel_image';
-if ($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table)) === $table) {
-    $enigme_id = (int) $wpdb->get_var(
-        $wpdb->prepare(
-            "SELECT post_id FROM $table WHERE value = %d LIMIT 1",
-            $image_id
-        )
-    );
-}
-
-if (!$enigme_id) {
-    $search = '%:"' . $wpdb->esc_like((string) $image_id) . '";%';
-    $sql    = "SELECT post_id FROM {$wpdb->postmeta} "
-        . "WHERE meta_key = 'enigme_visuel_image' AND meta_value LIKE %s LIMIT 1";
-    $enigme_id = (int) $wpdb->get_var(
-        $wpdb->prepare($sql, $search)
-    );
-}
+$image_service = new ChassesAuTresor\Core\Media\RiddleImageService(
+    new ChassesAuTresor\Core\Media\RiddleImageRepository($wpdb)
+);
+$enigme_id = $image_service->findRiddleId($image_id);
 
 if (!$enigme_id) {
     http_response_code(403);
@@ -110,4 +100,3 @@ header('Content-Type: ' . $mime);
 header('Content-Length: ' . filesize($path));
 readfile($path);
 exit;
-

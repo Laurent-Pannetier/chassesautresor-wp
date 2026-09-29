@@ -6,6 +6,13 @@ if (!class_exists(ChassesAuTresor\Core\Messages\AccountMessageService::class, fa
         . '/plugins/chassesautresor-core/src/Messages/AccountMessageService.php';
 }
 
+if (!class_exists(ChassesAuTresor\Core\Progress\UserAttemptStatisticsService::class, false)) {
+    require_once dirname(__DIR__, 3)
+        . '/plugins/chassesautresor-core/src/Progress/UserAttemptStatisticsRepository.php';
+    require_once dirname(__DIR__, 3)
+        . '/plugins/chassesautresor-core/src/Progress/UserAttemptStatisticsService.php';
+}
+
 /**
  * Create the service responsible for account messages.
  */
@@ -15,6 +22,15 @@ function cat_get_account_message_service(): ChassesAuTresor\Core\Messages\Accoun
 
     return new ChassesAuTresor\Core\Messages\AccountMessageService(
         new UserMessageRepository($wpdb)
+    );
+}
+
+function cat_get_user_attempt_statistics_service(): ChassesAuTresor\Core\Progress\UserAttemptStatisticsService
+{
+    global $wpdb;
+
+    return new ChassesAuTresor\Core\Progress\UserAttemptStatisticsService(
+        new ChassesAuTresor\Core\Progress\UserAttemptStatisticsRepository($wpdb)
     );
 }
 
@@ -912,28 +928,14 @@ function ca_get_engaged_hunts_page_param(): string
  */
 function ca_get_user_engaged_hunt_ids(int $user_id): array
 {
-    global $wpdb;
-
-    $table = $wpdb->prefix . 'engagements';
-    $query = $wpdb->prepare(
-        "SELECT chasse_id FROM {$table} WHERE user_id = %d AND chasse_id IS NOT NULL ORDER BY date_engagement DESC",
-        $user_id
-    );
-
-    $raw_ids = $wpdb->get_col($query);
-    if (empty($raw_ids)) {
+    $engaged_hunt_ids = cat_get_hunt_engagement_service()->findHuntIdsForUser($user_id);
+    if ($engaged_hunt_ids === []) {
         return [];
     }
 
     $chasse_ids = [];
 
-    foreach ($raw_ids as $chasse_id) {
-        $chasse_id = (int) $chasse_id;
-
-        if ($chasse_id <= 0) {
-            continue;
-        }
-
+    foreach ($engaged_hunt_ids as $chasse_id) {
         if (
             function_exists('chasse_est_visible_pour_utilisateur')
             && !chasse_est_visible_pour_utilisateur($chasse_id, $user_id)
@@ -944,7 +946,7 @@ function ca_get_user_engaged_hunt_ids(int $user_id): array
         $chasse_ids[] = $chasse_id;
     }
 
-    return array_values(array_unique($chasse_ids));
+    return $chasse_ids;
 }
 
 /**
@@ -1443,82 +1445,27 @@ function ca_register_tentatives_search_context(): void
  */
 function ca_get_tentatives_view_model(int $user_id, int $page = 1, int $per_page = 10): array
 {
-    global $wpdb;
-
-    $table     = $wpdb->prefix . 'enigme_tentatives';
     $per_page  = max(1, $per_page);
     $page      = max(1, $page);
     $search    = ca_get_search_term('tentatives');
-    $pending   = (int) $wpdb->get_var($wpdb->prepare(
-        "SELECT COUNT(*) FROM {$table} WHERE user_id = %d AND resultat = 'attente' AND traitee = 0",
-        $user_id
-    ));
-    $total     = (int) $wpdb->get_var($wpdb->prepare(
-        "SELECT COUNT(*) FROM {$table} WHERE user_id = %d",
-        $user_id
-    ));
-    $success   = (int) $wpdb->get_var($wpdb->prepare(
-        "SELECT COUNT(*) FROM {$table} WHERE user_id = %d AND resultat = 'bon'",
-        $user_id
-    ));
-
-    $base_from = sprintf(
-        " FROM %s t
-        INNER JOIN %s p ON t.enigme_id = p.ID
-        LEFT JOIN (
-            SELECT pm.post_id,
-                   MAX(
-                       CAST(
-                           SUBSTRING_INDEX(
-                               SUBSTRING_INDEX(pm.meta_value, ';', 2),
-                               ':',
-                               -1
-                           ) AS UNSIGNED
-                       )
-                   ) AS chasse_id
-            FROM %s pm
-            WHERE pm.meta_key IN ('chasse_associee', 'enigme_chasse_associee')
-            GROUP BY pm.post_id
-        ) AS chasse_meta ON chasse_meta.post_id = t.enigme_id
-        LEFT JOIN %s chasses ON chasses.ID = chasse_meta.chasse_id",
-        $table,
-        $wpdb->posts,
-        $wpdb->postmeta,
-        $wpdb->posts
-    );
-
-    $where_clause   = ' WHERE t.user_id = %d';
-    $count_sql      = "SELECT COUNT(*){$base_from}{$where_clause}";
-    $count_sql      = ca_apply_search_filters('tentatives', $count_sql, $search);
-    $filtered_total = (int) $wpdb->get_var($wpdb->prepare($count_sql, $user_id));
-
-    $pages = $filtered_total > 0 ? (int) ceil($filtered_total / $per_page) : 0;
-    if ($pages > 0 && $page > $pages) {
-        $page = $pages;
-    } elseif (0 === $pages) {
-        $page = 1;
-    }
-
-    $offset     = ($page - 1) * $per_page;
-    $select_sql = "SELECT t.*, p.post_title AS enigme_title, COALESCE(chasse_meta.chasse_id, 0) AS chasse_id, chasses.post_title AS chasse_title{$base_from}{$where_clause}";
-    $select_sql = ca_apply_search_filters('tentatives', $select_sql, $search);
-    $select_sql .= ' ORDER BY t.date_tentative DESC LIMIT %d OFFSET %d';
-    $results     = $wpdb->get_results($wpdb->prepare($select_sql, $user_id, $per_page, $offset));
+    $service    = cat_get_user_attempt_statistics_service();
+    $summary    = $service->summarize($user_id);
+    $pagination = $service->paginate($user_id, $page, $per_page, $search);
 
     $message = $search !== ''
         ? __('Aucune tentative ne correspond à votre recherche.', 'chassesautresor-com')
         : __('Vous n\'avez pas encore enregistré de tentative.', 'chassesautresor-com');
 
     return [
-        'pending'            => $pending,
-        'total'              => $total,
-        'success'            => $success,
+        'pending'            => $summary['pending'],
+        'total'              => $summary['total'],
+        'success'            => $summary['success'],
         'search_term'        => $search,
-        'page'               => $page,
-        'pages'              => $pages,
+        'page'               => $pagination['page'],
+        'pages'              => $pagination['pages'],
         'per_page'           => $per_page,
-        'filtered_total'     => $filtered_total,
-        'tentatives'         => is_array($results) ? $results : [],
+        'filtered_total'     => $pagination['total'],
+        'tentatives'         => $pagination['items'],
         'no_results_message' => $message,
     ];
 }

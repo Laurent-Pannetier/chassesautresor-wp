@@ -123,7 +123,6 @@ function chasse_calculer_taux_engagement(int $chasse_id, string $periode = 'tota
  */
 function chasse_calculer_taux_progression(int $chasse_id, string $periode = 'total'): float
 {
-
     $enigme_ids = recuperer_ids_enigmes_pour_chasse($chasse_id);
     if (!$enigme_ids) {
         return 0.0;
@@ -136,44 +135,13 @@ function chasse_calculer_taux_progression(int $chasse_id, string $periode = 'tot
         return 0.0;
     }
 
-    global $wpdb;
-    $placeholders = implode(',', array_fill(0, count($validables), '%d'));
-
-    $where_eng = "enigme_id IN ({$placeholders})";
-    $where_res = "enigme_id IN ({$placeholders}) AND statut IN ('resolue','terminee','terminée')";
-    $params_eng = $validables;
-    $params_res = $validables;
-
-    if ($periode !== 'total') {
-        [$debut, $fin] = enigme_stats_date_range($periode);
-        if ($debut && $fin) {
-            $where_eng .= ' AND date_engagement BETWEEN %s AND %s';
-            $where_res .= ' AND date_mise_a_jour BETWEEN %s AND %s';
-            $params_eng[] = $debut;
-            $params_eng[] = $fin;
-            $params_res[] = $debut;
-            $params_res[] = $fin;
-        }
-    }
-
-    $table_eng = $wpdb->prefix . 'engagements';
-    $sql_eng   = $wpdb->prepare(
-        "SELECT SUM(cnt) FROM (SELECT COUNT(DISTINCT user_id) AS cnt FROM {$table_eng} WHERE {$where_eng} GROUP BY enigme_id) t",
-        ...$params_eng
+    [$debut, $fin] = $periode === 'total' ? [null, null] : enigme_stats_date_range($periode);
+    return cat_get_hunt_statistics_service()->calculateResolutionRate(
+        array_values($validables),
+        $debut,
+        $fin,
+        chasse_stats_excluded_user_ids($chasse_id)
     );
-    $total_engages = (int) $wpdb->get_var($sql_eng);
-    if ($total_engages === 0) {
-        return 0.0;
-    }
-
-    $table_res = $wpdb->prefix . 'enigme_statuts_utilisateur';
-    $sql_res   = $wpdb->prepare(
-        "SELECT SUM(cnt) FROM (SELECT COUNT(DISTINCT user_id) AS cnt FROM {$table_res} WHERE {$where_res} GROUP BY enigme_id) t",
-        ...$params_res
-    );
-    $total_resolus = (int) $wpdb->get_var($sql_res);
-
-    return (100 * $total_resolus) / $total_engages;
 }
 
 /**
@@ -192,46 +160,18 @@ function chasse_calculer_taux_progression(int $chasse_id, string $periode = 'tot
  */
 function chasse_lister_participants(int $chasse_id, int $limit, int $offset, string $orderby, string $order): array
 {
-    global $wpdb;
-    $table_eng  = $wpdb->prefix . 'engagements';
-    $table_stat = $wpdb->prefix . 'enigme_statuts_utilisateur';
-
     $enigme_ids = recuperer_ids_enigmes_pour_chasse($chasse_id);
-    if ($enigme_ids) {
-        $placeholders = implode(',', array_fill(0, count($enigme_ids), '%d'));
-        $join_filter  = " AND e2.enigme_id IN ({$placeholders})";
-        $params_join  = $enigme_ids;
-    } else {
-        $join_filter = ' AND 1=0';
-        $params_join = [];
-    }
-
-    $order = strtoupper($order) === 'DESC' ? 'DESC' : 'ASC';
-    $orderby_map = [
-        'username' => 'username',
-        'participation' => 'nb_engagees',
-        'resolution' => 'nb_resolues',
-        'inscription' => 'date_inscription',
-    ];
-    $orderby = $orderby_map[$orderby] ?? 'date_inscription';
-
-    $query =
-        "SELECT e.user_id, u.user_login AS username, MIN(e.date_engagement) AS date_inscription," .
-        " COUNT(DISTINCT e2.enigme_id) AS nb_engagees," .
-        " COUNT(DISTINCT CASE WHEN s.statut IN ('resolue','terminee') THEN s.enigme_id END) AS nb_resolues" .
-        " FROM {$table_eng} e" .
-        " JOIN {$wpdb->users} u ON u.ID = e.user_id" .
-        " LEFT JOIN {$table_eng} e2 ON e2.user_id = e.user_id{$join_filter}" .
-        " LEFT JOIN {$table_stat} s ON s.user_id = e.user_id" .
-        " AND s.enigme_id = e2.enigme_id AND s.statut IN ('resolue','terminee')" .
-        " WHERE e.chasse_id = %d AND e.enigme_id IS NULL" .
-        " GROUP BY e.user_id" .
-        " ORDER BY {$orderby} {$order}" .
-        " LIMIT %d OFFSET %d";
-    $params = array_merge($params_join, [$chasse_id, $limit, $offset]);
-    $sql    = $wpdb->prepare($query, $params);
-
-    $rows = $wpdb->get_results($sql, ARRAY_A);
+    $excluded_user_ids = chasse_stats_excluded_user_ids($chasse_id);
+    $service = cat_get_hunt_statistics_service();
+    $rows = $service->listParticipants(
+        $chasse_id,
+        $enigme_ids,
+        $excluded_user_ids,
+        $limit,
+        $offset,
+        $orderby,
+        $order
+    );
     if (!$rows) {
         return [];
     }
@@ -240,15 +180,7 @@ function chasse_lister_participants(int $chasse_id, int $limit, int $offset, str
     foreach ($rows as $row) {
         $user_id = (int) $row['user_id'];
         if ($enigme_ids) {
-            $placeholders = implode(',', array_fill(0, count($enigme_ids), '%d'));
-            $params_ids   = array_merge([$user_id], $enigme_ids);
-            $ids          = $wpdb->get_col(
-                $wpdb->prepare(
-                    "SELECT DISTINCT enigme_id FROM {$table_eng}" .
-                    " WHERE user_id = %d AND enigme_id IN ({$placeholders})",
-                    $params_ids
-                )
-            );
+            $ids = $service->findEngagedRiddleIds($user_id, $enigme_ids);
         } else {
             $ids = [];
         }
