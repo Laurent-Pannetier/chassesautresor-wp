@@ -24,6 +24,11 @@ if (!class_exists(ChassesAuTresor\Core\Content\OrganizerCompletionService::class
         . '/plugins/chassesautresor-core/src/Content/OrganizerCompletionService.php';
 }
 
+if (!class_exists(ChassesAuTresor\Core\Content\HuntCompletionService::class, false)) {
+    require_once dirname(__DIR__, 3)
+        . '/plugins/chassesautresor-core/src/Content/HuntCompletionService.php';
+}
+
 if (!function_exists('cat_get_hunt_progress_service')) {
     function cat_get_hunt_progress_service(): ChassesAuTresor\Core\Progress\HuntProgressService
     {
@@ -531,21 +536,17 @@ function chasse_est_complet(int $chasse_id): bool
 
     $mode_fin = get_field('chasse_mode_fin', $chasse_id) ?: 'automatique';
 
-    if ($mode_fin === 'automatique' && !chasse_has_validatable_enigme($chasse_id)) {
-        return false;
-    }
-
-    $titre_ok = titre_est_valide($chasse_id);
-
-    $desc_field = get_field('chasse_principale_description', $chasse_id);
-    $desc       = trim((string) $desc_field);
-    $desc_ok    = $desc !== '';
-
     $image    = get_field('chasse_principale_image', $chasse_id);
     $image_id = is_array($image) ? ($image['ID'] ?? 0) : (int) $image;
-    $image_ok = !empty($image_id) && $image_id !== 3902;
 
-    return $titre_ok && $desc_ok && $image_ok;
+    return (new ChassesAuTresor\Core\Content\HuntCompletionService())->isComplete(
+        titre_est_valide($chasse_id),
+        (string) get_field('chasse_principale_description', $chasse_id),
+        (int) $image_id,
+        3902,
+        (string) $mode_fin,
+        chasse_has_validatable_enigme($chasse_id)
+    );
 }
 
 function chasse_mettre_a_jour_complet(int $chasse_id): bool
