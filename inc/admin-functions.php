@@ -498,9 +498,7 @@ function afficher_tableau_paiements_admin(): void
         return;
     }
 
-    global $wpdb;
-    $repo     = new PointsRepository($wpdb);
-    $requests = $repo->getConversionRequests();
+    $requests = cat_get_conversion_service()->getRequests();
 
     if (empty($requests)) {
         echo '<p>Aucune demande de paiement en attente.</p>';
@@ -512,14 +510,11 @@ function afficher_tableau_paiements_admin(): void
 
 function recuperer_historique_paiements_admin(int $page = 1): array
 {
-    global $wpdb;
     $per_page = HISTORIQUE_PAIEMENTS_ADMIN_PER_PAGE;
-    $repo     = new PointsRepository($wpdb);
     $offset   = ($page - 1) * $per_page;
-    $requests = $repo->getConversionRequests(null, null, $per_page, $offset);
-
-    $table = $wpdb->prefix . 'user_points';
-    $total = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$table} WHERE origin_type = 'conversion'");
+    $service  = cat_get_conversion_service();
+    $requests = $service->getRequests(null, null, $per_page, $offset);
+    $total = $service->countRequests();
     $pages = max(1, (int) ceil($total / $per_page));
 
     if (empty($requests)) {
@@ -613,9 +608,7 @@ function traiter_demande_paiement() {
     // ✅ Calcul du montant en euros
     $montant_euros = round(($points_a_convertir / 1000) * $taux_conversion, 2);
 
-    global $wpdb;
-    $repo   = new PointsRepository($wpdb);
-    $log_id = $repo->logConversionRequest($user_id, -$points_a_convertir, $montant_euros);
+    $log_id = cat_get_conversion_service()->createRequest($user_id, $points_a_convertir, $taux_conversion);
     cat_debug("✅ Demande enregistrée : log_id {$log_id}");
 
     // 📧 Notification admin
@@ -671,48 +664,16 @@ function ajax_update_request_status(): void
         wp_send_json_error();
     }
 
-    global $wpdb;
-    $repo = new PointsRepository($wpdb);
-
-    $map = [
-        'regle'  => 'paid',
-        'annule' => 'cancelled',
-        'refuse' => 'refused',
-    ];
-
-    $repoStatus = $map[$statut];
-    $dates      = [];
-    if ($repoStatus === 'paid') {
-        $dates['settlement_date'] = current_time('mysql');
-    } else {
-        $dates['cancelled_date'] = current_time('mysql');
-    }
-
-    $repo->updateRequestStatus($paiement_id, $repoStatus, $dates);
+    $result = cat_get_conversion_service()->updateStatus(
+        $paiement_id,
+        $statut,
+        current_time('mysql')
+    );
+    $repoStatus = $result['status'];
     cat_debug("✅ Statut mis à jour pour l'entrée {$paiement_id} : {$repoStatus}");
 
-    if (in_array($repoStatus, ['cancelled', 'refused'], true)) {
-        $request = $repo->getRequestById($paiement_id);
-        if ($request) {
-            $points = abs((int) $request['points']);
-            $reason = sprintf(
-                'Restauration de %d points après annulation/refus',
-                $points
-            );
-            update_user_points(
-                (int) $request['user_id'],
-                $points,
-                $reason,
-                'admin',
-                $paiement_id
-            );
-        }
-    } elseif ($repoStatus === 'paid') {
-        $request = $repo->getRequestById($paiement_id);
-        if ($request) {
-            $montant_paye = floatval($request['amount_eur']);
-            mettre_a_jour_paiements_organisateurs($montant_paye);
-        }
+    if ($result['paid_amount'] > 0) {
+        mettre_a_jour_paiements_organisateurs($result['paid_amount']);
     }
 
     wp_send_json_success(['status' => $repoStatus]);
@@ -2317,5 +2278,3 @@ function envoyer_mail_chasse_validee(int $organisateur_id, int $chasse_id)
     cta_send_email($emails, $subject_raw, $body, $headers);
     remove_filter('wp_mail_from_name', $from_filter, 10);
 }
-
-

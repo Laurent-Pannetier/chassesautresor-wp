@@ -1,6 +1,81 @@
 <?php
 defined( 'ABSPATH' ) || exit;
 
+if (!class_exists(ChassesAuTresor\Core\Points\PointsService::class, false)) {
+    require_once dirname(__DIR__, 3)
+        . '/plugins/chassesautresor-core/src/Points/PointsService.php';
+}
+
+if (!class_exists(ChassesAuTresor\Core\Points\PurchasePointsService::class, false)) {
+    require_once dirname(__DIR__, 3)
+        . '/plugins/chassesautresor-core/src/Points/PurchasePointsService.php';
+}
+
+if (!class_exists(ChassesAuTresor\Core\Points\ConversionService::class, false)) {
+    require_once dirname(__DIR__, 3)
+        . '/plugins/chassesautresor-core/src/Points/ConversionService.php';
+}
+
+if (!class_exists(ChassesAuTresor\Core\Progress\HuntProgressService::class, false)) {
+    require_once dirname(__DIR__, 3)
+        . '/plugins/chassesautresor-core/src/Progress/HuntProgressRepository.php';
+    require_once dirname(__DIR__, 3)
+        . '/plugins/chassesautresor-core/src/Progress/HuntProgressService.php';
+}
+
+if (!class_exists(ChassesAuTresor\Core\Progress\HuntRiddleClassifier::class, false)) {
+    require_once dirname(__DIR__, 3)
+        . '/plugins/chassesautresor-core/src/Progress/HuntRiddleClassifier.php';
+}
+
+/**
+ * Create the service responsible for points operations.
+ */
+function cat_get_points_service(): ChassesAuTresor\Core\Points\PointsService
+{
+    global $wpdb;
+
+    return new ChassesAuTresor\Core\Points\PointsService(
+        new PointsRepository($wpdb)
+    );
+}
+
+/**
+ * Create the service responsible for purchased point packs.
+ */
+function cat_get_purchase_points_service(): ChassesAuTresor\Core\Points\PurchasePointsService
+{
+    return new ChassesAuTresor\Core\Points\PurchasePointsService(cat_get_points_service());
+}
+
+/**
+ * Create the service responsible for point conversion requests.
+ */
+function cat_get_conversion_service(): ChassesAuTresor\Core\Points\ConversionService
+{
+    global $wpdb;
+
+    $repository = new PointsRepository($wpdb);
+
+    return new ChassesAuTresor\Core\Points\ConversionService(
+        $repository,
+        new ChassesAuTresor\Core\Points\PointsService($repository)
+    );
+}
+
+function cat_get_hunt_progress_service(): ChassesAuTresor\Core\Progress\HuntProgressService
+{
+    global $wpdb;
+
+    return new ChassesAuTresor\Core\Progress\HuntProgressService(
+        new ChassesAuTresor\Core\Progress\HuntProgressRepository($wpdb)
+    );
+}
+
+function cat_classify_hunt_riddles(array $riddleIds): array
+{
+    return (new ChassesAuTresor\Core\Progress\HuntRiddleClassifier())->classify($riddleIds);
+}
 
 // ==================================================
 // 📚 SOMMAIRE DU FICHIER : gamify-functions.php
@@ -44,10 +119,7 @@ function get_user_points($user_id = null): int {
         return 0;
     }
 
-    global $wpdb;
-    $repo = new PointsRepository($wpdb);
-
-    return $repo->getBalance((int) $user_id);
+    return cat_get_points_service()->getBalance((int) $user_id);
 }
 
 /**
@@ -73,9 +145,7 @@ function update_user_points(
         return;
     }
 
-    global $wpdb;
-    $repo = new PointsRepository($wpdb);
-    $repo->addPoints($user_id, $points_change, $reason, $origin_type, $origin_id);
+    cat_get_points_service()->changeBalance($user_id, $points_change, $reason, $origin_type, $origin_id);
 
     // 🔄 Rafraîchit la session utilisateur si connecté
     if (is_user_logged_in()) {
@@ -90,37 +160,8 @@ function update_user_points(
  */
 function attribuer_points_apres_achat($order_id) {
     $order = wc_get_order($order_id);
-    if (!$order || $order->get_meta('_points_deja_attribues')) return; // 🔒 Évite les doublons
 
-    $user_id = $order->get_user_id();
-    if (!$user_id) return;
-
-    $packs_points = [
-        'pack-100-points'  => 100,
-        'pack-500-points'  => 500,
-        'pack-1000-points' => 1000,
-    ];
-
-    $points_ajoutes = 0;
-
-    foreach ($order->get_items() as $item) {
-        $product = $item->get_product();
-        if (!$product) continue;
-
-        $slug = $product->get_slug();
-        if (isset($packs_points[$slug])) {
-            $points_to_add = $packs_points[$slug] * $item->get_quantity();
-            $reason = sprintf('Achat de %d points (commande #%d)', $points_to_add, $order_id);
-            update_user_points($user_id, $points_to_add, $reason, 'achat', $order_id);
-            $points_ajoutes += $points_to_add;
-            $order->add_order_note("✅ {$points_to_add} points ajoutés.");
-        }
-    }
-
-    if ($points_ajoutes > 0) {
-        $order->update_meta_data('_points_deja_attribues', true); // ✅ Marque la commande comme traitée
-        $order->save();
-    }
+    cat_get_purchase_points_service()->awardOrder($order);
 }
 
 /**
@@ -211,10 +252,7 @@ add_action('wp_enqueue_scripts', 'charger_script_modal_points');
  * @return bool True si le solde est suffisant.
  */
 function utilisateur_a_assez_de_points(int $user_id, int $montant): bool {
-    if (!$user_id || $montant < 0) return false;
-
-    $points_disponibles = get_user_points($user_id);
-    return $points_disponibles >= $montant;
+    return cat_get_points_service()->hasEnough($user_id, $montant);
 }
 
 /**
@@ -234,9 +272,7 @@ function deduire_points_utilisateur(
     string $origin_type = 'admin',
     ?int $origin_id = null
 ): void {
-    if ($user_id && $montant > 0) {
-        update_user_points($user_id, -$montant, $reason, $origin_type, $origin_id);
-    }
+    cat_get_points_service()->deduct($user_id, $montant, $reason, $origin_type, $origin_id);
 }
 
 /**
@@ -256,9 +292,7 @@ function ajouter_points_utilisateur(
     string $origin_type = 'admin',
     ?int $origin_id = null
 ): void {
-    if ($user_id && $montant > 0) {
-        update_user_points($user_id, $montant, $reason, $origin_type, $origin_id);
-    }
+    cat_get_points_service()->add($user_id, $montant, $reason, $origin_type, $origin_id);
 }
 
 
@@ -286,36 +320,15 @@ function enigme_get_chasse_progression(int $chasse_id, int $user_id): array
         return ['resolues' => 0, 'total' => 0];
     }
 
-    $validables      = [];
-    $non_validables  = [];
-    foreach ($enigmes as $id) {
-        if (get_field('enigme_mode_validation', $id) === 'aucune') {
-            $non_validables[] = $id;
-        } else {
-            $validables[] = $id;
-        }
-    }
+    $classified = cat_classify_hunt_riddles($enigmes);
+    $validables = $classified['validatable'];
+    $non_validables = $classified['engagement_only'];
 
-    global $wpdb;
-    $resolues = 0;
-
-    if ($validables) {
-        $table        = $wpdb->prefix . 'enigme_statuts_utilisateur';
-        $placeholders = implode(',', array_fill(0, count($validables), '%d'));
-        $sql = "SELECT COUNT(DISTINCT enigme_id) FROM {$table} WHERE user_id = %d AND statut IN ('resolue','terminee','terminée') AND enigme_id IN ($placeholders)";
-        $resolues = (int) $wpdb->get_var($wpdb->prepare($sql, array_merge([$user_id], $validables)));
-    }
-
-    if ($non_validables) {
-        $table_eng    = $wpdb->prefix . 'engagements';
-        $placeholders = implode(',', array_fill(0, count($non_validables), '%d'));
-        $sql = "SELECT COUNT(DISTINCT enigme_id) FROM {$table_eng} WHERE user_id = %d AND enigme_id IN ($placeholders)";
-        $resolues += (int) $wpdb->get_var($wpdb->prepare($sql, array_merge([$user_id], $non_validables)));
-    }
+    $progress = cat_get_hunt_progress_service()->calculate($user_id, $validables, $non_validables);
 
     return [
-        'resolues' => $resolues,
-        'total'    => count($validables) + count($non_validables),
+        'resolues' => $progress['completed'],
+        'total'    => $progress['total'],
     ];
 }
 
@@ -337,34 +350,13 @@ function compter_enigmes_resolues($chasse_id, $user_id): int
         return 0;
     }
 
-    $validables     = [];
-    $non_validables = [];
-    foreach ($enigmes as $eid) {
-        if (get_field('enigme_mode_validation', $eid) === 'aucune') {
-            $non_validables[] = $eid;
-        } else {
-            $validables[] = $eid;
-        }
-    }
+    $classified = cat_classify_hunt_riddles($enigmes);
+    $validables = $classified['validatable'];
+    $non_validables = $classified['engagement_only'];
 
-    global $wpdb;
-    $resolues = 0;
+    $progress = cat_get_hunt_progress_service()->calculate((int) $user_id, $validables, $non_validables);
 
-    if ($validables) {
-        $table        = $wpdb->prefix . 'enigme_statuts_utilisateur';
-        $placeholders = implode(',', array_fill(0, count($validables), '%d'));
-        $sql = "SELECT COUNT(DISTINCT enigme_id) FROM {$table} WHERE user_id = %d AND statut IN ('resolue','terminee','terminée') AND enigme_id IN ($placeholders)";
-        $resolues = (int) $wpdb->get_var($wpdb->prepare($sql, array_merge([$user_id], $validables)));
-    }
-
-    if ($non_validables) {
-        $table_eng    = $wpdb->prefix . 'engagements';
-        $placeholders = implode(',', array_fill(0, count($non_validables), '%d'));
-        $sql = "SELECT COUNT(DISTINCT enigme_id) FROM {$table_eng} WHERE user_id = %d AND enigme_id IN ($placeholders)";
-        $resolues += (int) $wpdb->get_var($wpdb->prepare($sql, array_merge([$user_id], $non_validables)));
-    }
-
-    return $resolues;
+    return $progress['completed'];
 }
 
 /**
@@ -402,41 +394,14 @@ function verifier_fin_de_chasse($user_id, $enigme_id)
         return;
     }
 
-    $validables      = [];
-    $non_validables  = [];
-    foreach ($enigmes_associees as $eid) {
-        if (get_field('enigme_mode_validation', $eid) === 'aucune') {
-            $non_validables[] = $eid;
-        } else {
-            $validables[] = $eid;
-        }
-    }
+    $classified = cat_classify_hunt_riddles($enigmes_associees);
+    $validables = $classified['validatable'];
+    $non_validables = $classified['engagement_only'];
 
-    global $wpdb;
-    $nb_resolues = 0;
+    $progress = cat_get_hunt_progress_service()->calculate((int) $user_id, $validables, $non_validables);
 
-    if ($validables) {
-        $table        = $wpdb->prefix . 'enigme_statuts_utilisateur';
-        $placeholders = implode(',', array_fill(0, count($validables), '%d'));
-        $sql = "SELECT COUNT(DISTINCT enigme_id) FROM {$table} WHERE user_id = %d AND statut IN ('resolue','terminee','terminée') AND enigme_id IN ($placeholders)";
-        $nb_resolues  = (int) $wpdb->get_var($wpdb->prepare($sql, array_merge([$user_id], $validables)));
-    }
-
-    $engagements_ok = true;
-    if ($non_validables) {
-        $table_eng    = $wpdb->prefix . 'engagements';
-        $placeholders = implode(',', array_fill(0, count($non_validables), '%d'));
-        $sql = "SELECT COUNT(DISTINCT enigme_id) FROM {$table_eng} WHERE user_id = %d AND enigme_id IN ($placeholders)";
-        $nb_engagees  = (int) $wpdb->get_var($wpdb->prepare($sql, array_merge([$user_id], $non_validables)));
-        $engagements_ok = ($nb_engagees === count($non_validables));
-    }
-
-    if ($nb_resolues === count($validables) && $engagements_ok) {
+    if ($progress['is_complete']) {
         gerer_chasse_terminee($chasse_id);
-
-        if (function_exists('ca_demo_is_demo_hunt') && ca_demo_is_demo_hunt((int) $chasse_id)) {
-            do_action('ca_demo_schedule_reset', (int) $chasse_id, (int) $user_id);
-        }
     }
 }
 add_action('enigme_resolue', function($user_id, $enigme_id) {
@@ -453,11 +418,7 @@ function get_user_points_history(int $user_id = null, int $page = 1, int $per_pa
         return [];
     }
 
-    global $wpdb;
-    $repo   = new PointsRepository($wpdb);
-    $offset = ($page - 1) * $per_page;
-
-    return $repo->getHistory((int) $user_id, $per_page, $offset);
+    return cat_get_points_service()->getHistory((int) $user_id, $page, $per_page);
 }
 
 /**
@@ -470,10 +431,7 @@ function count_user_points_history(int $user_id = null): int
         return 0;
     }
 
-    global $wpdb;
-    $repo = new PointsRepository($wpdb);
-
-    return $repo->countHistory((int) $user_id);
+    return cat_get_points_service()->countHistory((int) $user_id);
 }
 
 /**
@@ -630,6 +588,3 @@ function ajax_load_points_history(): void
     wp_send_json_success(['rows' => $rows]);
 }
 add_action('wp_ajax_load_points_history', 'ajax_load_points_history');
-
-
-

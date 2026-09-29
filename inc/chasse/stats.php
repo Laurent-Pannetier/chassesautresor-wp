@@ -12,12 +12,6 @@ require_once __DIR__ . '/../enigme/stats.php';
  */
 function chasse_compter_participants(int $chasse_id, string $periode = 'total'): int
 {
-    if (
-        function_exists('ca_demo_is_demo_hunt')
-        && ca_demo_is_demo_hunt($chasse_id)
-    ) {
-        return 0;
-    }
 
     global $wpdb;
     $table = $wpdb->prefix . 'engagements';
@@ -40,12 +34,6 @@ function chasse_compter_participants(int $chasse_id, string $periode = 'total'):
  */
 function chasse_compter_tentatives(int $chasse_id, string $periode = 'total'): int
 {
-    if (
-        function_exists('ca_demo_is_demo_hunt')
-        && ca_demo_is_demo_hunt($chasse_id)
-    ) {
-        return 0;
-    }
 
     $enigme_ids = recuperer_ids_enigmes_pour_chasse($chasse_id);
     if (!$enigme_ids) {
@@ -77,12 +65,6 @@ function chasse_compter_tentatives(int $chasse_id, string $periode = 'total'): i
  */
 function chasse_compter_points_collectes(int $chasse_id, string $periode = 'total'): int
 {
-    if (
-        function_exists('ca_demo_is_demo_hunt')
-        && ca_demo_is_demo_hunt($chasse_id)
-    ) {
-        return 0;
-    }
 
     $enigme_ids = recuperer_ids_enigmes_pour_chasse($chasse_id);
     if (!$enigme_ids) {
@@ -115,12 +97,6 @@ function chasse_compter_points_collectes(int $chasse_id, string $periode = 'tota
  */
 function chasse_compter_engagements(int $chasse_id): int
 {
-    if (
-        function_exists('ca_demo_is_demo_hunt')
-        && ca_demo_is_demo_hunt($chasse_id)
-    ) {
-        return 0;
-    }
 
     global $wpdb;
     $table = $wpdb->prefix . 'engagements';
@@ -133,12 +109,6 @@ function chasse_compter_engagements(int $chasse_id): int
  */
 function chasse_calculer_taux_engagement(int $chasse_id, string $periode = 'total'): float
 {
-    if (
-        function_exists('ca_demo_is_demo_hunt')
-        && ca_demo_is_demo_hunt($chasse_id)
-    ) {
-        return 0.0;
-    }
 
     $participants  = chasse_compter_participants($chasse_id, $periode);
     $enigme_ids    = recuperer_ids_enigmes_pour_chasse($chasse_id);
@@ -176,12 +146,6 @@ function chasse_calculer_taux_engagement(int $chasse_id, string $periode = 'tota
  */
 function chasse_calculer_taux_progression(int $chasse_id, string $periode = 'total'): float
 {
-    if (
-        function_exists('ca_demo_is_demo_hunt')
-        && ca_demo_is_demo_hunt($chasse_id)
-    ) {
-        return 0.0;
-    }
 
     $enigme_ids = recuperer_ids_enigmes_pour_chasse($chasse_id);
     if (!$enigme_ids) {

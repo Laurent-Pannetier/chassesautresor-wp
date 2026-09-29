@@ -25,9 +25,6 @@ $badge_icon_html = $infos['statut_icon'] ?? '';
 $badge_label = $infos['statut_label'] ?? ($infos['badge_content'] ?? '');
 $has_badge_icon = $badge_icon_html !== '';
 $badge_classes = $infos['badge_class'] ?? '';
-$is_demo = !empty($infos['is_demo']);
-$demo_badge = is_array($infos['demo_badge'] ?? null) ? $infos['demo_badge'] : null;
-$demo_badge_description_id = $is_demo && $demo_badge ? wp_unique_id('badge-demo-desc-') : '';
 
 if ($has_badge_icon) {
     $badge_classes = trim($badge_classes . ' badge-statut--responsive');
@@ -53,35 +50,15 @@ $has_reward = !empty($reward_title) && (float) $reward_value > 0;
 <div class="carte carte-chasse carte-wide <?php echo esc_attr(trim($infos['classe_statut'] . ' ' . $completion_class)); ?>">
     <div class="carte-wide__image">
         <div class="carte-badges-stack">
-            <?php if ($is_demo && $demo_badge) : ?>
-                <span
-                    class="badge-demo"
-                    role="img"
-                    aria-label="<?php echo esc_attr($demo_badge['aria_label'] ?? $demo_badge['screen_text'] ?? ''); ?>"
-                    <?php if ($demo_badge_description_id) : ?>aria-describedby="<?php echo esc_attr($demo_badge_description_id); ?>"<?php endif; ?>
-                    title="<?php echo esc_attr($demo_badge['title'] ?? ''); ?>"
-                >
-                    <?php if (!empty($demo_badge['icon_html'])) : ?>
-                        <span class="badge-demo__icon" aria-hidden="true">
-                            <?php echo $demo_badge['icon_html']; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- icône préparée. ?>
-                        </span>
-                    <?php endif; ?>
-                    <span class="badge-demo__label"><?php echo esc_html($demo_badge['label'] ?? ''); ?></span>
-                    <?php if ($demo_badge_description_id) : ?>
-                        <span id="<?php echo esc_attr($demo_badge_description_id); ?>" class="screen-reader-text"><?php echo esc_html($demo_badge['screen_text'] ?? ''); ?></span>
-                    <?php endif; ?>
-                </span>
-            <?php else : ?>
-                <span class="badge-statut <?php echo esc_attr($badge_classes); ?>"
-                    data-post-id="<?php echo esc_attr($chasse_id); ?>"<?= $badge_attributes; ?>>
-                    <span class="badge-statut__label"><?php echo esc_html($badge_label); ?></span>
-                    <?php if ($has_badge_icon) : ?>
-                        <span class="badge-statut__icon" aria-hidden="true">
-                            <?php echo $badge_icon_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- contenu préparé et sécurisé en amont. ?>
-                        </span>
-                    <?php endif; ?>
-                </span>
-            <?php endif; ?>
+            <span class="badge-statut <?php echo esc_attr($badge_classes); ?>"
+                data-post-id="<?php echo esc_attr($chasse_id); ?>"<?= $badge_attributes; ?>>
+                <span class="badge-statut__label"><?php echo esc_html($badge_label); ?></span>
+                <?php if ($has_badge_icon) : ?>
+                    <span class="badge-statut__icon" aria-hidden="true">
+                        <?php echo $badge_icon_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- contenu préparé et sécurisé en amont. ?>
+                    </span>
+                <?php endif; ?>
+            </span>
         </div>
         <?php if ((int) $infos['cout_points'] > 0) : ?>
         <span

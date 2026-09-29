@@ -140,9 +140,7 @@ function verifier_acces_conversion($user_id) {
     }
 
     // 2️⃣ Vérification des demandes via le registre des points
-    global $wpdb;
-    $repo      = new PointsRepository($wpdb);
-    $paiements = $repo->getConversionRequests($user_id);
+    $paiements = cat_get_conversion_service()->getRequests((int) $user_id);
 
     foreach ($paiements as $paiement) {
         if ($paiement['request_status'] === 'pending') {
@@ -309,9 +307,7 @@ add_action('wp_ajax_conversion_modal_content', 'ajax_conversion_modal_content');
  * @param string $filtre_statut Filtre optionnel : 'en_attente' pour les demandes en cours, 'toutes' (par défaut) pour l'historique complet.
  */
 function afficher_tableau_paiements_organisateur($user_id, $filtre_statut = 'toutes') {
-    global $wpdb;
-    $repo      = new PointsRepository($wpdb);
-    $paiements = $repo->getConversionRequests($user_id);
+    $paiements = cat_get_conversion_service()->getRequests((int) $user_id);
 
     if (empty($paiements)) {
         return;
@@ -370,27 +366,22 @@ function afficher_tableau_paiements_organisateur($user_id, $filtre_statut = 'tou
  */
 function render_conversion_history(?int $user_id = null): string
 {
-    global $wpdb;
-    $repo = new PointsRepository($wpdb);
+    $service = cat_get_conversion_service();
 
     $per_page      = 10;
-    $total         = $repo->countConversionRequests($user_id);
+    $total         = $service->countRequests($user_id);
     if ($total === 0) {
         return '';
     }
 
-    $requests      = $repo->getConversionRequests($user_id, null, $per_page);
-    $paid_requests = $repo->getConversionRequests($user_id, 'paid');
-    $pending_count = $repo->countConversionRequests($user_id, 'pending');
+    $requests      = $service->getRequests($user_id, null, $per_page);
+    $paid_totals   = $service->getPaidTotals($user_id);
+    $pending_count = $service->countRequests($user_id, 'pending');
 
     $is_admin_view = $user_id === null;
 
-    $total_points = 0;
-    $total_eur    = 0.0;
-    foreach ($paid_requests as $request) {
-        $total_points += abs((int) $request['points']);
-        $total_eur    += (float) $request['amount_eur'];
-    }
+    $total_points = $paid_totals['points'];
+    $total_eur    = $paid_totals['amount'];
 
     $total_points_label = sprintf(
         '%s : %s',
@@ -539,9 +530,7 @@ function ajax_load_conversion_history(): void
     $user_id  = current_user_can('administrator') ? null : get_current_user_id();
     $is_admin = $user_id === null;
 
-    global $wpdb;
-    $repo     = new PointsRepository($wpdb);
-    $requests = $repo->getConversionRequests($user_id, null, $per_page, $offset);
+    $requests = cat_get_conversion_service()->getRequests($user_id, null, $per_page, $offset);
 
     ob_start();
     foreach ($requests as $paiement) {
@@ -1073,5 +1062,4 @@ function traiter_confirmation_organisateur() {
     exit;
 }
 add_action('template_redirect', 'traiter_confirmation_organisateur');
-
 

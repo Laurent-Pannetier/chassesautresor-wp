@@ -32,13 +32,6 @@ function handle_single_enigme_access(): void
         verifier_et_synchroniser_cache_enigmes_si_autorise($chasse_id);
         if ($user_id) {
             $est_engage_chasse = utilisateur_est_engage_dans_chasse($user_id, $chasse_id);
-            if (
-                !$est_engage_chasse
-                && function_exists('ca_demo_is_demo_hunt')
-                && ca_demo_is_demo_hunt($chasse_id)
-            ) {
-                $est_engage_chasse = true;
-            }
         }
     }
 

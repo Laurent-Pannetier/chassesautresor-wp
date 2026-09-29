@@ -2,6 +2,23 @@
 
 defined('ABSPATH') || exit;
 
+if (!class_exists(ChassesAuTresor\Core\Messages\SiteMessageService::class, false)) {
+    require_once dirname(__DIR__, 3)
+        . '/plugins/chassesautresor-core/src/Messages/SiteMessageService.php';
+}
+
+/**
+ * Create the service responsible for persistent site messages.
+ */
+function cat_get_site_message_service(): ChassesAuTresor\Core\Messages\SiteMessageService
+{
+    global $wpdb;
+
+    return new ChassesAuTresor\Core\Messages\SiteMessageService(
+        new UserMessageRepository($wpdb)
+    );
+}
+
 /**
  * Create the table storing user and site messages.
  *
@@ -9,26 +26,12 @@ defined('ABSPATH') || exit;
  */
 function cat_install_user_messages_table(): void
 {
-    global $wpdb;
+    if (!class_exists(ChassesAuTresor\Core\Messages\UserMessagesTable::class, false)) {
+        require_once dirname(__DIR__, 3)
+            . '/plugins/chassesautresor-core/src/Messages/UserMessagesTable.php';
+    }
 
-    $table          = $wpdb->prefix . 'user_messages';
-    $charsetCollate = $wpdb->get_charset_collate();
-
-    $sql = "CREATE TABLE {$table} (
-        id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-        user_id BIGINT UNSIGNED NOT NULL,
-        message LONGTEXT NOT NULL,
-        status VARCHAR(20) NOT NULL,
-        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        expires_at DATETIME NULL,
-        locale VARCHAR(10) NULL,
-        KEY user_id (user_id),
-        KEY status (status),
-        KEY expires_at (expires_at)
-    ) {$charsetCollate};";
-
-    require_once ABSPATH . 'wp-admin/includes/upgrade.php';
-    dbDelta($sql);
+    ChassesAuTresor\Core\Messages\UserMessagesTable::install();
 }
 add_action('after_switch_theme', 'cat_install_user_messages_table');
 
@@ -70,21 +73,7 @@ function add_site_message(
     }
 
     if ($persistent) {
-        $expiresAt = null;
-        if ($expires !== null) {
-            $now = (int) current_time('timestamp');
-            if ($expires > $now) {
-                $expiresAt = gmdate('c', $expires);
-            } else {
-                $expiresAt = gmdate('c', $now + $expires);
-            }
-        }
-
-        global $wpdb;
-        $repo = new UserMessageRepository($wpdb);
-        $inserted = $repo->insert(0, wp_json_encode($message), 'site', $expiresAt, $locale);
-
-        if ($inserted !== 0) {
+        if (cat_get_site_message_service()->store($message, $locale, $expires)) {
             return;
         }
 
@@ -118,15 +107,7 @@ function add_site_message(
  */
 function remove_site_message(string $key): void
 {
-    global $wpdb;
-    $repo = new UserMessageRepository($wpdb);
-    $rows = $repo->get(0, 'site', null);
-    foreach ($rows as $row) {
-        $data = json_decode($row['message'], true);
-        if (is_array($data) && ($data['message_key'] ?? '') === $key) {
-            $repo->delete((int) $row['id']);
-        }
-    }
+    cat_get_site_message_service()->removeByKey($key);
 }
 
 /**
@@ -157,35 +138,9 @@ function get_site_messages(): string
         unset($_SESSION['cat_site_messages']);
     }
 
-    global $wpdb;
-    $repo = new UserMessageRepository($wpdb);
-    $repo->purgeExpired();
-    $rows = $repo->get(0, 'site', false);
-    foreach ($rows as $row) {
-        $data = json_decode($row['message'], true);
-        if (is_array($data)) {
-            if (!empty($row['locale'])) {
-                $data['locale'] = $row['locale'];
-            }
-            $messages[] = $data;
-        }
-    }
-
-    if (!empty($messages)) {
-        $unique   = [];
-        $seenKeys = [];
-        foreach ($messages as $msg) {
-            $key = $msg['message_key'] ?? null;
-            if ($key !== null) {
-                if (isset($seenKeys[$key])) {
-                    continue;
-                }
-                $seenKeys[$key] = true;
-            }
-            $unique[] = $msg;
-        }
-        $messages = $unique;
-    }
+    $service = cat_get_site_message_service();
+    $messages = array_merge($messages, $service->getActive());
+    $messages = $service->deduplicate($messages);
 
     if (empty($messages)) {
         return '';
@@ -264,18 +219,8 @@ function cat_remove_legacy_test_messages(): void
         return;
     }
 
-    global $wpdb;
-    $repo = new UserMessageRepository($wpdb);
-    $rows = $repo->get(0, 'site', null);
-
-    foreach ($rows as $row) {
-        $data = json_decode($row['message'], true);
-        if (is_array($data) && ($data['content'] ?? '') === 'prout') {
-            $repo->delete((int) $row['id']);
-        }
-    }
+    cat_get_site_message_service()->removeLegacyTestMessages();
 
     update_option('cat_removed_test_messages', 1);
 }
 add_action('init', 'cat_remove_legacy_test_messages');
-

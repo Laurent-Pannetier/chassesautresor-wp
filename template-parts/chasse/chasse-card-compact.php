@@ -31,9 +31,6 @@ if ($badge_has_interaction && $badge_tooltip !== '') {
     $badge_attributes .= ' role="img" tabindex="0"';
 }
 
-$is_demo = !empty($infos['is_demo']);
-$demo_badge = is_array($infos['demo_badge'] ?? null) ? $infos['demo_badge'] : null;
-$demo_badge_description_id = $is_demo && $demo_badge ? wp_unique_id('badge-demo-desc-') : '';
 
 $progression = $infos['progression'] ?? null;
 $resolvables = is_array($progression) ? (int) ($progression['resolvables'] ?? 0) : 0;
@@ -53,29 +50,9 @@ if ($has_reward) {
         <a href="<?php echo esc_url($infos['permalink']); ?>" class="carte-compact__lien">
             <div class="carte-compact__image-wrapper">
                 <div class="carte-badges-stack">
-                    <?php if ($is_demo && $demo_badge) : ?>
-                        <span
-                            class="badge-demo"
-                            role="img"
-                            aria-label="<?php echo esc_attr($demo_badge['aria_label'] ?? $demo_badge['screen_text'] ?? ''); ?>"
-                            <?php if ($demo_badge_description_id) : ?>aria-describedby="<?php echo esc_attr($demo_badge_description_id); ?>"<?php endif; ?>
-                            title="<?php echo esc_attr($demo_badge['title'] ?? ''); ?>"
-                        >
-                            <?php if (!empty($demo_badge['icon_html'])) : ?>
-                                <span class="badge-demo__icon" aria-hidden="true">
-                                    <?php echo $demo_badge['icon_html']; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- icône préparée. ?>
-                                </span>
-                            <?php endif; ?>
-                            <span class="badge-demo__label"><?php echo esc_html($demo_badge['label'] ?? ''); ?></span>
-                            <?php if ($demo_badge_description_id) : ?>
-                                <span id="<?php echo esc_attr($demo_badge_description_id); ?>" class="screen-reader-text"><?php echo esc_html($demo_badge['screen_text'] ?? ''); ?></span>
-                            <?php endif; ?>
-                        </span>
-                    <?php else : ?>
-                        <span class="badge-statut <?php echo esc_attr($infos['badge_class']); ?>" data-post-id="<?php echo esc_attr($chasse_id); ?>"<?= $badge_attributes; ?>>
-                            <?php echo $infos['badge_content']; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- contenu préparé et sécurisé en amont. ?>
-                        </span>
-                    <?php endif; ?>
+                    <span class="badge-statut <?php echo esc_attr($infos['badge_class']); ?>" data-post-id="<?php echo esc_attr($chasse_id); ?>"<?= $badge_attributes; ?>>
+                        <?php echo $infos['badge_content']; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- contenu préparé et sécurisé en amont. ?>
+                    </span>
                 </div>
                 <img src="<?php echo esc_url($infos['image']); ?>" alt="<?php echo esc_attr($infos['titre']); ?>" class="carte-compact__image">
             </div>

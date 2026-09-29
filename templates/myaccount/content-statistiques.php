@@ -15,10 +15,9 @@ if (!current_user_can('administrator')) {
 $user_id = get_current_user_id();
 $wins    = compter_chasses_gagnees($user_id);
 
-global $wpdb;
-$repo               = new PointsRepository($wpdb);
-$used_points        = $repo->getTotalPointsUsed();
-$circulation_points = $repo->getTotalPointsInCirculation();
+$points_service     = cat_get_points_service();
+$used_points        = $points_service->getTotalUsed();
+$circulation_points = $points_service->getTotalInCirculation();
 ?>
 <section>
     <h1 class="mb-4 text-xl font-semibold"><?php esc_html_e('Statistiques', 'chassesautresor'); ?></h1>

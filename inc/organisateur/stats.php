@@ -22,18 +22,6 @@ function organisateur_compter_joueurs_uniques(int $organisateur_id): int
         return 0;
     }
 
-    $ids = array_values(array_filter(
-        $ids,
-        static function ($chasse_id) {
-            return !function_exists('ca_demo_is_demo_hunt')
-                || !ca_demo_is_demo_hunt((int) $chasse_id);
-        }
-    ));
-
-    if (empty($ids)) {
-        return 0;
-    }
-
     global $wpdb;
     $table        = $wpdb->prefix . 'engagements';
     $placeholders = implode(',', array_fill(0, count($ids), '%d'));
@@ -59,13 +47,6 @@ function organisateur_compter_points_collectes(int $organisateur_id): int
     $total = 0;
     foreach ($query->posts as $chasse_id) {
         $chasse_id = (int) $chasse_id;
-        if (
-            function_exists('ca_demo_is_demo_hunt')
-            && ca_demo_is_demo_hunt($chasse_id)
-        ) {
-            continue;
-        }
-
         $total += chasse_compter_points_collectes($chasse_id);
     }
 

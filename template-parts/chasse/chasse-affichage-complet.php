@@ -13,9 +13,6 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
 // Récupération centralisée des informations
 $infos_chasse = $args['infos_chasse'] ?? preparer_infos_affichage_chasse($chasse_id);
 $statut = $infos_chasse['statut'];
-$is_demo = !empty($infos_chasse['is_demo']);
-$demo_badge = is_array($infos_chasse['demo_badge'] ?? null) ? $infos_chasse['demo_badge'] : null;
-$demo_badge_description_id = $is_demo && $demo_badge ? wp_unique_id('badge-demo-desc-') : '';
 
 
 // Champs principaux (avec fallback direct en meta)
@@ -169,30 +166,10 @@ if ($edition_active && !$est_complet) {
               data-mode-auto-icon="<?= esc_attr($mode_auto_icon); ?>"
               data-mode-manuel-icon="<?= esc_attr($mode_manual_icon); ?>"
           >
-              <?php if ($is_demo && $demo_badge) : ?>
-                <span
-                    class="badge-statut badge-demo"
-                    role="img"
-                    aria-label="<?= esc_attr($demo_badge['aria_label'] ?? $demo_badge['screen_text'] ?? ''); ?>"
-                    <?php if ($demo_badge_description_id) : ?>aria-describedby="<?= esc_attr($demo_badge_description_id); ?>"<?php endif; ?>
-                    title="<?= esc_attr($demo_badge['title'] ?? ''); ?>"
-                >
-                  <?php if (!empty($demo_badge['icon_html'])) : ?>
-                    <span class="badge-demo__icon" aria-hidden="true">
-                      <?= $demo_badge['icon_html']; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- icône SVG préparée. ?>
-                    </span>
-                  <?php endif; ?>
-                  <span class="badge-demo__label"><?= esc_html($demo_badge['label'] ?? ''); ?></span>
-                  <?php if ($demo_badge_description_id) : ?>
-                    <span id="<?= esc_attr($demo_badge_description_id); ?>" class="screen-reader-text"><?= esc_html($demo_badge['screen_text'] ?? ''); ?></span>
-                  <?php endif; ?>
-                </span>
-              <?php else : ?>
                 <span class="badge-statut statut-<?= esc_attr($statut_for_class); ?>"
                   data-post-id="<?= esc_attr($chasse_id); ?>">
                   <?= esc_html($statut_label); ?>
                 </span>
-              <?php endif; ?>
               <?php if ($cout_points > 0) : ?>
                 <span
                     class="badge-cout"

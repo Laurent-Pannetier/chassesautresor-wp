@@ -1989,27 +1989,6 @@ body .wp-block-file .wp-block-file__button:focus,
   width: fit-content;
 }
 
-.cta-reset-demo__button {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-xs, 0.5rem);
-}
-
-.cta-reset-demo__icon {
-  display: inline-flex;
-  flex-shrink: 0;
-}
-.cta-reset-demo__icon svg {
-  width: 1.25rem;
-  height: 1.25rem;
-  display: block;
-}
-
-.cta-reset-demo__label {
-  display: inline-flex;
-  align-items: center;
-}
-
 .bouton-cta:hover {
   background-color: var(--color-gris-carte);
   text-decoration: none;
@@ -2525,8 +2504,7 @@ a.ajout-link:focus-visible {
   gap: var(--space-xxs);
   z-index: 2;
 }
-.carte-badges-stack .badge-statut,
-.carte-badges-stack .badge-demo {
+.carte-badges-stack .badge-statut {
   position: static;
 }
 
@@ -2546,45 +2524,6 @@ a.ajout-link:focus-visible {
   z-index: 1;
 }
 
-.badge-demo {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-xxs);
-  padding: 4px 10px;
-  font-size: 0.75rem;
-  font-weight: 700;
-  line-height: 1;
-  border-radius: 999px;
-  background: rgba(225, 169, 95, 0.85);
-  color: var(--color-text-primary);
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  box-shadow: 0 6px 16px rgba(var(--color-black-rgb), 0.35);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-}
-
-.badge-demo__icon {
-  display: inline-flex;
-  width: 1.1rem;
-  height: 1.1rem;
-}
-
-.badge-demo__icon svg {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-
-.badge-demo__label {
-  font-weight: 700;
-  letter-spacing: 0.04em;
-}
-
-@media (min-width: 1024px) {
-  .badge-demo {
-    font-size: 0.8rem;
-  }
-}
 .badge-statut[data-tooltip] {
   cursor: help;
 }

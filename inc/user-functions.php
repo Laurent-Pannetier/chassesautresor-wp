@@ -1,6 +1,23 @@
 <?php
 defined( 'ABSPATH' ) || exit;
 
+if (!class_exists(ChassesAuTresor\Core\Messages\AccountMessageService::class, false)) {
+    require_once dirname(__DIR__, 3)
+        . '/plugins/chassesautresor-core/src/Messages/AccountMessageService.php';
+}
+
+/**
+ * Create the service responsible for account messages.
+ */
+function cat_get_account_message_service(): ChassesAuTresor\Core\Messages\AccountMessageService
+{
+    global $wpdb;
+
+    return new ChassesAuTresor\Core\Messages\AccountMessageService(
+        new UserMessageRepository($wpdb)
+    );
+}
+
 // ==================================================
 // 📚 SOMMAIRE DU FICHIER
 // ==================================================
@@ -382,9 +399,7 @@ function myaccount_add_persistent_message(
 ): int {
     global $wpdb;
 
-    $repo   = new UserMessageRepository($wpdb);
     $payload = [
-        'key'         => $key,
         'text'        => $message,
         'type'        => $type,
         'dismissible' => $dismissible,
@@ -403,31 +418,12 @@ function myaccount_add_persistent_message(
         $payload['include_enigmes'] = $include_enigmes;
     }
 
-    // Remove existing message with the same key if present.
-    $existing = $repo->get($user_id, 'persistent', null);
-    foreach ($existing as $row) {
-        $data = json_decode($row['message'], true);
-        if (is_array($data) && ($data['key'] ?? '') === $key) {
-            $repo->delete((int) $row['id']);
-        }
-    }
-
-    $expiresAt = null;
-    if ($expires !== null) {
-        $now = (int) current_time('timestamp');
-        if ($expires > $now) {
-            $expiresAt = gmdate('c', $expires);
-        } else {
-            $expiresAt = gmdate('c', $now + $expires);
-        }
-    }
-
-    $message_id = $repo->insert(
+    $message_id = cat_get_account_message_service()->addPersistent(
         $user_id,
-        wp_json_encode($payload),
-        'persistent',
-        $expiresAt,
-        $locale
+        $key,
+        $payload,
+        $locale,
+        $expires
     );
 
     if (0 === $message_id) {
@@ -454,17 +450,7 @@ function myaccount_add_persistent_message(
  */
 function myaccount_remove_persistent_message(int $user_id, string $key): void
 {
-    global $wpdb;
-
-    $repo     = new UserMessageRepository($wpdb);
-    $messages = $repo->get($user_id, 'persistent', null);
-
-    foreach ($messages as $row) {
-        $data = json_decode($row['message'], true);
-        if (is_array($data) && ($data['key'] ?? '') === $key) {
-            $repo->delete((int) $row['id']);
-        }
-    }
+    cat_get_account_message_service()->removePersistent($user_id, $key);
 }
 
 /**
@@ -540,16 +526,12 @@ function myaccount_maybe_add_validation_message(): void
 
     $key = 'correction_info_chasse_' . $chasse_id;
 
-    global $wpdb;
-    $repo     = new UserMessageRepository($wpdb);
-    $existing = $repo->get($user_id, 'persistent', null);
-    foreach ($existing as $row) {
-        $data = json_decode($row['message'], true);
-        if (is_array($data) && ($data['key'] ?? '') === $key) {
-            if (!isset($data['chasse_scope']) || !array_key_exists('include_enigmes', $data)) {
-                $repo->delete((int) $row['id']);
-                break;
-            }
+    $service = cat_get_account_message_service();
+    $existing = $service->findPersistent($user_id, $key);
+    if ($existing !== null) {
+        if (!isset($existing['chasse_scope']) || !array_key_exists('include_enigmes', $existing)) {
+            $service->removePersistent($user_id, $key);
+        } else {
             return;
         }
     }
@@ -582,21 +564,7 @@ add_action('template_redirect', 'myaccount_maybe_add_validation_message');
 */
 function myaccount_get_persistent_messages(int $user_id): array
 {
-    global $wpdb;
-
-    $repo   = new UserMessageRepository($wpdb);
-    $rows   = $repo->get($user_id, 'persistent', false);
-    $messages = [];
-    foreach ($rows as $row) {
-        $data = json_decode($row['message'], true);
-        if (is_array($data)) {
-            if (!empty($row['locale'])) {
-                $data['locale'] = $row['locale'];
-            }
-            $key = isset($data['key']) ? (string) $data['key'] : (string) $row['id'];
-            $messages[$key] = $data;
-        }
-    }
+    $messages = cat_get_account_message_service()->getPersistent($user_id);
 
     $current_id   = get_queried_object_id();
     $current_type = get_post_type($current_id);
@@ -707,17 +675,13 @@ if (!function_exists('myaccount_add_flash_message')) {
         string $type = 'info',
         bool $dismissible = false
     ): void {
-        global $wpdb;
-
-        $repo = new UserMessageRepository($wpdb);
-        $repo->insert(
+        cat_get_account_message_service()->addFlash(
             $user_id,
-            wp_json_encode([
+            [
                 'text'        => $message,
                 'type'        => $type,
                 'dismissible' => $dismissible,
-            ]),
-            'flash'
+            ]
         );
     }
 }
@@ -732,22 +696,16 @@ if (!function_exists('myaccount_add_flash_message')) {
 if (!function_exists('myaccount_get_flash_messages')) {
     function myaccount_get_flash_messages(int $user_id): array
     {
-        global $wpdb;
-
-        $repo = new UserMessageRepository($wpdb);
-        $rows = $repo->get($user_id, 'flash', false);
         $messages = [];
 
-        foreach ($rows as $row) {
-            $data = json_decode($row['message'], true);
-            if (is_array($data) && isset($data['text'])) {
+        foreach (cat_get_account_message_service()->pullFlash($user_id) as $data) {
+            if (isset($data['text'])) {
                 $messages[] = [
                     'text'        => (string) $data['text'],
                     'type'        => isset($data['type']) ? (string) $data['type'] : 'info',
                     'dismissible' => !empty($data['dismissible']),
                 ];
             }
-            $repo->delete((int) $row['id']);
         }
 
         return $messages;
@@ -802,9 +760,7 @@ function myaccount_get_important_messages(): string
             }
         }
 
-        global $wpdb;
-        $repo            = new PointsRepository($wpdb);
-        $pendingRequests = $repo->getConversionRequests(null, 'pending');
+        $pendingRequests = cat_get_conversion_service()->getRequests(null, 'pending');
 
         if (!empty($pendingRequests)) {
             $messages[] = [
@@ -818,9 +774,7 @@ function myaccount_get_important_messages(): string
         $current_user_id   = get_current_user_id();
         $organisateur_id   = get_organisateur_from_user($current_user_id);
 
-        global $wpdb;
-        $repo       = new PointsRepository($wpdb);
-        $pendingOwn = $repo->getConversionRequests($current_user_id, 'pending');
+        $pendingOwn = cat_get_conversion_service()->getRequests($current_user_id, 'pending');
         if (!empty($pendingOwn)) {
             $conversion_url = $organisateur_id
                 ? esc_url(
@@ -983,13 +937,6 @@ function ca_get_user_engaged_hunt_ids(int $user_id): array
         if (
             function_exists('chasse_est_visible_pour_utilisateur')
             && !chasse_est_visible_pour_utilisateur($chasse_id, $user_id)
-        ) {
-            continue;
-        }
-
-        if (
-            function_exists('ca_demo_is_demo_hunt')
-            && ca_demo_is_demo_hunt($chasse_id)
         ) {
             continue;
         }
@@ -2125,4 +2072,3 @@ function ajouter_role_organisateur_creation($post_id, $post, $update) {
     }
 }
 add_action('save_post', 'ajouter_role_organisateur_creation', 10, 3);
-

@@ -2,14 +2,11 @@
 defined('ABSPATH') || exit;
 
 require_once __DIR__ . '/badge-functions.php';
-require_once __DIR__ . '/chasse/demo.php';
-
 
 //
 // 1. 📦 FONCTIONS LIÉES À UNE CHASSE
 // 2. 📦 AFFICHAGE
 //
-
 
 // ==================================================
 // 📦 FONCTIONS LIÉES À UNE CHASSE
@@ -24,8 +21,6 @@ require_once __DIR__ . '/chasse/demo.php';
  * 🔹 gerer_chasse_terminee → Déclencher toutes les actions nécessaires lorsqu’une chasse est terminée.
  * 🔹 compter_chasses_gagnees → Compter les chasses gagnées par un utilisateur.
  */
-
-
 
 /**
  * Récupère les informations essentielles d'une chasse.
@@ -121,7 +116,6 @@ function chasse_get_champs($chasse_id)
         'titre_recompense' => get_field('chasse_infos_recompense_titre', $chasse_id) ?? '',
         'valeur_recompense' => get_field('chasse_infos_recompense_valeur', $chasse_id) ?? '',
         'cout_points' => get_field('chasse_infos_cout_points', $chasse_id) ?? 0,
-        'is_demo' => ca_demo_is_demo_hunt((int) $chasse_id),
         // Lecture directe des dates pour éviter un éventuel cache ACF
         'date_debut' => (function () use ($chasse_id) {
             $val = get_field('chasse_infos_date_debut', $chasse_id);
@@ -147,8 +141,6 @@ function chasse_get_champs($chasse_id)
         'current_stored_statut' => get_field('chasse_cache_statut', $chasse_id),
     ];
 }
-
-
 
 /**
  * Vérifie si un utilisateur souscrit à une chasse pour la première fois en souscrivant à une énigme.
@@ -210,13 +202,6 @@ function utilisateur_est_engage_dans_chasse(int $user_id, int $chasse_id): bool
     global $wpdb;
     if (!$user_id || !$chasse_id) return false;
 
-    if (
-        function_exists('ca_demo_is_demo_hunt')
-        && ca_demo_is_demo_hunt($chasse_id)
-    ) {
-        return $user_id > 0;
-    }
-
     $table = $wpdb->prefix . 'engagements';
 
     return (bool) $wpdb->get_var($wpdb->prepare(
@@ -225,8 +210,6 @@ function utilisateur_est_engage_dans_chasse(int $user_id, int $chasse_id): bool
         $chasse_id
     ));
 }
-
-
 
 /**
  * 📌 Validation des incohérences de dates dans les chasses.
@@ -249,7 +232,6 @@ add_filter('acf/validate_value/name=date_de_fin', function ($valid, $value, $fie
     $caracteristiques_key = 'field_67ca7fd7f5117'; // ID du groupe "caracteristiques"
     $date_debut_key = 'field_67b58c6fd98ec'; // ID du champ "date_de_debut"
     $date_debut = $_POST['acf'][$caracteristiques_key][$date_debut_key] ?? null;
-
 
     // ✅ Vérification : La date de fin ne peut pas être avant la date de début
     if (!empty($date_debut) && !empty($value) && strtotime($value) < strtotime($date_debut)) {
@@ -428,8 +410,6 @@ function gerer_chasse_terminee($chasse_id)
     //notifier_fin_chasse($chasse_id);
 }
 
-
-
 // ==================================================
 // 📦 AFFICHAGE
 // ==================================================
@@ -437,7 +417,6 @@ function gerer_chasse_terminee($chasse_id)
  * 🔹 afficher_picture_vignette_chasse() → Affiche une balise <picture> responsive pour l’image d’une chasse.
  * 🔹 afficher_chasse_associee_callback → ffiche les informations principales de la chasse associée à l’énigme.
  */
-
 
 /**
  *
@@ -469,8 +448,6 @@ function afficher_picture_vignette_chasse($chasse_id, $alt = '')
     echo '</picture>';
     echo '</a>';
 }
-
-
 
 /**
  * 🏴‍☠️ Affiche les informations principales de la chasse associée à l’énigme.
@@ -610,10 +587,6 @@ function chasse_calculer_progression_utilisateur(int $chasse_id, int $user_id): 
 {
     $enigmes = recuperer_enigmes_associees($chasse_id);
     $total   = count($enigmes);
-    $is_demo = function_exists('ca_demo_is_demo_hunt')
-        ? ca_demo_is_demo_hunt($chasse_id)
-        : false;
-
     $resolvables = 0;
     if ($total > 0) {
         global $wpdb;
@@ -631,26 +604,12 @@ function chasse_calculer_progression_utilisateur(int $chasse_id, int $user_id): 
         global $wpdb;
         $placeholders = implode(',', array_fill(0, $total, '%d'));
 
-        if ($is_demo) {
-            $table_statuts = $wpdb->prefix . 'enigme_statuts_utilisateur';
-            $params        = array_merge([$user_id], $enigmes);
-
-            $sql_engagees = "SELECT COUNT(DISTINCT enigme_id) FROM {$table_statuts}"
-                . " WHERE user_id = %d AND enigme_id IN ($placeholders)"
-                . " AND statut NOT IN ('non_commencee','non_souscrite')";
-            $engagees = (int) $wpdb->get_var($wpdb->prepare($sql_engagees, $params));
-
-            $sql_resolues = "SELECT COUNT(DISTINCT enigme_id) FROM {$table_statuts}"
-                . " WHERE user_id = %d AND enigme_id IN ($placeholders)"
-                . " AND statut IN ('resolue','terminee','terminée')";
-            $resolues = (int) $wpdb->get_var($wpdb->prepare($sql_resolues, $params));
-        } else {
-            $sql = "SELECT COUNT(DISTINCT enigme_id) FROM {$wpdb->prefix}engagements WHERE user_id = %d AND enigme_id IN ($placeholders)";
-            $engagees = (int) $wpdb->get_var($wpdb->prepare($sql, array_merge([$user_id], $enigmes)));
-        }
+        $sql = "SELECT COUNT(DISTINCT enigme_id) FROM {$wpdb->prefix}engagements "
+            . "WHERE user_id = %d AND enigme_id IN ($placeholders)";
+        $engagees = (int) $wpdb->get_var($wpdb->prepare($sql, array_merge([$user_id], $enigmes)));
     }
 
-    if (!$is_demo && $user_id && function_exists('compter_enigmes_resolues')) {
+    if ($user_id && function_exists('compter_enigmes_resolues')) {
         $resolues = compter_enigmes_resolues($chasse_id, $user_id);
     }
 
@@ -678,20 +637,12 @@ function generer_cta_chasse(int $chasse_id, ?int $user_id = null): array
     $validation = get_field('chasse_cache_statut_validation', $chasse_id);
     $date_debut = get_field('chasse_infos_date_debut', $chasse_id);
     $date_fin   = get_field('chasse_infos_date_fin', $chasse_id);
-    $is_demo    = function_exists('ca_demo_is_demo_hunt')
-        ? ca_demo_is_demo_hunt($chasse_id)
-        : false;
-    $response   = static function (array $data) use ($is_demo): array {
-        $data['is_demo'] = $is_demo;
-
-        return $data;
-    };
 
     // 🧑‍💻 Utilisateur non connecté
     if (! $user_id) {
         $login_url = wp_login_url($permalink);
 
-        return $response([
+        return [
             'cta_html'    => sprintf(
                 '<a href="%s" class="bouton-cta bouton-cta--color">%s</a>',
                 esc_url($login_url),
@@ -699,15 +650,15 @@ function generer_cta_chasse(int $chasse_id, ?int $user_id = null): array
             ),
             'cta_message' => '',
             'type'        => 'connexion',
-        ]);
+        ];
     }
 
     if (peut_valider_chasse($chasse_id, $user_id)) {
-        return $response([
+        return [
             'cta_html'    => render_form_validation_chasse($chasse_id),
             'cta_message' => '',
             'type'        => 'validation',
-        ]);
+        ];
     }
 
     // 🔐 Admin or organiser info
@@ -718,19 +669,19 @@ function generer_cta_chasse(int $chasse_id, ?int $user_id = null): array
 
     if ($validation === 'en_attente') {
         if ($is_orga) {
-            return $response([
+            return [
                 'cta_html'    => render_form_annulation_validation_chasse($chasse_id),
                 'cta_message' => '',
                 'type'        => 'annuler_validation',
-            ]);
+            ];
         }
-        return $response([
+        return [
             'cta_html'    => '<span class="bouton-cta bouton-cta--pending" aria-disabled="true">'
                 . esc_html__( 'Demande de validation en cours', 'chassesautresor-com' )
                 . '</span>',
             'cta_message' => '',
             'type'        => 'en_attente',
-        ]);
+        ];
     }
 
     // 🔐 Admin or organiser: front-end edition
@@ -739,7 +690,7 @@ function generer_cta_chasse(int $chasse_id, ?int $user_id = null): array
             ? add_query_arg(['edition' => 'open', 'tab' => 'param'], $permalink)
             : $permalink . '?edition=open&tab=param';
 
-        return $response([
+        return [
             'cta_html'    => sprintf(
                 '<a href="%s" class="bouton-secondaire">%s</a>',
                 esc_url($edition_url),
@@ -747,7 +698,7 @@ function generer_cta_chasse(int $chasse_id, ?int $user_id = null): array
             ),
             'cta_message' => '',
             'type'        => 'edition',
-        ]);
+        ];
     }
 
     if (
@@ -759,7 +710,7 @@ function generer_cta_chasse(int $chasse_id, ?int $user_id = null): array
             ? add_query_arg(['edition' => 'open', 'tab' => 'stats'], $permalink)
             : $permalink . '?edition=open&tab=stats';
 
-        return $response([
+        return [
             'cta_html'    => sprintf(
                 '<a href="%s" class="bouton-secondaire">%s</a>',
                 esc_url($stats_url),
@@ -767,68 +718,34 @@ function generer_cta_chasse(int $chasse_id, ?int $user_id = null): array
             ),
             'cta_message' => '',
             'type'        => 'statistiques',
-        ]);
+        ];
     }
 
     if ($is_admin || $is_orga) {
-        return $response([
+        return [
             'cta_html'    => sprintf(
                 '<button class="bouton-cta" disabled>%s</button>',
                 esc_html__( 'Participer', 'chassesautresor-com' )
             ),
             'cta_message' => '',
             'type'        => 'indisponible',
-        ]);
+        ];
     }
 
     // ✅ Déjà engagé
     $engage_override = $GLOBALS['force_engage_override'] ?? null;
     $est_engage = $engage_override !== null ? (bool) $engage_override : utilisateur_est_engage_dans_chasse($user_id, $chasse_id);
     if ($est_engage) {
-        if ($is_demo) {
-            $nonce_action = 'ca_demo_reset_chasse_' . $chasse_id . '_' . $user_id;
-            $nonce = function_exists('wp_create_nonce')
-                ? wp_create_nonce($nonce_action)
-                : $nonce_action;
-
-            $icon_markup = '';
-            if (function_exists('get_svg_icon')) {
-                $icon_markup = trim(get_svg_icon('reset'));
-            }
-
-            if ($icon_markup !== '') {
-                $icon_markup = '<span class="cta-reset-demo__icon" aria-hidden="true">' . $icon_markup . '</span>';
-            }
-
-            $button_html = sprintf(
-                '<button type="button" class="bouton-cta bouton-cta--color cta-reset-demo__button" data-ca-demo-reset="1"'
-                . ' data-chasse-id="%1$d" data-nonce="%2$s">%3$s<span class="cta-reset-demo__label">%4$s</span></button>',
-                (int) $chasse_id,
-                esc_attr($nonce),
-                $icon_markup,
-                esc_html__('Réinitialiser ma progression', 'chassesautresor-com')
-            );
-
-            return $response([
-                'cta_html'    => $button_html,
-                'cta_message' => '<p class="cta-reset-demo__message">' . esc_html__(
-                    'Ceci est une chasse de démonstration',
-                    'chassesautresor-com'
-                ) . '</p>',
-                'type'        => 'reset_demo',
-            ]);
-        }
-
-        return $response([
+        return [
             'cta_html'    => '<a href="#chasse-enigmes-wrapper" class="bouton-secondaire">' . esc_html__('Voir mes énigmes', 'chassesautresor-com') . '</a>',
             'cta_message' => '<p>✅ ' . esc_html__('Vous participez à cette chasse', 'chassesautresor-com') . '</p>',
             'type'        => 'engage',
-        ]);
+        ];
     }
 
     // ❌ Chasse non validée
     if ($validation !== 'valide') {
-        return $response(['cta_html' => '', 'cta_message' => '', 'type' => '']);
+        return ['cta_html' => '', 'cta_message' => '', 'type' => ''];
     }
 
     $html    = '';
@@ -895,11 +812,11 @@ function generer_cta_chasse(int $chasse_id, ?int $user_id = null): array
         $message = '';
     }
 
-        return $response([
-            'cta_html'    => $html,
-            'cta_message' => $message,
-            'type'        => $type,
-        ]);
+    return [
+        'cta_html'    => $html,
+        'cta_message' => $message,
+        'type'        => $type,
+    ];
 }
 
 /**
@@ -911,13 +828,6 @@ function generer_cta_chasse(int $chasse_id, ?int $user_id = null): array
 function compter_joueurs_engages_chasse(int $chasse_id): int
 {
     if (!$chasse_id || get_post_type($chasse_id) !== 'chasse') {
-        return 0;
-    }
-
-    if (
-        function_exists('ca_demo_is_demo_hunt')
-        && ca_demo_is_demo_hunt($chasse_id)
-    ) {
         return 0;
     }
 
@@ -933,7 +843,6 @@ function compter_joueurs_engages_chasse(int $chasse_id): int
 
     return (int) $wpdb->get_var($query);
 }
-
 
 /**
  * Enregistre un engagement à une chasse pour un utilisateur.
@@ -952,15 +861,6 @@ function enregistrer_engagement_chasse(int $user_id, int $chasse_id): bool
 
     if (current_user_can('administrator') || utilisateur_est_organisateur_associe_a_chasse($user_id, $chasse_id)) {
         return false;
-    }
-
-    if (
-        function_exists('ca_demo_is_demo_hunt')
-        && ca_demo_is_demo_hunt($chasse_id)
-    ) {
-        chasse_clear_infos_affichage_cache($chasse_id);
-
-        return true;
     }
 
     $table = $wpdb->prefix . 'engagements';
@@ -1190,7 +1090,6 @@ function actualiser_cta_validation_chasse(): void
 
     wp_send_json_success(['html' => $html]);
 }
-
 
 /**
  * Retrieve the active solution for a given object.
@@ -2152,26 +2051,6 @@ function preparer_infos_affichage_carte_chasse(int $chasse_id, int $word_limit =
     }
 
     $champs = chasse_get_champs($chasse_id);
-    $is_demo = !empty($champs['is_demo']);
-    $demo_label = function_exists('__') ? __('Démo', 'chassesautresor-com') : 'Démo';
-    $demo_aria_label = function_exists('__')
-        ? __('Chasse de démonstration', 'chassesautresor-com')
-        : 'Chasse de démonstration';
-    $demo_title = function_exists('__')
-        ? __('Cette chasse est proposée en mode démonstration.', 'chassesautresor-com')
-        : 'Cette chasse est proposée en mode démonstration.';
-    $demo_screen = function_exists('__')
-        ? __('Chasse en mode démonstration', 'chassesautresor-com')
-        : 'Chasse en mode démonstration';
-    $demo_icon = function_exists('get_svg_icon') ? get_svg_icon('idea') : '';
-    $demo_badge = [
-        'label'       => $demo_label,
-        'aria_label'  => $demo_aria_label,
-        'icon_html'   => $demo_icon,
-        'icon_name'   => 'idea',
-        'title'       => $demo_title,
-        'screen_text' => $demo_screen,
-    ];
     $regions = chasse_preparer_termes_affichage($chasse_id, 'chasse_region');
     $themes = chasse_preparer_termes_affichage($chasse_id, 'theme_chasse');
     $region_principale = !empty($regions) ? $regions[0] : null;
@@ -2297,7 +2176,6 @@ function preparer_infos_affichage_carte_chasse(int $chasse_id, int $word_limit =
             . '</div>';
     }
 
-
     $extrait_html = $extrait
         ? '<p class="chasse-intro-extrait liste-elegante">' . esc_html($extrait) . '</p>'
         : '';
@@ -2327,7 +2205,6 @@ function preparer_infos_affichage_carte_chasse(int $chasse_id, int $word_limit =
             . $footer_liens_html
             . '</div>';
     }
-
 
     $infos = [
         'titre'             => $titre,
@@ -2361,14 +2238,11 @@ function preparer_infos_affichage_carte_chasse(int $chasse_id, int $word_limit =
         'cta_html'          => $cta_html,
         'cta_message'       => $cta_message,
         'cta_type'         => $cta_data['type'] ?? '',
-        'cta_is_demo'      => !empty($cta_data['is_demo']),
         'footer_html'       => $footer_html,
         'regions'           => $regions,
         'themes'            => $themes,
         'region_principale' => $region_principale,
         'organisateur_id'   => $organisateur_id,
-        'is_demo'           => $is_demo,
-        'demo_badge'        => $is_demo ? $demo_badge : null,
     ];
 
     if (!empty($progression['resolvables'])) {
@@ -2400,18 +2274,8 @@ function preparer_infos_affichage_chasse(int $chasse_id, ?int $user_id = null): 
         return [];
     }
 
-    $current_demo_flag = ca_demo_is_demo_hunt($chasse_id);
-
     if (isset($memo[$memo_key])) {
-        $memo_demo_flag = isset($memo[$memo_key]['is_demo'])
-            ? (bool) $memo[$memo_key]['is_demo']
-            : (bool) ($memo[$memo_key]['champs']['is_demo'] ?? false);
-
-        if ($memo_demo_flag === $current_demo_flag) {
-            return $memo[$memo_key];
-        }
-
-        unset($memo[$memo_key]);
+        return $memo[$memo_key];
     }
 
     $cache_key = chasse_infos_affichage_cache_key($chasse_id);
@@ -2422,40 +2286,11 @@ function preparer_infos_affichage_chasse(int $chasse_id, ?int $user_id = null): 
     }
 
     if (isset($cache[$user_id])) {
-        $cache_demo_flag = isset($cache[$user_id]['is_demo'])
-            ? (bool) $cache[$user_id]['is_demo']
-            : (bool) ($cache[$user_id]['champs']['is_demo'] ?? false);
-
-        if ($cache_demo_flag === $current_demo_flag) {
-            $memo[$memo_key] = $cache[$user_id];
-            return $memo[$memo_key];
-        }
-
-        chasse_clear_infos_affichage_cache($chasse_id);
-        $cache = [];
+        $memo[$memo_key] = $cache[$user_id];
+        return $memo[$memo_key];
     }
 
     $champs = chasse_get_champs($chasse_id);
-    $is_demo = !empty($champs['is_demo']);
-    $demo_label = function_exists('__') ? __('Démo', 'chassesautresor-com') : 'Démo';
-    $demo_aria_label = function_exists('__')
-        ? __('Chasse de démonstration', 'chassesautresor-com')
-        : 'Chasse de démonstration';
-    $demo_title = function_exists('__')
-        ? __('Cette chasse est proposée en mode démonstration.', 'chassesautresor-com')
-        : 'Cette chasse est proposée en mode démonstration.';
-    $demo_screen = function_exists('__')
-        ? __('Chasse en mode démonstration', 'chassesautresor-com')
-        : 'Chasse en mode démonstration';
-    $demo_icon = function_exists('get_svg_icon') ? get_svg_icon('idea') : '';
-    $demo_badge = [
-        'label'       => $demo_label,
-        'aria_label'  => $demo_aria_label,
-        'icon_html'   => $demo_icon,
-        'icon_name'   => 'idea',
-        'title'       => $demo_title,
-        'screen_text' => $demo_screen,
-    ];
     $regions = chasse_preparer_termes_affichage($chasse_id, 'chasse_region');
     $themes = chasse_preparer_termes_affichage($chasse_id, 'theme_chasse');
     $region_principale = !empty($regions) ? $regions[0] : null;
@@ -2545,7 +2380,6 @@ function preparer_infos_affichage_chasse(int $chasse_id, ?int $user_id = null): 
         'progression'         => $progression,
         'cta_data'            => $cta_data,
         'cta_type'            => $cta_data['type'] ?? '',
-        'cta_is_demo'         => !empty($cta_data['is_demo']),
         'nb_joueurs'          => $nb_joueurs,
         'nb_enigmes_payantes' => $nb_enigmes_payantes,
         'top_avances'         => [
@@ -2559,8 +2393,6 @@ function preparer_infos_affichage_chasse(int $chasse_id, ?int $user_id = null): 
         'region_principale' => $region_principale,
         'date_debut_court'  => $dates_courtes['date_debut_court'],
         'date_fin_court'    => $dates_courtes['date_fin_court'],
-        'is_demo'           => $is_demo,
-        'demo_badge'        => $is_demo ? $demo_badge : null,
     ];
 
     $cache[$user_id] = $memo[$memo_key];
@@ -2573,7 +2405,7 @@ function preparer_infos_affichage_chasse(int $chasse_id, ?int $user_id = null): 
 
 function chasse_infos_affichage_cache_key(int $chasse_id): string
 {
-    return "chasse_infos_affichage_{$chasse_id}";
+    return "chasse_infos_affichage_v2_{$chasse_id}";
 }
 
 function chasse_clear_infos_affichage_cache_for_organisateur(int $organisateur_id): void

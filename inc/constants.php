@@ -8,17 +8,6 @@ if (!defined('ROLE_ORGANISATEUR_CREATION')) {
     define('ROLE_ORGANISATEUR_CREATION', 'organisateur_creation');
 }
 
-if (!defined('CA_DEMO_ORGANISATEUR_LOGINS')) {
-    /**
-     * Liste des logins organisateur considérés comme étant en mode démo.
-     *
-     * Utilisez le filtre `ca_demo_organisateur_logins` pour enrichir cette liste dynamiquement.
-     */
-    define('CA_DEMO_ORGANISATEUR_LOGINS', [
-        'organisateur1',
-    ]);
-}
-
 // --------------------------------------------------
 // 🔢 Solution states
 // --------------------------------------------------
