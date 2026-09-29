@@ -8,6 +8,36 @@ if (!class_exists(ChassesAuTresor\Core\Relationships\OrganizerService::class, fa
         . '/plugins/chassesautresor-core/src/Relationships/OrganizerService.php';
 }
 
+if (!class_exists(ChassesAuTresor\Core\Relationships\RelationshipService::class, false)) {
+    require_once dirname(__DIR__, 3)
+        . '/plugins/chassesautresor-core/src/Relationships/RelationshipService.php';
+}
+
+if (!class_exists(ChassesAuTresor\Core\Relationships\HuntRiddleQueryService::class, false)) {
+    require_once dirname(__DIR__, 3)
+        . '/plugins/chassesautresor-core/src/Relationships/HuntRiddleQueryService.php';
+}
+
+if (!class_exists(ChassesAuTresor\Core\Relationships\OrganizerHuntQueryService::class, false)) {
+    require_once dirname(__DIR__, 3)
+        . '/plugins/chassesautresor-core/src/Relationships/OrganizerHuntQueryService.php';
+}
+
+if (!class_exists(ChassesAuTresor\Core\Content\HuntManagementService::class, false)) {
+    require_once dirname(__DIR__, 3)
+        . '/plugins/chassesautresor-core/src/Content/HuntManagementService.php';
+}
+
+if (!class_exists(ChassesAuTresor\Core\Relationships\HuntRiddleCacheService::class, false)) {
+    require_once dirname(__DIR__, 3)
+        . '/plugins/chassesautresor-core/src/Relationships/HuntRiddleCacheService.php';
+}
+
+if (!class_exists(ChassesAuTresor\Core\Content\HuntFeatureService::class, false)) {
+    require_once dirname(__DIR__, 3)
+        . '/plugins/chassesautresor-core/src/Content/HuntFeatureService.php';
+}
+
 function cat_get_organizer_service(): ChassesAuTresor\Core\Relationships\OrganizerService
 {
     global $wpdb;
@@ -15,6 +45,36 @@ function cat_get_organizer_service(): ChassesAuTresor\Core\Relationships\Organiz
     return new ChassesAuTresor\Core\Relationships\OrganizerService(
         new ChassesAuTresor\Core\Relationships\OrganizerRepository($wpdb)
     );
+}
+
+function cat_get_relationship_service(): ChassesAuTresor\Core\Relationships\RelationshipService
+{
+    return new ChassesAuTresor\Core\Relationships\RelationshipService();
+}
+
+function cat_get_hunt_riddle_query_service(): ChassesAuTresor\Core\Relationships\HuntRiddleQueryService
+{
+    return new ChassesAuTresor\Core\Relationships\HuntRiddleQueryService();
+}
+
+function cat_get_organizer_hunt_query_service(): ChassesAuTresor\Core\Relationships\OrganizerHuntQueryService
+{
+    return new ChassesAuTresor\Core\Relationships\OrganizerHuntQueryService();
+}
+
+function cat_get_hunt_management_service(): ChassesAuTresor\Core\Content\HuntManagementService
+{
+    return new ChassesAuTresor\Core\Content\HuntManagementService();
+}
+
+function cat_get_hunt_riddle_cache_service(): ChassesAuTresor\Core\Relationships\HuntRiddleCacheService
+{
+    return new ChassesAuTresor\Core\Relationships\HuntRiddleCacheService();
+}
+
+function cat_get_hunt_feature_service(): ChassesAuTresor\Core\Content\HuntFeatureService
+{
+    return new ChassesAuTresor\Core\Content\HuntFeatureService();
 }
 
 // 📚 SOMMAIRE DU FICHIER : relations-functions.php
@@ -52,8 +112,7 @@ function get_organisateur_from_user($user_id)
 
 function get_organisateur_chasse($chasse_id)
 {
-  $organisateur_id = get_field('organisateur_id', $chasse_id);
-  return is_numeric($organisateur_id) ? intval($organisateur_id) : null;
+    return cat_get_relationship_service()->normalizeId(get_field('organisateur_id', $chasse_id));
 }
 
 /**
@@ -64,24 +123,9 @@ function get_organisateur_chasse($chasse_id)
  */
 function get_organisateur_from_chasse($chasse_id)
 {
-  // ✅ Lecture directe
-  $relation = get_field('chasse_cache_organisateur', $chasse_id);
-
-  if (!empty($relation)) {
-
-    // Gère tableau ou objet
-    if (is_array($relation)) {
-      $id = (int) reset($relation);
-    } elseif (is_numeric($relation)) {
-      $id = (int) $relation;
-    } elseif ($relation instanceof WP_Post) {
-      $id = (int) $relation->ID;
-    } else {
-      $id = null;
-    }
-    return $id;
-  }
-  return null;
+    return cat_get_relationship_service()->normalizeId(
+        get_field('chasse_cache_organisateur', $chasse_id)
+    );
 }
 
 
@@ -114,20 +158,19 @@ function get_organisateur_id_from_context(array $args = []): ?int
  */
 function utilisateur_est_organisateur_associe_a_chasse(int $user_id, int $chasse_id): bool
 {
-  if (!$user_id || !$chasse_id) return false;
+    if ($user_id <= 0 || $chasse_id <= 0) {
+        return false;
+    }
 
-  $organisateur_id = get_organisateur_from_chasse($chasse_id);
-  if (!$organisateur_id) return false;
+    $organisateur_id = get_organisateur_from_chasse($chasse_id);
+    if ($organisateur_id === null) {
+        return false;
+    }
 
-  $utilisateurs = get_field('utilisateurs_associes', $organisateur_id);
-  if (!is_array($utilisateurs)) return false;
+    $utilisateurs = get_field('utilisateurs_associes', $organisateur_id);
 
-  foreach ($utilisateurs as $user) {
-    $id = is_object($user) ? $user->ID : (int) $user;
-    if ($id === $user_id) return true;
-  }
-
-  return false;
+    return is_array($utilisateurs)
+        && cat_get_organizer_service()->isUserAssociated($user_id, $utilisateurs);
 }
 
 
@@ -214,26 +257,16 @@ function recuperer_id_chasse_associee($post_id = null)
  */
 function organisateur_a_des_chasses($organisateur_id)
 {
-  $query = new WP_Query([
-    'post_type'      => 'chasse',
-    'posts_per_page' => 1,
-    'post_status'    => ['publish', 'pending'],
-    'meta_query'     => [
-      'relation' => 'AND',
-      [
-        'key'     => 'chasse_cache_organisateur',
-        'value'   => '"' . $organisateur_id . '"',
-        'compare' => 'LIKE'
-      ],
-      [
-        'key'     => 'chasse_cache_statut_validation',
-        'value'   => 'banni',
-        'compare' => '!='
-      ]
-    ]
-  ]);
+    $organisateur_id = (int) $organisateur_id;
+    if ($organisateur_id <= 0) {
+        return false;
+    }
 
-  return $query->have_posts();
+    $query = new WP_Query(
+        cat_get_organizer_hunt_query_service()->getExistingHuntQueryArgs($organisateur_id)
+    );
+
+    return $query->have_posts();
 }
 
 /**
@@ -244,26 +277,15 @@ function organisateur_a_des_chasses($organisateur_id)
  */
 function organisateur_a_chasse_pending(int $organisateur_id): bool
 {
-  $query = new WP_Query([
-    'post_type'      => 'chasse',
-    'posts_per_page' => 1,
-    'post_status'    => 'pending',
-    'meta_query'     => [
-      'relation' => 'AND',
-      [
-        'key'     => 'chasse_cache_organisateur',
-        'value'   => '"' . $organisateur_id . '"',
-        'compare' => 'LIKE'
-      ],
-      [
-        'key'     => 'chasse_cache_statut_validation',
-        'value'   => 'banni',
-        'compare' => '!='
-      ]
-    ]
-  ]);
+    if ($organisateur_id <= 0) {
+        return false;
+    }
 
-  return $query->have_posts();
+    $query = new WP_Query(
+        cat_get_organizer_hunt_query_service()->getExistingHuntQueryArgs($organisateur_id, true)
+    );
+
+    return $query->have_posts();
 }
 
 /**
@@ -285,22 +307,9 @@ function get_chasses_de_organisateur($organisateur_id)
         return $cache[$organisateur_id];
     }
 
-    $query = new WP_Query([
-        'post_type'              => 'chasse',
-        'posts_per_page'         => -1,
-        'post_status'            => ['publish', 'pending'], // Inclure les chasses en attente
-        'fields'                 => 'ids',
-        'no_found_rows'          => true,
-        'update_post_meta_cache' => false,
-        'update_post_term_cache' => false,
-        'meta_query'             => [
-            [
-                'key'     => 'chasse_cache_organisateur', // Champ correct
-                'value'   => '"' . strval($organisateur_id) . '"', // Recherche dans le tableau sérialisé
-                'compare' => 'LIKE',
-            ],
-        ],
-    ]);
+    $query = new WP_Query(
+        cat_get_organizer_hunt_query_service()->getHuntIdsQueryArgs($organisateur_id)
+    );
 
     $cache[$organisateur_id] = $query;
 
@@ -317,37 +326,24 @@ function get_chasses_de_organisateur($organisateur_id)
  */
 function organisateur_get_nb_chasses_publiees(int $organisateur_id): int
 {
-  static $cache = [];
+    static $cache = [];
 
-  if (isset($cache[$organisateur_id])) {
-    return $cache[$organisateur_id];
-  }
+    if (isset($cache[$organisateur_id])) {
+        return $cache[$organisateur_id];
+    }
 
-  if ($organisateur_id <= 0) {
-    return $cache[$organisateur_id] = 0;
-  }
+    if ($organisateur_id <= 0) {
+        return $cache[$organisateur_id] = 0;
+    }
 
-  $query = new WP_Query([
-    'post_type'              => 'chasse',
-    'posts_per_page'         => 1,
-    'post_status'            => 'publish',
-    'fields'                 => 'ids',
-    'no_found_rows'          => false,
-    'update_post_meta_cache' => false,
-    'update_post_term_cache' => false,
-    'meta_query'             => [
-      [
-        'key'     => 'chasse_cache_organisateur',
-        'value'   => '"' . $organisateur_id . '"',
-        'compare' => 'LIKE',
-      ],
-    ],
-  ]);
+    $query = new WP_Query(
+        cat_get_organizer_hunt_query_service()->getPublishedHuntCountQueryArgs($organisateur_id)
+    );
 
-  $count = (int) $query->found_posts;
-  $cache[$organisateur_id] = $count;
+    $count = (int) $query->found_posts;
+    $cache[$organisateur_id] = $count;
 
-  return $count;
+    return $count;
 }
 
 /**
@@ -358,35 +354,36 @@ function organisateur_get_nb_chasses_publiees(int $organisateur_id): int
  */
 function get_chasses_en_creation($organisateur_id)
 {
-  if (!is_numeric($organisateur_id)) {
-    cat_debug("⛔ get_chasses_en_creation : ID non numérique : " . print_r($organisateur_id, true));
-    return [];
-  }
+    if (!is_numeric($organisateur_id)) {
+        cat_debug("⛔ get_chasses_en_creation : ID non numérique : " . print_r($organisateur_id, true));
+        return [];
+    }
 
-  $chasses_query = get_chasses_de_organisateur($organisateur_id);
-  $chasse_ids    = is_a($chasses_query, 'WP_Query') ? $chasses_query->posts : (array) $chasses_query;
+    $chasses_query = get_chasses_de_organisateur($organisateur_id);
+    $chasse_ids = is_a($chasses_query, 'WP_Query') ? $chasses_query->posts : (array) $chasses_query;
 
-  if (empty($chasse_ids)) {
-    cat_debug("🔍 Aucune chasse liée à l’organisateur $organisateur_id");
-    return [];
-  }
+    if (empty($chasse_ids)) {
+        cat_debug("🔍 Aucune chasse liée à l’organisateur $organisateur_id");
+        return [];
+    }
 
-  $filtrees = array_filter($chasse_ids, function ($id) {
-    $id               = (int) $id;
-    $statut_wp        = get_post_status($id);
-    $statut_validation = get_field('chasse_cache_statut_validation', $id);
-    $statut_metier    = get_field('chasse_cache_statut', $id);
+    $service = cat_get_hunt_management_service();
+    $filtered = array_filter($chasse_ids, function ($id) use ($service): bool {
+        $id = (int) $id;
+        $publicationStatus = (string) get_post_status($id);
+        $validationStatus = (string) get_field('chasse_cache_statut_validation', $id);
+        $businessStatus = (string) get_field('chasse_cache_statut', $id);
 
-    cat_debug("🧪 #$id | statut=$statut_wp | validation=$statut_validation | metier=$statut_metier");
+        cat_debug(
+            "🧪 #$id | statut=$publicationStatus | validation=$validationStatus | metier=$businessStatus"
+        );
 
-    return $statut_wp === 'pending'
-      && $statut_validation === 'creation'
-      && $statut_metier === 'revision';
-  });
+        return $service->isInCreation($publicationStatus, $validationStatus, $businessStatus);
+    });
 
-  cat_debug("📦 Chasses en création retrouvées : " . count($filtrees));
+    cat_debug("📦 Chasses en création retrouvées : " . count($filtered));
 
-  return array_values($filtrees);
+    return array_values($filtered);
 }
 
 
@@ -410,31 +407,24 @@ function get_chasses_en_creation($organisateur_id)
  */
 function recuperer_enigmes_associees(int $chasse_id): array
 {
-  if (!$chasse_id || get_post_type($chasse_id) !== 'chasse') {
-    cat_debug("❌ [recuperer_enigmes_associees] Appel invalide pour ID $chasse_id");
-    return [];
-  }
+    if (!$chasse_id || get_post_type($chasse_id) !== 'chasse') {
+        cat_debug("❌ [recuperer_enigmes_associees] Appel invalide pour ID $chasse_id");
+        return [];
+    }
 
-  $liste_brute = get_field('chasse_cache_enigmes', $chasse_id) ?? [];
+    $rawRelationships = get_field('chasse_cache_enigmes', $chasse_id);
+    $ids = cat_get_relationship_service()->normalizeIds(
+        is_array($rawRelationships) ? $rawRelationships : []
+    );
+    $uniqueIds = array_values(array_unique($ids));
 
-  // Extraction des IDs (objet ou int)
-  $ids = [];
+    if (count($ids) !== count($uniqueIds)) {
+        cat_debug("⚠️ [recuperer_enigmes_associees] Doublons détectés pour la chasse #$chasse_id");
+    }
 
-  foreach ($liste_brute as $item) {
-    $ids[] = is_object($item) && isset($item->ID) ? (int)$item->ID : (int)$item;
-  }
-
-  // Détection et log des doublons
-  $doublons = array_diff_key($ids, array_unique($ids));
-  if (!empty($doublons)) {
-    cat_debug("⚠️ [recuperer_enigmes_associees] Doublons détectés pour la chasse #$chasse_id : " . implode(', ', $doublons));
-  }
-
-  $ids_valides = array_filter(array_unique($ids), function ($id) {
-    return get_post_type($id) === 'enigme';
-  });
-
-  return array_values($ids_valides);
+    return array_values(array_filter($uniqueIds, function (int $id): bool {
+        return get_post_type($id) === 'enigme';
+    }));
 }
 
 
@@ -446,38 +436,15 @@ function recuperer_enigmes_associees(int $chasse_id): array
  */
 function recuperer_enigmes_pour_chasse(int $chasse_id): array
 {
-  if (!$chasse_id || get_post_type($chasse_id) !== 'chasse') {
-    return [];
-  }
+    if ($chasse_id <= 0 || get_post_type($chasse_id) !== 'chasse') {
+        return [];
+    }
 
-  $query = new WP_Query([
-    'post_type'      => 'enigme',
-    'posts_per_page' => -1,
-    'post_status'    => ['publish', 'pending'],
-    'orderby'        => 'menu_order',
-    'order'          => 'ASC',
-    'meta_query'     => [
-      [
-        'key'     => 'enigme_chasse_associee',
-        'value'   => $chasse_id,
-        'compare' => '=',
-      ],
-      [
-        'relation' => 'OR',
-        [
-          'key'     => 'enigme_cache_statut_validation',
-          'compare' => 'NOT EXISTS',
-        ],
-        [
-          'key'     => 'enigme_cache_statut_validation',
-          'value'   => 'banni',
-          'compare' => '!=',
-        ],
-      ],
-    ],
-  ]);
+    $query = new WP_Query(
+        cat_get_hunt_riddle_query_service()->getVisibleRiddlesQueryArgs($chasse_id)
+    );
 
-  return $query->have_posts() ? $query->posts : [];
+    return $query->have_posts() ? $query->posts : [];
 }
 
 
@@ -487,25 +454,15 @@ function recuperer_enigmes_pour_chasse(int $chasse_id): array
  */
 function recuperer_ids_enigmes_pour_chasse(int $chasse_id): array
 {
-  if (!$chasse_id || get_post_type($chasse_id) !== 'chasse') {
-    return [];
-  }
+    if ($chasse_id <= 0 || get_post_type($chasse_id) !== 'chasse') {
+        return [];
+    }
 
-  $query = new WP_Query([
-    'post_type'      => 'enigme',
-    'fields'         => 'ids', // ⚠️ retourne un tableau d'IDs
-    'posts_per_page' => -1,
-    'post_status'    => ['publish', 'pending', 'draft'],
-    'meta_query'     => [
-      [
-        'key'     => 'enigme_chasse_associee',
-        'value'   => $chasse_id,
-        'compare' => '=',
-      ],
-    ],
-  ]);
+    $query = new WP_Query(
+        cat_get_hunt_riddle_query_service()->getRiddleIdsQueryArgs($chasse_id)
+    );
 
-  return $query->posts;
+    return $query->posts;
 }
 
 
@@ -531,34 +488,26 @@ add_action('save_post_enigme', 'clear_enigmes_chasse_cache', 20, 1);
 
 function recalculate_chasse_cached_flags(int $chasse_id): void
 {
-    $has_solutions = function_exists('solution_existe_pour_objet')
+    $huntHasSolution = function_exists('solution_existe_pour_objet')
         && solution_existe_pour_objet($chasse_id, 'chasse');
-    $has_indices = function_exists('prochain_rang_indice')
+    $huntHasHints = function_exists('prochain_rang_indice')
         && prochain_rang_indice($chasse_id, 'chasse') > 1;
+    $features = cat_get_hunt_feature_service()->summarize(
+        $huntHasSolution,
+        $huntHasHints,
+        recuperer_enigmes_associees($chasse_id),
+        static function (int $riddleId): bool {
+            return function_exists('solution_existe_pour_objet')
+                && solution_existe_pour_objet($riddleId, 'enigme');
+        },
+        static function (int $riddleId): bool {
+            return function_exists('prochain_rang_indice')
+                && prochain_rang_indice($riddleId, 'enigme') > 1;
+        }
+    );
 
-    $enigmes = recuperer_enigmes_associees($chasse_id);
-    foreach ($enigmes as $eid) {
-        if (
-            !$has_solutions
-            && function_exists('solution_existe_pour_objet')
-            && solution_existe_pour_objet($eid, 'enigme')
-        ) {
-            $has_solutions = true;
-        }
-        if (
-            !$has_indices
-            && function_exists('prochain_rang_indice')
-            && prochain_rang_indice($eid, 'enigme') > 1
-        ) {
-            $has_indices = true;
-        }
-        if ($has_solutions && $has_indices) {
-            break;
-        }
-    }
-
-    update_field('chasse_cache_has_solutions', $has_solutions ? 1 : 0, $chasse_id);
-    update_field('chasse_cache_has_indices', $has_indices ? 1 : 0, $chasse_id);
+    update_field('chasse_cache_has_solutions', $features['has_solutions'] ? 1 : 0, $chasse_id);
+    update_field('chasse_cache_has_indices', $features['has_indices'] ? 1 : 0, $chasse_id);
 }
 
 /**
@@ -584,20 +533,21 @@ add_action('save_post_enigme', 'update_chasse_cached_flags_on_enigme_save', 20, 
  */
 function update_chasse_cached_flags_on_indice_save(int $post_id): void
 {
-    $cible = get_field('indice_cible_type', $post_id);
-    $chasse_id = 0;
+    $targetType = (string) get_field('indice_cible_type', $post_id);
+    $riddleId = $targetType === 'enigme'
+        ? (int) get_field('indice_enigme_linked', $post_id)
+        : 0;
+    $directHunt = $targetType === 'chasse'
+        ? get_field('indice_chasse_linked', $post_id)
+        : null;
+    $riddleHunt = $riddleId > 0 ? recuperer_chasse_associee($riddleId) : null;
+    $chasse_id = cat_get_relationship_service()->resolveTargetHuntId(
+        $targetType,
+        $directHunt,
+        $riddleHunt
+    );
 
-    if ($cible === 'chasse') {
-        $chasse_id = (int) get_field('indice_chasse_linked', $post_id);
-    } elseif ($cible === 'enigme') {
-        $enigme_id = (int) get_field('indice_enigme_linked', $post_id);
-        if ($enigme_id) {
-            $chasse = recuperer_chasse_associee($enigme_id);
-            $chasse_id = $chasse ? (int) $chasse->ID : 0;
-        }
-    }
-
-    if ($chasse_id) {
+    if ($chasse_id !== null) {
         recalculate_chasse_cached_flags($chasse_id);
     }
 }
@@ -611,20 +561,21 @@ add_action('save_post_indice', 'update_chasse_cached_flags_on_indice_save', 20, 
  */
 function update_chasse_cached_flags_on_solution_save(int $post_id): void
 {
-    $cible = get_field('solution_cible_type', $post_id);
-    $chasse_id = 0;
+    $targetType = (string) get_field('solution_cible_type', $post_id);
+    $riddleId = $targetType === 'enigme'
+        ? (int) get_field('solution_enigme_linked', $post_id)
+        : 0;
+    $directHunt = $targetType === 'chasse'
+        ? get_field('solution_chasse_linked', $post_id)
+        : null;
+    $riddleHunt = $riddleId > 0 ? recuperer_chasse_associee($riddleId) : null;
+    $chasse_id = cat_get_relationship_service()->resolveTargetHuntId(
+        $targetType,
+        $directHunt,
+        $riddleHunt
+    );
 
-    if ($cible === 'chasse') {
-        $chasse_id = (int) get_field('solution_chasse_linked', $post_id);
-    } elseif ($cible === 'enigme') {
-        $enigme_id = (int) get_field('solution_enigme_linked', $post_id);
-        if ($enigme_id) {
-            $chasse = recuperer_chasse_associee($enigme_id);
-            $chasse_id = $chasse ? (int) $chasse->ID : 0;
-        }
-    }
-
-    if ($chasse_id) {
+    if ($chasse_id !== null) {
         recalculate_chasse_cached_flags($chasse_id);
     }
 }
@@ -758,60 +709,51 @@ function synchroniser_cache_enigmes_chasse($chasse_id, $forcer_recalcul = false,
  */
 function verifier_chasse_cache_enigmes($chasse_id, $mettre_a_jour = false)
 {
-  if (get_post_type($chasse_id) !== 'chasse') {
+    if (get_post_type($chasse_id) !== 'chasse') {
+        return [
+            'valide' => false,
+            'erreur' => 'ID de chasse invalide.',
+            'attendu' => [],
+            'cache' => [],
+        ];
+    }
+
+    $posts = get_posts([
+        'post_type' => 'enigme',
+        'post_status' => ['draft', 'pending', 'publish'],
+        'posts_per_page' => -1,
+        'fields' => 'ids',
+    ]);
+    $expectedIds = [];
+
+    foreach ($posts as $post_id) {
+        $association = get_field('enigme_chasse_associee', $post_id, false);
+        $associatedIds = cat_get_relationship_service()->normalizeIds(
+            is_array($association) ? $association : [$association]
+        );
+        if (in_array((int) $chasse_id, $associatedIds, true)) {
+            $expectedIds[] = (int) $post_id;
+        }
+    }
+
+    $cache = get_field('chasse_cache_enigmes', $chasse_id);
+    $result = cat_get_hunt_riddle_cache_service()->compare(
+        $expectedIds,
+        is_array($cache) ? array_map('intval', $cache) : [],
+        (bool) $mettre_a_jour
+    );
+
+    if ($result['correction']) {
+        update_field('chasse_cache_enigmes', $result['expected'], $chasse_id);
+    }
+
     return [
-      'valide' => false,
-      'erreur' => 'ID de chasse invalide.',
-      'attendu' => [],
-      'cache' => [],
+        'valide' => true,
+        'synchro' => $result['synced'],
+        'attendu' => $result['expected'],
+        'cache' => $result['cached'],
+        'correction' => $result['correction'],
     ];
-  }
-
-  // 🔍 Récupérer toutes les énigmes
-  $posts = get_posts([
-    'post_type'      => 'enigme',
-    'post_status'    => ['draft', 'pending', 'publish'],
-    'posts_per_page' => -1,
-    'fields'         => 'ids',
-  ]);
-
-  $attendu_ids = [];
-
-  foreach ($posts as $post_id) {
-    $associee = get_field('enigme_chasse_associee', $post_id, false);
-
-    // Peut être un entier ou un tableau
-    if (is_array($associee)) {
-      $associee_ids = array_map('intval', $associee);
-    } else {
-      $associee_ids = [(int)$associee];
-    }
-
-    if (in_array((int)$chasse_id, $associee_ids, true)) {
-      $attendu_ids[] = (int)$post_id;
-    }
-  }
-
-  // 📦 Cache actuel
-  $cache = get_field('chasse_cache_enigmes', $chasse_id);
-  $cache_ids = is_array($cache) ? array_map('intval', $cache) : [];
-
-  // 🎯 Comparaison brute
-  $diff1 = array_diff($attendu_ids, $cache_ids);
-  $diff2 = array_diff($cache_ids, $attendu_ids);
-  $synchronise = empty($diff1) && empty($diff2);
-
-  if ($mettre_a_jour && !$synchronise) {
-    update_field('chasse_cache_enigmes', $attendu_ids, $chasse_id);
-  }
-
-  return [
-    'valide'     => true,
-    'synchro'    => $synchronise,
-    'attendu'    => $attendu_ids,
-    'cache'      => $cache_ids,
-    'correction' => $mettre_a_jour && !$synchronise,
-  ];
 }
 
 
@@ -827,50 +769,48 @@ function verifier_chasse_cache_enigmes($chasse_id, $mettre_a_jour = false)
  */
 function verifier_cache_chasse_enigmes_valides($chasse_id, $retirer_si_invalide = false)
 {
-  if (get_post_type($chasse_id) !== 'chasse') {
+    if (get_post_type($chasse_id) !== 'chasse') {
+        return [
+            'valide' => false,
+            'erreur' => 'ID de chasse invalide.',
+            'liste_cache' => [],
+            'invalides' => [],
+        ];
+    }
+
+    $cache = get_field('chasse_cache_enigmes', $chasse_id);
+    $cacheIds = is_array($cache) ? array_map('intval', $cache) : [];
+    $relatedHuntIds = [];
+
+    foreach ($cacheIds as $riddleId) {
+        if (get_post_type($riddleId) !== 'enigme') {
+            $relatedHuntIds[$riddleId] = null;
+            continue;
+        }
+
+        $relatedHuntIds[$riddleId] = cat_get_relationship_service()->normalizeId(
+            get_field('enigme_chasse_associee', $riddleId)
+        );
+    }
+
+    $result = cat_get_hunt_riddle_cache_service()->validate(
+        (int) $chasse_id,
+        $cacheIds,
+        $relatedHuntIds,
+        (bool) $retirer_si_invalide
+    );
+
+    if ($result['correction']) {
+        update_field('chasse_cache_enigmes', $result['corrected'], $chasse_id);
+    }
+
     return [
-      'valide' => false,
-      'erreur' => 'ID de chasse invalide.',
-      'liste_cache' => [],
-      'invalides' => [],
+        'valide' => true,
+        'synchro' => $result['synced'],
+        'liste_cache' => $result['cached'],
+        'invalides' => $result['invalid'],
+        'correction' => $result['correction'],
     ];
-  }
-
-  // 📦 Liste brute depuis le cache
-  $cache = get_field('chasse_cache_enigmes', $chasse_id);
-  $cache_ids = is_array($cache) ? array_map('intval', $cache) : [];
-
-  $invalides = [];
-
-  foreach ($cache_ids as $enigme_id) {
-    if (get_post_type($enigme_id) !== 'enigme') {
-      $invalides[] = $enigme_id;
-      continue;
-    }
-
-    $chasse_associee = get_field('enigme_chasse_associee', $enigme_id);
-    $chasse_associee_id = is_object($chasse_associee) ? $chasse_associee->ID : (int) $chasse_associee;
-
-    if ((int)$chasse_associee_id !== (int)$chasse_id) {
-      $invalides[] = $enigme_id;
-    }
-  }
-
-  $est_synchro = empty($invalides);
-
-  // 🔄 Correction : on retire les énigmes invalides du cache
-  if ($retirer_si_invalide && !$est_synchro) {
-    $nouvelle_liste = array_diff($cache_ids, $invalides);
-    update_field('chasse_cache_enigmes', array_values($nouvelle_liste), $chasse_id);
-  }
-
-  return [
-    'valide'     => true,
-    'synchro'    => $est_synchro,
-    'liste_cache' => $cache_ids,
-    'invalides'  => $invalides,
-    'correction' => $retirer_si_invalide && !$est_synchro,
-  ];
 }
 
 
@@ -890,45 +830,29 @@ function synchroniser_relations_cache_enigmes(int $chasse_id): bool
         return false;
     }
 
-    // 🧩 Énigmes réellement liées à la chasse, triées par menu_order
-    $ids_detectes = get_posts([
-        'post_type'      => 'enigme',
-        'post_status'    => ['draft', 'pending', 'publish'],
-        'posts_per_page' => -1,
-        'fields'         => 'ids',
-        'orderby'        => 'menu_order',
-        'order'          => 'ASC',
-        'meta_query'     => [
-            [
-                'key'     => 'enigme_chasse_associee',
-                'value'   => $chasse_id,
-                'compare' => 'LIKE',
-            ],
-        ],
-    ]);
+    $detectedIds = get_posts(
+        cat_get_hunt_riddle_query_service()->getSynchronizedRiddleIdsQueryArgs($chasse_id)
+    );
+    $currentCache = get_field('chasse_cache_enigmes', $chasse_id, false);
+    $cachedIds = cat_get_relationship_service()->normalizeIds(
+        is_array($currentCache) ? $currentCache : []
+    );
+    $comparison = cat_get_hunt_riddle_cache_service()->compare(
+        array_map('intval', $detectedIds),
+        $cachedIds,
+        false
+    );
 
-    // 🧮 Cache actuel
-    $cache_actuel = get_field('chasse_cache_enigmes', $chasse_id, false);
-    $cache_ids    = [];
-
-    foreach ((array) $cache_actuel as $item) {
-        $cache_ids[] = is_object($item) ? (int) $item->ID : (int) $item;
-    }
-
-    // 🧪 Comparaison stricte
-    $diff_detectes = array_diff($ids_detectes, $cache_ids);
-    $diff_cache    = array_diff($cache_ids, $ids_detectes);
-
-    if (empty($diff_detectes) && empty($diff_cache)) {
+    if ($comparison['synced']) {
         cat_debug("✅ [SYNC] Aucune mise à jour nécessaire pour chasse #$chasse_id");
         return true;
     }
 
     cat_debug("🔧 [SYNC] Cache obsolète → écrasement nécessaire pour chasse #$chasse_id");
-    cat_debug("🗑️ Ancien cache : " . implode(', ', $cache_ids));
-    cat_debug("🆕 Nouvel ensemble : " . implode(', ', $ids_detectes));
+    cat_debug("🗑️ Ancien cache : " . implode(', ', $comparison['cached']));
+    cat_debug("🆕 Nouvel ensemble : " . implode(', ', $comparison['expected']));
 
-    $success = update_field('chasse_cache_enigmes', $ids_detectes, $chasse_id);
+    $success = update_field('chasse_cache_enigmes', $comparison['expected'], $chasse_id);
 
     if ($success) {
         cat_debug("✅ [SYNC] Mise à jour réussie de chasse_cache_enigmes pour chasse #$chasse_id");

@@ -6,15 +6,17 @@ defined('ABSPATH') || exit;
  */
 function utilisateur_peut_voir_statistiques_chasse(int $chasse_id): bool
 {
-    if ($chasse_id <= 0) {
-        return false;
-    }
+    $has_valid_hunt = $chasse_id > 0;
+    $is_administrator = $has_valid_hunt && current_user_can('manage_options');
+    $service = new ChassesAuTresor\Core\Content\HuntAccessService();
 
-    if (current_user_can('manage_options')) {
-        return true;
-    }
-
-    return utilisateur_est_organisateur_associe_a_chasse(get_current_user_id(), $chasse_id);
+    return $service->canViewStatistics(
+        $has_valid_hunt,
+        $is_administrator,
+        $has_valid_hunt
+            && !$is_administrator
+            && utilisateur_est_organisateur_associe_a_chasse(get_current_user_id(), $chasse_id)
+    );
 }
 
 // ==================================================
@@ -219,9 +221,13 @@ function est_organisateur($user_id = null)
     }
 
     $roles = (array) $user->roles;
+    $service = new ChassesAuTresor\Core\Content\OrganizerRoleService();
 
-    return in_array(ROLE_ORGANISATEUR, $roles, true)
-        || in_array(ROLE_ORGANISATEUR_CREATION, $roles, true);
+    return $service->isOrganizer(
+        $roles,
+        ROLE_ORGANISATEUR,
+        ROLE_ORGANISATEUR_CREATION
+    );
 }
 
 
@@ -1079,21 +1085,24 @@ add_filter('acf/load_field/name=enigme_acces_condition', function ($field) {
 function recuperer_enigmes_possibles_pre_requis($enigme_id)
 {
     $chasse_id = recuperer_id_chasse_associee($enigme_id);
-    if (!$chasse_id) return [];
-
-    $associees = recuperer_enigmes_associees($chasse_id);
-    $filtrees = [];
-
-    foreach ($associees as $id) {
-        if ((int) $id === (int) $enigme_id) continue;
-
-        $mode = get_field('enigme_mode_validation', $id);
-        if (in_array($mode, ['manuelle', 'automatique'])) {
-            $filtrees[] = $id;
-        }
+    if (!$chasse_id) {
+        return [];
     }
 
-    return $filtrees;
+    $associees = recuperer_enigmes_associees($chasse_id);
+    $validation_modes = [];
+
+    foreach ($associees as $id) {
+        if ((int) $id === (int) $enigme_id) {
+            continue;
+        }
+
+        $validation_modes[(int) $id] = (string) get_field('enigme_mode_validation', $id);
+    }
+
+    $service = new ChassesAuTresor\Core\Content\RiddlePrerequisiteService();
+
+    return $service->getEligibleIds((int) $enigme_id, $validation_modes);
 }
 
 
@@ -1103,33 +1112,37 @@ function recuperer_enigmes_possibles_pre_requis($enigme_id)
  */
 function verifier_et_enregistrer_condition_pre_requis()
 {
-    if (!is_user_logged_in()) {
-        wp_send_json_error('non_connecte');
-    }
-
-    $user_id = get_current_user_id();
+    $is_authenticated = is_user_logged_in();
+    $user_id = $is_authenticated ? get_current_user_id() : 0;
     $post_id = isset($_POST['post_id']) ? (int) $_POST['post_id'] : 0;
+    $is_riddle = $is_authenticated && $post_id > 0 && get_post_type($post_id) === 'enigme';
+    $prerequisites = $is_riddle ? get_field('enigme_acces_pre_requis', $post_id) : [];
+    $prerequisite_ids = is_array($prerequisites) ? $prerequisites : [];
+    $service = new ChassesAuTresor\Core\Content\RiddlePrerequisiteService();
+    $error = $service->getConditionUpdateError(
+        $is_authenticated,
+        $is_riddle,
+        $is_riddle && (int) get_post_field('post_author', $post_id) === $user_id,
+        $prerequisite_ids
+    );
 
-    if (!$post_id || get_post_type($post_id) !== 'enigme') {
-        wp_send_json_error('ID ou type invalide');
+    if ($error !== null) {
+        $messages = [
+            ChassesAuTresor\Core\Content\RiddlePrerequisiteService::ERROR_UNAUTHENTICATED =>
+                __('Utilisateur non connecté.', 'chassesautresor-com'),
+            ChassesAuTresor\Core\Content\RiddlePrerequisiteService::ERROR_INVALID_RIDDLE =>
+                __('Identifiant ou type de contenu invalide.', 'chassesautresor-com'),
+            ChassesAuTresor\Core\Content\RiddlePrerequisiteService::ERROR_FORBIDDEN =>
+                __('Accès refusé.', 'chassesautresor-com'),
+            ChassesAuTresor\Core\Content\RiddlePrerequisiteService::ERROR_MISSING_PREREQUISITES =>
+                __('Aucun prérequis sélectionné.', 'chassesautresor-com'),
+        ];
+        wp_send_json_error($messages[$error]);
     }
 
-    $auteur = (int) get_post_field('post_author', $post_id);
-    if ($auteur !== $user_id) {
-        wp_send_json_error('Accès refusé');
-    }
-
-    $pre_requis = get_field('enigme_acces_pre_requis', $post_id);
-    $ids = is_array($pre_requis) ? array_filter($pre_requis) : [];
-
-    if (empty($ids)) {
-        wp_send_json_error('Aucun prérequis sélectionné');
-    }
-
-    // ✔️ Mise à jour de la condition d'accès si au moins 1 est présent
     update_field('enigme_acces_condition', 'pre_requis', $post_id);
 
-    wp_send_json_success('Condition "pré-requis" enregistrée');
+    wp_send_json_success(__('Condition « prérequis » enregistrée.', 'chassesautresor-com'));
 }
 add_action('wp_ajax_verifier_et_enregistrer_condition_pre_requis', 'verifier_et_enregistrer_condition_pre_requis');
 
@@ -1155,29 +1168,19 @@ add_action('wp_ajax_verifier_et_enregistrer_condition_pre_requis', 'verifier_et_
  */
 function chasse_est_visible_pour_utilisateur(int $chasse_id, int $user_id): bool
 {
-    $status = get_post_status($chasse_id);
-    $validation = get_field('chasse_cache_statut_validation', $chasse_id) ?? '';
+    $publication_status = (string) get_post_status($chasse_id);
+    $is_pending = $publication_status === 'pending';
+    $is_administrator = $is_pending && user_can($user_id, 'manage_options');
+    $service = new ChassesAuTresor\Core\Content\HuntAccessService();
 
-    // ✅ Cas 1 : chasse publiée et valide → visible par tous
-    if ($status === 'publish' && $validation === 'valide') {
-        return true;
-    }
-
-    // ✅ Cas 2 : chasse en attente → visible pour admin ou organisateur associé
-    if ($status === 'pending') {
-        if (user_can($user_id, 'manage_options')) {
-            return true;
-        }
-
-        if (utilisateur_est_organisateur_associe_a_chasse($user_id, $chasse_id)) {
-            return true;
-        }
-
-        return false;
-    }
-
-    // ❌ Tous les autres cas : non visible
-    return false;
+    return $service->canView(
+        $publication_status,
+        (string) get_field('chasse_cache_statut_validation', $chasse_id),
+        $is_administrator,
+        $is_pending
+            && !$is_administrator
+            && utilisateur_est_organisateur_associe_a_chasse($user_id, $chasse_id)
+    );
 }
 
 
@@ -1196,19 +1199,20 @@ add_action('pre_get_posts', function ($query) {
         return;
     }
 
-    if ($query->is_singular('enigme') && is_user_logged_in()) {
-        if (current_user_can('manage_options')) {
-            $query->set('post_status', ['publish', 'pending', 'draft']);
-        } elseif (est_organisateur()) {
-            $query->set('post_status', ['publish', 'pending']);
-        }
+    if (!$query->is_singular('enigme') && !$query->is_singular('chasse')) {
+        return;
     }
 
-    if ($query->is_singular('chasse') && is_user_logged_in()) {
-        if (current_user_can('manage_options')) {
-            $query->set('post_status', ['publish', 'pending', 'draft']);
-        } elseif (est_organisateur()) {
-            $query->set('post_status', ['publish', 'pending']);
-        }
+    $is_authenticated = is_user_logged_in();
+    $is_administrator = $is_authenticated && current_user_can('manage_options');
+    $service = new ChassesAuTresor\Core\Content\ContentQueryAccessService();
+    $statuses = $service->getVisibleStatuses(
+        $is_authenticated,
+        $is_administrator,
+        $is_authenticated && !$is_administrator && est_organisateur()
+    );
+
+    if ($statuses !== []) {
+        $query->set('post_status', $statuses);
     }
 });

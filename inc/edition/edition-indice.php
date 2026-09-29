@@ -1,6 +1,56 @@
 <?php
 defined('ABSPATH') || exit;
 
+if (!class_exists(ChassesAuTresor\Core\Content\HintQueryService::class, false)) {
+    require_once dirname(__DIR__, 4)
+        . '/plugins/chassesautresor-core/src/Content/HintQueryService.php';
+}
+
+if (!class_exists(ChassesAuTresor\Core\Content\HintStatusService::class, false)) {
+    require_once dirname(__DIR__, 4)
+        . '/plugins/chassesautresor-core/src/Content/HintStatusService.php';
+}
+
+if (!class_exists(ChassesAuTresor\Core\Content\HintScheduler::class, false)) {
+    require_once dirname(__DIR__, 4)
+        . '/plugins/chassesautresor-core/src/Content/HintScheduler.php';
+}
+
+if (!class_exists(ChassesAuTresor\Core\Relationships\RelationshipService::class, false)) {
+    require_once dirname(__DIR__, 4)
+        . '/plugins/chassesautresor-core/src/Relationships/RelationshipService.php';
+}
+
+if (!class_exists(ChassesAuTresor\Core\Content\HintTitleService::class, false)) {
+    require_once dirname(__DIR__, 4)
+        . '/plugins/chassesautresor-core/src/Content/HintTitleService.php';
+}
+
+if (!class_exists(ChassesAuTresor\Core\Content\HintCreationService::class, false)) {
+    require_once dirname(__DIR__, 4)
+        . '/plugins/chassesautresor-core/src/Content/HintCreationService.php';
+}
+
+function cat_get_hint_query_service(): ChassesAuTresor\Core\Content\HintQueryService
+{
+    return new ChassesAuTresor\Core\Content\HintQueryService();
+}
+
+function cat_get_hint_status_service(): ChassesAuTresor\Core\Content\HintStatusService
+{
+    return new ChassesAuTresor\Core\Content\HintStatusService();
+}
+
+function cat_get_hint_title_service(): ChassesAuTresor\Core\Content\HintTitleService
+{
+    return new ChassesAuTresor\Core\Content\HintTitleService();
+}
+
+function cat_get_hint_creation_service(): ChassesAuTresor\Core\Content\HintCreationService
+{
+    return new ChassesAuTresor\Core\Content\HintCreationService();
+}
+
 // ==================================================
 // 💡 GESTION DES INDICES
 // ==================================================
@@ -19,18 +69,19 @@ defined('ABSPATH') || exit;
 function build_indice_placeholder_title(int $chasse_id): string
 {
     $prefix = defined('INDICE_DEFAULT_PREFIX') ? INDICE_DEFAULT_PREFIX : 'clue-';
-    $slug   = get_post_field('post_name', $chasse_id);
+    $slug = (string) get_post_field('post_name', $chasse_id);
+    $generatedSlug = '';
 
     if ($slug === '') {
-        $chasse_name = get_post_field('post_title', $chasse_id);
-        $slug        = $chasse_name !== ''
+        $chasseName = (string) get_post_field('post_title', $chasse_id);
+        $generatedSlug = $chasseName !== ''
             ? (function_exists('sanitize_title')
-                ? sanitize_title($chasse_name)
-                : strtolower(trim(preg_replace('/[^A-Za-z0-9]+/', '-', $chasse_name), '-')))
+                ? sanitize_title($chasseName)
+                : strtolower(trim(preg_replace('/[^A-Za-z0-9]+/', '-', $chasseName), '-')))
             : '';
     }
 
-    return $prefix . $slug;
+    return cat_get_hint_title_service()->buildPlaceholder($prefix, $slug, $generatedSlug);
 }
 
 /**
@@ -71,52 +122,13 @@ add_action('template_redirect', 'rediriger_si_affichage_indice');
  */
 function prochain_rang_indice(int $objet_id, string $objet_type): int
 {
-    if (!in_array($objet_type, ['chasse', 'enigme'], true)) {
+    $queryArgs = cat_get_hint_query_service()->getRankedHintIdsQueryArgs($objet_id, $objet_type);
+    if ($queryArgs === []) {
         return 1;
     }
 
-    if ($objet_type === 'chasse') {
-        $meta_query = [
-            [
-                'key'     => 'indice_chasse_linked',
-                'value'   => $objet_id,
-                'compare' => '=',
-            ],
-            [
-                'key'     => 'indice_cache_etat_systeme',
-                'value'   => ['programme', 'accessible', 'desactive'],
-                'compare' => 'IN',
-            ],
-        ];
-    } else {
-        $meta_query = [
-            [
-                'key'     => 'indice_cible_type',
-                'value'   => 'enigme',
-                'compare' => '=',
-            ],
-            [
-                'key'     => 'indice_enigme_linked',
-                'value'   => $objet_id,
-                'compare' => '=',
-            ],
-            [
-                'key'     => 'indice_cache_etat_systeme',
-                'value'   => ['programme', 'accessible', 'desactive'],
-                'compare' => 'IN',
-            ],
-        ];
-    }
-
     $existing_indices = function_exists('get_posts')
-        ? get_posts([
-            'post_type'      => 'indice',
-            'post_status'    => ['publish', 'pending', 'draft', 'private', 'future'],
-            'meta_query'     => $meta_query,
-            'fields'         => 'ids',
-            'no_found_rows'  => true,
-            'posts_per_page' => -1,
-        ])
+        ? get_posts($queryArgs)
         : [];
 
     return count($existing_indices) + 1;
@@ -132,65 +144,22 @@ function prochain_rang_indice(int $objet_id, string $objet_type): int
 function reordonner_indices(int $objet_id, string $objet_type): void
 {
     static $processing = false;
-    if (!in_array($objet_type, ['chasse', 'enigme'], true) || $processing) {
+    $queryArgs = cat_get_hint_query_service()->getRankedHintIdsQueryArgs($objet_id, $objet_type, true);
+    if ($queryArgs === [] || $processing) {
         return;
     }
 
     $processing = true;
-
-    if ($objet_type === 'chasse') {
-        $meta_query = [
-            [
-                'key'     => 'indice_chasse_linked',
-                'value'   => $objet_id,
-                'compare' => '=',
-            ],
-            [
-                'key'     => 'indice_cache_etat_systeme',
-                'value'   => ['programme', 'accessible', 'desactive'],
-                'compare' => 'IN',
-            ],
-        ];
-    } else {
-        $meta_query = [
-            [
-                'key'     => 'indice_cible_type',
-                'value'   => 'enigme',
-                'compare' => '=',
-            ],
-            [
-                'key'     => 'indice_enigme_linked',
-                'value'   => $objet_id,
-                'compare' => '=',
-            ],
-            [
-                'key'     => 'indice_cache_etat_systeme',
-                'value'   => ['programme', 'accessible', 'desactive'],
-                'compare' => 'IN',
-            ],
-        ];
-    }
-
-    $indices = get_posts([
-        'post_type'      => 'indice',
-        'post_status'    => ['publish', 'pending', 'draft', 'private', 'future'],
-        'meta_query'     => $meta_query,
-        'orderby'        => 'date',
-        'order'          => 'ASC',
-        'fields'         => 'ids',
-        'no_found_rows'  => true,
-        'posts_per_page' => -1,
-    ]);
+    $indices = get_posts($queryArgs);
 
     $i = 1;
     foreach ($indices as $indice_id) {
         $current_title = get_post_field('post_title', $indice_id);
         $prefix        = defined('INDICE_DEFAULT_PREFIX') ? INDICE_DEFAULT_PREFIX : '';
-        $should_update = (
-            $current_title === ''
-            || (defined('TITRE_DEFAUT_INDICE') && $current_title === TITRE_DEFAUT_INDICE)
-            || preg_match('/^Indice #\d+$/', $current_title)
-            || ($prefix !== '' && strpos($current_title, $prefix) === 0)
+        $should_update = cat_get_hint_title_service()->shouldRegenerate(
+            (string) $current_title,
+            defined('TITRE_DEFAUT_INDICE') ? TITRE_DEFAUT_INDICE : '',
+            $prefix
         );
 
         if ($should_update) {
@@ -229,45 +198,28 @@ function reordonner_indices(int $objet_id, string $objet_type): void
 function reordonner_indices_pour_indice(int $indice_id): void
 {
     $cible_type = get_field('indice_cible_type', $indice_id) === 'enigme' ? 'enigme' : 'chasse';
+    $relationshipService = new ChassesAuTresor\Core\Relationships\RelationshipService();
 
     if ($cible_type === 'enigme') {
-        $linked = get_field('indice_enigme_linked', $indice_id);
-        if (is_array($linked)) {
-            $first     = $linked[0] ?? null;
-            $objet_id = is_array($first) ? (int) ($first['ID'] ?? 0) : (int) $first;
-        } else {
-            $objet_id = (int) $linked;
-        }
+        $objet_id = $relationshipService->normalizeId(get_field('indice_enigme_linked', $indice_id));
 
-        if ($objet_id) {
+        if ($objet_id !== null) {
             reordonner_indices($objet_id, 'enigme');
         }
 
-        $chasse_linked = get_field('indice_chasse_linked', $indice_id);
-        if (is_array($chasse_linked)) {
-            $first     = $chasse_linked[0] ?? null;
-            $chasse_id = is_array($first) ? (int) ($first['ID'] ?? 0) : (int) $first;
-        } else {
-            $chasse_id = (int) $chasse_linked;
+        $chasse_id = $relationshipService->normalizeId(get_field('indice_chasse_linked', $indice_id));
+
+        if ($chasse_id === null && $objet_id !== null) {
+            $chasse_id = $relationshipService->normalizeId(recuperer_id_chasse_associee($objet_id));
         }
 
-        if (!$chasse_id && isset($objet_id)) {
-            $chasse_id = (int) recuperer_id_chasse_associee($objet_id);
-        }
-
-        if ($chasse_id) {
+        if ($chasse_id !== null) {
             reordonner_indices($chasse_id, 'chasse');
         }
     } else {
-        $linked = get_field('indice_chasse_linked', $indice_id);
-        if (is_array($linked)) {
-            $first     = $linked[0] ?? null;
-            $chasse_id = is_array($first) ? (int) ($first['ID'] ?? 0) : (int) $first;
-        } else {
-            $chasse_id = (int) $linked;
-        }
+        $chasse_id = $relationshipService->normalizeId(get_field('indice_chasse_linked', $indice_id));
 
-        if ($chasse_id) {
+        if ($chasse_id !== null) {
             reordonner_indices($chasse_id, 'chasse');
         }
     }
@@ -300,37 +252,57 @@ add_action('save_post_indice', 'reordonner_indices_apres_enregistrement', 20, 1)
  */
 function creer_indice_pour_objet(int $objet_id, string $objet_type, ?int $user_id = null)
 {
-    if (!in_array($objet_type, ['chasse', 'enigme'], true)) {
-        return new WP_Error('type_invalide', __('Type de cible invalide.', 'chassesautresor-com'));
+    $creationService = cat_get_hint_creation_service();
+    $supportedTargetType = $creationService->isSupportedTargetType($objet_type);
+    $targetMatchesType = $supportedTargetType && get_post_type($objet_id) === $objet_type;
+    $isAuthenticated = is_user_logged_in();
+    $canModifyTarget = $targetMatchesType
+        && $isAuthenticated
+        && utilisateur_peut_modifier_post($objet_id);
+    $chasse_id = null;
+
+    if ($canModifyTarget) {
+        $chasse_id = $objet_type === 'chasse'
+            ? $objet_id
+            : recuperer_id_chasse_associee($objet_id);
     }
 
-    if (get_post_type($objet_id) !== $objet_type) {
-        return new WP_Error('cible_invalide', __('ID cible invalide.', 'chassesautresor-com'));
+    $canModifyHunt = $chasse_id !== null
+        && (int) $chasse_id > 0
+        && utilisateur_peut_modifier_post((int) $chasse_id);
+    $creationError = $creationService->getCreationError(
+        $supportedTargetType,
+        $targetMatchesType,
+        $isAuthenticated,
+        $canModifyTarget,
+        $chasse_id !== null && (int) $chasse_id > 0,
+        $canModifyHunt
+    );
+
+    if ($creationError !== null) {
+        $errorMessages = [
+            'type_invalide' => __('Type de cible invalide.', 'chassesautresor-com'),
+            'cible_invalide' => __('ID cible invalide.', 'chassesautresor-com'),
+            'non_connecte' => __('Utilisateur non connecté.', 'chassesautresor-com'),
+            'permission_refusee' => __('Droits insuffisants.', 'chassesautresor-com'),
+        ];
+
+        return new WP_Error($creationError, $errorMessages[$creationError]);
     }
 
-    if (!is_user_logged_in()) {
-        return new WP_Error('non_connecte', __('Utilisateur non connecté.', 'chassesautresor-com'));
-    }
-
-    if (!utilisateur_peut_modifier_post($objet_id)) {
-        return new WP_Error('permission_refusee', __('Droits insuffisants.', 'chassesautresor-com'));
-    }
-
-    $chasse_id = $objet_type === 'chasse'
-        ? $objet_id
-        : recuperer_id_chasse_associee($objet_id);
-
-    if (!$chasse_id || !utilisateur_peut_modifier_post($chasse_id)) {
-        return new WP_Error('permission_refusee', __('Droits insuffisants.', 'chassesautresor-com'));
-    }
+    $chasse_id = (int) $chasse_id;
 
     $user_id     = $user_id ?? get_current_user_id();
     $indice_rank   = prochain_rang_indice($chasse_id, 'chasse');
     $default_title = build_indice_placeholder_title($chasse_id);
+    $initialState = $creationService->getInitialState(
+        (int) current_time('timestamp'),
+        DAY_IN_SECONDS
+    );
 
     $indice_id = wp_insert_post([
         'post_type'   => 'indice',
-        'post_status' => 'pending',
+        'post_status' => $initialState['post_status'],
         'post_title'  => $default_title,
         'post_author' => $user_id,
     ]);
@@ -346,14 +318,14 @@ function creer_indice_pour_objet(int $objet_id, string $objet_type, ?int $user_i
     if ($objet_type === 'enigme') {
         update_field('indice_enigme_linked', $objet_id, $indice_id);
     }
-    update_field('indice_disponibilite', 'immediate', $indice_id);
+    update_field('indice_disponibilite', $initialState['availability'], $indice_id);
 
-    $date_disponibilite = wp_date('Y-m-d H:i:s', (int) current_time('timestamp') + DAY_IN_SECONDS);
+    $date_disponibilite = wp_date('Y-m-d H:i:s', $initialState['availability_timestamp']);
     update_field('indice_date_disponibilite', $date_disponibilite, $indice_id);
 
-    update_field('indice_cout_points', 0, $indice_id);
-    update_field('indice_cache_complet', false, $indice_id);
-    update_field('indice_cache_etat_systeme', 'desactive', $indice_id);
+    update_field('indice_cout_points', $initialState['points_cost'], $indice_id);
+    update_field('indice_cache_complet', $initialState['complete'], $indice_id);
+    update_field('indice_cache_etat_systeme', $initialState['system_state'], $indice_id);
 
     reordonner_indices($objet_id, $objet_type);
 
@@ -1067,28 +1039,25 @@ function mettre_a_jour_cache_indice($post_id, ?int $chasse_id = null): void
         }
     }
 
-    $content  = trim((string) get_field('indice_contenu', $post_id));
-    $image_id = get_field('indice_image', $post_id);
+    $content = trim((string) get_field('indice_contenu', $post_id));
+    $imageId = get_field('indice_image', $post_id);
+    $availability = (string) get_field('indice_disponibilite', $post_id);
+    $availabilityDate = null;
 
-    $complete = $content !== '' || !empty($image_id);
-    $state    = 'desactive';
-
-    if ($complete) {
-        $state        = 'accessible';
-        $availability = get_field('indice_disponibilite', $post_id);
-
-        if ($availability === 'differe') {
-            $date_raw = get_field('indice_date_disponibilite', $post_id);
-            $date     = $date_raw ? convertir_en_datetime($date_raw) : null;
-
-            if (!$date) {
-                $complete = false;
-                $state    = 'desactive';
-            } elseif ($date->getTimestamp() > time()) {
-                $state = 'programme';
-            }
-        }
+    if ($availability === 'differe') {
+        $dateRaw = get_field('indice_date_disponibilite', $post_id);
+        $availabilityDate = $dateRaw ? convertir_en_datetime($dateRaw) : null;
     }
+
+    $hintStatus = cat_get_hint_status_service()->resolve(
+        $content !== '',
+        !empty($imageId),
+        $availability,
+        $availabilityDate ? $availabilityDate->getTimestamp() : null,
+        time()
+    );
+    $complete = $hintStatus['complete'];
+    $state = $hintStatus['state'];
 
     update_field('indice_cache_complet', $complete ? 1 : 0, $post_id);
     update_field('indice_cache_etat_systeme', $state, $post_id);
@@ -1096,20 +1065,16 @@ function mettre_a_jour_cache_indice($post_id, ?int $chasse_id = null): void
     $status = get_post_status($post_id);
     $post   = get_post($post_id);
 
-    if ($complete && $state === 'accessible') {
-        if ($status !== 'publish') {
-            wp_update_post([
-                'ID'            => $post_id,
-                'post_status'   => 'publish',
-                'post_date'     => $post->post_date,
-                'post_date_gmt' => $post->post_date_gmt,
-                'edit_date'     => true,
-            ]);
-        }
-    } elseif ($status === 'publish') {
+    $publicationStatus = cat_get_hint_status_service()->resolvePublicationStatus(
+        $complete,
+        $state,
+        (string) $status
+    );
+
+    if ($publicationStatus !== null) {
         wp_update_post([
             'ID'            => $post_id,
-            'post_status'   => 'pending',
+            'post_status'   => $publicationStatus,
             'post_date'     => $post->post_date,
             'post_date_gmt' => $post->post_date_gmt,
             'edit_date'     => true,
@@ -1128,44 +1093,13 @@ add_action('acf/save_post', 'mettre_a_jour_cache_indice', 30);
  */
 function basculer_indices_programmes(): void
 {
-    $indices = get_posts([
-        'post_type'      => 'indice',
-        'post_status'    => ['publish', 'pending', 'draft', 'private', 'future'],
-        'meta_query'     => [
-            [
-                'key'   => 'indice_cache_etat_systeme',
-                'value' => 'programme',
-            ],
-            [
-                'key'     => 'indice_date_disponibilite',
-                'value'   => current_time('mysql'),
-                'compare' => '<=',
-                'type'    => 'DATETIME',
-            ],
-        ],
-        'fields'         => 'ids',
-        'no_found_rows'  => true,
-        'posts_per_page' => -1,
-    ]);
-
-    foreach ($indices as $indice_id) {
-        mettre_a_jour_cache_indice($indice_id);
-    }
+    ChassesAuTresor\Core\Content\HintScheduler::run();
 }
-add_action('basculer_indices_programmes', 'basculer_indices_programmes');
 
-/**
- * Planifie l'exécution régulière de la tâche de basculement des indices.
- *
- * @return void
- */
-function planifier_tache_basculer_indices_programmes(): void
-{
-    if (!wp_next_scheduled('basculer_indices_programmes')) {
-        wp_schedule_event(time(), 'hourly', 'basculer_indices_programmes');
-    }
-}
-add_action('after_switch_theme', 'planifier_tache_basculer_indices_programmes');
+add_action(
+    ChassesAuTresor\Core\Content\HintScheduler::PROCESS_HOOK,
+    'mettre_a_jour_cache_indice'
+);
 
 /**
  * Enregistre la cible d'un indice avant suppression définitive.
@@ -1182,41 +1116,23 @@ function memoriser_cible_indice_avant_suppression(int $post_id): void
     }
 
     $type = get_field('indice_cible_type', $post_id) === 'enigme' ? 'enigme' : 'chasse';
-    $objet_id = 0;
-    $chasse_id = 0;
+    $relationshipService = new ChassesAuTresor\Core\Relationships\RelationshipService();
+    $objet_id = null;
+    $chasse_id = null;
 
     if ($type === 'enigme') {
-        $linked = get_field('indice_enigme_linked', $post_id);
-        if (is_array($linked)) {
-            $first    = $linked[0] ?? null;
-            $objet_id = is_array($first) ? (int) ($first['ID'] ?? 0) : (int) $first;
-        } else {
-            $objet_id = (int) $linked;
-        }
+        $objet_id = $relationshipService->normalizeId(get_field('indice_enigme_linked', $post_id));
+        $chasse_id = $relationshipService->normalizeId(get_field('indice_chasse_linked', $post_id));
 
-        $chasse_linked = get_field('indice_chasse_linked', $post_id);
-        if (is_array($chasse_linked)) {
-            $first     = $chasse_linked[0] ?? null;
-            $chasse_id = is_array($first) ? (int) ($first['ID'] ?? 0) : (int) $first;
-        } else {
-            $chasse_id = (int) $chasse_linked;
-        }
-
-        if (!$chasse_id && $objet_id) {
-            $chasse_id = (int) recuperer_id_chasse_associee($objet_id);
+        if ($chasse_id === null && $objet_id !== null) {
+            $chasse_id = $relationshipService->normalizeId(recuperer_id_chasse_associee($objet_id));
         }
     } else {
-        $linked = get_field('indice_chasse_linked', $post_id);
-        if (is_array($linked)) {
-            $first     = $linked[0] ?? null;
-            $objet_id  = is_array($first) ? (int) ($first['ID'] ?? 0) : (int) $first;
-        } else {
-            $objet_id = (int) $linked;
-        }
+        $objet_id = $relationshipService->normalizeId(get_field('indice_chasse_linked', $post_id));
         $chasse_id = $objet_id;
     }
 
-    if ($objet_id) {
+    if ($objet_id !== null) {
         $indice_delete_context = [
             'objet_id'   => $objet_id,
             'objet_type' => $type,

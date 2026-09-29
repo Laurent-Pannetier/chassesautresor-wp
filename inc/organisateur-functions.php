@@ -739,43 +739,23 @@ function cat_clear_organisateur_request(int $user_id): void
 function cat_get_organisateur_request_status(int $user_id): array
 {
     $token = (string) get_user_meta($user_id, 'organisateur_demande_token', true);
-
-    if ($token === '') {
-        return [
-            'token'   => null,
-            'expired' => false,
-        ];
-    }
-
-    $date = get_user_meta($user_id, 'organisateur_demande_date', true);
+    $service = new ChassesAuTresor\Core\Relationships\OrganizerRequestService();
+    $date = $token !== '' ? get_user_meta($user_id, 'organisateur_demande_date', true) : null;
     $timestamp = $date ? strtotime((string) $date) : false;
+    $status = $service->getStatus(
+        $token,
+        $timestamp !== false ? $timestamp : null,
+        $token !== '' ? (int) current_time('timestamp') : 0,
+        2 * DAY_IN_SECONDS
+    );
 
-    if (!$timestamp) {
+    if ($status['clear']) {
         cat_clear_organisateur_request($user_id);
-
-        return [
-            'token'   => null,
-            'expired' => false,
-        ];
     }
 
-    $expires_at = $timestamp + 2 * DAY_IN_SECONDS;
-    $now        = (int) current_time('timestamp');
+    unset($status['clear']);
 
-    if ($now > $expires_at) {
-        cat_clear_organisateur_request($user_id);
-
-        return [
-            'token'   => null,
-            'expired' => true,
-        ];
-    }
-
-    return [
-        'token'      => $token,
-        'expired'    => false,
-        'expires_at' => $expires_at,
-    ];
+    return $status;
 }
 
 /**
@@ -1062,4 +1042,3 @@ function traiter_confirmation_organisateur() {
     exit;
 }
 add_action('template_redirect', 'traiter_confirmation_organisateur');
-
