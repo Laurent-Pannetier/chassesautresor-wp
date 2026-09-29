@@ -275,66 +275,15 @@ function gerer_chasse_terminee($chasse_id)
         return;
     }
 
-    $validables      = [];
-    $non_validables  = [];
-    foreach ($toutes_enigmes as $id) {
-        if (get_field('enigme_mode_validation', $id) === 'aucune') {
-            $non_validables[] = $id;
-        } else {
-            $validables[] = $id;
-        }
-    }
+    $classified = cat_classify_hunt_riddles($toutes_enigmes);
+    $validables = $classified['validatable'];
+    $non_validables = $classified['engagement_only'];
 
     global $wpdb;
     $table = $wpdb->prefix . 'enigme_statuts_utilisateur';
     $now   = current_time('mysql');
 
-    $results = [];
-    if ($validables) {
-        $placeholders = implode(',', array_fill(0, count($validables), '%d'));
-        $sql = "
-            SELECT user_id, MIN(date_mise_a_jour) AS first_finish
-            FROM {$table}
-            WHERE statut IN ('resolue', 'terminee', 'terminée')
-              AND enigme_id IN ($placeholders)
-            GROUP BY user_id
-            HAVING COUNT(DISTINCT enigme_id) = %d
-            ORDER BY first_finish ASC
-        ";
-        $results = $wpdb->get_results(
-            $wpdb->prepare($sql, array_merge($validables, [count($validables)]))
-        );
-
-        if ($non_validables) {
-            $table_eng    = $wpdb->prefix . 'engagements';
-            $ph_non_val   = implode(',', array_fill(0, count($non_validables), '%d'));
-            foreach ($results as $idx => $row) {
-                $uid      = (int) $row->user_id;
-                $nb       = (int) $wpdb->get_var($wpdb->prepare(
-                    "SELECT COUNT(DISTINCT enigme_id) FROM {$table_eng} WHERE user_id = %d AND enigme_id IN ($ph_non_val)",
-                    array_merge([$uid], $non_validables)
-                ));
-                if ($nb !== count($non_validables)) {
-                    unset($results[$idx]);
-                }
-            }
-            $results = array_values($results);
-        }
-    } elseif ($non_validables) {
-        $table_eng    = $wpdb->prefix . 'engagements';
-        $placeholders = implode(',', array_fill(0, count($non_validables), '%d'));
-        $sql = "
-            SELECT user_id, MIN(date_engagement) AS first_finish
-            FROM {$table_eng}
-            WHERE enigme_id IN ($placeholders)
-            GROUP BY user_id
-            HAVING COUNT(DISTINCT enigme_id) = %d
-            ORDER BY first_finish ASC
-        ";
-        $results = $wpdb->get_results(
-            $wpdb->prepare($sql, array_merge($non_validables, [count($non_validables)]))
-        );
-    }
+    $results = cat_get_hunt_progress_service()->getCompletedUsers($validables, $non_validables);
 
     $max_winners = (int) get_field('chasse_infos_nb_max_gagants', $chasse_id);
     if ($max_winners > 0 && count($results) > $max_winners) {

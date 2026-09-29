@@ -28,6 +28,11 @@ if (!class_exists(ChassesAuTresor\Core\Progress\HuntRiddleClassifier::class, fal
         . '/plugins/chassesautresor-core/src/Progress/HuntRiddleClassifier.php';
 }
 
+if (!class_exists(ChassesAuTresor\Core\Progress\HuntCompletionService::class, false)) {
+    require_once dirname(__DIR__, 3)
+        . '/plugins/chassesautresor-core/src/Progress/HuntCompletionService.php';
+}
+
 /**
  * Create the service responsible for points operations.
  */
@@ -75,6 +80,14 @@ function cat_get_hunt_progress_service(): ChassesAuTresor\Core\Progress\HuntProg
 function cat_classify_hunt_riddles(array $riddleIds): array
 {
     return (new ChassesAuTresor\Core\Progress\HuntRiddleClassifier())->classify($riddleIds);
+}
+
+function cat_get_hunt_completion_service(): ChassesAuTresor\Core\Progress\HuntCompletionService
+{
+    return new ChassesAuTresor\Core\Progress\HuntCompletionService(
+        cat_get_hunt_progress_service(),
+        new ChassesAuTresor\Core\Progress\HuntRiddleClassifier()
+    );
 }
 
 // ==================================================
@@ -374,33 +387,24 @@ function verifier_fin_de_chasse($user_id, $enigme_id)
 {
     cat_debug("🔍 Vérification de fin de chasse pour l'utilisateur {$user_id} (énigme : {$enigme_id})");
 
-    // 🧭 Récupération de la chasse associée
-    $chasse_id = recuperer_id_chasse_associee($enigme_id);
+    $completion = cat_get_hunt_completion_service()->evaluate((int) $user_id, (int) $enigme_id);
+    $chasse_id = $completion['hunt_id'];
 
     if (!$chasse_id) {
         cat_debug("❌ Aucune chasse associée trouvée.");
         return;
     }
 
-    $mode_fin = get_field('chasse_mode_fin', $chasse_id) ?: 'automatique';
-    if ($mode_fin !== 'automatique') {
+    if (!$completion['is_automatic']) {
         return; // 🔁 La complétion se fait manuellement
     }
 
-    // 📄 Récupération des énigmes associées (IDs uniquement)
-    $enigmes_associees = recuperer_enigmes_associees($chasse_id);
-    if (empty($enigmes_associees)) {
+    if (!$completion['has_riddles']) {
         cat_debug("⚠️ Pas d'énigmes associées à la chasse (ID: {$chasse_id})");
         return;
     }
 
-    $classified = cat_classify_hunt_riddles($enigmes_associees);
-    $validables = $classified['validatable'];
-    $non_validables = $classified['engagement_only'];
-
-    $progress = cat_get_hunt_progress_service()->calculate((int) $user_id, $validables, $non_validables);
-
-    if ($progress['is_complete']) {
+    if ($completion['is_complete']) {
         gerer_chasse_terminee($chasse_id);
     }
 }
