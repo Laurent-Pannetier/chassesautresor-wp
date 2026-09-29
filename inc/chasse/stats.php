@@ -14,6 +14,13 @@ if (!class_exists(ChassesAuTresor\Core\Progress\HuntEngagementService::class, fa
         . '/plugins/chassesautresor-core/src/Progress/HuntEngagementService.php';
 }
 
+if (!class_exists(ChassesAuTresor\Core\Progress\HuntStatisticsService::class, false)) {
+    require_once dirname(__DIR__, 4)
+        . '/plugins/chassesautresor-core/src/Progress/HuntStatisticsRepository.php';
+    require_once dirname(__DIR__, 4)
+        . '/plugins/chassesautresor-core/src/Progress/HuntStatisticsService.php';
+}
+
 if (!function_exists('cat_get_hunt_engagement_service')) {
     function cat_get_hunt_engagement_service(): ChassesAuTresor\Core\Progress\HuntEngagementService
     {
@@ -23,6 +30,25 @@ if (!function_exists('cat_get_hunt_engagement_service')) {
             new ChassesAuTresor\Core\Progress\HuntEngagementRepository($wpdb)
         );
     }
+}
+
+function cat_get_hunt_statistics_service(): ChassesAuTresor\Core\Progress\HuntStatisticsService
+{
+    global $wpdb;
+
+    return new ChassesAuTresor\Core\Progress\HuntStatisticsService(
+        new ChassesAuTresor\Core\Progress\HuntStatisticsRepository($wpdb)
+    );
+}
+
+function chasse_stats_excluded_user_ids(int $chasse_id): array
+{
+    $excluded = function_exists('get_users') ? get_users(['role' => 'administrator', 'fields' => 'ids']) : [];
+    if (function_exists('get_organisateur_from_chasse') && function_exists('get_field')) {
+        $organizerId = get_organisateur_from_chasse($chasse_id);
+        $excluded = array_merge($excluded, $organizerId ? (array) get_field('utilisateurs_associes', $organizerId) : []);
+    }
+    return array_values(array_unique(array_filter(array_map('intval', $excluded))));
 }
 
 /**
@@ -36,7 +62,12 @@ function chasse_compter_participants(int $chasse_id, string $periode = 'total'):
         [$debut, $fin] = enigme_stats_date_range($periode);
     }
 
-    return cat_get_hunt_engagement_service()->countParticipants($chasse_id, $debut, $fin);
+    return cat_get_hunt_engagement_service()->countParticipants(
+        $chasse_id,
+        $debut,
+        $fin,
+        chasse_stats_excluded_user_ids($chasse_id)
+    );
 }
 
 /**
@@ -44,30 +75,10 @@ function chasse_compter_participants(int $chasse_id, string $periode = 'total'):
  */
 function chasse_compter_tentatives(int $chasse_id, string $periode = 'total'): int
 {
-
     $enigme_ids = recuperer_ids_enigmes_pour_chasse($chasse_id);
-    if (!$enigme_ids) {
-        return 0;
-    }
+    [$debut, $fin] = $periode === 'total' ? [null, null] : enigme_stats_date_range($periode);
 
-    global $wpdb;
-    $table        = $wpdb->prefix . 'enigme_tentatives';
-    $placeholders = implode(',', array_fill(0, count($enigme_ids), '%d'));
-    $where        = "enigme_id IN ({$placeholders})";
-    $params       = $enigme_ids;
-
-    if ($periode !== 'total') {
-        [$debut, $fin] = enigme_stats_date_range($periode);
-        if ($debut && $fin) {
-            $where   .= ' AND date_tentative BETWEEN %s AND %s';
-            $params[] = $debut;
-            $params[] = $fin;
-        }
-    }
-
-    $sql = $wpdb->prepare("SELECT COUNT(*) FROM {$table} WHERE {$where}", ...$params);
-
-    return (int) $wpdb->get_var($sql);
+    return cat_get_hunt_statistics_service()->countAttempts($enigme_ids, $debut, $fin);
 }
 
 /**
@@ -75,31 +86,10 @@ function chasse_compter_tentatives(int $chasse_id, string $periode = 'total'): i
  */
 function chasse_compter_points_collectes(int $chasse_id, string $periode = 'total'): int
 {
-
     $enigme_ids = recuperer_ids_enigmes_pour_chasse($chasse_id);
-    if (!$enigme_ids) {
-        return 0;
-    }
+    [$debut, $fin] = $periode === 'total' ? [null, null] : enigme_stats_date_range($periode);
 
-    global $wpdb;
-    $table        = $wpdb->prefix . 'enigme_tentatives';
-    $placeholders = implode(',', array_fill(0, count($enigme_ids), '%d'));
-    $where        = "enigme_id IN ({$placeholders})";
-    $params       = $enigme_ids;
-
-    if ($periode !== 'total') {
-        [$debut, $fin] = enigme_stats_date_range($periode);
-        if ($debut && $fin) {
-            $where   .= ' AND date_tentative BETWEEN %s AND %s';
-            $params[] = $debut;
-            $params[] = $fin;
-        }
-    }
-
-    $sql = $wpdb->prepare("SELECT SUM(points_utilises) FROM {$table} WHERE {$where}", ...$params);
-    $res = $wpdb->get_var($sql);
-
-    return $res ? (int) $res : 0;
+    return cat_get_hunt_statistics_service()->sumCollectedPoints($enigme_ids, $debut, $fin);
 }
 
 /**
@@ -107,11 +97,7 @@ function chasse_compter_points_collectes(int $chasse_id, string $periode = 'tota
  */
 function chasse_compter_engagements(int $chasse_id): int
 {
-
-    global $wpdb;
-    $table = $wpdb->prefix . 'engagements';
-    $sql = $wpdb->prepare("SELECT COUNT(*) FROM $table WHERE chasse_id = %d", $chasse_id);
-    return (int) $wpdb->get_var($sql);
+    return cat_get_hunt_statistics_service()->countEngagements($chasse_id, chasse_stats_excluded_user_ids($chasse_id));
 }
 
 /**
@@ -119,36 +105,17 @@ function chasse_compter_engagements(int $chasse_id): int
  */
 function chasse_calculer_taux_engagement(int $chasse_id, string $periode = 'total'): float
 {
-
     $participants  = chasse_compter_participants($chasse_id, $periode);
     $enigme_ids    = recuperer_ids_enigmes_pour_chasse($chasse_id);
-    $total_enigmes = count($enigme_ids);
-    if ($participants === 0 || $total_enigmes === 0) {
-        return 0.0;
-    }
+    [$debut, $fin] = $periode === 'total' ? [null, null] : enigme_stats_date_range($periode);
 
-    global $wpdb;
-    $table        = $wpdb->prefix . 'engagements';
-    $placeholders = implode(',', array_fill(0, count($enigme_ids), '%d'));
-    $where        = "enigme_id IN ({$placeholders})";
-    $params       = $enigme_ids;
-
-    if ($periode !== 'total') {
-        [$debut, $fin] = enigme_stats_date_range($periode);
-        if ($debut && $fin) {
-            $where   .= ' AND date_engagement BETWEEN %s AND %s';
-            $params[] = $debut;
-            $params[] = $fin;
-        }
-    }
-
-    $sql = $wpdb->prepare(
-        "SELECT SUM(cnt) FROM (SELECT COUNT(DISTINCT user_id) AS cnt FROM {$table} WHERE {$where} GROUP BY enigme_id) t",
-        ...$params
+    return cat_get_hunt_statistics_service()->calculateEngagementRate(
+        $participants,
+        $enigme_ids,
+        $debut,
+        $fin,
+        chasse_stats_excluded_user_ids($chasse_id)
     );
-    $total = (int) $wpdb->get_var($sql);
-
-    return (100 * $total) / ($participants * $total_enigmes);
 }
 
 /**
