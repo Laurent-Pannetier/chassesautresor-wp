@@ -517,15 +517,15 @@ function organisateur_mettre_a_jour_complet(int $organisateur_id): bool
 function chasse_has_validatable_enigme(int $chasse_id): bool
 {
     $enigme_ids = recuperer_ids_enigmes_pour_chasse($chasse_id);
+    $validationModes = [];
 
     foreach ($enigme_ids as $eid) {
-        $mode = get_field('enigme_mode_validation', $eid);
-        if ($mode !== 'aucune') {
-            return true;
-        }
+        $validationModes[] = (string) get_field('enigme_mode_validation', $eid);
     }
 
-    return false;
+    return (new ChassesAuTresor\Core\Content\HuntCompletionService())->hasValidatableRiddle(
+        $validationModes
+    );
 }
 
 function chasse_est_complet(int $chasse_id): bool
@@ -704,41 +704,34 @@ function verifier_ou_mettre_a_jour_cache_complet(int $post_id): void
  */
 function verifier_ou_recalculer_statut_chasse($chasse_id): void
 {
-    if (get_post_type($chasse_id) !== 'chasse') return;
+    if (get_post_type($chasse_id) !== 'chasse') {
+        return;
+    }
 
     static $chasses_traitees = [];
 
-    if (in_array($chasse_id, $chasses_traitees, true)) return;
+    if (in_array($chasse_id, $chasses_traitees, true)) {
+        return;
+    }
     $chasses_traitees[] = $chasse_id;
 
+    $statut           = (string) get_field('chasse_cache_statut', $chasse_id);
+    $validation       = (string) get_field('chasse_cache_statut_validation', $chasse_id);
+    $date_debut_obj   = convertir_en_datetime(get_field('chasse_infos_date_debut', $chasse_id) ?: null);
+    $date_fin_obj     = convertir_en_datetime(get_field('chasse_infos_date_fin', $chasse_id) ?: null);
+    $decouverte_obj   = convertir_en_datetime(get_field('chasse_cache_date_decouverte', $chasse_id) ?: null);
+    $service          = new ChassesAuTresor\Core\Progress\HuntStatusService();
 
-    $statut     = get_field('chasse_cache_statut', $chasse_id);
-    $validation = get_field('chasse_cache_statut_validation', $chasse_id);
-
-    // ⚠️ Validation non valide mais statut différent de "revision"
-    if ($validation !== 'valide' && $statut !== 'revision') {
-        mettre_a_jour_statuts_chasse($chasse_id);
-        chasse_clear_infos_affichage_cache($chasse_id);
-        return;
-    }
-
-    // Si le statut est manquant ou invalide, on le recalcule
-    $statuts_valides = ['revision', 'a_venir', 'en_cours', 'payante', 'termine'];
-    if (!in_array($statut, $statuts_valides, true)) {
-        mettre_a_jour_statuts_chasse($chasse_id);
-        chasse_clear_infos_affichage_cache($chasse_id);
-        return;
-    }
-
-    // On pourrait aller plus loin : vérifier si la date est dépassée
-    $date_fin = get_field('chasse_infos_date_fin', $chasse_id);
-    $illimitee = get_field('chasse_infos_duree_illimitee', $chasse_id);
-    $now = current_time('timestamp');
-    $date_fin = $date_fin ? strtotime($date_fin) : null;
-
-    if (!empty($illimitee)) return;
-
-    if ($statut !== 'termine' && $date_fin && $date_fin < $now) {
+    if ($service->isStale(
+        $statut,
+        $validation,
+        $date_debut_obj ? $date_debut_obj->getTimestamp() : null,
+        $date_fin_obj ? $date_fin_obj->getTimestamp() : null,
+        $decouverte_obj ? $decouverte_obj->getTimestamp() : null,
+        (int) get_field('chasse_infos_cout_points', $chasse_id),
+        !empty(get_field('chasse_infos_duree_illimitee', $chasse_id)),
+        (int) current_time('timestamp')
+    )) {
         mettre_a_jour_statuts_chasse($chasse_id);
         chasse_clear_infos_affichage_cache($chasse_id);
     }
@@ -775,8 +768,6 @@ function mettre_a_jour_statuts_chasse($chasse_id)
         return;
     }
 
-    $maintenant = current_time('timestamp');
-
     $statut_validation = $cache['validation'] ?? 'creation';
     $date_debut_obj    = convertir_en_datetime($carac['date_debut'] ?? null);
     $date_debut        = $date_debut_obj ? $date_debut_obj->getTimestamp() : null;
@@ -785,25 +776,16 @@ function mettre_a_jour_statuts_chasse($chasse_id)
     $date_obj          = convertir_en_datetime($cache['date'] ?? null);
     $date_decouverte   = $date_obj ? $date_obj->getTimestamp() : null;
     $cout_points       = intval($carac['cout_points'] ?? 0);
-    $mode_continue     = empty($carac['duree_illimitee']);
-
-    $statut = 'revision';
-
-    if ($statut_validation === 'valide') {
-        if ($date_decouverte) {
-            $statut = 'termine';
-        } elseif ($mode_continue && $date_fin && $date_fin < $maintenant) {
-            $statut = 'termine';
-        } elseif ($date_debut && $date_debut <= $maintenant) {
-            $statut = ($cout_points > 0) ? 'payante' : 'en_cours';
-        } elseif ($date_debut && $date_debut > $maintenant) {
-            $statut = 'a_venir';
-        } else {
-            $statut = $cache['statut'] ?? 'revision';
-        }
-    }
-
-    $ancien = $cache['statut'] ?? '(inconnu)';
+    $statut            = (new ChassesAuTresor\Core\Progress\HuntStatusService())->calculate(
+        (string) $statut_validation,
+        $date_debut,
+        $date_fin,
+        $date_decouverte,
+        $cout_points,
+        !empty($carac['duree_illimitee']),
+        (int) current_time('timestamp'),
+        (string) ($cache['statut'] ?? 'revision')
+    );
 
     // ✅ Si terminée, déclenche les planifications PDF
     if ($statut === 'termine') {
@@ -947,11 +929,9 @@ function forcer_statut_apres_acf($post_id, $nouvelle_validation = null)
 
     if (!$validation) return;
 
-    $statut_voulu = match ($validation) {
-        'valide'     => 'publish',
-        'banni'      => 'draft',
-        default      => 'pending',
-    };
+    $statut_voulu = (new ChassesAuTresor\Core\Content\HuntPublicationStatusService())->resolve(
+        (string) $validation
+    );
 
     if (get_post_status($post_id) !== $statut_voulu) {
         wp_update_post([
@@ -1013,11 +993,9 @@ function forcer_statut_selon_validation_chasse($post_id, $post, $update)
     if (!$validation) return;
     $statut_wp = get_post_status($post_id);
 
-    $statut_attendu = match ($validation) {
-        'valide'   => 'publish',
-        'banni'    => 'draft',
-        default    => 'pending',
-    };
+    $statut_attendu = (new ChassesAuTresor\Core\Content\HuntPublicationStatusService())->resolve(
+        (string) $validation
+    );
 
     if ($statut_wp !== $statut_attendu) {
         cat_debug("⚠️ Décalage statut WP vs ACF pour chasse $post_id → WP = $statut_wp / ACF = $validation");

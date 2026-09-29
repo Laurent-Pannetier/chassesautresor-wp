@@ -480,45 +480,27 @@ function peut_valider_chasse(int $chasse_id, int $user_id): bool
     }
 
     $organisateur_id = get_organisateur_from_chasse($chasse_id);
-    if (!$organisateur_id || !get_field('organisateur_cache_complet', $organisateur_id)) {
-        return false;
-    }
-
-    if (!get_field('chasse_cache_complet', $chasse_id)) {
-        return false;
-    }
-
-    if (get_post_status($chasse_id) !== 'pending') {
-        return false;
-    }
-
-    $statut_validation = get_field('chasse_cache_statut_validation', $chasse_id);
-    $statut_metier     = get_field('chasse_cache_statut', $chasse_id);
-
-    if (!in_array($statut_validation ?? '', ['creation', 'correction'], true)) {
-        return false;
-    }
-
-    if (($statut_metier ?? '') !== 'revision') {
-        return false;
-    }
 
     // Utilise la requête directe pour lister toutes les énigmes rattachées
     // afin d'éviter toute incohérence liée au cache "chasse_cache_enigmes".
-    $enigmes = recuperer_ids_enigmes_pour_chasse($chasse_id);
-    if (empty($enigmes)) {
-        return false;
+    $riddles = [];
+    foreach (recuperer_ids_enigmes_pour_chasse($chasse_id) as $enigme_id) {
+        $riddles[] = [
+            'system_status' => (string) get_field('enigme_cache_etat_systeme', $enigme_id),
+            'is_complete'    => (bool) get_field('enigme_cache_complet', $enigme_id),
+        ];
     }
 
-    foreach ($enigmes as $eid) {
-        $etat = get_field('enigme_cache_etat_systeme', $eid);
-        $complet = get_field('enigme_cache_complet', $eid);
-        if ($etat !== 'bloquee_chasse' || !$complet) {
-            return false;
-        }
-    }
-
-    return true;
+    return (new ChassesAuTresor\Core\Content\HuntValidationService())->canRequestValidation(
+        true,
+        true,
+        $organisateur_id > 0 && (bool) get_field('organisateur_cache_complet', $organisateur_id),
+        (bool) get_field('chasse_cache_complet', $chasse_id),
+        (string) get_post_status($chasse_id),
+        (string) get_field('chasse_cache_statut_validation', $chasse_id),
+        (string) get_field('chasse_cache_statut', $chasse_id),
+        $riddles
+    );
 }
 
 /**
@@ -1128,29 +1110,21 @@ function solution_peut_etre_affichee(int $enigme_id): bool
         return false;
     }
 
-    $statut   = get_field('chasse_cache_statut', $chasse_id);
-    if ($statut !== 'termine') {
-        return false;
-    }
-
     $dispo    = get_field('solution_disponibilite', $solution->ID) ?: 'fin_chasse';
     $decalage = (int) get_field('solution_decalage_jours', $solution->ID);
     $heure    = get_field('solution_heure_publication', $solution->ID) ?: '00:00';
     $now      = current_time('timestamp');
+    $base     = get_field('date_de_decouverte', $chasse_id)
+        ?: get_field('chasse_infos_date_fin', $chasse_id);
 
-    if ($dispo === 'differee') {
-        $base = get_field('date_de_decouverte', $chasse_id);
-        if (!$base) {
-            $base = get_field('chasse_infos_date_fin', $chasse_id);
-        }
-        $timestamp_base = $base ? strtotime($base) : $now;
-        $cible          = strtotime("+$decalage days $heure", $timestamp_base);
-        if ($cible && $now < $cible) {
-            return false;
-        }
-    }
-
-    return true;
+    return (new ChassesAuTresor\Core\Content\SolutionAvailabilityService())->isAvailable(
+        (string) get_field('chasse_cache_statut', $chasse_id),
+        (string) $dispo,
+        $base ? strtotime((string) $base) : null,
+        $decalage,
+        (string) $heure,
+        (int) $now
+    );
 }
 
 /**
@@ -1173,29 +1147,21 @@ function solution_chasse_peut_etre_affichee(int $chasse_id): bool
         return false;
     }
 
-    $statut   = get_field('chasse_cache_statut', $chasse_id);
-    if ($statut !== 'termine') {
-        return false;
-    }
-
     $dispo    = get_field('solution_disponibilite', $solution->ID) ?: 'fin_chasse';
     $decalage = (int) get_field('solution_decalage_jours', $solution->ID);
     $heure    = get_field('solution_heure_publication', $solution->ID) ?: '00:00';
     $now      = current_time('timestamp');
+    $base     = get_field('date_de_decouverte', $chasse_id)
+        ?: get_field('chasse_infos_date_fin', $chasse_id);
 
-    if ($dispo === 'differee') {
-        $base = get_field('date_de_decouverte', $chasse_id);
-        if (!$base) {
-            $base = get_field('chasse_infos_date_fin', $chasse_id);
-        }
-        $timestamp_base = $base ? strtotime($base) : $now;
-        $cible          = strtotime("+$decalage days $heure", $timestamp_base);
-        if ($cible && $now < $cible) {
-            return false;
-        }
-    }
-
-    return true;
+    return (new ChassesAuTresor\Core\Content\SolutionAvailabilityService())->isAvailable(
+        (string) get_field('chasse_cache_statut', $chasse_id),
+        (string) $dispo,
+        $base ? strtotime((string) $base) : null,
+        $decalage,
+        (string) $heure,
+        (int) $now
+    );
 }
 
 /**
