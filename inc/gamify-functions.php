@@ -68,13 +68,15 @@ function cat_get_conversion_service(): ChassesAuTresor\Core\Points\ConversionSer
     );
 }
 
-function cat_get_hunt_progress_service(): ChassesAuTresor\Core\Progress\HuntProgressService
-{
-    global $wpdb;
+if (!function_exists('cat_get_hunt_progress_service')) {
+    function cat_get_hunt_progress_service(): ChassesAuTresor\Core\Progress\HuntProgressService
+    {
+        global $wpdb;
 
-    return new ChassesAuTresor\Core\Progress\HuntProgressService(
-        new ChassesAuTresor\Core\Progress\HuntProgressRepository($wpdb)
-    );
+        return new ChassesAuTresor\Core\Progress\HuntProgressService(
+            new ChassesAuTresor\Core\Progress\HuntProgressRepository($wpdb)
+        );
+    }
 }
 
 function cat_classify_hunt_riddles(array $riddleIds): array

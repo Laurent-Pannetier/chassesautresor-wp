@@ -1,6 +1,22 @@
 <?php
 defined('ABSPATH') || exit;
 
+/**
+ * Determine whether the current user may view statistics for a hunt.
+ */
+function utilisateur_peut_voir_statistiques_chasse(int $chasse_id): bool
+{
+    if ($chasse_id <= 0) {
+        return false;
+    }
+
+    if (current_user_can('manage_options')) {
+        return true;
+    }
+
+    return utilisateur_est_organisateur_associe_a_chasse(get_current_user_id(), $chasse_id);
+}
+
 // ==================================================
 // 📘 SOMMAIRE DU FICHIER : access-functions.php
 // ==================================================

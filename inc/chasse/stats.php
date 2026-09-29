@@ -7,26 +7,36 @@ defined('ABSPATH') || exit;
 
 require_once __DIR__ . '/../enigme/stats.php';
 
+if (!class_exists(ChassesAuTresor\Core\Progress\HuntEngagementService::class, false)) {
+    require_once dirname(__DIR__, 4)
+        . '/plugins/chassesautresor-core/src/Progress/HuntEngagementRepository.php';
+    require_once dirname(__DIR__, 4)
+        . '/plugins/chassesautresor-core/src/Progress/HuntEngagementService.php';
+}
+
+if (!function_exists('cat_get_hunt_engagement_service')) {
+    function cat_get_hunt_engagement_service(): ChassesAuTresor\Core\Progress\HuntEngagementService
+    {
+        global $wpdb;
+
+        return new ChassesAuTresor\Core\Progress\HuntEngagementService(
+            new ChassesAuTresor\Core\Progress\HuntEngagementRepository($wpdb)
+        );
+    }
+}
+
 /**
  * Count distinct participants engaged in a hunt.
  */
 function chasse_compter_participants(int $chasse_id, string $periode = 'total'): int
 {
-
-    global $wpdb;
-    $table = $wpdb->prefix . 'engagements';
-    $where = 'chasse_id = %d AND enigme_id IS NULL';
-    $params = [$chasse_id];
+    $debut = null;
+    $fin = null;
     if ($periode !== 'total') {
         [$debut, $fin] = enigme_stats_date_range($periode);
-        if ($debut && $fin) {
-            $where .= ' AND date_engagement BETWEEN %s AND %s';
-            $params[] = $debut;
-            $params[] = $fin;
-        }
     }
-    $sql = $wpdb->prepare("SELECT COUNT(DISTINCT user_id) FROM $table WHERE $where", ...$params);
-    return (int) $wpdb->get_var($sql);
+
+    return cat_get_hunt_engagement_service()->countParticipants($chasse_id, $debut, $fin);
 }
 
 /**
