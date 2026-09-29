@@ -31,23 +31,20 @@ if (
 
 // 💚 Réinitialisations
 if (isset($_GET['reset_tentatives'])) {
-  global $wpdb;
-  $reset = $wpdb->delete($wpdb->prefix . 'enigme_tentatives', ['enigme_id' => $enigme_id], ['%d']);
+  $reset = cat_get_riddle_attempt_service()->deleteForRiddle($enigme_id);
   echo '<p style="text-align:center;">🧹 ' . $reset . ' tentative(s) supprimée(s).</p>';
   return;
 }
 
 if (isset($_GET['reset_statuts'])) {
-  global $wpdb;
-  $reset = $wpdb->delete($wpdb->prefix . 'enigme_statuts_utilisateur', ['enigme_id' => $enigme_id], ['%d']);
+  $reset = cat_get_hunt_progress_service()->deleteRiddleStatuses($enigme_id);
   echo '<p style="text-align:center;">🗑️ ' . $reset . ' statut(s) utilisateur supprimé(s).</p>';
   return;
 }
 
 if (isset($_GET['reset_all'])) {
-  global $wpdb;
-  $reset1 = $wpdb->delete($wpdb->prefix . 'enigme_tentatives', ['enigme_id' => $enigme_id], ['%d']);
-  $reset2 = $wpdb->delete($wpdb->prefix . 'enigme_statuts_utilisateur', ['enigme_id' => $enigme_id], ['%d']);
+  $reset1 = cat_get_riddle_attempt_service()->deleteForRiddle($enigme_id);
+  $reset2 = cat_get_hunt_progress_service()->deleteRiddleStatuses($enigme_id);
   echo '<p style="text-align:center;">🔥 ' . $reset1 . ' tentative(s) & ' . $reset2 . ' statut(s) supprimés.</p>';
   return;
 }

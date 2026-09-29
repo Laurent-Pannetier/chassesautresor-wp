@@ -13,14 +13,9 @@ if (!function_exists('est_enigme_resolue_par_utilisateur')) {
 }
 
 if (est_enigme_resolue_par_utilisateur($user_id, $post_id)) {
-    global $wpdb;
-    $table = $wpdb->prefix . 'enigme_statuts_utilisateur';
-    $resolution_date = $wpdb->get_var(
-        $wpdb->prepare(
-            "SELECT date_mise_a_jour FROM $table WHERE user_id = %d AND enigme_id = %d",
-            $user_id,
-            $post_id
-        )
+    $resolution_date = cat_get_hunt_progress_service()->getRiddleResolutionDate(
+        (int) $user_id,
+        (int) $post_id
     );
     if ($resolution_date) {
         $formatted_date = wp_date('d/m/y \\à H:i', strtotime($resolution_date));
@@ -59,14 +54,9 @@ if ($mode_validation === 'manuelle') {
     if (!utilisateur_peut_repondre_manuelle($user_id, $post_id)) {
         $statut = enigme_get_statut_utilisateur($post_id, $user_id);
         if ($statut === 'soumis') {
-            global $wpdb;
-            $table     = $wpdb->prefix . 'enigme_tentatives';
-            $tentative = $wpdb->get_row(
-                $wpdb->prepare(
-                    "SELECT id, date_tentative FROM $table WHERE user_id = %d AND enigme_id = %d AND traitee = 0 ORDER BY date_tentative DESC LIMIT 1",
-                    $user_id,
-                    $post_id
-                )
+            $tentative = cat_get_riddle_attempt_service()->findLatestPendingForUserAndRiddle(
+                (int) $user_id,
+                (int) $post_id
             );
             if ($tentative) {
                 $timestamp   = strtotime($tentative->date_tentative);
@@ -90,14 +80,9 @@ if ($mode_validation === 'manuelle') {
                 echo '<p class="message-joueur-statut">' . esc_html__('⏳ Votre tentative est en cours de traitement.', 'chassesautresor-com') . '</p>';
             }
         } else {
-            global $wpdb;
-            $table           = $wpdb->prefix . 'enigme_statuts_utilisateur';
-            $resolution_date = $wpdb->get_var(
-                $wpdb->prepare(
-                    "SELECT date_mise_a_jour FROM $table WHERE user_id = %d AND enigme_id = %d",
-                    $user_id,
-                    $post_id
-                )
+            $resolution_date = cat_get_hunt_progress_service()->getRiddleResolutionDate(
+                (int) $user_id,
+                (int) $post_id
             );
             if ($resolution_date) {
                 $formatted_date = wp_date('d/m/y \\à H:i', strtotime($resolution_date));
@@ -223,4 +208,3 @@ $nonce = wp_create_nonce('reponse_auto_nonce');
     </p>
   <?php endif; ?>
 </form>
-

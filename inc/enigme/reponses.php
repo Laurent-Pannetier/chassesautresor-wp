@@ -187,8 +187,6 @@ function calculer_contexte_points(int $user_id, int $enigme_id): array
      */
 function soumettre_reponse_manuelle()
 {
-    global $wpdb;
-
     if (!is_user_logged_in()) {
         wp_send_json_error('non_connecte');
     }
@@ -206,11 +204,7 @@ function soumettre_reponse_manuelle()
         wp_send_json_error('interdit');
     }
 
-    $current_statut = $wpdb->get_var($wpdb->prepare(
-        "SELECT statut FROM {$wpdb->prefix}enigme_statuts_utilisateur WHERE user_id = %d AND enigme_id = %d",
-        $user_id,
-        $enigme_id
-    ));
+    $current_statut = enigme_get_statut_utilisateur($enigme_id, $user_id);
 
     if (in_array($current_statut, ['resolue', 'terminee'], true)) {
         wp_send_json_error('deja_resolue');
@@ -222,12 +216,15 @@ function soumettre_reponse_manuelle()
     }
 
     if ($cout > 0) {
-        $reason = sprintf("Tentative de réponse pour l'énigme #%d", $enigme_id);
+        $reason = sprintf(
+            __("Tentative de réponse pour l'énigme #%d", 'chassesautresor-com'),
+            $enigme_id
+        );
         deduire_points_utilisateur($user_id, $cout, $reason, 'tentative', $enigme_id);
     }
 
     $uid = inserer_tentative($user_id, $enigme_id, $reponse);
-    $tentative_id = (int) $wpdb->insert_id;
+    $tentative_id = get_last_tentative_insert_id();
     $timestamp = current_time('timestamp');
     $date = wp_date('d/m/Y', $timestamp);
     $time = wp_date('H:i', $timestamp);
@@ -636,4 +633,3 @@ function charger_script_reponse_manuelle() {
     }
 }
 add_action('wp_enqueue_scripts', 'charger_script_reponse_manuelle');
-

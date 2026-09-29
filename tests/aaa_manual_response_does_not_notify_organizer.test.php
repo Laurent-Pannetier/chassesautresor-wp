@@ -45,6 +45,12 @@ if (!function_exists('wp_date')) {
 if (!function_exists('enigme_mettre_a_jour_statut_utilisateur')) {
     function enigme_mettre_a_jour_statut_utilisateur(...$args) {}
 }
+if (!function_exists('enigme_get_statut_utilisateur')) {
+    function enigme_get_statut_utilisateur(...$args) { return 'non_commencee'; }
+}
+if (!function_exists('get_last_tentative_insert_id')) {
+    function get_last_tentative_insert_id(): int { return 1; }
+}
 if (!function_exists('get_the_title')) {
     function get_the_title($id) { return 'Énigme'; }
 }
