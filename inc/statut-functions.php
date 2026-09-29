@@ -14,6 +14,16 @@ if (!class_exists(ChassesAuTresor\Core\Progress\HuntProgressService::class, fals
         . '/plugins/chassesautresor-core/src/Progress/HuntProgressService.php';
 }
 
+if (!class_exists(ChassesAuTresor\Core\Content\RiddleCompletionService::class, false)) {
+    require_once dirname(__DIR__, 3)
+        . '/plugins/chassesautresor-core/src/Content/RiddleCompletionService.php';
+}
+
+if (!class_exists(ChassesAuTresor\Core\Content\OrganizerCompletionService::class, false)) {
+    require_once dirname(__DIR__, 3)
+        . '/plugins/chassesautresor-core/src/Content/OrganizerCompletionService.php';
+}
+
 if (!function_exists('cat_get_hunt_progress_service')) {
     function cat_get_hunt_progress_service(): ChassesAuTresor\Core\Progress\HuntProgressService
     {
@@ -149,23 +159,20 @@ function enigme_pre_requis_remplis(int $enigme_id, int $user_id): bool
 
     $condition = get_field('enigme_acces_condition', $enigme_id) ?? 'immediat';
 
-    if (empty($pre_requis) || !is_array($pre_requis)) {
-        return $condition !== 'pre_requis'; // ❌ Pré-requis exigés mais liste vide
-    }
-
-    foreach ($pre_requis as $enigme_requise) {
-        $enigme_id_requise = is_object($enigme_requise) ? $enigme_requise->ID : (is_numeric($enigme_requise) ? (int) $enigme_requise : null);
-
-        if ($enigme_id_requise) {
-            $statut = enigme_get_statut_utilisateur($enigme_id_requise, $user_id);
-
-            if (!in_array($statut, ['resolue', 'terminee'], true)) {
-                return false; // ❌ Prérequis non rempli
-            }
+    $prerequisiteIds = [];
+    foreach (is_array($pre_requis) ? $pre_requis : [] as $requiredRiddle) {
+        if (is_object($requiredRiddle) && isset($requiredRiddle->ID)) {
+            $prerequisiteIds[] = (int) $requiredRiddle->ID;
+        } elseif (is_numeric($requiredRiddle)) {
+            $prerequisiteIds[] = (int) $requiredRiddle;
         }
     }
 
-    return true; // ✅ Tous les prérequis sont remplis
+    return cat_get_hunt_progress_service()->areRiddlePrerequisitesMet(
+        $user_id,
+        $prerequisiteIds,
+        (string) $condition
+    );
 }
 
 /**
@@ -183,70 +190,26 @@ function enigme_pre_requis_remplis(int $enigme_id, int $user_id): bool
  */
 function enigme_verifier_verrouillage(int $enigme_id, int $user_id): array
 {
-    $resultat = [
-        'est_verrouillee'   => false,
-        'motif'             => 'aucun',
-        'date_deblocage'    => null,
-        'timestamp_restant' => null,
-        'cout_points'       => null,
-        'message_variante'  => null,
-    ];
+    $statut = $user_id > 0 ? enigme_get_statut_utilisateur($enigme_id, $user_id) : '';
 
-    if ($user_id === 0) {
-        return array_merge($resultat, [
-            'est_verrouillee' => true,
-            'motif'           => 'utilisateur_non_connecte',
-        ]);
+    $unlockTimestamp = null;
+    $formattedUnlockDate = null;
+    if ($statut === 'bloquee_date') {
+        $access = get_field('enigme_acces', $enigme_id);
+        $dateString = is_array($access) ? ($access['enigme_acces_date'] ?? null) : null;
+        $date = $dateString ? convertir_en_datetime($dateString) : null;
+        if ($date) {
+            $unlockTimestamp = $date->getTimestamp();
+            $formattedUnlockDate = $date->format('d/m/Y à H\hi');
+        }
     }
 
-    $statut = enigme_get_statut_utilisateur($enigme_id, $user_id);
-
-    switch ($statut) {
-        case 'bloquee_date':
-            $date_str = get_field('enigme_acces')['enigme_acces_date'] ?? null;
-            if ($date_str) {
-                $date_obj = convertir_en_datetime($date_str);
-                if ($date_obj && $date_obj->getTimestamp() > time()) {
-                    return array_merge($resultat, [
-                        'est_verrouillee'   => true,
-                        'motif'             => 'date_future',
-                        'date_deblocage'    => $date_obj->format('d/m/Y à H\hi'),
-                        'timestamp_restant' => $date_obj->getTimestamp() - time(),
-                    ]);
-                }
-            }
-            return array_merge($resultat, [
-                'est_verrouillee' => true,
-                'motif'           => 'date_non_definie',
-            ]);
-
-        case 'bloquee_pre_requis':
-            return array_merge($resultat, [
-                'est_verrouillee' => true,
-                'motif'           => 'pre_requis',
-            ]);
-
-        case 'bloquee_chasse':
-            return array_merge($resultat, [
-                'est_verrouillee' => true,
-                'motif'           => 'chasse_indisponible',
-            ]);
-
-        case 'non_souscrite':
-            return array_merge($resultat, [
-                'est_verrouillee' => true,
-                'motif'           => 'non_souscrit',
-            ]);
-
-        case 'invalide':
-            return array_merge($resultat, [
-                'est_verrouillee' => true,
-                'motif'           => 'erreur_configuration',
-            ]);
-
-        default:
-            return $resultat;
-    }
+    return cat_get_hunt_progress_service()->getRiddleLockState(
+        $user_id,
+        $statut,
+        $unlockTimestamp,
+        $formattedUnlockDate
+    );
 }
 
 
@@ -342,73 +305,15 @@ function traiter_statut_enigme(int $enigme_id, ?int $user_id = null): array
 
     $condition_acces = get_field('enigme_acces_condition', $enigme_id) ?? 'immediat';
     if ($condition_acces === 'pre_requis' && !enigme_pre_requis_remplis($enigme_id, $user_id)) {
-        return [
-            'etat' => 'bloquee_pre_requis',
-            'rediriger' => true,
-            'url' => $chasse_id ? get_permalink($chasse_id) : home_url('/'),
-            'afficher_formulaire' => false,
-            'afficher_message' => false,
-            'message_html' => '',
-        ];
+        $statut = 'bloquee_pre_requis';
     }
 
-    // 🔁 Cas interdits : accès refusé
-    if ($statut === 'abandonnee') {
-        return [
-            'etat' => $statut,
-            'rediriger' => true,
-            'url' => $chasse_id ? get_permalink($chasse_id) : home_url('/'),
-            'afficher_formulaire' => false,
-            'afficher_message' => false,
-            'message_html' => '',
-        ];
-    }
+    $state = cat_get_hunt_progress_service()->getRiddleParticipationState($statut);
+    $state['url'] = $state['rediriger']
+        ? ($chasse_id ? get_permalink($chasse_id) : home_url('/'))
+        : null;
 
-    if ($statut === 'echouee') {
-        return [
-            'etat' => $statut,
-            'rediriger' => false,
-            'url' => null,
-            'afficher_formulaire' => true,
-            'afficher_message' => false,
-            'message_html' => '',
-        ];
-    }
-
-    // 🔁 Cas bloqués structurellement (pré-requis, date, etc.)
-    if (in_array($statut, ['bloquee_date', 'bloquee_chasse', 'bloquee_pre_requis', 'invalide', 'cache_invalide'], true)) {
-        return [
-            'etat' => $statut,
-            'rediriger' => true,
-            'url' => $chasse_id ? get_permalink($chasse_id) : home_url('/'),
-            'afficher_formulaire' => false,
-            'afficher_message' => false,
-            'message_html' => '',
-        ];
-    }
-
-    // 🎯 Cas d'accès légitime (en cours, non_souscrite, resolue, soumis)
-    if ($statut === 'soumis') {
-        return [
-            'etat' => 'soumis',
-            'rediriger' => false,
-            'url' => null,
-            'afficher_formulaire' => false,
-            'afficher_message' => false,
-            'message_html' => '',
-        ];
-    }
-
-    $formulaire = in_array($statut, ['en_cours', 'non_souscrite'], true);
-
-    return [
-        'etat' => $statut,
-        'rediriger' => false,
-        'url' => null,
-        'afficher_formulaire' => $formulaire,
-        'afficher_message' => false,
-        'message_html' => '',
-    ];
+    return $state;
 }
 
 
@@ -467,46 +372,26 @@ function enigme_mettre_a_jour_etat_systeme(int $enigme_id, bool $mettre_a_jour =
         cat_debug("❌ [STATUT] Post #$enigme_id n'est pas une énigme");
         return 'cache_invalide';
     }
-    $etat = 'accessible';
-
-    // 🔎 Vérifie la chasse liée
     $chasse_id = recuperer_id_chasse_associee($enigme_id);
-    if (!$chasse_id || get_post_type($chasse_id) !== 'chasse') {
-        $etat = 'bloquee_chasse';
-        cat_debug("🧩 #$enigme_id → bloquee_chasse (aucune chasse valide liée)");
-    } else {
-        $statut_chasse = $statut_chasse_forcé ?? get_field('chasse_cache_statut', $chasse_id);
-        cat_debug("🧩 #$enigme_id → chasse #$chasse_id statut = $statut_chasse");
-
-        if (!in_array($statut_chasse, ['en_cours', 'payante', 'termine'], true)) {
-            $etat = 'bloquee_chasse';
-        }
-    }
-
-    // 🔐 Accès programmé / prérequis
+    $hasValidHunt = $chasse_id > 0 && get_post_type($chasse_id) === 'chasse';
+    $statut_chasse = $hasValidHunt
+        ? (string) ($statut_chasse_forcé ?? get_field('chasse_cache_statut', $chasse_id))
+        : '';
     $condition = get_field('enigme_acces_condition', $enigme_id) ?? 'immediat';
-
-    if ($etat === 'accessible') {
-        if ($condition === 'date_programmee') {
-            $date = get_field('enigme_acces_date', $enigme_id);
-            $date_obj = convertir_en_datetime($date);
-            if (!$date_obj || $date_obj->getTimestamp() > time()) {
-                $etat = 'bloquee_date';
-                cat_debug("🧩 #$enigme_id → bloquee_date (accès programmé futur ou vide)");
-            }
-        } elseif ($condition === 'pre_requis') {
-            $etat = 'bloquee_pre_requis';
-            cat_debug("🧩 #$enigme_id → bloquee_pre_requis (pré-requis exigés)");
-        }
-    }
-
-    // ❓ Vérifie si la réponse attendue est bien définie si validation = automatique
+    $scheduledDate = $condition === 'date_programmee'
+        ? convertir_en_datetime(get_field('enigme_acces_date', $enigme_id))
+        : null;
     $mode = get_field('enigme_mode_validation', $enigme_id);
     $reponses = enigme_get_bonnes_reponses($enigme_id);
-    if ($etat === 'accessible' && $mode === 'automatique' && empty($reponses)) {
-        $etat = 'invalide';
-        cat_debug("🧩 #$enigme_id → invalide (automatique sans réponse)");
-    }
+
+    $etat = cat_get_hunt_progress_service()->calculateRiddleSystemState(
+        $hasValidHunt,
+        $statut_chasse,
+        (string) $condition,
+        $scheduledDate ? $scheduledDate->getTimestamp() : null,
+        (string) $mode,
+        !empty($reponses)
+    );
 
     // ✅ Mise à jour ACF si demandé
     if ($mettre_a_jour) {
@@ -586,19 +471,16 @@ function utilisateur_peut_engager_enigme(int $enigme_id, ?int $user_id = null): 
     $user_id = $user_id ?? get_current_user_id();
 
     $etat_systeme = enigme_get_etat_systeme($enigme_id);
-    if (
-        $etat_systeme === 'bloquee_pre_requis'
+    $prerequisitesMet = $etat_systeme === 'bloquee_pre_requis'
         && function_exists('enigme_pre_requis_remplis')
-        && enigme_pre_requis_remplis($enigme_id, $user_id)
-    ) {
-        $etat_systeme = 'accessible';
-    }
-
+        && enigme_pre_requis_remplis($enigme_id, $user_id);
     $statut = enigme_get_statut_utilisateur($enigme_id, $user_id);
 
-    $statuts_autorises = ['non_commencee', 'abandonnee', 'echouee'];
-
-    return $etat_systeme === 'accessible' && in_array($statut, $statuts_autorises, true);
+    return cat_get_hunt_progress_service()->canEngageRiddle(
+        $etat_systeme,
+        $statut,
+        $prerequisitesMet
+    );
 }
 
 // ==================================================
@@ -611,16 +493,13 @@ function organisateur_est_complet(int $organisateur_id): bool
         return false;
     }
 
-    $titre_ok = titre_est_valide($organisateur_id);
-
     $logo = get_field('logo_organisateur', $organisateur_id);
-    $logo_ok = !empty($logo);
 
-    $description_field = get_field('description_longue', $organisateur_id);
-    $description = trim((string) $description_field);
-    $desc_ok = $description !== '';
-
-    return $titre_ok && $logo_ok && $desc_ok;
+    return (new ChassesAuTresor\Core\Content\OrganizerCompletionService())->isComplete(
+        titre_est_valide($organisateur_id),
+        !empty($logo),
+        (string) get_field('description_longue', $organisateur_id)
+    );
 }
 
 function organisateur_mettre_a_jour_complet(int $organisateur_id): bool
@@ -687,19 +566,20 @@ function enigme_est_complet(int $enigme_id): bool
     $images = get_field('enigme_visuel_image', $enigme_id);
     $placeholder = defined('ID_IMAGE_PLACEHOLDER_ENIGME') ? ID_IMAGE_PLACEHOLDER_ENIGME : 3925;
     $first_id = (is_array($images) && !empty($images[0]['ID'])) ? (int) $images[0]['ID'] : 0;
-    $image_ok = $first_id && $first_id !== $placeholder;
-
-    // 🔄 [NOVELTY] Require an expected answer if validation is automatic
     $mode = get_field('enigme_mode_validation', $enigme_id);
     $reponses = enigme_get_bonnes_reponses($enigme_id);
-    $reponse_ok = $mode !== 'automatique' || !empty($reponses);
-
-    // ✅ Ensure prerequisite list is filled when required
     $condition_acces = get_field('enigme_acces_condition', $enigme_id) ?? 'immediat';
     $pre_requis = get_field('enigme_acces_pre_requis', $enigme_id);
-    $pre_requis_ok = $condition_acces !== 'pre_requis' || (is_array($pre_requis) && !empty($pre_requis));
 
-    return $titre_ok && $image_ok && $reponse_ok && $pre_requis_ok;
+    return (new ChassesAuTresor\Core\Content\RiddleCompletionService())->isComplete(
+        $titre_ok,
+        $first_id,
+        $placeholder,
+        (string) $mode,
+        !empty($reponses),
+        (string) $condition_acces,
+        is_array($pre_requis) && !empty($pre_requis)
+    );
 }
 
 function enigme_mettre_a_jour_complet(int $enigme_id): bool
