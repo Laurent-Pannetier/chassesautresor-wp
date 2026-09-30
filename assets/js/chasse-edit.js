@@ -143,6 +143,7 @@ function rafraichirCarteSolutions() {
 
   const fd = new FormData();
   fd.append('action', 'chasse_solution_status');
+  fd.append('nonce', window.solutionsCreate?.nonce || '');
   fd.append('chasse_id', chasseId);
   fetch(ajaxUrl, { method: 'POST', credentials: 'same-origin', body: fd })
     .then((r) => r.json())
@@ -225,6 +226,7 @@ window.rafraichirCarteSolutions = rafraichirCarteSolutions;
       const fd = new FormData();
       fd.append('action', 'supprimer_chasse');
       fd.append('chasse_id', chasseId);
+      fd.append('nonce', ChasseIndices.nonce || '');
 
       fetch(ajaxUrl, {
         method: 'POST',
@@ -1562,4 +1564,3 @@ qrDownloadBtn?.addEventListener('click', (e) => {
       window.location.href = url;
     });
 });
-

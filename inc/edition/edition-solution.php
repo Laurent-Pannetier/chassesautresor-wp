@@ -312,6 +312,7 @@ add_action('template_redirect', 'creer_solution_et_rediriger_si_appel');
  */
 function ajax_solutions_lister_table(): void
 {
+    check_ajax_referer('solution_management', 'nonce');
     $managementService = new ChassesAuTresor\Core\Content\SolutionManagementService();
 
     if (!is_user_logged_in()) {
@@ -378,6 +379,7 @@ add_action('wp_ajax_solutions_lister_table', 'ajax_solutions_lister_table');
  */
 function ajax_chasse_solution_status(): void
 {
+    check_ajax_referer('solution_management', 'nonce');
     $managementService = new ChassesAuTresor\Core\Content\SolutionManagementService();
 
     if (!is_user_logged_in()) {
@@ -464,6 +466,7 @@ function solution_resoudre_fichier_modal(int $solution_id): array
  */
 function ajax_creer_solution_modal(): void
 {
+    check_ajax_referer('solution_management', 'nonce');
     $fieldPolicy = new ChassesAuTresor\Core\Content\SolutionFieldPolicyService();
     $isAuthenticated = is_user_logged_in();
     $objet_id   = $isAuthenticated && isset($_POST['objet_id']) ? (int) $_POST['objet_id'] : 0;
@@ -524,6 +527,7 @@ add_action('wp_ajax_creer_solution_modal', 'ajax_creer_solution_modal');
  */
 function ajax_modifier_solution_modal(): void
 {
+    check_ajax_referer('solution_management', 'nonce');
     $fieldPolicy = new ChassesAuTresor\Core\Content\SolutionFieldPolicyService();
     $isAuthenticated = is_user_logged_in();
     $solution_id = $isAuthenticated && isset($_POST['solution_id']) ? (int) $_POST['solution_id'] : 0;
@@ -579,6 +583,7 @@ add_action('wp_ajax_modifier_solution_modal', 'ajax_modifier_solution_modal');
  */
 function supprimer_solution_ajax(): void
 {
+    check_ajax_referer('solution_management', 'nonce');
     if (!is_user_logged_in()) {
         wp_send_json_error('non_connecte');
     }

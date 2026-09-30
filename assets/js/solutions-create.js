@@ -92,6 +92,7 @@
         <button type="button" class="solution-modal-close" aria-label="${solutionsCreate.texts.close}">×</button>
         <form class="solution-modal-form">
           <input type="hidden" name="action" value="${isEdit ? 'modifier_solution_modal' : 'creer_solution_modal'}" />
+          <input type="hidden" name="nonce" value="${solutionsCreate.nonce || ''}" />
           <input type="hidden" name="objet_type" value="${btn.dataset.objetType || ''}" />
           ${enigmeField}
           <input type="hidden" name="objet_id" value="${btn.dataset.objetId || ''}" />

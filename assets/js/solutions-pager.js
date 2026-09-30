@@ -3,6 +3,7 @@
     var page = wrapper.dataset.page || '1';
     var formData = new FormData();
     formData.append('action', 'solutions_lister_table');
+    formData.append('nonce', window.solutionsCreate?.nonce || '');
     formData.append('objet_id', wrapper.dataset.objetId);
     formData.append('objet_type', wrapper.dataset.objetType);
     formData.append('page', page);
@@ -55,6 +56,7 @@
 
     var formData = new FormData();
     formData.append('action', 'supprimer_solution');
+    formData.append('nonce', window.solutionsCreate?.nonce || '');
     formData.append('solution_id', btn.dataset.solutionId);
 
     fetch(wrapper.dataset.ajaxUrl, {

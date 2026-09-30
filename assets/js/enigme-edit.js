@@ -41,6 +41,7 @@ function rafraichirCarteSolutions() {
 
   const fd = new FormData();
   fd.append('action', 'chasse_solution_status');
+  fd.append('nonce', window.solutionsCreate?.nonce || '');
   fd.append('chasse_id', chasseId);
   if (enigmeId) fd.append('enigme_id', enigmeId);
   fetch(ajaxUrl, { method: 'POST', credentials: 'same-origin', body: fd })

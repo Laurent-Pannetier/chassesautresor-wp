@@ -209,6 +209,7 @@ function enqueue_core_edit_scripts(array $additional = [])
         'solutionsCreate',
         [
           'ajaxUrl' => admin_url('admin-ajax.php'),
+          'nonce'   => wp_create_nonce('solution_management'),
           'texts'   => [
             'close'      => __('Fermer', 'chassesautresor-com'),
             'contenu'    => __('Texte de la solution', 'chassesautresor-com'),
