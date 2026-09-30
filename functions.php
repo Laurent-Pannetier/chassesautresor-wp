@@ -617,6 +617,7 @@ if (defined('WP_CLI') && WP_CLI) {
 require_once $inc_path . 'shortcodes-init.php';
 require_once $inc_path . 'enigme-functions.php';
 require_once $inc_path . 'user-functions.php';
+require_once $inc_path . 'myaccount-functions.php';
 require_once $inc_path . 'chasse-functions.php';
 require_once $inc_path . 'gamify-functions.php';
 require_once $inc_path . 'utils/titres.php';

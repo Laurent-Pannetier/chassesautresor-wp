@@ -24,7 +24,8 @@ $statut_metier   = $infos_chasse['statut'] ?? 'revision';
 $autorise_boucle = (
     user_can($utilisateur_id, 'manage_options') ||
     $est_orga_associe ||
-    utilisateur_est_engage_dans_chasse($utilisateur_id, $chasse_id)
+    utilisateur_est_engage_dans_chasse($utilisateur_id, $chasse_id) ||
+    $statut_metier === 'termine'
 );
 if (!$autorise_boucle) {
     return;

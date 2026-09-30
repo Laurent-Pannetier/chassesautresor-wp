@@ -64,6 +64,12 @@ function build_picture_enigme(int $image_id, string $alt, array $sizes, array $i
         $sizes = ['full'];
     }
 
+    $largest_index = max(array_map(
+        static fn (string $size): int => (int) array_search($size, $order, true),
+        $sizes
+    ));
+    $sizes = array_values(array_intersect(array_slice($order, 0, $largest_index + 1), $valid_sizes));
+
     usort(
         $sizes,
         static fn (string $a, string $b): int => array_search($a, $order, true) <=> array_search($b, $order, true)
