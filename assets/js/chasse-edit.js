@@ -94,6 +94,7 @@ function rafraichirCarteIndices() {
 
   const formData = new FormData();
   formData.append('action', 'chasse_lister_indices');
+  formData.append('nonce', ChasseIndices.hintNonce || '');
   formData.append('chasse_id', ChasseIndices.chasseId);
 
   fetch(ChasseIndices.ajaxUrl, {

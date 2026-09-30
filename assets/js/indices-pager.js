@@ -3,6 +3,7 @@
     var page = wrapper.dataset.page || '1';
     var formData = new FormData();
     formData.append('action', 'indices_lister_table');
+    formData.append('nonce', (window.indicesCreate && indicesCreate.nonce) || '');
     formData.append('objet_id', wrapper.dataset.objetId);
     formData.append('objet_type', wrapper.dataset.objetType);
     formData.append('page', page);

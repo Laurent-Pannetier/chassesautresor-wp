@@ -46,6 +46,16 @@ if (!class_exists(ChassesAuTresor\Core\Content\HintOrderingUpdater::class, false
         . '/plugins/chassesautresor-core/src/Content/HintOrderingUpdater.php';
 }
 
+if (!class_exists(ChassesAuTresor\Core\Content\HintOrderingApplicationService::class, false)) {
+    require_once dirname(__DIR__, 4)
+        . '/plugins/chassesautresor-core/src/Content/HintOrderingApplicationService.php';
+}
+
+if (!class_exists(ChassesAuTresor\Core\Content\HintOrderingLifecycleHookHandler::class, false)) {
+    require_once dirname(__DIR__, 4)
+        . '/plugins/chassesautresor-core/src/Content/HintOrderingLifecycleHookHandler.php';
+}
+
 if (!class_exists(ChassesAuTresor\Core\Content\HintCreationService::class, false)) {
     require_once dirname(__DIR__, 4)
         . '/plugins/chassesautresor-core/src/Content/HintCreationService.php';
@@ -96,11 +106,6 @@ if (!class_exists(ChassesAuTresor\Core\Content\HintDeletionAjaxHandler::class, f
         . '/plugins/chassesautresor-core/src/Content/HintDeletionAjaxHandler.php';
 }
 
-if (!class_exists(ChassesAuTresor\Core\Content\HintDeletionLifecycleService::class, false)) {
-    require_once dirname(__DIR__, 4)
-        . '/plugins/chassesautresor-core/src/Content/HintDeletionLifecycleService.php';
-}
-
 if (!class_exists(ChassesAuTresor\Core\Content\HintRelationshipService::class, false)) {
     require_once dirname(__DIR__, 4)
         . '/plugins/chassesautresor-core/src/Content/HintRelationshipService.php';
@@ -141,19 +146,6 @@ function cat_get_hint_title_service(): ChassesAuTresor\Core\Content\HintTitleSer
     return new ChassesAuTresor\Core\Content\HintTitleService();
 }
 
-function cat_get_hint_ordering_service(): ChassesAuTresor\Core\Content\HintOrderingService
-{
-    return new ChassesAuTresor\Core\Content\HintOrderingService(cat_get_hint_title_service());
-}
-
-function cat_get_hint_ordering_updater(): ChassesAuTresor\Core\Content\HintOrderingUpdater
-{
-    return new ChassesAuTresor\Core\Content\HintOrderingUpdater(
-        cat_get_hint_ordering_service(),
-        new ChassesAuTresor\Core\Relationships\RelationshipService()
-    );
-}
-
 function cat_get_hint_creation_service(): ChassesAuTresor\Core\Content\HintCreationService
 {
     return new ChassesAuTresor\Core\Content\HintCreationService();
@@ -182,11 +174,6 @@ function cat_get_hint_deletion_service(): ChassesAuTresor\Core\Content\HintDelet
     return new ChassesAuTresor\Core\Content\HintDeletionService(
         new ChassesAuTresor\Core\Relationships\RelationshipService()
     );
-}
-
-function cat_get_hint_deletion_lifecycle_service(): ChassesAuTresor\Core\Content\HintDeletionLifecycleService
-{
-    return new ChassesAuTresor\Core\Content\HintDeletionLifecycleService(cat_get_hint_deletion_service());
 }
 
 function cat_get_hint_relationship_service(): ChassesAuTresor\Core\Content\HintRelationshipService
@@ -268,76 +255,6 @@ function prochain_rang_indice(int $objet_id, string $objet_type): int
 }
 
 /**
- * Renomme les indices d'une chasse ou d'une énigme en séquence.
- *
- * @param int    $objet_id   ID de la chasse ou de l'énigme.
- * @param string $objet_type Type de cible ('chasse' ou 'enigme').
- * @return void
- */
-function reordonner_indices(int $objet_id, string $objet_type): void
-{
-    static $processing = false;
-    $queryArgs = cat_get_hint_query_service()->getRankedHintIdsQueryArgs($objet_id, $objet_type, true);
-    if ($queryArgs === [] || $processing) {
-        return;
-    }
-
-    $processing = true;
-    try {
-        cat_get_hint_ordering_updater()->apply(
-            get_posts($queryArgs),
-            $objet_type,
-            $objet_id,
-            defined('TITRE_DEFAUT_INDICE') ? TITRE_DEFAUT_INDICE : '',
-            defined('INDICE_DEFAULT_PREFIX') ? INDICE_DEFAULT_PREFIX : '',
-            static fn (int $hintId): string => (string) get_post_field('post_title', $hintId),
-            static fn (int $hintId) => get_field('indice_chasse_linked', $hintId),
-            static fn (int $huntId): string => build_indice_placeholder_title($huntId),
-            static fn (array $postData) => wp_update_post($postData),
-            static fn (int $hintId, string $key, int $rank) => update_post_meta($hintId, $key, $rank)
-        );
-    } finally {
-        $processing = false;
-    }
-}
-
-/**
- * Renomme les indices liés à l'indice donné.
- *
- * @param int $indice_id ID de l'indice.
- * @return void
- */
-function reordonner_indices_pour_indice(int $indice_id): void
-{
-    $targets = cat_get_hint_ordering_updater()->resolveAffectedTargets(
-        (string) get_field('indice_cible_type', $indice_id),
-        get_field('indice_chasse_linked', $indice_id),
-        get_field('indice_enigme_linked', $indice_id),
-        static fn (int $riddleId) => recuperer_id_chasse_associee($riddleId)
-    );
-    foreach ($targets as $target) {
-        reordonner_indices($target['id'], $target['type']);
-    }
-}
-
-/**
- * Réordonne les indices après sauvegarde d'un indice.
- *
- * @param int $post_id ID de l'indice.
- * @return void
- */
-function reordonner_indices_apres_enregistrement(int $post_id): void
-{
-    if (wp_is_post_revision($post_id) || wp_is_post_autosave($post_id)) {
-        return;
-    }
-
-    reordonner_indices_pour_indice($post_id);
-}
-
-add_action('save_post_indice', 'reordonner_indices_apres_enregistrement', 20, 1);
-
-/**
  * Crée un indice lié à une chasse ou une énigme.
  *
  * @param int      $objet_id   ID de la chasse ou de l’énigme.
@@ -401,7 +318,7 @@ function creer_indice_pour_objet(int $objet_id, string $objet_type, ?int $user_i
         return $indice_id;
     }
 
-    reordonner_indices($objet_id, $objet_type);
+    (new ChassesAuTresor\Core\Content\HintOrderingApplicationService())->applyTarget($objet_id, $objet_type);
 
     return $indice_id;
 }
@@ -482,214 +399,6 @@ function creer_indice_et_rediriger_si_appel(): void
 }
 add_action('template_redirect', 'creer_indice_et_rediriger_si_appel');
 
-/**
- * AJAX handler listing enigmas available for a hunt.
- *
- * @return void
- */
-function ajax_chasse_lister_enigmes(): void
-{
-    if (!is_user_logged_in()) {
-        wp_send_json_error('non_connecte');
-    }
-
-    $chasse_id = isset($_POST['chasse_id']) ? (int) $_POST['chasse_id'] : 0;
-
-    if (!$chasse_id || get_post_type($chasse_id) !== 'chasse') {
-        wp_send_json_error('post_invalide');
-    }
-
-    if (!indice_action_autorisee('create', 'chasse', $chasse_id)) {
-        wp_send_json_error('acces_refuse');
-    }
-
-    $posts = recuperer_enigmes_pour_chasse($chasse_id);
-    $excludeSolutions = !empty($_POST['sans_solution']);
-    $enigmes = cat_get_hint_management_service()->buildRiddleOptions(
-        $posts,
-        prochain_rang_indice($chasse_id, 'chasse'),
-        static fn ($riddle): bool => $excludeSolutions
-            && solution_existe_pour_objet((int) $riddle->ID, 'enigme'),
-        static fn ($riddle): string => (string) get_the_title($riddle)
-    );
-
-    wp_send_json_success(['enigmes' => $enigmes]);
-}
-add_action('wp_ajax_chasse_lister_enigmes', 'ajax_chasse_lister_enigmes');
-
-/**
- * AJAX handler returning indices card HTML for a hunt.
- *
- * @return void
- */
-function ajax_chasse_lister_indices(): void
-{
-    if (!is_user_logged_in()) {
-        wp_send_json_error('non_connecte');
-    }
-
-    $chasse_id = isset($_POST['chasse_id']) ? (int) $_POST['chasse_id'] : 0;
-
-    if (!$chasse_id || get_post_type($chasse_id) !== 'chasse') {
-        wp_send_json_error('post_invalide');
-    }
-
-    if (!indice_action_autorisee('edit', 'chasse', $chasse_id)) {
-        wp_send_json_error('acces_refuse');
-    }
-
-    ob_start();
-    get_template_part(
-        'template-parts/chasse/partials/chasse-partial-indices',
-        null,
-        [
-            'objet_id'   => $chasse_id,
-            'objet_type' => 'chasse',
-        ]
-    );
-    $html = ob_get_clean();
-
-    wp_send_json_success(['html' => $html]);
-}
-add_action('wp_ajax_chasse_lister_indices', 'ajax_chasse_lister_indices');
-
-/**
- * AJAX handler returning indices table HTML.
- *
- * @return void
- */
-function ajax_indices_lister_table(): void
-{
-    if (!is_user_logged_in()) {
-        wp_send_json_error('non_connecte');
-    }
-
-    $objet_id   = isset($_POST['objet_id']) ? (int) $_POST['objet_id'] : 0;
-    $objet_type = sanitize_key($_POST['objet_type'] ?? '');
-    $page       = isset($_POST['page']) ? (int) $_POST['page'] : 1;
-    $chasse_id  = isset($_POST['chasse_id']) ? (int) $_POST['chasse_id'] : 0;
-    $enigme_id  = isset($_POST['enigme_id']) ? (int) $_POST['enigme_id'] : 0;
-
-    if (!$objet_id || !in_array($objet_type, ['chasse', 'enigme'], true)
-        || get_post_type($objet_id) !== $objet_type
-    ) {
-        wp_send_json_error('post_invalide');
-    }
-
-    if (!indice_action_autorisee('edit', $objet_type, $objet_id)) {
-        wp_send_json_error('acces_refuse');
-    }
-
-    if ($objet_type === 'enigme') {
-        $enigme_id = $objet_id;
-        if (!$chasse_id) {
-            $chasse_id = (int) recuperer_id_chasse_associee($enigme_id);
-        }
-    } elseif ($objet_type === 'chasse') {
-        $chasse_id = $objet_id;
-    }
-
-    $per_page = $objet_type === 'chasse' ? 5 : 8;
-    $enigme_ids = $objet_type === 'chasse' ? recuperer_ids_enigmes_pour_chasse($objet_id) : [];
-    $query_service = cat_get_hint_query_service();
-
-    $ids = [];
-    if (function_exists('get_posts')) {
-        $ids = get_posts($query_service->getManagementTableQueryArgs(
-            $objet_id,
-            $objet_type,
-            $enigme_ids,
-            $page,
-            $per_page,
-            true
-        ));
-    }
-
-    $pagination = cat_get_hint_management_service()->paginate(
-        $page,
-        is_countable($ids) ? count($ids) : 0,
-        $per_page
-    );
-    $page = $pagination['page'];
-    $total_pages = $pagination['pages'];
-
-    $query_args = $query_service->getManagementTableQueryArgs(
-        $objet_id,
-        $objet_type,
-        $enigme_ids,
-        $page,
-        $per_page
-    );
-    $query      = new WP_Query($query_args);
-
-    $counts = [
-        'total' => is_countable($ids) ? count($ids) : 0,
-        'hunt' => 0,
-        'riddle' => 0,
-    ];
-    if (function_exists('get_post_meta')) {
-        $counts = cat_get_hint_management_service()->countByTargetType(
-            $ids,
-            static fn (int $hintId): string => (string) get_post_meta(
-                $hintId,
-                'indice_cible_type',
-                true
-            )
-        );
-    }
-    $count_total = $counts['total'];
-    $count_chasse = $counts['hunt'];
-    $count_enigme = $counts['riddle'];
-
-    $has_enigme_indices = false;
-    if ($enigme_id) {
-        $riddle_hint_query = $query_service->getManagementTableQueryArgs(
-            $enigme_id,
-            'enigme',
-            [],
-            1,
-            1,
-            true
-        );
-        $has_enigme_indices = function_exists('get_posts')
-            ? count(get_posts($riddle_hint_query)) > 0
-            : false;
-    }
-
-    $toggle_args = null;
-    if ($has_enigme_indices && $chasse_id && $enigme_id) {
-        $toggle_args = [
-            'chasse_id' => $chasse_id,
-            'enigme_id' => $enigme_id,
-            'label'     => $objet_type === 'enigme'
-                ? __('Voir tous les indices de la chasse', 'chassesautresor-com')
-                : __('Voir les indices de cette énigme', 'chassesautresor-com'),
-        ];
-    }
-
-    ob_start();
-    get_template_part('template-parts/common/indices-table', null, [
-        'indices'      => $query->posts,
-        'page'         => $page,
-        'pages'        => $total_pages,
-        'objet_type'   => $objet_type,
-        'objet_id'     => $objet_id,
-        'count_total'  => $count_total,
-        'count_chasse' => $count_chasse,
-        'count_enigme' => $count_enigme,
-        'toggle'       => $toggle_args,
-    ]);
-    $html = ob_get_clean();
-
-    wp_send_json_success([
-        'html'  => $html,
-        'page'  => $page,
-        'pages' => $total_pages,
-    ]);
-}
-add_action('wp_ajax_indices_lister_table', 'ajax_indices_lister_table');
-
-
 function autoriser_gestion_indice(
     bool $allowed,
     string $action,
@@ -699,6 +408,86 @@ function autoriser_gestion_indice(
     return indice_action_autorisee($action, $targetType, $targetId);
 }
 add_filter('chassesautresor_can_manage_hint', 'autoriser_gestion_indice', 10, 4);
+
+function rendre_carte_indices(string $html, int $huntId): string
+{
+    ob_start();
+    get_template_part(
+        'template-parts/chasse/partials/chasse-partial-indices',
+        null,
+        ['objet_id' => $huntId, 'objet_type' => 'chasse']
+    );
+
+    return (string) ob_get_clean();
+}
+add_filter('chassesautresor_render_hint_card', 'rendre_carte_indices', 10, 2);
+
+/** @return int[] */
+function fournir_ids_enigmes_table_indice(array $riddleIds, int $huntId): array
+{
+    return recuperer_ids_enigmes_pour_chasse($huntId);
+}
+add_filter('chassesautresor_hint_hunt_riddle_ids', 'fournir_ids_enigmes_table_indice', 10, 2);
+
+function fournir_chasse_liee_table_indice(int $huntId, int $riddleId): int
+{
+    return (int) recuperer_id_chasse_associee($riddleId);
+}
+add_filter('chassesautresor_hint_related_hunt_id', 'fournir_chasse_liee_table_indice', 10, 2);
+
+/**
+ * @param object[] $hints
+ * @param array{total:int,hunt:int,riddle:int} $counts
+ * @param array<string, mixed>|null $toggle
+ */
+function rendre_table_indices(
+    string $html,
+    array $hints,
+    int $page,
+    int $pages,
+    string $targetType,
+    int $targetId,
+    array $counts,
+    ?array $toggle
+): string {
+    ob_start();
+    get_template_part('template-parts/common/indices-table', null, [
+        'indices' => $hints,
+        'page' => $page,
+        'pages' => $pages,
+        'objet_type' => $targetType,
+        'objet_id' => $targetId,
+        'count_total' => $counts['total'],
+        'count_chasse' => $counts['hunt'],
+        'count_enigme' => $counts['riddle'],
+        'toggle' => $toggle,
+    ]);
+
+    return (string) ob_get_clean();
+}
+add_filter('chassesautresor_render_hint_table', 'rendre_table_indices', 10, 9);
+
+/** @return array<int, object> */
+function fournir_enigmes_cibles_indice(array $riddles, int $huntId): array
+{
+    return recuperer_enigmes_pour_chasse($huntId);
+}
+add_filter('chassesautresor_hint_target_riddles', 'fournir_enigmes_cibles_indice', 10, 2);
+
+function fournir_prochain_rang_indice(
+    int $rank,
+    int $targetId,
+    string $targetType
+): int {
+    return prochain_rang_indice($targetId, $targetType);
+}
+add_filter('chassesautresor_next_hint_rank', 'fournir_prochain_rang_indice', 10, 3);
+
+function indiquer_solution_cible_indice(bool $exists, int $targetId, string $targetType): bool
+{
+    return solution_existe_pour_objet($targetId, $targetType);
+}
+add_filter('chassesautresor_hint_target_has_solution', 'indiquer_solution_cible_indice', 10, 3);
 
 /**
  * @param mixed $hintId
@@ -722,21 +511,6 @@ function autoriser_modification_champs_indice(bool $allowed, int $hintId): bool
     return utilisateur_peut_editer_champs($hintId);
 }
 add_filter('chassesautresor_can_edit_hint_fields', 'autoriser_modification_champs_indice', 10, 2);
-
-function actualiser_cache_indice_demande(int $hintId): void
-{
-    mettre_a_jour_cache_indice($hintId);
-}
-add_action('chassesautresor_hint_cache_refresh_requested', 'actualiser_cache_indice_demande');
-
-
-
-function reordonner_indices_demande(int $targetId, string $targetType): void
-{
-    reordonner_indices($targetId, $targetType);
-}
-add_action('chassesautresor_hint_reorder_requested', 'reordonner_indices_demande', 10, 2);
-
 
 /**
  * Pré-remplit automatiquement la chasse liée d'un indice lors de sa création.
@@ -771,136 +545,3 @@ function pre_remplir_indice_chasse_linked(array $field): array
     return $field;
 }
 add_filter('acf/load_field/name=indice_chasse_linked', 'pre_remplir_indice_chasse_linked');
-
-/**
- * Sauvegarde la chasse liée si le champ est vide lors de l'enregistrement.
- *
- * @hook acf/save_post
- *
- * @param int|string $post_id ID du post ACF.
- * @return void
- */
-function sauvegarder_indice_chasse_si_manquant($post_id): void
-{
-    if (!is_numeric($post_id) || get_post_type((int) $post_id) !== 'indice') {
-        return;
-    }
-
-    if (wp_is_post_revision($post_id) || wp_is_post_autosave($post_id)) {
-        return;
-    }
-
-    $chasse = get_field('indice_chasse_linked', $post_id);
-    if ($chasse) {
-        return;
-    }
-
-    $relationshipService = cat_get_hint_relationship_service();
-    $chasse_id = $relationshipService->resolveLinkedHuntId(
-        (string) get_field('indice_cible_type', $post_id),
-        get_field('indice_enigme_linked', $post_id),
-        isset($_GET['chasse_id']) ? (int) $_GET['chasse_id'] : null,
-        static fn (int $riddleId) => recuperer_id_chasse_associee($riddleId)
-    );
-    $relationshipService->persistLinkedHunt($post_id, $chasse_id, 'update_field');
-}
-add_action('acf/save_post', 'sauvegarder_indice_chasse_si_manquant', 20);
-
-/**
- * Met à jour les champs de cache d'un indice.
- *
- * @param int|string $post_id  ID du post ACF.
- * @param int|null   $chasse_id ID de la chasse si connu.
- * @return void
- */
-function mettre_a_jour_cache_indice($post_id, ?int $chasse_id = null): void
-{
-    if (!is_numeric($post_id) || get_post_type((int) $post_id) !== 'indice') {
-        return;
-    }
-
-    if (wp_is_post_revision($post_id) || wp_is_post_autosave($post_id)) {
-        return;
-    }
-
-    $relationshipService = cat_get_hint_relationship_service();
-    $chasse_linked = $relationshipService->normalizeHuntId(get_field('indice_chasse_linked', $post_id));
-    if ($chasse_linked === null) {
-        $chasse_linked = $relationshipService->resolveLinkedHuntId(
-            (string) get_field('indice_cible_type', $post_id),
-            get_field('indice_enigme_linked', $post_id),
-            $chasse_id,
-            static fn (int $riddleId) => recuperer_id_chasse_associee($riddleId)
-        );
-        $relationshipService->persistLinkedHunt($post_id, $chasse_linked, 'update_field');
-    }
-
-    cat_get_hint_cache_updater()->update(
-        (int) $post_id,
-        time(),
-        'get_field',
-        static fn (string $date) => $date !== '' ? convertir_en_datetime($date) : null,
-        'get_post_status',
-        'get_post',
-        'update_field',
-        'wp_update_post'
-    );
-
-    reordonner_indices_pour_indice((int) $post_id);
-}
-
-add_action('acf/save_post', 'mettre_a_jour_cache_indice', 30);
-
-/**
- * Met à jour les indices programmés dont la date est passée.
- *
- * @return void
- */
-function basculer_indices_programmes(): void
-{
-    ChassesAuTresor\Core\Content\HintScheduler::run();
-}
-
-add_action(
-    ChassesAuTresor\Core\Content\HintScheduler::PROCESS_HOOK,
-    'mettre_a_jour_cache_indice'
-);
-
-/**
- * Enregistre la cible d'un indice avant suppression définitive.
- *
- * @param int $post_id ID du post.
- * @return void
- */
-function memoriser_cible_indice_avant_suppression(int $post_id): void
-{
-    global $indice_delete_context;
-
-    $indice_delete_context = cat_get_hint_deletion_lifecycle_service()->capture(
-        (string) get_post_type($post_id),
-        (string) get_field('indice_cible_type', $post_id),
-        get_field('indice_chasse_linked', $post_id),
-        get_field('indice_enigme_linked', $post_id),
-        static fn (int $riddleId): int => (int) recuperer_id_chasse_associee($riddleId)
-    );
-}
-add_action('before_delete_post', 'memoriser_cible_indice_avant_suppression');
-
-/**
- * Réordonne les indices après suppression définitive.
- *
- * @param int $post_id ID du post.
- * @return void
- */
-function reordonner_indices_apres_suppression(int $post_id): void
-{
-    global $indice_delete_context;
-    $targets = cat_get_hint_deletion_lifecycle_service()->restoreTargets($indice_delete_context);
-    foreach ($targets as $target) {
-        reordonner_indices($target['id'], $target['type']);
-    }
-
-    $indice_delete_context = null;
-}
-add_action('deleted_post', 'reordonner_indices_apres_suppression');
-add_action('trashed_post', 'reordonner_indices_pour_indice');

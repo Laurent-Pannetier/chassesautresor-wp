@@ -176,6 +176,7 @@
       var titleSpan = overlay.querySelector('.objet-titre');
       var fd = new FormData();
       fd.append('action', 'chasse_lister_enigmes');
+      fd.append('nonce', solutionsCreate.hintNonce || '');
       fd.append('chasse_id', btn.dataset.chasseId || '');
       fd.append('sans_solution', '1');
       fetch(solutionsCreate.ajaxUrl, { method: 'POST', credentials: 'same-origin', body: fd })

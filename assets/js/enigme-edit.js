@@ -552,6 +552,7 @@ document.addEventListener('click', (e) => {
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
       action: 'desactiver_htaccess_enigme',
+      nonce: window.CHP_ENIGME_DEFAUT?.nonce || '',
       post_id: postId
     })
   })
@@ -591,6 +592,7 @@ document.querySelector('#panneau-images-enigme .panneau-fermer')?.addEventListen
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
         action: 'reactiver_htaccess_immediat_enigme',
+        nonce: window.CHP_ENIGME_DEFAUT?.nonce || '',
         post_id: postId
       })
     }).then(r => r.json())

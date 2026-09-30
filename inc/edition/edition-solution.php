@@ -27,34 +27,14 @@ if (!class_exists(ChassesAuTresor\Core\Content\SolutionCreationService::class, f
         . '/plugins/chassesautresor-core/src/Content/SolutionCreationService.php';
 }
 
-if (!class_exists(ChassesAuTresor\Core\Content\SolutionDeletionService::class, false)) {
-    require_once dirname(__DIR__, 4)
-        . '/plugins/chassesautresor-core/src/Content/SolutionDeletionService.php';
-}
-
 if (!class_exists(ChassesAuTresor\Core\Content\SolutionFieldPolicyService::class, false)) {
     require_once dirname(__DIR__, 4)
         . '/plugins/chassesautresor-core/src/Content/SolutionFieldPolicyService.php';
 }
 
-if (!class_exists(ChassesAuTresor\Core\Content\SolutionFileInputService::class, false)) {
-    require_once dirname(__DIR__, 4)
-        . '/plugins/chassesautresor-core/src/Content/SolutionFileInputService.php';
-}
-
 if (!class_exists(ChassesAuTresor\Core\Content\SolutionManagementService::class, false)) {
     require_once dirname(__DIR__, 4)
         . '/plugins/chassesautresor-core/src/Content/SolutionManagementService.php';
-}
-
-if (!class_exists(ChassesAuTresor\Core\Content\SolutionModalPolicyService::class, false)) {
-    require_once dirname(__DIR__, 4)
-        . '/plugins/chassesautresor-core/src/Content/SolutionModalPolicyService.php';
-}
-
-if (!class_exists(ChassesAuTresor\Core\Content\SolutionMutationService::class, false)) {
-    require_once dirname(__DIR__, 4)
-        . '/plugins/chassesautresor-core/src/Content/SolutionMutationService.php';
 }
 
 if (!class_exists(ChassesAuTresor\Core\Content\SolutionPostFactory::class, false)) {
@@ -306,308 +286,76 @@ function creer_solution_et_rediriger_si_appel(): void
 add_action('template_redirect', 'creer_solution_et_rediriger_si_appel');
 
 /**
- * Liste les solutions via AJAX pour un objet donné.
- *
- * @return void
+ * Connects the core solution controllers to the theme permission policy.
  */
-function ajax_solutions_lister_table(): void
+function autoriser_gestion_solution(bool $allowed, string $action, string $targetType, int $targetId): bool
 {
-    check_ajax_referer('solution_management', 'nonce');
-    $managementService = new ChassesAuTresor\Core\Content\SolutionManagementService();
+    return solution_action_autorisee($action, $targetType, $targetId);
+}
+add_filter('chassesautresor_can_manage_solution', 'autoriser_gestion_solution', 10, 4);
 
-    if (!is_user_logged_in()) {
-        wp_send_json_error('non_connecte');
-    }
+/**
+ * Connects the core solution creation controller to the theme creation adapter.
+ *
+ * @param mixed $solutionId Previous filtered value.
+ * @return int|WP_Error
+ */
+function creer_solution_depuis_core($solutionId, int $targetId, string $targetType)
+{
+    return creer_solution_pour_objet($targetId, $targetType);
+}
+add_filter('chassesautresor_create_solution', 'creer_solution_depuis_core', 10, 3);
 
-    $objet_id   = isset($_POST['objet_id']) ? (int) $_POST['objet_id'] : 0;
-    $objet_type = sanitize_key($_POST['objet_type'] ?? '');
-    $page       = isset($_POST['page']) ? (int) $_POST['page'] : 1;
+/**
+ * Provides riddle IDs to the core solution management controllers.
+ *
+ * @return int[]
+ */
+function fournir_ids_enigmes_solution(array $riddleIds, int $huntId): array
+{
+    return recuperer_ids_enigmes_pour_chasse($huntId);
+}
+add_filter('chassesautresor_hunt_riddle_ids', 'fournir_ids_enigmes_solution', 10, 2);
 
-    if (!$objet_id || !in_array($objet_type, ['chasse', 'enigme'], true)
-        || get_post_type($objet_id) !== $objet_type
-    ) {
-        wp_send_json_error('post_invalide');
-    }
+/**
+ * Provides hunt riddles to the core solution status controller.
+ *
+ * @return array<int, object>
+ */
+function fournir_enigmes_solution(array $riddles, int $huntId): array
+{
+    return recuperer_enigmes_pour_chasse($huntId);
+}
+add_filter('chassesautresor_hunt_riddles', 'fournir_enigmes_solution', 10, 2);
 
-    if (!solution_action_autorisee('edit', $objet_type, $objet_id)) {
-        wp_send_json_error('acces_refuse');
-    }
+function indiquer_existence_solution(bool $exists, int $targetId, string $targetType): bool
+{
+    return solution_existe_pour_objet($targetId, $targetType);
+}
+add_filter('chassesautresor_solution_exists', 'indiquer_existence_solution', 10, 3);
 
-    $per_page = 5;
-    $enigme_ids = $objet_type === 'chasse' ? recuperer_ids_enigmes_pour_chasse($objet_id) : [];
-    $queryService = new ChassesAuTresor\Core\Content\SolutionQueryService();
-    $page       = $managementService->normalizePage($page, 0);
-    $query_args = $queryService->getManagementQueryArgs(
-        $objet_id,
-        $objet_type,
-        $enigme_ids,
-        $page,
-        $per_page
-    );
-    $query      = new WP_Query($query_args);
-    $total_pages = (int) $query->max_num_pages;
-    $normalizedPage = $managementService->normalizePage($page, $total_pages);
-    if ($normalizedPage !== $page) {
-        $page                  = $normalizedPage;
-        $query_args['paged']   = $page;
-        $query                 = new WP_Query($query_args);
-        $total_pages           = (int) $query->max_num_pages;
-    }
-
+/**
+ * Renders solution rows requested by the core controller.
+ *
+ * @param object[] $solutions
+ */
+function rendre_table_solutions(
+    string $html,
+    array $solutions,
+    int $page,
+    int $pages,
+    string $targetType,
+    int $targetId
+): string {
     ob_start();
     get_template_part('template-parts/common/solutions-table', null, [
-        'solutions'  => $query->posts,
-        'page'       => $page,
-        'pages'      => $total_pages,
-        'objet_type' => $objet_type,
-        'objet_id'   => $objet_id,
+        'solutions' => $solutions,
+        'page' => $page,
+        'pages' => $pages,
+        'objet_type' => $targetType,
+        'objet_id' => $targetId,
     ]);
-    $html = ob_get_clean();
 
-    wp_send_json_success([
-        'html'  => $html,
-        'page'  => $page,
-        'pages' => $total_pages,
-    ]);
+    return (string) ob_get_clean();
 }
-add_action('wp_ajax_solutions_lister_table', 'ajax_solutions_lister_table');
-
-/**
- * Retourne l'état des boutons d'ajout de solutions pour une chasse.
- *
- * @return void
- */
-function ajax_chasse_solution_status(): void
-{
-    check_ajax_referer('solution_management', 'nonce');
-    $managementService = new ChassesAuTresor\Core\Content\SolutionManagementService();
-
-    if (!is_user_logged_in()) {
-        wp_send_json_error('non_connecte');
-    }
-
-    $chasse_id = isset($_POST['chasse_id']) ? (int) $_POST['chasse_id'] : 0;
-    $enigme_id = isset($_POST['enigme_id']) ? (int) $_POST['enigme_id'] : 0;
-
-    if (!$chasse_id || get_post_type($chasse_id) !== 'chasse') {
-        wp_send_json_error('post_invalide');
-    }
-    if ($enigme_id && get_post_type($enigme_id) !== 'enigme') {
-        $enigme_id = 0;
-    }
-
-    if (!solution_action_autorisee('create', 'chasse', $chasse_id)) {
-        wp_send_json_error('acces_refuse');
-    }
-
-    $has_solution_chasse = solution_existe_pour_objet($chasse_id, 'chasse');
-    $has_solution_enigme = $enigme_id ? solution_existe_pour_objet($enigme_id, 'enigme') : false;
-
-    $toutes_enigmes = recuperer_enigmes_pour_chasse($chasse_id);
-    $enigmes        = array_filter(
-        $toutes_enigmes,
-        static fn($e) => !solution_existe_pour_objet($e->ID, 'enigme')
-    );
-    $total_solutions = 0;
-    if (function_exists('get_posts')) {
-        $enigme_ids = array_map(static fn($e) => (int) $e->ID, $toutes_enigmes);
-        $queryService = new ChassesAuTresor\Core\Content\SolutionQueryService();
-        $count_posts = get_posts($queryService->getManagementQueryArgs(
-            $chasse_id,
-            'chasse',
-            $enigme_ids,
-            1,
-            1,
-            true
-        ));
-        $total_solutions = is_array($count_posts) ? count($count_posts) : 0;
-    }
-
-    wp_send_json_success($managementService->buildHuntStatus(
-        $has_solution_chasse,
-        $has_solution_enigme,
-        count($toutes_enigmes),
-        count($enigmes),
-        $total_solutions
-    ));
-}
-add_action('wp_ajax_chasse_solution_status', 'ajax_chasse_solution_status');
-
-/**
- * Résout le fichier soumis par les modales de création et d'édition.
- *
- * @return array{id:int,submitted:bool,error:?string}
- */
-function solution_resoudre_fichier_modal(int $solution_id): array
-{
-    return (new ChassesAuTresor\Core\Content\SolutionFileInputService())->resolve(
-        $solution_id,
-        isset($_FILES['solution_fichier']) ? (array) $_FILES['solution_fichier'] : [],
-        isset($_POST['solution_fichier']),
-        isset($_POST['solution_fichier']) ? (int) $_POST['solution_fichier'] : 0,
-        static function (int $post_id) {
-            if (!function_exists('media_handle_upload')) {
-                require_once ABSPATH . 'wp-admin/includes/file.php';
-                require_once ABSPATH . 'wp-admin/includes/media.php';
-                require_once ABSPATH . 'wp-admin/includes/image.php';
-            }
-
-            return media_handle_upload('solution_fichier', $post_id);
-        },
-        'is_wp_error',
-        static fn ($error): string => $error->get_error_message()
-    );
-}
-
-/**
- * Crée une solution via une requête AJAX depuis une modale.
- *
- * @return void
- */
-function ajax_creer_solution_modal(): void
-{
-    check_ajax_referer('solution_management', 'nonce');
-    $fieldPolicy = new ChassesAuTresor\Core\Content\SolutionFieldPolicyService();
-    $isAuthenticated = is_user_logged_in();
-    $objet_id   = $isAuthenticated && isset($_POST['objet_id']) ? (int) $_POST['objet_id'] : 0;
-    $objet_type = $isAuthenticated ? sanitize_key($_POST['objet_type'] ?? '') : '';
-    $hasValidTarget = $objet_id > 0
-        && in_array($objet_type, ['chasse', 'enigme'], true)
-        && get_post_type($objet_id) === $objet_type;
-    $linked = isset($_POST['solution_enigme_linked']) ? (int) $_POST['solution_enigme_linked'] : 0;
-    $hasConsistentTarget = $hasValidTarget
-        && $fieldPolicy->hasConsistentRiddleTarget($objet_type, $objet_id, $linked);
-    $isAuthorized = $hasConsistentTarget && solution_action_autorisee('create', $objet_type, $objet_id);
-    $has_file   = !empty($_FILES['solution_fichier']['tmp_name']) || !empty($_POST['solution_fichier']);
-    $rawExplanation = (string) ($_POST['solution_explication'] ?? '');
-    $requestError = (new ChassesAuTresor\Core\Content\SolutionModalPolicyService())->getCreationError(
-        $isAuthenticated,
-        $hasValidTarget,
-        $hasConsistentTarget,
-        $isAuthorized,
-        $fieldPolicy->hasRequiredContent($has_file, $rawExplanation)
-    );
-    if ($requestError !== null) {
-        wp_send_json_error($requestError);
-    }
-
-    $solution_id = creer_solution_pour_objet($objet_id, $objet_type);
-    if (is_wp_error($solution_id)) {
-        wp_send_json_error($solution_id->get_error_message());
-    }
-
-    $fileInput = solution_resoudre_fichier_modal($solution_id);
-    if ($fileInput['error'] !== null) {
-        wp_send_json_error($fileInput['error']);
-    }
-
-    $explic = wp_kses_post($rawExplanation);
-    $dispo  = sanitize_key($_POST['solution_disponibilite'] ?? 'fin_chasse');
-    $delai  = isset($_POST['solution_decalage_jours']) ? (int) $_POST['solution_decalage_jours'] : 0;
-    $heure  = sanitize_text_field($_POST['solution_heure_publication'] ?? '');
-
-    $schedule = $fieldPolicy->normalizeSchedule($dispo, $delai, $heure);
-    ChassesAuTresor\Core\Content\SolutionMutationService::apply(
-        $solution_id,
-        $fileInput['id'],
-        false,
-        $explic,
-        $schedule,
-        false
-    );
-
-    wp_send_json_success(['solution_id' => $solution_id]);
-}
-add_action('wp_ajax_creer_solution_modal', 'ajax_creer_solution_modal');
-
-/**
- * Met à jour une solution existante via le modal d'édition.
- *
- * @return void
- */
-function ajax_modifier_solution_modal(): void
-{
-    check_ajax_referer('solution_management', 'nonce');
-    $fieldPolicy = new ChassesAuTresor\Core\Content\SolutionFieldPolicyService();
-    $isAuthenticated = is_user_logged_in();
-    $solution_id = $isAuthenticated && isset($_POST['solution_id']) ? (int) $_POST['solution_id'] : 0;
-    $hasValidSolution = $solution_id > 0 && get_post_type($solution_id) === 'solution';
-    $objet_id = $hasValidSolution && isset($_POST['objet_id']) ? (int) $_POST['objet_id'] : 0;
-    $objet_type = $hasValidSolution ? sanitize_key($_POST['objet_type'] ?? '') : '';
-    $hasValidTarget = $objet_id > 0
-        && in_array($objet_type, ['chasse', 'enigme'], true)
-        && get_post_type($objet_id) === $objet_type;
-    $isAuthorized = $hasValidTarget && solution_action_autorisee('edit', $objet_type, $objet_id);
-    $has_file   = !empty($_FILES['solution_fichier']['tmp_name']) || !empty($_POST['solution_fichier']);
-    $rawExplanation = (string) ($_POST['solution_explication'] ?? '');
-    $requestError = (new ChassesAuTresor\Core\Content\SolutionModalPolicyService())->getEditionError(
-        $isAuthenticated,
-        $hasValidSolution,
-        $hasValidTarget,
-        $isAuthorized,
-        $fieldPolicy->hasRequiredContent($has_file, $rawExplanation)
-    );
-    if ($requestError !== null) {
-        wp_send_json_error($requestError);
-    }
-
-    $fileInput = solution_resoudre_fichier_modal($solution_id);
-    if ($fileInput['error'] !== null) {
-        wp_send_json_error($fileInput['error']);
-    }
-
-    $explic = wp_kses_post($rawExplanation);
-    $dispo  = sanitize_key($_POST['solution_disponibilite'] ?? 'fin_chasse');
-    $delai  = isset($_POST['solution_decalage_jours']) ? (int) $_POST['solution_decalage_jours'] : 0;
-    $heure  = sanitize_text_field($_POST['solution_heure_publication'] ?? '');
-
-    $schedule = $fieldPolicy->normalizeSchedule($dispo, $delai, $heure);
-    ChassesAuTresor\Core\Content\SolutionMutationService::apply(
-        $solution_id,
-        $fileInput['id'],
-        $fileInput['submitted'],
-        $explic,
-        $schedule,
-        true
-    );
-
-    wp_send_json_success(['solution_id' => $solution_id]);
-}
-add_action('wp_ajax_modifier_solution_modal', 'ajax_modifier_solution_modal');
-
-/**
- * Supprime une solution via requête AJAX.
- *
- * @hook wp_ajax_supprimer_solution
- * @return void
- */
-function supprimer_solution_ajax(): void
-{
-    check_ajax_referer('solution_management', 'nonce');
-    if (!is_user_logged_in()) {
-        wp_send_json_error('non_connecte');
-    }
-
-    $solution_id = isset($_POST['solution_id']) ? (int) $_POST['solution_id'] : 0;
-    if (!$solution_id || get_post_type($solution_id) !== 'solution') {
-        wp_send_json_error('id_invalide');
-    }
-
-    $deletionService = new ChassesAuTresor\Core\Content\SolutionDeletionService();
-    $target = $deletionService->resolveTarget(
-        (string) get_field('solution_cible_type', $solution_id),
-        get_field('solution_chasse_linked', $solution_id),
-        get_field('solution_enigme_linked', $solution_id)
-    );
-
-    if ($target === null || !solution_action_autorisee('delete', $target['type'], $target['id'])) {
-        wp_send_json_error('acces_refuse');
-    }
-
-    if (!$deletionService->delete($solution_id)) {
-        wp_send_json_error('echec_suppression');
-    }
-
-    wp_send_json_success();
-}
-add_action('wp_ajax_supprimer_solution', 'supprimer_solution_ajax');
+add_filter('chassesautresor_render_solutions_table', 'rendre_table_solutions', 10, 7);

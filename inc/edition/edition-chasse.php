@@ -95,6 +95,7 @@ function enqueue_script_chasse_edit()
             'ajaxUrl'   => admin_url('admin-ajax.php'),
             'chasseId'  => $chasse_id,
             'nonce'     => wp_create_nonce('hunt_management'),
+            'hintNonce' => wp_create_nonce('hint_management'),
             'errorText' => __('Erreur lors du chargement des indices.', 'chassesautresor-com'),
         ]
     );
