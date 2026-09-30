@@ -21,7 +21,13 @@ $use_button      = $args['use_button'] ?? false;
 
 if (!$chasse_id || get_post_type($chasse_id) !== 'chasse') return;
 
-$ajout_url = esc_url(add_query_arg('chasse_id', $chasse_id, home_url('/creer-enigme/')));
+$ajout_url = esc_url(add_query_arg(
+    [
+        'chasse_id' => $chasse_id,
+        'nonce' => wp_create_nonce('creer_enigme'),
+    ],
+    home_url('/creer-enigme/')
+));
 
 if ($use_button) : ?>
 <div class="enigme-navigation__ajout">
@@ -76,4 +82,3 @@ if ($highlight_pulse) {
         <span class="carte-ajout-libelle"><?php echo esc_html__('Ajouter une énigme', 'chassesautresor-com'); ?></span>
     </div>
 </button>
-

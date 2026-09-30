@@ -71,6 +71,7 @@ function initEnigmeCardsReorder() {
     const fd = new FormData();
     fd.append('action', 'reordonner_enigmes');
     fd.append('chasse_id', grid.dataset.chasseId);
+    fd.append('nonce', window.ChasseRiddleOrdering?.nonce || '');
     order.forEach((id) => fd.append('ordre[]', id));
     fetch(window.ajaxurl, {
       method: 'POST',

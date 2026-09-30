@@ -37,9 +37,19 @@ if (!class_exists(ChassesAuTresor\Core\Content\SolutionFieldPolicyService::class
         . '/plugins/chassesautresor-core/src/Content/SolutionFieldPolicyService.php';
 }
 
+if (!class_exists(ChassesAuTresor\Core\Content\SolutionFileInputService::class, false)) {
+    require_once dirname(__DIR__, 4)
+        . '/plugins/chassesautresor-core/src/Content/SolutionFileInputService.php';
+}
+
 if (!class_exists(ChassesAuTresor\Core\Content\SolutionManagementService::class, false)) {
     require_once dirname(__DIR__, 4)
         . '/plugins/chassesautresor-core/src/Content/SolutionManagementService.php';
+}
+
+if (!class_exists(ChassesAuTresor\Core\Content\SolutionModalPolicyService::class, false)) {
+    require_once dirname(__DIR__, 4)
+        . '/plugins/chassesautresor-core/src/Content/SolutionModalPolicyService.php';
 }
 
 if (!class_exists(ChassesAuTresor\Core\Content\SolutionMutationService::class, false)) {
@@ -422,6 +432,32 @@ function ajax_chasse_solution_status(): void
 add_action('wp_ajax_chasse_solution_status', 'ajax_chasse_solution_status');
 
 /**
+ * Résout le fichier soumis par les modales de création et d'édition.
+ *
+ * @return array{id:int,submitted:bool,error:?string}
+ */
+function solution_resoudre_fichier_modal(int $solution_id): array
+{
+    return (new ChassesAuTresor\Core\Content\SolutionFileInputService())->resolve(
+        $solution_id,
+        isset($_FILES['solution_fichier']) ? (array) $_FILES['solution_fichier'] : [],
+        isset($_POST['solution_fichier']),
+        isset($_POST['solution_fichier']) ? (int) $_POST['solution_fichier'] : 0,
+        static function (int $post_id) {
+            if (!function_exists('media_handle_upload')) {
+                require_once ABSPATH . 'wp-admin/includes/file.php';
+                require_once ABSPATH . 'wp-admin/includes/media.php';
+                require_once ABSPATH . 'wp-admin/includes/image.php';
+            }
+
+            return media_handle_upload('solution_fichier', $post_id);
+        },
+        'is_wp_error',
+        static fn ($error): string => $error->get_error_message()
+    );
+}
+
+/**
  * Crée une solution via une requête AJAX depuis une modale.
  *
  * @return void
@@ -429,31 +465,27 @@ add_action('wp_ajax_chasse_solution_status', 'ajax_chasse_solution_status');
 function ajax_creer_solution_modal(): void
 {
     $fieldPolicy = new ChassesAuTresor\Core\Content\SolutionFieldPolicyService();
-
-    if (!is_user_logged_in()) {
-        wp_send_json_error('non_connecte');
-    }
-
-    $objet_id   = isset($_POST['objet_id']) ? (int) $_POST['objet_id'] : 0;
-    $objet_type = sanitize_key($_POST['objet_type'] ?? '');
-
-    if (!$objet_id || !in_array($objet_type, ['chasse', 'enigme'], true) || get_post_type($objet_id) !== $objet_type) {
-        wp_send_json_error('post_invalide');
-    }
-
+    $isAuthenticated = is_user_logged_in();
+    $objet_id   = $isAuthenticated && isset($_POST['objet_id']) ? (int) $_POST['objet_id'] : 0;
+    $objet_type = $isAuthenticated ? sanitize_key($_POST['objet_type'] ?? '') : '';
+    $hasValidTarget = $objet_id > 0
+        && in_array($objet_type, ['chasse', 'enigme'], true)
+        && get_post_type($objet_id) === $objet_type;
     $linked = isset($_POST['solution_enigme_linked']) ? (int) $_POST['solution_enigme_linked'] : 0;
-    if (!$fieldPolicy->hasConsistentRiddleTarget($objet_type, $objet_id, $linked)) {
-        wp_send_json_error('post_invalide');
-    }
-
-    if (!solution_action_autorisee('create', $objet_type, $objet_id)) {
-        wp_send_json_error('acces_refuse');
-    }
-
+    $hasConsistentTarget = $hasValidTarget
+        && $fieldPolicy->hasConsistentRiddleTarget($objet_type, $objet_id, $linked);
+    $isAuthorized = $hasConsistentTarget && solution_action_autorisee('create', $objet_type, $objet_id);
     $has_file   = !empty($_FILES['solution_fichier']['tmp_name']) || !empty($_POST['solution_fichier']);
     $rawExplanation = (string) ($_POST['solution_explication'] ?? '');
-    if (!$fieldPolicy->hasRequiredContent($has_file, $rawExplanation)) {
-        wp_send_json_error('contenu_manquant');
+    $requestError = (new ChassesAuTresor\Core\Content\SolutionModalPolicyService())->getCreationError(
+        $isAuthenticated,
+        $hasValidTarget,
+        $hasConsistentTarget,
+        $isAuthorized,
+        $fieldPolicy->hasRequiredContent($has_file, $rawExplanation)
+    );
+    if ($requestError !== null) {
+        wp_send_json_error($requestError);
     }
 
     $solution_id = creer_solution_pour_objet($objet_id, $objet_type);
@@ -461,19 +493,9 @@ function ajax_creer_solution_modal(): void
         wp_send_json_error($solution_id->get_error_message());
     }
 
-    $fichier = 0;
-    if (!empty($_FILES['solution_fichier']) && !empty($_FILES['solution_fichier']['tmp_name'])) {
-        if (!function_exists('media_handle_upload')) {
-            require_once ABSPATH . 'wp-admin/includes/file.php';
-            require_once ABSPATH . 'wp-admin/includes/media.php';
-            require_once ABSPATH . 'wp-admin/includes/image.php';
-        }
-        $fichier = media_handle_upload('solution_fichier', $solution_id);
-        if (is_wp_error($fichier)) {
-            wp_send_json_error($fichier->get_error_message());
-        }
-    } elseif (isset($_POST['solution_fichier'])) {
-        $fichier = (int) $_POST['solution_fichier'];
+    $fileInput = solution_resoudre_fichier_modal($solution_id);
+    if ($fileInput['error'] !== null) {
+        wp_send_json_error($fileInput['error']);
     }
 
     $explic = wp_kses_post($rawExplanation);
@@ -484,7 +506,7 @@ function ajax_creer_solution_modal(): void
     $schedule = $fieldPolicy->normalizeSchedule($dispo, $delai, $heure);
     ChassesAuTresor\Core\Content\SolutionMutationService::apply(
         $solution_id,
-        $fichier,
+        $fileInput['id'],
         false,
         $explic,
         $schedule,
@@ -503,45 +525,31 @@ add_action('wp_ajax_creer_solution_modal', 'ajax_creer_solution_modal');
 function ajax_modifier_solution_modal(): void
 {
     $fieldPolicy = new ChassesAuTresor\Core\Content\SolutionFieldPolicyService();
-
-    if (!is_user_logged_in()) {
-        wp_send_json_error('non_connecte');
-    }
-
-    $solution_id = isset($_POST['solution_id']) ? (int) $_POST['solution_id'] : 0;
-    $objet_id    = isset($_POST['objet_id']) ? (int) $_POST['objet_id'] : 0;
-    $objet_type  = sanitize_key($_POST['objet_type'] ?? '');
-
-    if (!$solution_id || get_post_type($solution_id) !== 'solution') {
-        wp_send_json_error('solution_invalide');
-    }
-    if (!$objet_id || !in_array($objet_type, ['chasse', 'enigme'], true) || get_post_type($objet_id) !== $objet_type) {
-        wp_send_json_error('post_invalide');
-    }
-    if (!solution_action_autorisee('edit', $objet_type, $objet_id)) {
-        wp_send_json_error('acces_refuse');
-    }
-
+    $isAuthenticated = is_user_logged_in();
+    $solution_id = $isAuthenticated && isset($_POST['solution_id']) ? (int) $_POST['solution_id'] : 0;
+    $hasValidSolution = $solution_id > 0 && get_post_type($solution_id) === 'solution';
+    $objet_id = $hasValidSolution && isset($_POST['objet_id']) ? (int) $_POST['objet_id'] : 0;
+    $objet_type = $hasValidSolution ? sanitize_key($_POST['objet_type'] ?? '') : '';
+    $hasValidTarget = $objet_id > 0
+        && in_array($objet_type, ['chasse', 'enigme'], true)
+        && get_post_type($objet_id) === $objet_type;
+    $isAuthorized = $hasValidTarget && solution_action_autorisee('edit', $objet_type, $objet_id);
     $has_file   = !empty($_FILES['solution_fichier']['tmp_name']) || !empty($_POST['solution_fichier']);
     $rawExplanation = (string) ($_POST['solution_explication'] ?? '');
-    if (!$fieldPolicy->hasRequiredContent($has_file, $rawExplanation)) {
-        wp_send_json_error('contenu_manquant');
+    $requestError = (new ChassesAuTresor\Core\Content\SolutionModalPolicyService())->getEditionError(
+        $isAuthenticated,
+        $hasValidSolution,
+        $hasValidTarget,
+        $isAuthorized,
+        $fieldPolicy->hasRequiredContent($has_file, $rawExplanation)
+    );
+    if ($requestError !== null) {
+        wp_send_json_error($requestError);
     }
 
-    $fichier = 0;
-    $has_file_input = isset($_POST['solution_fichier']) || (!empty($_FILES['solution_fichier']) && !empty($_FILES['solution_fichier']['tmp_name']));
-    if (!empty($_FILES['solution_fichier']) && !empty($_FILES['solution_fichier']['tmp_name'])) {
-        if (!function_exists('media_handle_upload')) {
-            require_once ABSPATH . 'wp-admin/includes/file.php';
-            require_once ABSPATH . 'wp-admin/includes/media.php';
-            require_once ABSPATH . 'wp-admin/includes/image.php';
-        }
-        $fichier = media_handle_upload('solution_fichier', $solution_id);
-        if (is_wp_error($fichier)) {
-            wp_send_json_error($fichier->get_error_message());
-        }
-    } elseif (isset($_POST['solution_fichier'])) {
-        $fichier = (int) $_POST['solution_fichier'];
+    $fileInput = solution_resoudre_fichier_modal($solution_id);
+    if ($fileInput['error'] !== null) {
+        wp_send_json_error($fileInput['error']);
     }
 
     $explic = wp_kses_post($rawExplanation);
@@ -552,8 +560,8 @@ function ajax_modifier_solution_modal(): void
     $schedule = $fieldPolicy->normalizeSchedule($dispo, $delai, $heure);
     ChassesAuTresor\Core\Content\SolutionMutationService::apply(
         $solution_id,
-        $fichier,
-        $has_file_input,
+        $fileInput['id'],
+        $fileInput['submitted'],
         $explic,
         $schedule,
         true

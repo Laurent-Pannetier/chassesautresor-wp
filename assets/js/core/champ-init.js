@@ -22,7 +22,8 @@ function modifierChampSimple(champ, valeur, postId, cpt = 'enigme') {
       action,
       champ,
       valeur,
-      post_id: postId
+      post_id: postId,
+      nonce: window.CHP_ENIGME_DEFAUT?.nonce || ''
     })
   })
     .then(r => r.json())

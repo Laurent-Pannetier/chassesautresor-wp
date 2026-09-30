@@ -249,6 +249,11 @@ function charger_scripts_personnalises() {
         filemtime(get_stylesheet_directory() . '/assets/js/enigme-cards-reorder.js'),
         true
       );
+      wp_localize_script(
+        'enigme-cards-reorder',
+        'ChasseRiddleOrdering',
+        ['nonce' => wp_create_nonce('reordonner_enigmes')]
+      );
       wp_set_script_translations('enigme-cards-reorder', 'chassesautresor-com');
     }
     wp_enqueue_script(
