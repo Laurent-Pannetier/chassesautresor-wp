@@ -90,7 +90,14 @@ function initChampImage(bloc) {
                 'modifier_champ_organisateur',
           champ,
           valeur: id,
-          post_id: postId
+          post_id: postId,
+          nonce: cpt === 'organisateur'
+            ? (window.organisateurData?.nonce || '')
+            : cpt === 'indice'
+              ? (window.indicesCreate?.nonce || '')
+            : cpt === 'chasse'
+              ? (window.CHP_CHASSE_DEFAUT?.nonce || '')
+              : ''
         })
       })
         .then(r => r.json())

@@ -498,7 +498,8 @@ window.rafraichirCarteSolutions = rafraichirCarteSolutions;
               action: 'modifier_champ_chasse',
               champ,
               valeur: '',
-              post_id: postId
+              post_id: postId,
+              nonce: window.CHP_CHASSE_DEFAUT?.nonce || ''
             })
           });
         })
@@ -551,7 +552,8 @@ window.rafraichirCarteSolutions = rafraichirCarteSolutions;
           action: 'modifier_champ_chasse',
           champ: 'chasse_infos_recompense_titre',
           valeur: titre,
-          post_id: postId
+          post_id: postId,
+          nonce: window.CHP_CHASSE_DEFAUT?.nonce || ''
         })
       })
         .then(r => r.json())
@@ -567,7 +569,8 @@ window.rafraichirCarteSolutions = rafraichirCarteSolutions;
                 action: 'modifier_champ_chasse',
                 champ: 'chasse_infos_recompense_texte',
                 valeur: texte,
-                post_id: postId
+                post_id: postId,
+                nonce: window.CHP_CHASSE_DEFAUT?.nonce || ''
               })
             });
           } else {
@@ -587,7 +590,8 @@ window.rafraichirCarteSolutions = rafraichirCarteSolutions;
                 action: 'modifier_champ_chasse',
                 champ: 'chasse_infos_recompense_valeur',
                 valeur: valeur,
-                post_id: postId
+                post_id: postId,
+                nonce: window.CHP_CHASSE_DEFAUT?.nonce || ''
               })
             });
           } else {
@@ -1508,7 +1512,8 @@ function enregistrerDatesChasse() {
     // On conserve toujours la date en base, même si l'affichage est "Illimitée"
     date_fin: inputDateFin.value.trim(),
     illimitee: toggleDateFin?.checked ? 0 : 1,
-    debut_differee: toggleDateDebut?.checked ? 1 : 0
+    debut_differee: toggleDateDebut?.checked ? 1 : 0,
+    nonce: window.CHP_CHASSE_DEFAUT?.nonce || ''
   });
   console.log('[enregistrerDatesChasse] params=', params.toString());
 

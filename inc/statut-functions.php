@@ -792,7 +792,7 @@ function mettre_a_jour_statuts_chasse($chasse_id)
         $liste_enigmes = recuperer_enigmes_associees($chasse_id);
 
         foreach ($liste_enigmes as $enigme_id) {
-            planifier_ou_deplacer_pdf_solution_immediatement($enigme_id);
+            ChassesAuTresor\Core\Content\RiddleSolutionFileScheduler::schedule((int) $enigme_id);
         }
     }
 

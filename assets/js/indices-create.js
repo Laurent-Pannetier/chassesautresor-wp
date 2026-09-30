@@ -203,6 +203,7 @@
       e.preventDefault();
       var form = e.target;
       var data = new FormData(form);
+      data.append('nonce', indicesCreate.nonce || '');
       validateBtn.disabled = true;
       stateMessage.textContent = '';
       fetch(indicesCreate.ajaxUrl, { method: 'POST', credentials: 'same-origin', body: data })

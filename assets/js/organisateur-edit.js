@@ -146,7 +146,8 @@ document.addEventListener('DOMContentLoaded', () => {
         action: 'modifier_champ_organisateur',
         champ: 'coordonnees_bancaires',
         post_id: postId,
-        valeur: JSON.stringify({ iban, bic })
+        valeur: JSON.stringify({ iban, bic }),
+        nonce: window.organisateurData?.nonce || ''
       })
     })
       .then(res => res.json())

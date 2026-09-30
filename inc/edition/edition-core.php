@@ -177,6 +177,7 @@ function enqueue_core_edit_scripts(array $additional = [])
         'indicesCreate',
         [
           'ajaxUrl' => admin_url('admin-ajax.php'),
+          'nonce'   => wp_create_nonce('hint_management'),
           'texts'   => [
             'close'     => __('Fermer', 'chassesautresor-com'),
             'image'     => __('Choisir une image', 'chassesautresor-com'),

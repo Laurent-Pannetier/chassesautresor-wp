@@ -1,6 +1,11 @@
 <?php
 defined( 'ABSPATH' ) || exit;
 
+if (!class_exists(ChassesAuTresor\Core\Content\PublicLinkService::class, false)) {
+    require_once dirname(__DIR__, 4)
+        . '/plugins/chassesautresor-core/src/Content/PublicLinkService.php';
+}
+
 /**
  * ============================================================
  * 🎛️  CONFIGURATION DES TYPES DE LIENS PUBLICS
@@ -91,21 +96,7 @@ function get_types_liens_publics(): array {
  */
 function render_liens_publics(array $liens, string $contexte = 'organisateur', array $options = []): string {
     $types = get_types_liens_publics();
-    $liens_actifs = [];
-
-    foreach ($liens as $entree) {
-        $type_raw = $entree[$contexte . '_principale_liens_type']
-            ?? $entree['type_de_lien']
-            ?? null;
-        $url = $entree[$contexte . '_principale_liens_url']
-            ?? $entree['url_lien']
-            ?? null;
-        $type = is_array($type_raw) ? ($type_raw[0] ?? '') : $type_raw;
-
-        if (is_string($type) && trim($type) !== '' && is_string($url) && trim($url) !== '') {
-            $liens_actifs[$type] = $url;
-        }
-    }
+    $liens_actifs = (new ChassesAuTresor\Core\Content\PublicLinkService())->activeLinks($liens, $contexte);
 
     if (! empty($liens_actifs)) {
         $show_labels = count($liens_actifs) <= 2;

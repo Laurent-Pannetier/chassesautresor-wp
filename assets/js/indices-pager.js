@@ -62,6 +62,7 @@
     var formData = new FormData();
     formData.append('action', 'supprimer_indice');
     formData.append('indice_id', btn.dataset.indiceId);
+    formData.append('nonce', window.indicesCreate?.nonce || '');
 
     fetch(wrapper.dataset.ajaxUrl, {
       method: 'POST',
@@ -85,4 +86,3 @@
       });
   });
 })();
-
