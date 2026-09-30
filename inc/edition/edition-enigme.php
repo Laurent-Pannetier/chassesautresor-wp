@@ -1,6 +1,75 @@
 <?php
 defined('ABSPATH') || exit;
 
+if (!class_exists(ChassesAuTresor\Core\Content\RiddleSolutionAttachmentService::class, false)) {
+    require_once dirname(__DIR__, 4)
+        . '/plugins/chassesautresor-core/src/Relationships/RelationshipService.php';
+    require_once dirname(__DIR__, 4)
+        . '/plugins/chassesautresor-core/src/Content/RiddleSolutionAttachmentService.php';
+}
+
+if (!class_exists(ChassesAuTresor\Core\Content\RiddleSolutionFilePolicyService::class, false)) {
+    require_once dirname(__DIR__, 4)
+        . '/plugins/chassesautresor-core/src/Content/RiddleSolutionFilePolicyService.php';
+}
+
+if (!class_exists(ChassesAuTresor\Core\Content\RiddleSolutionFilePublicationService::class, false)) {
+    require_once dirname(__DIR__, 4)
+        . '/plugins/chassesautresor-core/src/Relationships/RelationshipService.php';
+    require_once dirname(__DIR__, 4)
+        . '/plugins/chassesautresor-core/src/Content/RiddleSolutionFilePublicationService.php';
+}
+
+if (!class_exists(ChassesAuTresor\Core\Content\RiddleSolutionFileScheduler::class, false)) {
+    require_once dirname(__DIR__, 4)
+        . '/plugins/chassesautresor-core/src/Content/RiddleSolutionFileScheduler.php';
+}
+
+if (!class_exists(ChassesAuTresor\Core\Content\RiddleSolutionFileStorageService::class, false)) {
+    require_once dirname(__DIR__, 4)
+        . '/plugins/chassesautresor-core/src/Content/RiddleSolutionFileStorageService.php';
+}
+
+if (!class_exists(ChassesAuTresor\Core\Media\RiddleUploadDirectoryService::class, false)) {
+    require_once dirname(__DIR__, 4)
+        . '/plugins/chassesautresor-core/src/Media/RiddleUploadDirectoryService.php';
+}
+
+if (!class_exists(ChassesAuTresor\Core\Content\RiddleManagementService::class, false)) {
+    require_once dirname(__DIR__, 4)
+        . '/plugins/chassesautresor-core/src/Content/RiddleManagementService.php';
+}
+
+if (!class_exists(ChassesAuTresor\Core\Content\RiddleDeletionService::class, false)) {
+    require_once dirname(__DIR__, 4)
+        . '/plugins/chassesautresor-core/src/Content/RiddleDeletionService.php';
+}
+
+if (!class_exists(ChassesAuTresor\Core\Content\RiddleCompletionService::class, false)) {
+    require_once dirname(__DIR__, 4)
+        . '/plugins/chassesautresor-core/src/Content/RiddleCompletionService.php';
+}
+
+if (!class_exists(ChassesAuTresor\Core\Content\RiddleFieldPolicyService::class, false)) {
+    require_once dirname(__DIR__, 4)
+        . '/plugins/chassesautresor-core/src/Content/RiddleFieldPolicyService.php';
+}
+
+if (!class_exists(ChassesAuTresor\Core\Content\RiddlePostFactory::class, false)) {
+    require_once dirname(__DIR__, 4)
+        . '/plugins/chassesautresor-core/src/Content/RiddlePostFactory.php';
+}
+
+if (!class_exists(ChassesAuTresor\Core\Content\RiddleRelationshipService::class, false)) {
+    require_once dirname(__DIR__, 4)
+        . '/plugins/chassesautresor-core/src/Content/RiddleRelationshipService.php';
+}
+
+if (!class_exists(ChassesAuTresor\Core\Content\RiddleRelationshipCleanupService::class, false)) {
+    require_once dirname(__DIR__, 4)
+        . '/plugins/chassesautresor-core/src/Content/RiddleRelationshipCleanupService.php';
+}
+
 
 // ==================================================
 // 🧩 CRÉATION & ÉDITION D’UNE ÉNIGME
@@ -87,7 +156,10 @@ add_action('wp_enqueue_scripts', 'enqueue_script_enigme_edit');
 function creer_enigme_pour_chasse($chasse_id, $user_id = null)
 {
   if (get_post_type($chasse_id) !== 'chasse') {
-    return new WP_Error('chasse_invalide', 'ID de chasse invalide.');
+    return new WP_Error(
+      'chasse_invalide',
+      __('ID de chasse invalide.', 'chassesautresor-com')
+    );
   }
 
   if (is_null($user_id)) {
@@ -95,43 +167,32 @@ function creer_enigme_pour_chasse($chasse_id, $user_id = null)
   }
 
   if (!$user_id || !get_userdata($user_id)) {
-    return new WP_Error('utilisateur_invalide', 'Utilisateur non connecté.');
+    return new WP_Error(
+      'utilisateur_invalide',
+      __('Utilisateur non connecté.', 'chassesautresor-com')
+    );
   }
 
   $organisateur_id = get_organisateur_from_chasse($chasse_id);
   if (!$organisateur_id) {
-    return new WP_Error('organisateur_introuvable', 'Organisateur non lié à cette chasse.');
+    return new WP_Error(
+      'organisateur_introuvable',
+      __('Organisateur non lié à cette chasse.', 'chassesautresor-com')
+    );
   }
 
-  $enigme_id = wp_insert_post([
-    'post_type'   => 'enigme',
-    'post_status' => 'pending',
-    'post_title'  => TITRE_DEFAUT_ENIGME,
-    'post_author' => $user_id,
-  ]);
+  $factory = new ChassesAuTresor\Core\Content\RiddlePostFactory();
+  $enigme_id = $factory->create(
+    (int) $chasse_id,
+    (int) $organisateur_id,
+    (int) $user_id,
+    TITRE_DEFAUT_ENIGME,
+    (new DateTime('+1 month'))->format('Y-m-d H:i:s')
+  );
 
   if (is_wp_error($enigme_id)) {
     return $enigme_id;
   }
-
-  if (get_option('chasse_associee_temp')) {
-    delete_option('chasse_associee_temp');
-  }
-
-  // 🧩 Champs ACF de base
-  update_field('enigme_chasse_associee', $chasse_id, $enigme_id);
-  update_field('enigme_organisateur_associe', $organisateur_id, $enigme_id);
-
-  update_field('enigme_tentative_cout_points', 0, $enigme_id);
-  update_field('enigme_tentative_max', 5, $enigme_id);
-
-  update_field('enigme_reponse_casse', true, $enigme_id);
-  update_field('enigme_acces_condition', 'immediat', $enigme_id);
-  update_field('enigme_acces_pre_requis', [], $enigme_id);
-  update_field('enigme_mode_validation', 'automatique', $enigme_id);
-
-  $date_deblocage = (new DateTime('+1 month'))->format('Y-m-d H:i:s');
-  update_field('enigme_acces_date', $date_deblocage, $enigme_id);
 
   // Calcule l\'état système initial pour permettre l\'édition complète
   enigme_mettre_a_jour_etat_systeme($enigme_id);
@@ -245,9 +306,10 @@ function modifier_champ_enigme()
   $champ_valide    = false;
   $reponse         = ['champ' => $champ, 'valeur' => $valeur];
   $ancien_complet  = (bool) get_field('enigme_cache_complet', $post_id);
+  $field_policy    = new ChassesAuTresor\Core\Content\RiddleFieldPolicyService();
 
   // 🔹 Bloc interdit (pre_requis manuel)
-  if ($champ === 'enigme_acces_condition' && $valeur === 'pre_requis') {
+  if ($champ === 'enigme_acces_condition' && $field_policy->isForbiddenAccessCondition((string) $valeur)) {
     wp_send_json_error('⚠️ Interdit : cette valeur est gérée automatiquement.');
   }
 
@@ -274,19 +336,10 @@ function modifier_champ_enigme()
       wp_send_json_error('⚠️ format_invalide');
     }
 
-    $liste = array_values(array_filter(array_map(function ($r) {
-      $clean = sanitize_text_field($r);
-      return $clean !== '' ? $clean : null;
-    }, $liste)));
-
-    if (count($liste) > 5) {
-      wp_send_json_error('⚠️ trop_de_reponses');
-    }
-
-    foreach ($liste as $r) {
-      if (mb_strlen($r) > 75) {
-        wp_send_json_error('⚠️ longueur_max');
-      }
+    $liste = $field_policy->normalizeAnswers($liste, 'sanitize_text_field');
+    $answer_error = $field_policy->getAnswersError($liste);
+    if ($answer_error !== null) {
+      wp_send_json_error('⚠️ ' . $answer_error);
     }
 
     $ok = update_field($champ, wp_json_encode($liste), $post_id);
@@ -304,16 +357,16 @@ function modifier_champ_enigme()
 
 
   // 🔹 Tentatives (coût et max)
-  if ($champ === 'enigme_tentative.enigme_tentative_cout_points') {
-    $champ_valide = update_field('enigme_tentative_cout_points', (int) $valeur, $post_id) !== false;
-  }
-
-  if ($champ === 'enigme_tentative.enigme_tentative_max') {
-    $champ_valide = update_field('enigme_tentative_max', (int) $valeur, $post_id) !== false;
+  $attempt_field = $field_policy->getAttemptStorageField($champ);
+  if ($attempt_field !== null) {
+    $champ_valide = update_field($attempt_field, (int) $valeur, $post_id) !== false;
   }
 
   // 🔹 Accès : condition (immédiat, date_programmee uniquement)
-  if ($champ === 'enigme_acces_condition' && in_array(sanitize_text_field($valeur), ['immediat', 'date_programmee'])) {
+  if (
+    $champ === 'enigme_acces_condition'
+    && $field_policy->isAllowedManualAccessCondition(sanitize_text_field($valeur))
+  ) {
     $ok = update_field($champ, sanitize_text_field($valeur), $post_id);
     if ($ok) $champ_valide = true;
   }
@@ -334,7 +387,7 @@ function modifier_champ_enigme()
     $today = strtotime(date('Y-m-d'));
     $mode = get_field('enigme_acces_condition', $post_id);
 
-    if ($timestamp && $timestamp < $today && $mode === 'date_programmee') {
+    if ($field_policy->shouldResetScheduledAccess($timestamp, $today, (string) $mode)) {
       update_field('enigme_acces_condition', 'immediat', $post_id);
     }
 
@@ -348,14 +401,12 @@ function modifier_champ_enigme()
 
     // 🔹 Accès : pré-requis (liste d'IDs)
     if ($champ === 'enigme_acces_pre_requis') {
-        $ids = is_array($valeur)
-            ? array_filter(array_map('intval', $valeur))
-            : array_filter(array_map('intval', explode(',', (string) $valeur)));
+        $ids = $field_policy->normalizePrerequisiteIds($valeur);
 
         $ok = update_field($champ, $ids, $post_id);
         if ($ok) {
             $champ_valide = true;
-            $condition = !empty($ids) ? 'pre_requis' : 'immediat';
+            $condition = $field_policy->getAccessConditionForPrerequisites($ids);
             update_field('enigme_acces_condition', $condition, $post_id);
             enigme_mettre_a_jour_etat_systeme($post_id);
         }
@@ -411,33 +462,37 @@ add_action('wp_ajax_enregistrer_fichier_solution_enigme', 'enregistrer_fichier_s
 function enregistrer_fichier_solution_enigme()
 {
   if (!is_user_logged_in()) {
-    wp_send_json_error("Non autorisé.");
+    wp_send_json_error(__('Non autorisé.', 'chassesautresor-com'));
   }
 
   $post_id = intval($_POST['post_id'] ?? 0);
   if (!$post_id || get_post_type($post_id) !== 'enigme') {
-    wp_send_json_error("ID de post invalide.");
+    wp_send_json_error(__('ID de post invalide.', 'chassesautresor-com'));
   }
 
   if (!utilisateur_peut_modifier_post($post_id)) {
-    wp_send_json_error("Non autorisé.");
+    wp_send_json_error(__('Non autorisé.', 'chassesautresor-com'));
   }
 
   if (empty($_FILES['fichier_pdf']) || $_FILES['fichier_pdf']['error'] !== 0) {
-    wp_send_json_error("Fichier manquant ou erreur de transfert.");
+    wp_send_json_error(__('Fichier manquant ou erreur de transfert.', 'chassesautresor-com'));
   }
 
   $fichier = $_FILES['fichier_pdf'];
 
-  // 🔒 Contrôle taille max : 5 Mo
-  if ($fichier['size'] > 5 * 1024 * 1024) {
-    wp_send_json_error("Fichier trop volumineux (5 Mo maximum).");
-  }
-
-  // 🔒 Vérification réelle du type MIME
   $filetype = wp_check_filetype($fichier['name']);
-  if ($filetype['ext'] !== 'pdf' || $filetype['type'] !== 'application/pdf') {
-    wp_send_json_error("Seuls les fichiers PDF sont autorisés.");
+  $filePolicy = new ChassesAuTresor\Core\Content\RiddleSolutionFilePolicyService();
+  $uploadError = $filePolicy->getUploadError(
+      (int) $fichier['size'],
+      (string) ($filetype['ext'] ?? ''),
+      (string) ($filetype['type'] ?? '')
+  );
+  if ($uploadError !== null) {
+    $messages = [
+      'file_too_large' => __('Fichier trop volumineux (5 Mo maximum).', 'chassesautresor-com'),
+      'invalid_file_type' => __('Seuls les fichiers PDF sont autorisés.', 'chassesautresor-com'),
+    ];
+    wp_send_json_error($messages[$uploadError]);
   }
 
   require_once ABSPATH . 'wp-admin/includes/file.php';
@@ -450,25 +505,20 @@ function enregistrer_fichier_solution_enigme()
 
 
   if (!isset($uploaded['url']) || !isset($uploaded['file'])) {
-    wp_send_json_error("Échec de l’upload.");
+    wp_send_json_error(
+      $uploaded['error'] ?? __('Échec de l’upload.', 'chassesautresor-com')
+    );
   }
 
-  // 📝 Création de la pièce jointe
-  $attachment = [
-    'post_mime_type' => $filetype['type'],
-    'post_title'     => sanitize_file_name($fichier['name']),
-    'post_content'   => '',
-    'post_status'    => 'inherit'
-  ];
-
-  $attach_id = wp_insert_attachment($attachment, $uploaded['file'], $post_id);
-  if (strpos($filetype['type'], 'image/') === 0) {
-    require_once ABSPATH . 'wp-admin/includes/image.php';
-    wp_generate_attachment_metadata($attach_id, $uploaded['file']);
+  $attach_id = (new ChassesAuTresor\Core\Content\RiddleSolutionAttachmentService())->attach(
+    $post_id,
+    $uploaded['file'],
+    $fichier['name'],
+    $filetype['type']
+  );
+  if (is_wp_error($attach_id)) {
+    wp_send_json_error($attach_id->get_error_message());
   }
-
-  // 💾 Enregistrement dans le champ ACF
-  update_field('enigme_solution_fichier', $attach_id, $post_id);
 
   wp_send_json_success([
     'fichier' => $uploaded['url']
@@ -484,24 +534,19 @@ add_action('wp_ajax_supprimer_fichier_solution_enigme', 'supprimer_fichier_solut
 function supprimer_fichier_solution_enigme()
 {
   if (!is_user_logged_in()) {
-    wp_send_json_error("Non autorisé.");
+    wp_send_json_error(__('Non autorisé.', 'chassesautresor-com'));
   }
 
   $post_id = intval($_POST['post_id'] ?? 0);
   if (!$post_id || get_post_type($post_id) !== 'enigme') {
-    wp_send_json_error("ID de post invalide.");
+    wp_send_json_error(__('ID de post invalide.', 'chassesautresor-com'));
   }
 
   if (!utilisateur_peut_modifier_post($post_id)) {
-    wp_send_json_error("Non autorisé.");
+    wp_send_json_error(__('Non autorisé.', 'chassesautresor-com'));
   }
 
-  $fichier_id = get_field('enigme_solution_fichier', $post_id, false);
-  if ($fichier_id) {
-    wp_delete_attachment($fichier_id, true);
-  }
-
-  update_field('enigme_solution_fichier', null, $post_id);
+  (new ChassesAuTresor\Core\Content\RiddleSolutionAttachmentService())->remove($post_id);
 
   wp_send_json_success();
 }
@@ -517,37 +562,8 @@ function supprimer_fichier_solution_enigme()
  */
 function rediriger_upload_fichier_solution($dirs)
 {
-    $custom = WP_CONTENT_DIR . '/protected/solutions';
-
-    if (!file_exists($custom)) {
-        wp_mkdir_p($custom);
-    }
-
-    $htaccess = $custom . '/.htaccess';
-
-    if (!file_exists($htaccess)) {
-        $htaccess_content = <<<HTACCESS
-<IfModule !authz_core_module>
-Order deny,allow
-Deny from all
-</IfModule>
-<IfModule authz_core_module>
-Require all denied
-</IfModule>
-
-HTACCESS;
-        file_put_contents($htaccess, $htaccess_content);
-    }
-
-    $dirs['path']    = $custom;
-    $dirs['basedir'] = $custom;
-    $dirs['subdir']  = '';
-
-    // 🔐 Empêche WordPress de construire une URL publique
-    $dirs['url']     = '';
-    $dirs['baseurl'] = '';
-
-    return $dirs;
+    return (new ChassesAuTresor\Core\Content\RiddleSolutionFileStorageService())
+        ->prepareUploadDirectory($dirs, WP_CONTENT_DIR);
 }
 
 
@@ -559,40 +575,8 @@ HTACCESS;
  */
 function deplacer_pdf_solution($enigme_id)
 {
-  if (!$enigme_id || get_post_type($enigme_id) !== 'enigme') return;
-
-  $fichier_id = get_field('enigme_solution_fichier', $enigme_id, false);
-  if (!$fichier_id || !is_numeric($fichier_id)) return;
-
-  $chemin_source = get_attached_file($fichier_id);
-  if (!$chemin_source || !file_exists($chemin_source)) return;
-
-  $chasse_id = recuperer_id_chasse_associee($enigme_id);
-  if (!$chasse_id || get_post_type($chasse_id) !== 'chasse') return;
-
-  $cache = get_field('champs_caches', $chasse_id);
-  $statut = $cache['chasse_cache_statut'] ?? '';
-  if (trim(strtolower($statut)) !== 'termine') return;
-
-  $dossier_public = WP_CONTENT_DIR . '/uploads/solutions-publiques';
-  if (!file_exists($dossier_public)) {
-    if (!wp_mkdir_p($dossier_public)) return;
-  }
-
-  $nom_fichier = basename($chemin_source);
-  $chemin_cible = $dossier_public . '/' . $nom_fichier;
-
-  if (file_exists($chemin_cible)) return;
-
-  $deplacement = @rename($chemin_source, $chemin_cible);
-  if (!$deplacement) {
-    $copie = @copy($chemin_source, $chemin_cible);
-    if (!$copie || !@unlink($chemin_source)) return;
-  }
-
-  update_attached_file($fichier_id, $chemin_cible);
+  ChassesAuTresor\Core\Content\RiddleSolutionFilePublicationService::publish((int) $enigme_id);
 }
-add_action('publier_solution_enigme', 'deplacer_pdf_solution');
 
 
 /**
@@ -603,26 +587,7 @@ add_action('publier_solution_enigme', 'deplacer_pdf_solution');
  */
 function planifier_ou_deplacer_pdf_solution_immediatement($enigme_id)
 {
-  if (!$enigme_id || get_post_type($enigme_id) !== 'enigme') return;
-
-  $mode = get_field('enigme_solution_mode', $enigme_id);
-  if (!in_array($mode, ['fin_de_chasse', 'delai_fin_chasse', 'date_fin_chasse'])) return;
-
-  $delai = get_field('enigme_solution_delai', $enigme_id);
-  $heure = get_field('enigme_solution_heure', $enigme_id);
-
-  if ($delai === null || $heure === null) return;
-
-  // 👉 Remettre "days" en prod
-  $timestamp = strtotime("+$delai days $heure");
-
-  if (!$timestamp) return;
-
-  if ($timestamp <= time()) {
-    $timestamp = time() + 5;
-  }
-
-  wp_schedule_single_event($timestamp, 'publier_solution_enigme', [$enigme_id]);
+  ChassesAuTresor\Core\Content\RiddleSolutionFileScheduler::schedule((int) $enigme_id);
 }
 
 /**
@@ -634,26 +599,10 @@ function planifier_ou_deplacer_pdf_solution_immediatement($enigme_id)
 function supprimer_dossier_enigme($post_id)
 {
   $upload_dir = wp_upload_dir();
-  $dir = $upload_dir['basedir'] . '/_enigmes/enigme-' . $post_id;
-
-  if (!is_dir($dir)) {
-    return;
-  }
-
-  $iterator = new RecursiveIteratorIterator(
-    new RecursiveDirectoryIterator($dir, RecursiveDirectoryIterator::SKIP_DOTS),
-    RecursiveIteratorIterator::CHILD_FIRST
+  (new ChassesAuTresor\Core\Media\RiddleUploadDirectoryService())->delete(
+    (int) $post_id,
+    (string) ($upload_dir['basedir'] ?? '')
   );
-
-  foreach ($iterator as $file) {
-    if ($file->isDir()) {
-      @rmdir($file->getPathname());
-    } else {
-      @unlink($file->getPathname());
-    }
-  }
-
-  @rmdir($dir);
 }
 
 /**
@@ -681,12 +630,14 @@ function supprimer_enigme_ajax()
   $chasse_id = recuperer_id_chasse_associee($post_id);
   $redirect  = $chasse_id ? get_permalink($chasse_id) : home_url('/');
 
-  $deleted = wp_delete_post($post_id, true);
+  $upload_dir = wp_upload_dir();
+  $deleted = (new ChassesAuTresor\Core\Content\RiddleDeletionService())->delete(
+    $post_id,
+    (string) ($upload_dir['basedir'] ?? '')
+  );
   if (!$deleted) {
     wp_send_json_error('echec_suppression');
   }
-
-  supprimer_dossier_enigme($post_id);
 
   wp_send_json_success(['redirect' => $redirect]);
 }
@@ -709,12 +660,13 @@ function verifier_enigmes_completes_ajax()
         wp_send_json_error('id_invalide');
     }
 
-    $ids            = recuperer_enigmes_associees($chasse_id);
-    $has_incomplete = false;
+    $ids = recuperer_enigmes_associees($chasse_id);
+    $completionFlags = [];
     foreach ($ids as $eid) {
         verifier_ou_mettre_a_jour_cache_complet($eid);
-        if (!get_field('enigme_cache_complet', $eid)) {
-            $has_incomplete = true;
+        $isComplete = (bool) get_field('enigme_cache_complet', $eid);
+        $completionFlags[] = $isComplete;
+        if (!$isComplete) {
             break;
         }
     }
@@ -723,10 +675,12 @@ function verifier_enigmes_completes_ajax()
         ? utilisateur_peut_ajouter_enigme($chasse_id)
         : false;
 
-    wp_send_json_success([
-        'has_incomplete' => $has_incomplete,
-        'can_add'       => $can_add,
-    ]);
+    wp_send_json_success(
+        (new ChassesAuTresor\Core\Content\RiddleCompletionService())->getManagementStatus(
+            $completionFlags,
+            $can_add
+        )
+    );
 }
 add_action('wp_ajax_verifier_enigmes_completes', 'verifier_enigmes_completes_ajax');
 
@@ -753,7 +707,11 @@ function reordonner_enigmes_ajax()
         wp_send_json_error('non_autorise');
     }
 
-    foreach ($ordre as $index => $enigme_id) {
+    $allowedOrder = (new ChassesAuTresor\Core\Content\RiddleManagementService())->getReorderUpdates(
+        $ordre,
+        recuperer_enigmes_associees($chasse_id)
+    );
+    foreach ($allowedOrder as $index => $enigme_id) {
         wp_update_post([
             'ID'         => $enigme_id,
             'menu_order' => $index,
@@ -826,14 +784,8 @@ add_filter('acf/fields/relationship/query', function ($args, $field, $post_id) {
     return $args;
   }
 
-  $enigmes_associees = recuperer_enigmes_associees($chasse_id);
-
-  if ($post_id && ($key = array_search($post_id, $enigmes_associees)) !== false) {
-    unset($enigmes_associees[$key]); // Exclure l'énigme en cours
-  }
-
-  // 📌 Correction : Si aucune énigme ne doit être affichée, forcer un tableau vide pour empêcher ACF d'afficher tout
-  $args['post__in'] = !empty($enigmes_associees) ? array_map('intval', $enigmes_associees) : [0];
+  $args['post__in'] = (new ChassesAuTresor\Core\Content\RiddleRelationshipService())
+    ->getSelectableRiddleIds(recuperer_enigmes_associees($chasse_id), (int) $post_id);
 
   return $args;
 }, 10, 3);
@@ -855,13 +807,8 @@ add_action('acf/save_post', function ($post_id) {
   // 🔎 Récupère la chasse associée à l’énigme
   $chasse = get_field('enigme_chasse_associee', $post_id);
 
-  if (is_array($chasse)) {
-    $chasse_id = is_object($chasse[0]) ? (int)$chasse[0]->ID : (int)$chasse[0];
-  } elseif (is_object($chasse)) {
-    $chasse_id = (int)$chasse->ID;
-  } else {
-    $chasse_id = (int)$chasse;
-  }
+  $chasse_id = (new ChassesAuTresor\Core\Content\RiddleRelationshipService())
+    ->resolveHuntId($chasse);
 
   if (!$chasse_id || get_post_type($chasse_id) !== 'chasse') return;
 
@@ -908,25 +855,19 @@ function nettoyer_relations_orphelines()
         WHERE meta_key = 'chasse_cache_enigmes'
     ");
 
-  foreach ($chasses as $chasse) {
-    $post_id = $chasse->post_id;
-    $relations = maybe_unserialize($chasse->meta_value);
-
-    if (!is_array($relations)) {
-      continue;
+  (new ChassesAuTresor\Core\Content\RiddleRelationshipCleanupService())->clean(
+    $chasses,
+    'maybe_unserialize',
+    function (int $enigme_id) use ($wpdb): bool {
+      return (bool) $wpdb->get_var(
+        $wpdb->prepare("SELECT COUNT(*) FROM {$wpdb->posts} WHERE ID = %d", $enigme_id)
+      );
+    },
+    static function (int $post_id, array $relations): void {
+      update_post_meta($post_id, 'chasse_cache_enigmes', $relations);
+      cat_debug("✅ Relations nettoyées pour la chasse ID {$post_id} : " . print_r($relations, true));
     }
-
-    // 📌 Vérifier si les IDs existent toujours
-    $relations_nettoyees = array_filter($relations, function ($enigme_id) use ($wpdb) {
-      return $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$wpdb->posts} WHERE ID = %d", $enigme_id));
-    });
-
-    // 🔥 Si on a supprimé des IDs, mettre à jour la base
-    if (count($relations_nettoyees) !== count($relations)) {
-      update_post_meta($post_id, 'chasse_cache_enigmes', $relations_nettoyees);
-      cat_debug("✅ Relations nettoyées pour la chasse ID {$post_id} : " . print_r($relations_nettoyees, true));
-    }
-  }
+  );
 }
 
 /**

@@ -17,14 +17,74 @@ if (!class_exists(ChassesAuTresor\Core\Content\SolutionCacheService::class, fals
         . '/plugins/chassesautresor-core/src/Content/SolutionCacheService.php';
 }
 
+if (!class_exists(ChassesAuTresor\Core\Content\SolutionCacheUpdater::class, false)) {
+    require_once dirname(__DIR__, 4)
+        . '/plugins/chassesautresor-core/src/Content/SolutionCacheUpdater.php';
+}
+
+if (!class_exists(ChassesAuTresor\Core\Content\SolutionCreationService::class, false)) {
+    require_once dirname(__DIR__, 4)
+        . '/plugins/chassesautresor-core/src/Content/SolutionCreationService.php';
+}
+
+if (!class_exists(ChassesAuTresor\Core\Content\SolutionDeletionService::class, false)) {
+    require_once dirname(__DIR__, 4)
+        . '/plugins/chassesautresor-core/src/Content/SolutionDeletionService.php';
+}
+
+if (!class_exists(ChassesAuTresor\Core\Content\SolutionFieldPolicyService::class, false)) {
+    require_once dirname(__DIR__, 4)
+        . '/plugins/chassesautresor-core/src/Content/SolutionFieldPolicyService.php';
+}
+
+if (!class_exists(ChassesAuTresor\Core\Content\SolutionManagementService::class, false)) {
+    require_once dirname(__DIR__, 4)
+        . '/plugins/chassesautresor-core/src/Content/SolutionManagementService.php';
+}
+
+if (!class_exists(ChassesAuTresor\Core\Content\SolutionMutationService::class, false)) {
+    require_once dirname(__DIR__, 4)
+        . '/plugins/chassesautresor-core/src/Content/SolutionMutationService.php';
+}
+
+if (!class_exists(ChassesAuTresor\Core\Content\SolutionPostFactory::class, false)) {
+    require_once dirname(__DIR__, 4)
+        . '/plugins/chassesautresor-core/src/Content/SolutionPostFactory.php';
+}
+
+if (!class_exists(ChassesAuTresor\Core\Content\SolutionPublicationService::class, false)) {
+    require_once dirname(__DIR__, 4)
+        . '/plugins/chassesautresor-core/src/Content/SolutionPublicationService.php';
+}
+
+if (!class_exists(ChassesAuTresor\Core\Content\SolutionPublicationPlanner::class, false)) {
+    require_once dirname(__DIR__, 4)
+        . '/plugins/chassesautresor-core/src/Content/SolutionPublicationPlanner.php';
+}
+
 if (!class_exists(ChassesAuTresor\Core\Content\SolutionQueryService::class, false)) {
     require_once dirname(__DIR__, 4)
         . '/plugins/chassesautresor-core/src/Content/SolutionQueryService.php';
 }
 
+if (!class_exists(ChassesAuTresor\Core\Content\SolutionRedirectHandler::class, false)) {
+    require_once dirname(__DIR__, 4)
+        . '/plugins/chassesautresor-core/src/Content/SolutionRedirectHandler.php';
+}
+
 if (!class_exists(ChassesAuTresor\Core\Content\SolutionRouteRegistrar::class, false)) {
     require_once dirname(__DIR__, 4)
         . '/plugins/chassesautresor-core/src/Content/SolutionRouteRegistrar.php';
+}
+
+if (!class_exists(ChassesAuTresor\Core\Content\SolutionScheduler::class, false)) {
+    require_once dirname(__DIR__, 4)
+        . '/plugins/chassesautresor-core/src/Content/SolutionScheduler.php';
+}
+
+if (!class_exists(ChassesAuTresor\Core\Content\SolutionSaveHandler::class, false)) {
+    require_once dirname(__DIR__, 4)
+        . '/plugins/chassesautresor-core/src/Content/SolutionSaveHandler.php';
 }
 
 if (!class_exists(ChassesAuTresor\Core\Relationships\RelationshipService::class, false)) {
@@ -43,58 +103,7 @@ if (!class_exists(ChassesAuTresor\Core\Relationships\RelationshipService::class,
  */
 function solution_planifier_publication(int $solution_id): void
 {
-    if (get_post_type($solution_id) !== 'solution') {
-        return;
-    }
-
-    $cible     = get_field('solution_cible_type', $solution_id);
-    $chasse_id = 0;
-    if ($cible === 'chasse') {
-        $chasse    = get_field('solution_chasse_linked', $solution_id);
-        $chasse_id = is_array($chasse) ? (int) ($chasse[0] ?? 0) : (int) $chasse;
-    } elseif ($cible === 'enigme') {
-        $enigme    = get_field('solution_enigme_linked', $solution_id);
-        $enigme_id = is_array($enigme) ? (int) ($enigme[0] ?? 0) : (int) $enigme;
-        $chasse_id = $enigme_id ? recuperer_id_chasse_associee($enigme_id) : 0;
-    }
-
-    if (!$chasse_id) {
-        update_field('solution_cache_etat_systeme', SOLUTION_STATE_INVALIDE, $solution_id);
-        return;
-    }
-
-    $statut   = (string) get_field('chasse_cache_statut', $chasse_id);
-    $dispo    = get_field('solution_disponibilite', $solution_id) ?: 'fin_chasse';
-    $decalage = (int) get_field('solution_decalage_jours', $solution_id);
-    $heure    = get_field('solution_heure_publication', $solution_id) ?: '00:00';
-
-    wp_clear_scheduled_hook('publier_solution_programmee', [$solution_id]);
-    $service = new ChassesAuTresor\Core\Content\SolutionAvailabilityService();
-    $plan = $service->getPublicationPlan(
-        $statut,
-        (string) $dispo,
-        $decalage,
-        (string) $heure,
-        (int) current_time('timestamp')
-    );
-
-    if ($plan['state'] === SOLUTION_STATE_EN_COURS) {
-        solution_rendre_accessible($solution_id);
-        return;
-    }
-
-    update_field('solution_cache_etat_systeme', $plan['state'], $solution_id);
-    if ($plan['target_timestamp'] === null) {
-        delete_post_meta($solution_id, 'solution_date_disponibilite');
-        return;
-    }
-
-    update_post_meta(
-        $solution_id,
-        'solution_date_disponibilite',
-        gmdate('Y-m-d H:i:s', $plan['target_timestamp'])
-    );
-    wp_schedule_single_event($plan['target_timestamp'], 'publier_solution_programmee', [$solution_id]);
+    ChassesAuTresor\Core\Content\SolutionPublicationPlanner::plan($solution_id);
 }
 
 /**
@@ -105,24 +114,8 @@ function solution_planifier_publication(int $solution_id): void
  */
 function solution_rendre_accessible(int $solution_id): void
 {
-    if (get_post_type($solution_id) !== 'solution') {
-        return;
-    }
-
-    update_field('solution_cache_etat_systeme', SOLUTION_STATE_EN_COURS, $solution_id);
-    delete_post_meta($solution_id, 'solution_date_disponibilite');
-    if (get_post_status($solution_id) !== 'publish') {
-        $post = get_post($solution_id);
-        wp_update_post([
-            'ID'            => $solution_id,
-            'post_status'   => 'publish',
-            'post_date'     => $post->post_date,
-            'post_date_gmt' => $post->post_date_gmt,
-            'edit_date'     => true,
-        ]);
-    }
+    ChassesAuTresor\Core\Content\SolutionPublicationService::makeAccessible($solution_id);
 }
-add_action('publier_solution_programmee', 'solution_rendre_accessible');
 
 /**
  * Basculer les solutions programmées dont la date est atteinte.
@@ -131,14 +124,8 @@ add_action('publier_solution_programmee', 'solution_rendre_accessible');
  */
 function basculer_solutions_programme(): void
 {
-    $service = new ChassesAuTresor\Core\Content\SolutionAvailabilityService();
-    $solutions = get_posts($service->getDueSolutionIdsQueryArgs((string) current_time('mysql')));
-
-    foreach ($solutions as $sid) {
-        solution_rendre_accessible($sid);
-    }
+    ChassesAuTresor\Core\Content\SolutionScheduler::run();
 }
-add_action('basculer_solutions_programme', 'basculer_solutions_programme');
 
 /**
  * Planifie la tâche récurrente de basculement des solutions.
@@ -147,11 +134,8 @@ add_action('basculer_solutions_programme', 'basculer_solutions_programme');
  */
 function planifier_tache_basculer_solutions_programme(): void
 {
-    if (!wp_next_scheduled('basculer_solutions_programme')) {
-        wp_schedule_event(time(), 'hourly', 'basculer_solutions_programme');
-    }
+    ChassesAuTresor\Core\Content\SolutionScheduler::schedule();
 }
-add_action('after_switch_theme', 'planifier_tache_basculer_solutions_programme');
 
 /**
  * Met à jour le cache et l'état système d'une solution.
@@ -161,44 +145,7 @@ add_action('after_switch_theme', 'planifier_tache_basculer_solutions_programme')
  */
 function mettre_a_jour_cache_solution(int $post_id): void
 {
-    if (get_post_type($post_id) !== 'solution') {
-        return;
-    }
-
-    if (wp_is_post_revision($post_id) || wp_is_post_autosave($post_id)) {
-        return;
-    }
-
-    $cible_type = (string) get_field('solution_cible_type', $post_id);
-    $relationshipService = new ChassesAuTresor\Core\Relationships\RelationshipService();
-    $target_id = $relationshipService->resolveTargetId(
-        $cible_type,
-        get_field('solution_chasse_linked', $post_id),
-        get_field('solution_enigme_linked', $post_id)
-    );
-
-    $explic  = trim((string) get_field('solution_explication', $post_id));
-    $fichier = get_field('solution_fichier', $post_id);
-    $content = $explic !== '' || !empty($fichier);
-
-    $cacheUpdate = (new ChassesAuTresor\Core\Content\SolutionCacheService())->buildUpdate(
-        $content,
-        $target_id,
-        (string) get_post_status($post_id)
-    );
-    update_field('solution_cache_complet', $cacheUpdate['complete'], $post_id);
-    update_field('solution_cache_etat_systeme', $cacheUpdate['state'], $post_id);
-
-    if ($cacheUpdate['publication_status'] !== null) {
-        $post = get_post($post_id);
-        wp_update_post([
-            'ID'            => $post_id,
-            'post_status'   => $cacheUpdate['publication_status'],
-            'post_date'     => $post->post_date,
-            'post_date_gmt' => $post->post_date_gmt,
-            'edit_date'     => true,
-        ]);
-    }
+    ChassesAuTresor\Core\Content\SolutionCacheUpdater::update($post_id);
 }
 
 /**
@@ -209,14 +156,8 @@ function mettre_a_jour_cache_solution(int $post_id): void
  */
 function solution_acf_save_post(int $post_id): void
 {
-    if (get_post_type($post_id) !== 'solution') {
-        return;
-    }
-
-    mettre_a_jour_cache_solution($post_id);
-    solution_planifier_publication($post_id);
+    ChassesAuTresor\Core\Content\SolutionSaveHandler::handle($post_id);
 }
-add_action('acf/save_post', 'solution_acf_save_post', 40);
 
 // ==================================================
 // 💡 GESTION DES SOLUTIONS (création, redirection, AJAX)
@@ -229,26 +170,8 @@ add_action('acf/save_post', 'solution_acf_save_post', 40);
  */
 function rediriger_si_affichage_solution(): void
 {
-    if (!is_singular('solution')) {
-        return;
-    }
-
-    $solution_id = get_the_ID();
-    $cible_type  = get_field('solution_cible_type', $solution_id);
-    $redirect_id = 0;
-
-    if ($cible_type === 'chasse') {
-        $redirect_id = (int) get_field('solution_chasse_linked', $solution_id);
-    } elseif ($cible_type === 'enigme') {
-        $redirect_id = (int) get_field('solution_enigme_linked', $solution_id);
-    }
-
-    if ($redirect_id) {
-        wp_safe_redirect(get_permalink($redirect_id));
-        exit;
-    }
+    ChassesAuTresor\Core\Content\SolutionRedirectHandler::redirectIfViewingSolution();
 }
-add_action('template_redirect', 'rediriger_si_affichage_solution');
 
 /**
  * Crée une solution liée à une chasse ou une énigme.
@@ -260,67 +183,51 @@ add_action('template_redirect', 'rediriger_si_affichage_solution');
  */
 function creer_solution_pour_objet(int $objet_id, string $objet_type, ?int $user_id = null)
 {
-    if (!in_array($objet_type, ['chasse', 'enigme'], true)) {
-        return new WP_Error('type_invalide', __('Type de cible invalide.', 'chassesautresor-com'));
+    $creationService = new ChassesAuTresor\Core\Content\SolutionCreationService();
+    $supportedTarget = $creationService->isSupportedTargetType($objet_type);
+    $targetMatches = $supportedTarget && get_post_type($objet_id) === $objet_type;
+    $authenticated = is_user_logged_in();
+    $canCreate = $authenticated && $targetMatches
+        && solution_action_autorisee('create', $objet_type, $objet_id);
+    $chasse_id = 0;
+    if ($targetMatches) {
+        $chasse_id = $objet_type === 'chasse'
+            ? $objet_id
+            : recuperer_id_chasse_associee($objet_id);
     }
-
-    if (get_post_type($objet_id) !== $objet_type) {
-        return new WP_Error('cible_invalide', __('ID cible invalide.', 'chassesautresor-com'));
-    }
-
-    if (!is_user_logged_in()) {
-        return new WP_Error('non_connecte', __('Utilisateur non connecté.', 'chassesautresor-com'));
-    }
-
-    if (!solution_action_autorisee('create', $objet_type, $objet_id)) {
-        return new WP_Error('permission_refusee', __('Droits insuffisants.', 'chassesautresor-com'));
-    }
-
-    $chasse_id = $objet_type === 'chasse'
-        ? $objet_id
-        : recuperer_id_chasse_associee($objet_id);
-
-    if (!$chasse_id) {
-        return new WP_Error('permission_refusee', __('Droits insuffisants.', 'chassesautresor-com'));
-    }
-
-    $user_id = $user_id ?? get_current_user_id();
-
     $queryService = new ChassesAuTresor\Core\Content\SolutionQueryService();
-    $existing = get_posts($queryService->getExistingSolutionIdsQueryArgs($objet_id, $objet_type));
-    if (!empty($existing)) {
-        return new WP_Error('existe_deja', __('Une solution existe déjà pour cet objet.', 'chassesautresor-com'));
+    $existing = $canCreate && $chasse_id
+        ? get_posts($queryService->getExistingSolutionIdsQueryArgs($objet_id, $objet_type))
+        : [];
+    $errorCode = $creationService->getCreationError(
+        $supportedTarget,
+        $targetMatches,
+        $authenticated,
+        $canCreate,
+        (bool) $chasse_id,
+        !empty($existing)
+    );
+    if ($errorCode !== null) {
+        $messages = [
+            'type_invalide' => __('Type de cible invalide.', 'chassesautresor-com'),
+            'cible_invalide' => __('ID cible invalide.', 'chassesautresor-com'),
+            'non_connecte' => __('Utilisateur non connecté.', 'chassesautresor-com'),
+            'permission_refusee' => __('Droits insuffisants.', 'chassesautresor-com'),
+            'existe_deja' => __('Une solution existe déjà pour cet objet.', 'chassesautresor-com'),
+        ];
+
+        return new WP_Error($errorCode, $messages[$errorCode]);
     }
 
-    $solution_id = wp_insert_post([
-        'post_type'   => 'solution',
-        'post_status' => 'pending',
-        'post_title'  => TITRE_DEFAUT_SOLUTION,
-        'post_author' => $user_id,
-    ]);
-
-    if (is_wp_error($solution_id)) {
-        return $solution_id;
-    }
-
-    $objet_titre   = get_the_title($objet_id);
-    $nouveau_titre = sprintf(__('Solution | %s', 'chassesautresor-com'), $objet_titre);
-    wp_update_post([
-        'ID'         => $solution_id,
-        'post_title' => $nouveau_titre,
-    ]);
-
-    update_field('solution_cible_type', $objet_type, $solution_id);
-    update_field('solution_chasse_linked', $chasse_id, $solution_id);
-    if ($objet_type === 'enigme') {
-        update_field('solution_enigme_linked', $objet_id, $solution_id);
-    }
-    update_field('solution_disponibilite', 'fin_chasse', $solution_id);
-    update_field('solution_decalage_jours', 0, $solution_id);
-    update_field('solution_heure_publication', '00:00', $solution_id);
-    update_field('solution_cache_etat_systeme', SOLUTION_STATE_DESACTIVE, $solution_id);
-
-    return $solution_id;
+    return (new ChassesAuTresor\Core\Content\SolutionPostFactory())->create(
+        $objet_id,
+        $objet_type,
+        $chasse_id,
+        $user_id ?? get_current_user_id(),
+        TITRE_DEFAUT_SOLUTION,
+        __('Solution | %s', 'chassesautresor-com'),
+        SOLUTION_STATE_DESACTIVE
+    );
 }
 
 /**
@@ -364,16 +271,15 @@ function creer_solution_et_rediriger_si_appel(): void
         exit;
     }
 
-    $cible_id   = isset($_GET['chasse_id']) ? absint($_GET['chasse_id']) : 0;
-    $cible_type = 'chasse';
-    if (!$cible_id) {
-        $cible_id   = isset($_GET['enigme_id']) ? absint($_GET['enigme_id']) : 0;
-        $cible_type = 'enigme';
-    }
-
-    if (!$cible_id) {
+    $target = (new ChassesAuTresor\Core\Content\SolutionCreationService())->resolveRequestedTarget(
+        isset($_GET['chasse_id']) ? absint($_GET['chasse_id']) : 0,
+        isset($_GET['enigme_id']) ? absint($_GET['enigme_id']) : 0
+    );
+    if ($target === null) {
         wp_die(__('ID cible manquant.', 'chassesautresor-com'), 'Erreur', ['response' => 400]);
     }
+    $cible_id = $target['id'];
+    $cible_type = $target['type'];
 
     $solution_id = creer_solution_pour_objet($cible_id, $cible_type);
     if (is_wp_error($solution_id)) {
@@ -396,6 +302,8 @@ add_action('template_redirect', 'creer_solution_et_rediriger_si_appel');
  */
 function ajax_solutions_lister_table(): void
 {
+    $managementService = new ChassesAuTresor\Core\Content\SolutionManagementService();
+
     if (!is_user_logged_in()) {
         wp_send_json_error('non_connecte');
     }
@@ -417,7 +325,7 @@ function ajax_solutions_lister_table(): void
     $per_page = 5;
     $enigme_ids = $objet_type === 'chasse' ? recuperer_ids_enigmes_pour_chasse($objet_id) : [];
     $queryService = new ChassesAuTresor\Core\Content\SolutionQueryService();
-    $page       = max(1, $page);
+    $page       = $managementService->normalizePage($page, 0);
     $query_args = $queryService->getManagementQueryArgs(
         $objet_id,
         $objet_type,
@@ -427,8 +335,9 @@ function ajax_solutions_lister_table(): void
     );
     $query      = new WP_Query($query_args);
     $total_pages = (int) $query->max_num_pages;
-    if ($page > $total_pages && $total_pages > 0) {
-        $page                  = $total_pages;
+    $normalizedPage = $managementService->normalizePage($page, $total_pages);
+    if ($normalizedPage !== $page) {
+        $page                  = $normalizedPage;
         $query_args['paged']   = $page;
         $query                 = new WP_Query($query_args);
         $total_pages           = (int) $query->max_num_pages;
@@ -459,6 +368,8 @@ add_action('wp_ajax_solutions_lister_table', 'ajax_solutions_lister_table');
  */
 function ajax_chasse_solution_status(): void
 {
+    $managementService = new ChassesAuTresor\Core\Content\SolutionManagementService();
+
     if (!is_user_logged_in()) {
         wp_send_json_error('non_connecte');
     }
@@ -485,10 +396,6 @@ function ajax_chasse_solution_status(): void
         $toutes_enigmes,
         static fn($e) => !solution_existe_pour_objet($e->ID, 'enigme')
     );
-    $has_enigmes         = !empty($enigmes);
-    $has_enigme_solution = count($toutes_enigmes) > count($enigmes);
-    $has_solutions       = $has_solution_chasse || $has_enigme_solution;
-
     $total_solutions = 0;
     if (function_exists('get_posts')) {
         $enigme_ids = array_map(static fn($e) => (int) $e->ID, $toutes_enigmes);
@@ -504,13 +411,13 @@ function ajax_chasse_solution_status(): void
         $total_solutions = is_array($count_posts) ? count($count_posts) : 0;
     }
 
-    wp_send_json_success([
-        'has_solution_chasse' => $has_solution_chasse ? 1 : 0,
-        'has_solution_enigme' => $has_solution_enigme ? 1 : 0,
-        'has_enigmes'        => $has_enigmes ? 1 : 0,
-        'has_solutions'      => $has_solutions ? 1 : 0,
-        'total_solutions'    => $total_solutions,
-    ]);
+    wp_send_json_success($managementService->buildHuntStatus(
+        $has_solution_chasse,
+        $has_solution_enigme,
+        count($toutes_enigmes),
+        count($enigmes),
+        $total_solutions
+    ));
 }
 add_action('wp_ajax_chasse_solution_status', 'ajax_chasse_solution_status');
 
@@ -521,6 +428,8 @@ add_action('wp_ajax_chasse_solution_status', 'ajax_chasse_solution_status');
  */
 function ajax_creer_solution_modal(): void
 {
+    $fieldPolicy = new ChassesAuTresor\Core\Content\SolutionFieldPolicyService();
+
     if (!is_user_logged_in()) {
         wp_send_json_error('non_connecte');
     }
@@ -532,11 +441,9 @@ function ajax_creer_solution_modal(): void
         wp_send_json_error('post_invalide');
     }
 
-    if ($objet_type === 'enigme') {
-        $linked = isset($_POST['solution_enigme_linked']) ? (int) $_POST['solution_enigme_linked'] : 0;
-        if (!$linked || $linked !== $objet_id) {
-            wp_send_json_error('post_invalide');
-        }
+    $linked = isset($_POST['solution_enigme_linked']) ? (int) $_POST['solution_enigme_linked'] : 0;
+    if (!$fieldPolicy->hasConsistentRiddleTarget($objet_type, $objet_id, $linked)) {
+        wp_send_json_error('post_invalide');
     }
 
     if (!solution_action_autorisee('create', $objet_type, $objet_id)) {
@@ -544,8 +451,8 @@ function ajax_creer_solution_modal(): void
     }
 
     $has_file   = !empty($_FILES['solution_fichier']['tmp_name']) || !empty($_POST['solution_fichier']);
-    $has_explic = isset($_POST['solution_explication']) && trim((string) $_POST['solution_explication']) !== '';
-    if (!$has_file && !$has_explic) {
+    $rawExplanation = (string) ($_POST['solution_explication'] ?? '');
+    if (!$fieldPolicy->hasRequiredContent($has_file, $rawExplanation)) {
         wp_send_json_error('contenu_manquant');
     }
 
@@ -569,25 +476,20 @@ function ajax_creer_solution_modal(): void
         $fichier = (int) $_POST['solution_fichier'];
     }
 
-    $explic = wp_kses_post($_POST['solution_explication'] ?? '');
+    $explic = wp_kses_post($rawExplanation);
     $dispo  = sanitize_key($_POST['solution_disponibilite'] ?? 'fin_chasse');
     $delai  = isset($_POST['solution_decalage_jours']) ? (int) $_POST['solution_decalage_jours'] : 0;
     $heure  = sanitize_text_field($_POST['solution_heure_publication'] ?? '');
 
-    if ($fichier) {
-        update_field('solution_fichier', $fichier, $solution_id);
-    }
-    if ($explic !== '') {
-        update_field('solution_explication', $explic, $solution_id);
-    }
-
-    $dispo = $dispo === 'differee' ? 'differee' : 'fin_chasse';
-    update_field('solution_disponibilite', $dispo, $solution_id);
-    update_field('solution_decalage_jours', $delai, $solution_id);
-    update_field('solution_heure_publication', $heure ?: '00:00', $solution_id);
-
-    mettre_a_jour_cache_solution($solution_id);
-    solution_planifier_publication($solution_id);
+    $schedule = $fieldPolicy->normalizeSchedule($dispo, $delai, $heure);
+    ChassesAuTresor\Core\Content\SolutionMutationService::apply(
+        $solution_id,
+        $fichier,
+        false,
+        $explic,
+        $schedule,
+        false
+    );
 
     wp_send_json_success(['solution_id' => $solution_id]);
 }
@@ -600,6 +502,8 @@ add_action('wp_ajax_creer_solution_modal', 'ajax_creer_solution_modal');
  */
 function ajax_modifier_solution_modal(): void
 {
+    $fieldPolicy = new ChassesAuTresor\Core\Content\SolutionFieldPolicyService();
+
     if (!is_user_logged_in()) {
         wp_send_json_error('non_connecte');
     }
@@ -619,8 +523,8 @@ function ajax_modifier_solution_modal(): void
     }
 
     $has_file   = !empty($_FILES['solution_fichier']['tmp_name']) || !empty($_POST['solution_fichier']);
-    $has_explic = isset($_POST['solution_explication']) && trim((string) $_POST['solution_explication']) !== '';
-    if (!$has_file && !$has_explic) {
+    $rawExplanation = (string) ($_POST['solution_explication'] ?? '');
+    if (!$fieldPolicy->hasRequiredContent($has_file, $rawExplanation)) {
         wp_send_json_error('contenu_manquant');
     }
 
@@ -640,25 +544,20 @@ function ajax_modifier_solution_modal(): void
         $fichier = (int) $_POST['solution_fichier'];
     }
 
-    $explic = wp_kses_post($_POST['solution_explication'] ?? '');
+    $explic = wp_kses_post($rawExplanation);
     $dispo  = sanitize_key($_POST['solution_disponibilite'] ?? 'fin_chasse');
     $delai  = isset($_POST['solution_decalage_jours']) ? (int) $_POST['solution_decalage_jours'] : 0;
     $heure  = sanitize_text_field($_POST['solution_heure_publication'] ?? '');
 
-    if ($fichier) {
-        update_field('solution_fichier', $fichier, $solution_id);
-    } elseif ($has_file_input) {
-        delete_field('solution_fichier', $solution_id);
-    }
-    update_field('solution_explication', $explic, $solution_id);
-
-    $dispo = $dispo === 'differee' ? 'differee' : 'fin_chasse';
-    update_field('solution_disponibilite', $dispo, $solution_id);
-    update_field('solution_decalage_jours', $delai, $solution_id);
-    update_field('solution_heure_publication', $heure ?: '00:00', $solution_id);
-
-    mettre_a_jour_cache_solution($solution_id);
-    solution_planifier_publication($solution_id);
+    $schedule = $fieldPolicy->normalizeSchedule($dispo, $delai, $heure);
+    ChassesAuTresor\Core\Content\SolutionMutationService::apply(
+        $solution_id,
+        $fichier,
+        $has_file_input,
+        $explic,
+        $schedule,
+        true
+    );
 
     wp_send_json_success(['solution_id' => $solution_id]);
 }
@@ -681,19 +580,18 @@ function supprimer_solution_ajax(): void
         wp_send_json_error('id_invalide');
     }
 
-    $cible_type = get_field('solution_cible_type', $solution_id) === 'enigme' ? 'enigme' : 'chasse';
-    $relationshipService = new ChassesAuTresor\Core\Relationships\RelationshipService();
-    $objet_id = $relationshipService->resolveTargetId(
-        $cible_type,
+    $deletionService = new ChassesAuTresor\Core\Content\SolutionDeletionService();
+    $target = $deletionService->resolveTarget(
+        (string) get_field('solution_cible_type', $solution_id),
         get_field('solution_chasse_linked', $solution_id),
         get_field('solution_enigme_linked', $solution_id)
     );
 
-    if ($objet_id === null || !solution_action_autorisee('delete', $cible_type, $objet_id)) {
+    if ($target === null || !solution_action_autorisee('delete', $target['type'], $target['id'])) {
         wp_send_json_error('acces_refuse');
     }
 
-    if (wp_delete_post($solution_id, true) === false) {
+    if (!$deletionService->delete($solution_id)) {
         wp_send_json_error('echec_suppression');
     }
 

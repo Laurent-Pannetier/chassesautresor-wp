@@ -27,6 +27,18 @@ if (!class_exists(ChassesAuTresor\Core\Progress\HuntProgressService::class, fals
         . '/plugins/chassesautresor-core/src/Progress/HuntProgressService.php';
 }
 
+if (!class_exists(ChassesAuTresor\Core\Content\SolutionQueryService::class, false)) {
+    require_once dirname(__DIR__, 3)
+        . '/plugins/chassesautresor-core/src/Content/SolutionQueryService.php';
+}
+
+if (!class_exists(ChassesAuTresor\Core\Content\SolutionDisplayService::class, false)) {
+    require_once dirname(__DIR__, 3)
+        . '/plugins/chassesautresor-core/src/Content/SolutionAvailabilityService.php';
+    require_once dirname(__DIR__, 3)
+        . '/plugins/chassesautresor-core/src/Content/SolutionDisplayService.php';
+}
+
 //
 // 1. 📦 FONCTIONS LIÉES À UNE CHASSE
 // 2. 📦 AFFICHAGE
@@ -990,47 +1002,12 @@ function actualiser_cta_validation_chasse(): void
  */
 function solution_recuperer_par_objet(int $id, string $type)
 {
-    if (!$id || !in_array($type, ['enigme', 'chasse'], true)) {
+    $queryService = new ChassesAuTresor\Core\Content\SolutionQueryService();
+    $queryArgs = $queryService->getActiveSolutionQueryArgs($id, $type);
+    if ($queryArgs === []) {
         return null;
     }
-
-    $meta_key   = $type === 'enigme' ? 'solution_enigme_linked' : 'solution_chasse_linked';
-    $meta_query = [
-        'relation' => 'AND',
-        [
-            'key'   => 'solution_cible_type',
-            'value' => $type,
-        ],
-        [
-            'key'     => 'solution_cache_etat_systeme',
-            'value'   => [
-                SOLUTION_STATE_EN_COURS,
-                SOLUTION_STATE_A_VENIR,
-                SOLUTION_STATE_FIN_CHASSE,
-                SOLUTION_STATE_FIN_CHASSE_DIFFERE,
-            ],
-            'compare' => 'IN',
-        ],
-        [
-            'relation' => 'OR',
-            [
-                'key'   => $meta_key,
-                'value' => $id,
-            ],
-            [
-                'key'     => $meta_key,
-                'value'   => '"' . $id . '"',
-                'compare' => 'LIKE',
-            ],
-        ],
-    ];
-
-    $solutions = get_posts([
-        'post_type'      => 'solution',
-        'post_status'    => ['publish', 'pending', 'draft'],
-        'posts_per_page' => 1,
-        'meta_query'     => $meta_query,
-    ]);
+    $solutions = get_posts($queryArgs);
 
     return $solutions[0] ?? null;
 }
@@ -1048,39 +1025,12 @@ function solution_recuperer_par_objet(int $id, string $type)
  */
 function solution_existe_pour_objet(int $id, string $type): bool
 {
-    if (!$id || !in_array($type, ['enigme', 'chasse'], true)) {
+    $queryService = new ChassesAuTresor\Core\Content\SolutionQueryService();
+    $queryArgs = $queryService->getExistingSolutionIdsQueryArgs($id, $type);
+    if ($queryArgs === []) {
         return false;
     }
-
-    $meta_key   = $type === 'enigme' ? 'solution_enigme_linked' : 'solution_chasse_linked';
-    $meta_query = [
-        'relation' => 'AND',
-        [
-            'key'   => 'solution_cible_type',
-            'value' => $type,
-        ],
-        [
-            'relation' => 'OR',
-            [
-                'key'   => $meta_key,
-                'value' => $id,
-            ],
-            [
-                'key'     => $meta_key,
-                'value'   => '"' . $id . '"',
-                'compare' => 'LIKE',
-            ],
-        ],
-    ];
-
-    $solutions = get_posts([
-        'post_type'      => 'solution',
-        'post_status'    => ['publish', 'pending', 'draft', 'private', 'future'],
-        'fields'         => 'ids',
-        'no_found_rows'  => true,
-        'posts_per_page' => 1,
-        'meta_query'     => $meta_query,
-    ]);
+    $solutions = get_posts($queryArgs);
 
     return !empty($solutions);
 }
@@ -1096,34 +1046,16 @@ function solution_existe_pour_objet(int $id, string $type): bool
  */
 function solution_peut_etre_affichee(int $enigme_id): bool
 {
-    if (!$enigme_id || get_post_type($enigme_id) !== 'enigme') {
-        return false;
-    }
-
-    $solution = solution_recuperer_par_objet($enigme_id, 'enigme');
-    if (!$solution) {
+    if ($enigme_id <= 0 || get_post_type($enigme_id) !== 'enigme') {
         return false;
     }
 
     $chasse_id = recuperer_id_chasse_associee($enigme_id);
-    if (!$chasse_id || get_post_type($chasse_id) !== 'chasse') {
-        return false;
-    }
 
-    $dispo    = get_field('solution_disponibilite', $solution->ID) ?: 'fin_chasse';
-    $decalage = (int) get_field('solution_decalage_jours', $solution->ID);
-    $heure    = get_field('solution_heure_publication', $solution->ID) ?: '00:00';
-    $now      = current_time('timestamp');
-    $base     = get_field('date_de_decouverte', $chasse_id)
-        ?: get_field('chasse_infos_date_fin', $chasse_id);
-
-    return (new ChassesAuTresor\Core\Content\SolutionAvailabilityService())->isAvailable(
-        (string) get_field('chasse_cache_statut', $chasse_id),
-        (string) $dispo,
-        $base ? strtotime((string) $base) : null,
-        $decalage,
-        (string) $heure,
-        (int) $now
+    return (new ChassesAuTresor\Core\Content\SolutionDisplayService())->canDisplay(
+        $enigme_id,
+        'enigme',
+        (int) $chasse_id
     );
 }
 
@@ -1138,29 +1070,10 @@ function solution_peut_etre_affichee(int $enigme_id): bool
  */
 function solution_chasse_peut_etre_affichee(int $chasse_id): bool
 {
-    if (!$chasse_id || get_post_type($chasse_id) !== 'chasse') {
-        return false;
-    }
-
-    $solution = solution_recuperer_par_objet($chasse_id, 'chasse');
-    if (!$solution) {
-        return false;
-    }
-
-    $dispo    = get_field('solution_disponibilite', $solution->ID) ?: 'fin_chasse';
-    $decalage = (int) get_field('solution_decalage_jours', $solution->ID);
-    $heure    = get_field('solution_heure_publication', $solution->ID) ?: '00:00';
-    $now      = current_time('timestamp');
-    $base     = get_field('date_de_decouverte', $chasse_id)
-        ?: get_field('chasse_infos_date_fin', $chasse_id);
-
-    return (new ChassesAuTresor\Core\Content\SolutionAvailabilityService())->isAvailable(
-        (string) get_field('chasse_cache_statut', $chasse_id),
-        (string) $dispo,
-        $base ? strtotime((string) $base) : null,
-        $decalage,
-        (string) $heure,
-        (int) $now
+    return (new ChassesAuTresor\Core\Content\SolutionDisplayService())->canDisplay(
+        $chasse_id,
+        'chasse',
+        $chasse_id
     );
 }
 
