@@ -21,110 +21,6 @@ if (!function_exists('cat_get_riddle_statistics_service')) {
      */
 
     /**
-     * Build a cache key for rendered enigma blocks.
-     *
-     * @param string $block    Block identifier.
-     * @param int    $post_id  Enigma identifier.
-     *
-     * @return string
-     */
-    function enigme_get_render_cache_key(string $block, int $post_id): string
-    {
-        $version = (int) get_option('enigme_permissions_cache_version', 1);
-
-        return $block . '_' . $post_id . '_' . $version;
-    }
-
-    /**
-     * Clear cached rendering for a given enigma.
-     *
-     * @param int $post_id Enigma identifier.
-     */
-    function enigme_clear_render_cache(int $post_id): void
-    {
-        wp_cache_delete(enigme_get_render_cache_key('enigme_sidebar', $post_id), 'chassesautresor');
-        wp_cache_delete(enigme_get_render_cache_key('enigme_solution', $post_id), 'chassesautresor');
-    }
-
-    /**
-     * Bump cache version when user permissions change.
-     *
-     * @param mixed ...$args Unused.
-     */
-    function enigme_bump_permissions_cache_version(...$args): void
-    {
-        $version = (int) get_option('enigme_permissions_cache_version', 1);
-        update_option('enigme_permissions_cache_version', $version + 1);
-    }
-
-    add_action('save_post_enigme', 'enigme_clear_render_cache', 10, 1);
-    add_action('set_user_role', 'enigme_bump_permissions_cache_version', 10, 3);
-    add_action('profile_update', 'enigme_bump_permissions_cache_version', 10, 2);
-    add_action('user_register', 'enigme_bump_permissions_cache_version', 10, 1);
-    add_action('deleted_user', 'enigme_bump_permissions_cache_version', 10, 1);
-    add_action('added_user_meta', 'enigme_bump_permissions_cache_version', 10, 4);
-    add_action('updated_user_meta', 'enigme_bump_permissions_cache_version', 10, 4);
-    add_action('deleted_user_meta', 'enigme_bump_permissions_cache_version', 10, 4);
-
-    /**
-     * Clear solution caches when a solution is saved.
-     *
-     * @param int $solution_id Solution identifier.
-     */
-    function enigme_clear_render_cache_on_solution_save(int $solution_id): void
-    {
-        $target = get_field('solution_cible_type', $solution_id);
-
-        if ($target === 'enigme') {
-            $enigme_id = (int) get_field('solution_enigme_linked', $solution_id);
-            if ($enigme_id) {
-                enigme_clear_render_cache($enigme_id);
-            }
-
-            return;
-        }
-
-        if ($target === 'chasse') {
-            $chasse_id = (int) get_field('solution_chasse_linked', $solution_id);
-            if ($chasse_id) {
-                $enigmes = recuperer_enigmes_pour_chasse($chasse_id);
-                foreach ($enigmes as $enigme) {
-                    enigme_clear_render_cache((int) $enigme->ID);
-                }
-            }
-        }
-    }
-
-    add_action('save_post_solution', 'enigme_clear_render_cache_on_solution_save', 20, 1);
-    /**
-     * Clear sidebar caches for a given hunt and user.
-     *
-     * @param int $chasse_id Hunt identifier.
-     * @param int $user_id   User identifier.
-     */
-    function enigme_clear_sidebar_cache(int $chasse_id, int $user_id): void
-    {
-        wp_cache_delete('enigme_sidebar_progression_' . $chasse_id . '_' . $user_id, 'chassesautresor');
-    }
-
-    /**
-     * Clear sidebar caches when an enigma is solved.
-     *
-     * @param int $user_id   User identifier.
-     * @param int $enigme_id Enigma identifier.
-     */
-    function enigme_clear_sidebar_cache_on_solve(int $user_id, int $enigme_id): void
-    {
-        $chasse_id = recuperer_id_chasse_associee($enigme_id);
-        if ($chasse_id) {
-            enigme_clear_sidebar_cache($chasse_id, $user_id);
-        }
-        wp_cache_delete('enigme_sidebar_resolution_' . $enigme_id, 'chassesautresor');
-    }
-
-    add_action('enigme_resolue', 'enigme_clear_sidebar_cache_on_solve', 10, 2);
-
-    /**
      * Determine if the enigma menu should be displayed for a user.
      *
      * @param int    $user_id     User identifier.
@@ -823,7 +719,7 @@ if (!function_exists('cat_get_riddle_statistics_service')) {
      */
     function render_enigme_solution(int $enigme_id, string $style, int $user_id): void
     {
-        $cache_key = enigme_get_render_cache_key('enigme_solution', $enigme_id);
+        $cache_key = ChassesAuTresor\Core\Content\RiddleRenderCacheHookHandler::key('enigme_solution', $enigme_id);
         $html      = wp_cache_get($cache_key, 'chassesautresor');
 
         if ($html === false) {
@@ -1050,7 +946,6 @@ if (!function_exists('cat_get_riddle_statistics_service')) {
 
     if (class_exists(ChassesAuTresor\Core\Progress\RiddleSidebarAjaxHandler::class)) {
         ChassesAuTresor\Core\Progress\RiddleSidebarAjaxHandler::configure(
-            static fn (int $riddle_id): int => (int) recuperer_id_chasse_associee($riddle_id),
             static function (int $riddle_id, int $user_id, int $page): string {
                 return enigme_sidebar_gagnants_html($riddle_id, $user_id, $page);
             },
@@ -1059,10 +954,6 @@ if (!function_exists('cat_get_riddle_statistics_service')) {
                 $html .= enigme_sidebar_metas_html($riddle_id);
                 $html .= enigme_sidebar_progression_html($hunt_id, $user_id);
                 return $html . enigme_sidebar_resolution_html($riddle_id);
-            },
-            static function (int $hunt_id, int $riddle_id, int $user_id): void {
-                enigme_clear_sidebar_cache($hunt_id, $user_id);
-                wp_cache_delete('enigme_sidebar_resolution_' . $riddle_id, 'chassesautresor');
             }
         );
     }

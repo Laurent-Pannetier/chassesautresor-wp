@@ -181,13 +181,6 @@ function recuperer_id_chasse_associee($post_id = null)
     return $cached_chasse_id;
   }
 
-  // 🔹 Option temporaire (création automatique)
-  $temp = (int) get_option('chasse_associee_temp');
-  if ($temp > 0) {
-    delete_option('chasse_associee_temp');
-    return $cached_chasse_id = $temp;
-  }
-
   // 🔹 Lecture du champ ACF
   if ($post_id) {
     $champ = get_field('enigme_chasse_associee', $post_id);

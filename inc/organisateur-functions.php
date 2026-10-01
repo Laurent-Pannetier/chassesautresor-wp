@@ -296,9 +296,6 @@ function ajax_conversion_modal_content(): void
 
 if (class_exists(ChassesAuTresor\Core\Points\ConversionModalAjaxHandler::class)) {
     ChassesAuTresor\Core\Points\ConversionModalAjaxHandler::configure(
-        static function (int $user_id) {
-            return verifier_acces_conversion($user_id);
-        },
         static function ($access_message): string {
             return render_conversion_modal_content($access_message);
         }
@@ -568,9 +565,6 @@ function ajax_load_conversion_history(): void
 
 if (class_exists(ChassesAuTresor\Core\Points\ConversionHistoryAjaxHandler::class)) {
     ChassesAuTresor\Core\Points\ConversionHistoryAjaxHandler::configure(
-        static function (?int $user_id, int $limit, int $offset): array {
-            return cat_get_conversion_service()->getRequests($user_id, null, $limit, $offset);
-        },
         static function (array $requests, bool $is_admin): string {
             return cat_render_conversion_history_rows($requests, $is_admin);
         }
@@ -584,7 +578,6 @@ if (class_exists(ChassesAuTresor\Core\Points\ConversionHistoryAjaxHandler::class
 /**
  * 🔹 get_organisateur_id_by_contact_email → retrouve l’ID organisateur à partir de l’email de contact.
  * 🔹 filtrer_destinataire_contact_organisateur → modifie le destinataire du mail via WPForms (email ACF ou auteur, BCC admin)
- * 🔹 ajouter_endpoint_contact_organisateur → ajoute l’endpoint `/contact` sur les URLs des organisateurs (détection côté template)
  */
 
 /**
@@ -647,33 +640,6 @@ function get_organisateur_id_by_contact_email(?string $email): ?int
 
     return null;
 }
-
-/**
- * Ajoute l'endpoint `contact` aux permaliens des organisateurs.
- *
- * Permet de détecter /contact après un CPT organisateur dans le template.
- *
- * @return void
- */
-function ajouter_endpoint_contact_organisateur() {
-    add_rewrite_endpoint('contact', EP_PERMALINK);
-}
-add_action('init', 'ajouter_endpoint_contact_organisateur');
-
-/**
- * Enregistre `contact` comme variable de requête valide.
- *
- * Permet d'utiliser get_query_var('contact') de manière fiable.
- *
- * @param array $vars
- * @return array
- */
-function ajouter_query_var_contact($vars) {
-    $vars[] = 'contact';
-    return $vars;
-}
-
-add_filter('query_vars', 'ajouter_query_var_contact');
 
 /**
  * Génére une liste hiérarchique des chasses d'un organisateur.
@@ -898,21 +864,6 @@ function confirmer_demande_organisateur(int $user_id, string $token): ?int
         'creer_organisateur_pour_utilisateur',
         static function (int $confirmed_user_id): void {
             (new WP_User($confirmed_user_id))->add_role(ROLE_ORGANISATEUR_CREATION);
-        }
-    );
-}
-
-// ==================================================
-// 🌐 ENDPOINT CONFIRMATION ORGANISATEUR
-// ==================================================
-if (class_exists(ChassesAuTresor\Core\Relationships\OrganizerConfirmationRouteHandler::class)) {
-    ChassesAuTresor\Core\Relationships\OrganizerConfirmationRouteHandler::configure(
-        'confirmer_demande_organisateur',
-        static function (int $user_id): void {
-            remove_site_message('profil_verification');
-            if (function_exists('myaccount_remove_persistent_message')) {
-                myaccount_remove_persistent_message($user_id, 'profil_verification');
-            }
         }
     );
 }

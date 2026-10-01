@@ -600,14 +600,9 @@ add_filter( 'login_message', 'cta_login_branding' );
 
 $inc_path = get_stylesheet_directory() . '/inc/';
 
-require_once get_stylesheet_directory() . '/inc/site-password.php';
 require_once $inc_path . 'constants.php';
 require_once $inc_path . 'utils.php';
 require_once $inc_path . 'messages.php';
-require_once $inc_path . 'emails/template.php';
-require_once $inc_path . 'emails/user-registration.php';
-require_once $inc_path . 'emails/forgot-password.php';
-require_once $inc_path . 'emails/woocommerce.php';
 
 require_once $inc_path . 'shortcodes-init.php';
 require_once $inc_path . 'enigme-functions.php';

@@ -245,21 +245,6 @@ function cat_render_hunt_statistics_participants(
 
 if (class_exists(ChassesAuTresor\Core\Progress\HuntStatisticsAjaxHandler::class)) {
     ChassesAuTresor\Core\Progress\HuntStatisticsAjaxHandler::configure(
-        static function (int $id): bool {
-            return utilisateur_est_organisateur_associe_a_chasse(get_current_user_id(), $id);
-        },
-        static function (int $id, string $period): array {
-            return [
-                'participants' => chasse_compter_participants($id, $period),
-                'tentatives' => chasse_compter_tentatives($id, $period),
-                'points' => chasse_compter_points_collectes($id, $period),
-                'engagement_rate' => (int) round(chasse_calculer_taux_engagement($id, $period)),
-            ];
-        },
-        static function (int $id, int $limit, int $offset, string $orderby, string $order): array {
-            return chasse_lister_participants($id, $limit, $offset, $orderby, $order);
-        },
-        static fn (int $id): int => chasse_compter_participants($id),
         static function (...$arguments): string {
             return cat_render_hunt_statistics_participants(...$arguments);
         }

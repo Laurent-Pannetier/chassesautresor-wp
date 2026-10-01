@@ -42,131 +42,10 @@ function cat_get_user_attempt_statistics_service(): ChassesAuTresor\Core\Progres
 // 📦 TEMPLATES UTILISATEURS
 // ==================================================
 /**
- * 🔹 ajouter_rewrite_rules → Déclarer les règles de réécriture pour les URL personnalisées de l’espace "Mon Compte".
- * 🔹 ajouter_query_vars → Déclarer les variables de requête personnalisées associées aux URL de l’espace utilisateur.
- * 🔹 charger_template_utilisateur → Charger dynamiquement un template spécifique selon l’URL dans "Mon Compte".
  * 🔹 modifier_titre_onglet → Modifier dynamiquement le titre de la page dans l'onglet du navigateur.
  * 🔹 is_woocommerce_account_page → Vérifier si la page actuelle est une sous-page WooCommerce dans "Mon Compte".
  */
 
-
-/**
- * Charge dynamiquement un template spécifique en fonction de l'URL sous /mon-compte/.
- *
- * Cette fonction intercepte l'affichage des templates WordPress et remplace le fichier de template 
- * si l'URL demandée correspond à une page spécifique de l'espace utilisateur (ex: organisateurs, administrateurs).
- *
- * @param string $template Le chemin du template par défaut déterminé par WordPress.
- * @return string Le chemin du fichier de template personnalisé ou le template par défaut.
- */
-function ajouter_rewrite_rules() {
-    add_rewrite_rule('^mon-compte/statistiques/?$', 'index.php?mon_compte_statistiques=1', 'top');
-    add_rewrite_rule('^mon-compte/outils/?$', 'index.php?mon_compte_outils=1', 'top');
-}
-add_action('init', 'ajouter_rewrite_rules');
-
-/**
- * ➕ Déclare les variables de requête personnalisées associées aux URL de l’espace utilisateur.
- *
- * Ces variables sont nécessaires pour que WordPress reconnaisse les URL réécrites
- * comme valides et les transmette aux hooks `template_include`.
- *
- * @param array $vars Tableau des variables de requête connues.
- * @return array Tableau enrichi avec les nouvelles variables personnalisées.
- *
- * @hook query_vars
- */
-function ajouter_query_vars($vars) {
-    $vars[] = 'mon_compte_statistiques';
-    $vars[] = 'mon_compte_outils';
-    return $vars;
-}
-add_filter('query_vars', 'ajouter_query_vars');
-
-/**
- * 📦 Charge dynamiquement un template spécifique pour certaines URL de l'espace utilisateur.
- *
- * Cette fonction intercepte l’inclusion du template principal WordPress (`template_include`)
- * et remplace le fichier de template par défaut si l’URL correspond à l’une des URL personnalisées
- * définies via les règles de réécriture.
- *
- * - Ignore les endpoints WooCommerce pour éviter les conflits.
- * - Vérifie l’existence des fichiers de template personnalisés dans `/templates/admin/`.
- * - Active un logging (`error_log`) utile au débogage.
- *
- * @param string $template Le chemin du template par défaut déterminé par WordPress.
- * @return string Le chemin du fichier de template personnalisé ou le template par défaut.
- *
- * @hook template_include
- */
-function charger_template_utilisateur($template) {
-    // Récupération et nettoyage de l'URL demandée
-    $raw_request = $_SERVER['REQUEST_URI'] ?? '';
-    $request_uri = '';
-    if ($raw_request !== '') {
-        $parsed_url = wp_parse_url(wp_unslash($raw_request));
-        if (!empty($parsed_url['path'])) {
-            $request_uri = trim($parsed_url['path'], '/');
-        }
-    }
-    $requested_section = sanitize_key($_GET['section'] ?? '');
-
-    // Vérification pour éviter les conflits avec WooCommerce
-    if (is_wc_endpoint_url()) {
-        return $template;
-    }
-
-    if ($request_uri === 'mon-compte/chasses' || ($request_uri === 'mon-compte' && $requested_section === 'chasses')) {
-        wp_safe_redirect(home_url('/mon-compte/'));
-        exit;
-    }
-    
-    // Associe chaque URL à un fichier de contenu spécifique
-    $mapping_templates = array(
-        'mon-compte/organisateurs'        => 'content-organisateurs.php',
-        'mon-compte/organisateurs/'       => 'content-organisateurs.php', // Variante avec /
-        'mon-compte/statistiques'         => 'content-statistiques.php',
-        'mon-compte/outils'               => 'content-outils.php',
-    );
-
-    $admin_paths = array(
-        'mon-compte/organisateurs',
-        'mon-compte/organisateurs/',
-        'mon-compte/statistiques',
-        'mon-compte/outils',
-    );
-
-    // Vérifie si l'URL correspond à un contenu personnalisé
-    if (array_key_exists($request_uri, $mapping_templates)) {
-        if (in_array($request_uri, $admin_paths, true)) {
-            $section       = str_replace('mon-compte/', '', rtrim($request_uri, '/'));
-            $redirect_path = '/mon-compte/';
-
-            if (current_user_can('administrator')) {
-                $redirect_path .= '?section=' . $section;
-            }
-
-            wp_redirect(home_url($redirect_path));
-            exit;
-        }
-
-        $content_template = get_stylesheet_directory() . '/templates/myaccount/' . $mapping_templates[$request_uri];
-
-        if (!file_exists($content_template)) {
-            cat_debug('Fichier de contenu introuvable : ' . $content_template);
-        } else {
-            // Stocke le chemin pour l'injection dans le layout
-            $GLOBALS['myaccount_content_template'] = $content_template;
-        }
-
-        // Retourne le layout commun pour les pages "Mon Compte"
-        return get_stylesheet_directory() . '/templates/myaccount/layout.php';
-    }
-
-    // Retourne le template par défaut si aucune correspondance n'est trouvée
-    return $template;
-}
-add_filter('template_include', 'charger_template_utilisateur');
 
 /**
  * Modifier dynamiquement le titre de la page dans l'onglet du navigateur
@@ -710,184 +589,6 @@ if (!function_exists('myaccount_get_flash_messages')) {
     }
 }
 
-/**
- * Get pre-formatted HTML for the important message section in My Account pages.
- *
- * @return string
- */
-function myaccount_get_important_messages(): string
-{
-    $current_user_id = get_current_user_id();
-    $messages = array_merge(
-        myaccount_get_persistent_messages($current_user_id),
-        myaccount_get_flash_messages($current_user_id)
-    );
-    $flash = '';
-
-    if (isset($_GET['points_modifies']) && $_GET['points_modifies'] === '1') {
-        $flash = '<p class="flash flash--success">' . __('Points mis à jour avec succès.', 'chassesautresor') . '</p>';
-    }
-
-    if (current_user_can('administrator')) {
-        if (function_exists('recuperer_organisateurs_pending')) {
-            $pending = array_filter(
-                recuperer_organisateurs_pending(),
-                function ($entry) {
-                    return !empty($entry['chasse_id']) && $entry['validation'] === 'en_attente';
-                }
-            );
-
-            if (!empty($pending)) {
-                $links = array_map(
-                    function ($entry) {
-                        $url   = esc_url(get_permalink($entry['chasse_id']));
-                        $title = esc_html(get_the_title($entry['chasse_id']));
-                        return '<a href="' . $url . '">' . $title . '</a>';
-                    },
-                    $pending
-                );
-
-                $label = count($pending) > 1
-                    ? __('Chasses à valider :', 'chassesautresor')
-                    : __('Chasse à valider :', 'chassesautresor');
-
-                $messages[] = [
-                    'text' => $label . ' ' . implode(', ', $links),
-                    'type' => 'info',
-                ];
-            }
-        }
-
-        $pendingRequests = cat_get_conversion_service()->getRequests(null, 'pending');
-
-        if (!empty($pendingRequests)) {
-            $messages[] = [
-                'text' => __('Des demandes de conversion sont en attente de traitement.', 'chassesautresor-com'),
-                'type' => 'info',
-            ];
-        }
-    }
-
-    if (est_organisateur()) {
-        $current_user_id   = get_current_user_id();
-        $organisateur_id   = get_organisateur_from_user($current_user_id);
-
-        $pendingOwn = cat_get_conversion_service()->getRequests($current_user_id, 'pending');
-        if (!empty($pendingOwn)) {
-            $conversion_url = $organisateur_id
-                ? esc_url(
-                    add_query_arg(
-                        [
-                            'edition' => 'open',
-                            'onglet'  => 'revenus',
-                        ],
-                        get_permalink($organisateur_id)
-                    )
-                )
-                : esc_url(home_url('/mon-compte/'));
-
-            $messages[] = [
-                'text' => sprintf(
-                    /* translators: 1: opening anchor tag, 2: closing anchor tag */
-                    __('Vous avez une %1$sdemande de conversion%2$s en attente de règlement.', 'chassesautresor'),
-                    '<a href="' . $conversion_url . '">',
-                    '</a>'
-                ),
-                'type' => 'info',
-            ];
-        }
-
-        if ($organisateur_id) {
-            $pendingChasses = get_posts([
-                'post_type'   => 'chasse',
-                'post_status' => ['publish', 'pending'],
-                'numberposts' => -1,
-                'fields'      => 'ids',
-                'meta_query'  => [
-                    [
-                        'key'     => 'chasse_cache_organisateur',
-                        'value'   => '"' . $organisateur_id . '"',
-                        'compare' => 'LIKE',
-                    ],
-                    [
-                        'key'   => 'chasse_cache_statut_validation',
-                        'value' => 'en_attente',
-                    ],
-                ],
-            ]);
-
-            if (!empty($pendingChasses)) {
-                foreach ($pendingChasses as $chasse_id) {
-                    $url   = esc_url(get_permalink($chasse_id));
-                    $title = esc_html(get_the_title($chasse_id));
-                    $messages[] = [
-                        'text' => sprintf(
-                            /* translators: %s: hunt title with link */
-                            __('Demande pour %s en cours de traitement', 'chassesautresor-com'),
-                            '<a href="' . $url . '">' . $title . '</a>'
-                        ),
-                        'type' => 'info',
-                    ];
-                }
-            }
-        }
-    }
-
-    if (empty($messages) && $flash === '') {
-        return '';
-    }
-
-    $output = array_map(
-        function ($msg) {
-            $type        = $msg['type'] ?? 'info';
-            $text        = $msg['text'] ?? '';
-            if (!empty($msg['message_key'])) {
-                if (!empty($msg['locale']) && function_exists('switch_to_locale')) {
-                    switch_to_locale($msg['locale']);
-                    $text = __($msg['message_key'], 'chassesautresor-com');
-                    restore_previous_locale();
-                } else {
-                    $text = __($msg['message_key'], 'chassesautresor-com');
-                }
-            }
-            $dismissible = !empty($msg['dismissible']) && !empty($msg['key']);
-
-            switch ($type) {
-                case 'success':
-                    $class = 'message-succes';
-                    $aria  = 'role="status" aria-live="polite"';
-                    break;
-                case 'error':
-                    $class = 'message-erreur';
-                    $aria  = 'role="alert" aria-live="assertive"';
-                    break;
-                case 'warning':
-                    $class = 'message-info';
-                    $aria  = 'role="status" aria-live="polite"';
-                    break;
-                default:
-                    $class = 'message-info';
-                    $aria  = 'role="status" aria-live="polite"';
-                    break;
-            }
-
-            $button = '';
-            if ($dismissible) {
-                $button = ' <button type="button" class="message-close" data-key="'
-                    . esc_attr($msg['key'])
-                    . '" aria-label="'
-                    . esc_attr__('Supprimer ce message', 'chassesautresor-com')
-                    . '">×</button>';
-            }
-
-            return '<p class="' . esc_attr($class) . '" ' . $aria . '>' . $text . $button . '</p>';
-        },
-        $messages
-    );
-
-    return $flash . implode('', $output);
-}
-
 // ==================================================
 // 🎯 CHASSES ENGAGÉES & 📊 TENTATIVES UTILISATEUR
 // ==================================================
@@ -1361,12 +1062,6 @@ function ca_render_engaged_hunts_ajax_content(array $pagination): string
 
 if (class_exists(ChassesAuTresor\Core\Progress\EngagedHuntsAjaxHandler::class)) {
     ChassesAuTresor\Core\Progress\EngagedHuntsAjaxHandler::configure(
-        static function (int $user_id): array {
-            return ca_get_user_engaged_hunt_ids($user_id);
-        },
-        static function (array $hunt_ids, int $page, int $per_page): array {
-            return ca_prepare_engaged_hunts_pagination($hunt_ids, $page, $per_page);
-        },
         static function (array $pagination): string {
             return ca_render_engaged_hunts_ajax_content($pagination);
         }
@@ -1649,12 +1344,6 @@ function ca_render_tentatives_ajax_pager(array $view): string
 
 if (class_exists(ChassesAuTresor\Core\Progress\UserAttemptsAjaxHandler::class)) {
     ChassesAuTresor\Core\Progress\UserAttemptsAjaxHandler::configure(
-        static function (): void {
-            ca_register_tentatives_search_context();
-        },
-        static function (int $user_id, int $page, int $per_page): array {
-            return ca_get_tentatives_view_model($user_id, $page, $per_page);
-        },
         static function (array $view): string {
             return ca_render_tentatives_ajax_rows($view);
         },
@@ -1689,9 +1378,6 @@ if (class_exists(ChassesAuTresor\Core\Messages\AccountSectionAjaxHandler::class)
     ChassesAuTresor\Core\Messages\AccountSectionAjaxHandler::configure(
         static function (string $template_name): string {
             return ca_render_admin_section($template_name);
-        },
-        static function (): array {
-            return myaccount_get_important_messages();
         }
     );
 }
@@ -1872,46 +1558,3 @@ function afficher_commandes_utilisateur($user_id, $limit = 4) {
     <?php
     return ob_get_clean(); // Retourne le HTML capturé
 }
-
-
-
-// ==================================================
-// 📦 ATTRIBUTION DE RÔLE
-// ==================================================
-/**
- * 🔹 ajouter_role_organisateur_creation() → Ajoute le rôle "organisateur_creation" à un abonné après la création CONFIRMÉE d'un CPT "organisateur"
- */
-
-/**
- * 📌 Ajoute le rôle "organisateur_creation" à un abonné après la création CONFIRMÉE d'un CPT "organisateur".
- *
- * - Vérifie que l'utilisateur est "subscriber" avant de modifier son rôle.
- * - Vérifie que le post n'est pas en mode "auto-draft" (création en cours).
- * - Ne touche AUCUN autre rôle (admin, organisateur...).
- *
- * @param int      $post_id ID du post enregistré.
- * @param WP_Post  $post    Objet du post.
- * @param bool     $update  Indique si le post est mis à jour ou nouvellement créé.
- * @return void
- */
-function ajouter_role_organisateur_creation($post_id, $post, $update) {
-    // 🔹 Vérifie que le post est bien un CPT "organisateur"
-    if ($post->post_type !== 'organisateur') {
-        return;
-    }
-
-    // 🔹 Vérifie si le post est un "auto-draft" (pas encore enregistré par l'utilisateur)
-    if ($post->post_status === 'auto-draft') {
-        return;
-    }
-
-    $user_id = get_current_user_id();
-    $user = new WP_User($user_id);
-
-    // 🔹 Vérifie si l'utilisateur est "subscriber" avant de lui attribuer "organisateur_creation"
-    if (in_array('subscriber', $user->roles, true)) {
-        $user->add_role(ROLE_ORGANISATEUR_CREATION); // ✅ Ajoute le rôle sans retirer "subscriber"
-        cat_debug("✅ L'utilisateur $user_id a maintenant aussi le rôle 'organisateur_creation'.");
-    }
-}
-add_action('save_post', 'ajouter_role_organisateur_creation', 10, 3);

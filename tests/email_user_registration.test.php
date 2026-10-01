@@ -60,8 +60,8 @@ if (!function_exists('network_site_url')) {
     }
 }
 
-require_once __DIR__ . '/../inc/emails/template.php';
-require_once __DIR__ . '/../inc/emails/user-registration.php';
+require_once __DIR__ . '/../../../plugins/chassesautresor-core/src/Email/template.php';
+require_once __DIR__ . '/../../../plugins/chassesautresor-core/src/Email/user-registration.php';
 
 class EmailUserRegistrationTest extends TestCase
 {

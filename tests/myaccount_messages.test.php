@@ -359,6 +359,7 @@ $wpdb = new class {
 
 require_once __DIR__ . '/../../../plugins/chassesautresor-core/src/Messages/UserMessageRepository.php';
 class_alias(ChassesAuTresor\Core\Messages\UserMessageRepository::class, 'UserMessageRepository');
+require_once __DIR__ . '/../../../plugins/chassesautresor-core/src/Messages/important-messages.php';
 require_once __DIR__ . '/../inc/user-functions.php';
 
 class MyAccountMessagesTest extends TestCase

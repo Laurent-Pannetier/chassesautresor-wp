@@ -144,26 +144,6 @@ function cat_render_riddle_statistics_participants(
 
 if (class_exists(ChassesAuTresor\Core\Progress\RiddleStatisticsAjaxHandler::class)) {
     ChassesAuTresor\Core\Progress\RiddleStatisticsAjaxHandler::configure(
-        static fn (int $id): bool => utilisateur_peut_voir_panneau($id),
-        static fn (int $id): bool => utilisateur_peut_modifier_post($id),
-        static function (int $id, string $period): array {
-            $mode = get_field('enigme_mode_validation', $id) ?? 'automatique';
-            $cost = (int) get_field('enigme_tentative_cout_points', $id);
-            $stats = ['participants' => enigme_compter_joueurs_engages($id, $period)];
-            if ($mode !== 'aucune') {
-                $stats['tentatives'] = enigme_compter_tentatives($id, $mode, $period);
-                $stats['solutions'] = enigme_compter_bonnes_solutions($id, $mode, $period);
-            }
-            if ($cost > 0) {
-                $stats['points'] = enigme_compter_points_depenses($id, $mode, $period);
-            }
-            return $stats;
-        },
-        static function (int $id, int $limit, int $offset, string $orderby, string $order): array {
-            $mode = get_field('enigme_mode_validation', $id) ?? 'aucune';
-            return enigme_lister_participants($id, $mode, $limit, $offset, $orderby, $order);
-        },
-        static fn (int $id): int => enigme_compter_joueurs_engages($id),
         static function (...$arguments): string {
             return cat_render_riddle_statistics_participants(...$arguments);
         }

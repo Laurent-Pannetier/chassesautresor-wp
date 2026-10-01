@@ -21,9 +21,14 @@ if (!function_exists('get_theme_file_uri')) {
         return 'https://example.com/' . ltrim($path, '/');
     }
 }
+if (!function_exists('get_site_icon_url')) {
+    function get_site_icon_url($size = 512) {
+        return 'https://example.com/site-icon.png';
+    }
+}
 
 require_once dirname(__DIR__, 4) . '/vendor/autoload.php';
-require_once __DIR__ . '/../inc/emails/template.php';
+require_once __DIR__ . '/../../../plugins/chassesautresor-core/src/Email/template.php';
 
 class EmailTemplateTest extends TestCase
 {
@@ -38,8 +43,7 @@ class EmailTemplateTest extends TestCase
         $this->assertStringContainsString($content, $html);
         $this->assertStringContainsString('<header', $html);
         $this->assertStringContainsString('<footer', $html);
-        $this->assertStringContainsString('logo-cat_icone-s.png', $html);
-        $this->assertStringContainsString('logo-cat_hz-txt.png', $html);
+        $this->assertStringContainsString('site-icon.png', $html);
         $this->assertStringContainsString('Mentions légales', $html);
         $this->assertGreaterThanOrEqual(2, substr_count($html, '#0B132B'));
     }

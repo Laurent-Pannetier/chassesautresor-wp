@@ -21,7 +21,6 @@ const ORGANISATEURS_PENDING_PER_PAGE     = 20;
 /**
  * 🔹 rechercher_utilisateur_ajax → Rechercher des utilisateurs en AJAX pour l’autocomplétion.
  * 🔹 charger_script_autocomplete_utilisateurs → Enregistrer et charger le script de gestion des points dans l’admin (page "Mon Compte").
- * 🔹 gerer_organisateur → Gérer l’acceptation ou le refus d’un organisateur (demande modération).
  */
 
  
@@ -66,73 +65,6 @@ function charger_script_autocomplete_utilisateurs() {
     }
 }
 add_action('wp_enqueue_scripts', 'charger_script_autocomplete_utilisateurs');
-
-// Fonction principale pour gérer l'acceptation ou le refus
-function gerer_organisateur() {
-    
-    // Vérification des permissions et nonce
-    check_ajax_referer('gerer_organisateur_nonce', 'security');
-    
-
-    if (!current_user_can('manage_options')) {
-        wp_send_json_error( array( 'message' => __( 'Permission refusée.', 'chassesautresor-com' ) ) );
-        exit;
-    }
-
-    $post_id = intval($_POST['post_id']);
-    $type = sanitize_text_field($_POST['type']);
-
-    if (!$post_id || empty($type)) {
-        wp_send_json_error( array( 'message' => __( 'Requête invalide.', 'chassesautresor-com' ) ) );
-        exit;
-    }
-
-    if ($type === "accepter") {
-        // Mise à jour du statut de l'organisateur
-        wp_update_post(array(
-            'ID'          => $post_id,
-            'post_status' => 'publish'
-        ));
-
-        // Attribution du rôle "Organisateur" à l'auteur de la demande
-        $user_id = get_post_field('post_author', $post_id);
-        if ($user_id) {
-            $user = new WP_User($user_id);
-            $user->set_role(ROLE_ORGANISATEUR); // Assurez-vous que ce rôle existe
-            // Nettoyer explicitement le rôle organisateur_creation si présent
-            $user->remove_role(ROLE_ORGANISATEUR_CREATION);
-        }
-
-        // Envoi d'un email de confirmation
-        $email = get_post_meta($post_id, 'email_organisateur', true);
-        if (!empty($email)) {
-            $subject = __('Validation de votre inscription', 'chassesautresor-com');
-            $message = '<p>' . esc_html__('Votre demande d\'organisateur a été validée !', 'chassesautresor-com') . '</p>';
-            cta_send_email($email, $subject, $message);
-        }
-
-        wp_send_json_success(array("message" => "Organisateur accepté."));
-    }
-
-    if ($type === "refuser") {
-        // Suppression de la demande
-        wp_delete_post($post_id, true);
-
-        // Envoi d'un email de refus
-        $email = get_post_meta($post_id, 'email_organisateur', true);
-        if (!empty($email)) {
-            $subject = __('Refus de votre demande', 'chassesautresor-com');
-            $message = '<p>' . esc_html__('Votre demande d\'organisateur a été refusée.', 'chassesautresor-com') . '</p>';
-            cta_send_email($email, $subject, $message);
-        }
-
-        wp_send_json_success(array("message" => "Demande refusée et supprimée."));
-    }
-
-    wp_send_json_error( array( 'message' => __( 'Action inconnue.', 'chassesautresor-com' ) ) );
-}
-
-
 
 // ==================================================
 // 📦 TAUX DE CONVERSION & PAIEMENT
@@ -344,132 +276,11 @@ function ajax_lister_historique_paiements_admin(): void
 // 🎛️ Mise à jour du statut des demandes de paiement (Admin)
 // ----------------------------------------------------------
 /**
- * Update monthly total of organizer payouts.
- */
-function mettre_a_jour_paiements_organisateurs(float $amount): void
-{
-    $option = 'total_paiements_effectues_mensuel_' . date('Y_m');
-
-    if (function_exists('get_option') && function_exists('update_option')) {
-        $current = (float) get_option($option, 0);
-        update_option($option, $current + $amount);
-    }
-}
-
-/**
  * Handle AJAX status updates for payment requests.
  */
 function ajax_update_request_status(): void
 {
     \ChassesAuTresor\Core\Admin\AdminAjaxHandler::updateConversionStatus();
-}
-
-
-
-// ==================================================
-// 📦 RÉINITIALISATION D’UNE ÉNIGME
-// ==================================================
-/**
- * 🔄 Réinitialise l’état d’une énigme pour un utilisateur donné :
- * - Supprime le statut et la date de résolution.
- * - Réinitialise les indices débloqués.
- * - Réinitialise le statut de la chasse si nécessaire.
- * - Nettoie les caches liés à l’utilisateur et à l’énigme.
- *
- * @param int $user_id ID de l’utilisateur.
- * @param int $enigme_id ID de l’énigme.
- */
-function reinitialiser_enigme($user_id, $enigme_id) {
-    if (!is_numeric($user_id) || !is_numeric($enigme_id)) {
-        cat_debug("⚠️ Paramètres invalides : user_id={$user_id}, enigme_id={$enigme_id}");
-        return;
-    }
-
-    cat_debug("🔄 DÉBUT de la réinitialisation pour l'utilisateur (ID: {$user_id}) sur l'énigme (ID: {$enigme_id})");
-
-    // 🧹 1. Suppression du statut et de la date de résolution
-    delete_user_meta($user_id, "statut_enigme_{$enigme_id}");
-    delete_user_meta($user_id, "enigme_{$enigme_id}_resolution_date");
-    cat_debug("🧹 Statut et date de résolution supprimés pour l'énigme (ID: {$enigme_id})");
-
-    // 🗑️ 2. Réinitialisation des indices débloqués
-    $indices = get_field('indices', $enigme_id); 
-    if (!empty($indices) && is_array($indices)) {
-        foreach ($indices as $index => $indice) {
-            delete_user_meta($user_id, "indice_debloque_{$enigme_id}_{$index}");
-        }
-        cat_debug("🧹 Indices débloqués réinitialisés pour l'énigme (ID: {$enigme_id})");
-    }
-
-    // 🏴‍☠️ 3. Gestion de la chasse associée
-    $chasse_id = get_field('chasse_associee', $enigme_id, false);
-    $chasse_id = is_array($chasse_id) ? reset($chasse_id) : $chasse_id;
-
-    if ($chasse_id && is_numeric($chasse_id)) {
-        // 🔄 Si la chasse est en mode "stop" et terminée, la remettre en cours
-        $illimitee = get_field('illimitee', $chasse_id); // Récupère le mode de la chasse (stop / continue)
-        $statut_chasse = get_field('statut_chasse', $chasse_id);
-        
-        // Vérifie si la chasse est en mode "stop" et si elle est terminée
-        if ($illimitee === 'stop' && in_array(mb_strtolower($statut_chasse), ['termine', 'terminée', 'terminé'], true)) {
-            update_field('statut_chasse', 'en cours', $chasse_id);
-            update_field('gagnant', '', $chasse_id);
-            update_field('date_de_decouverte', null, $chasse_id);
-        
-            delete_post_meta($chasse_id, 'statut_chasse');
-            delete_post_meta($chasse_id, 'gagnant');
-            delete_post_meta($chasse_id, 'date_de_decouverte');
-        
-            wp_cache_delete($chasse_id, 'post_meta');
-            clean_post_cache($chasse_id);
-        
-            cat_debug("🔄 Chasse (ID: {$chasse_id}) réinitialisée : statut 'en cours', gagnant et date supprimés.");
-        }
-    }
-
-    // 🚀 5. (Optionnel) Réinitialisation de la souscription pour permettre de rejouer immédiatement
-    // Décommentez la ligne suivante si vous souhaitez que le bouton "JOUER" apparaisse directement après réinitialisation :
-    // update_user_meta($user_id, "statut_enigme_{$enigme_id}", 'souscrit');
-    // cat_debug("🔄 Souscription réinitialisée pour l'énigme (ID: {$enigme_id}) → bouton 'JOUER' réactivé.");
-
-    // 🧹 6. Nettoyage des caches
-    // 🚀 5. Rafraîchissement des caches WordPress pour garantir l'affichage correct
-wp_cache_delete($user_id, 'user_meta'); // Supprime le cache des métas utilisateur
-wp_cache_delete("statut_enigme_{$enigme_id}", 'user_meta'); // Supprime le cache spécifique du statut d'énigme
-wp_cache_delete($enigme_id, 'post_meta'); // Supprime le cache des métas du post (énigme)
-
-clean_user_cache($user_id); // Nettoie le cache complet de l'utilisateur
-clean_post_cache($enigme_id); // Nettoie le cache du post énigme
-
-cat_debug("🔄 Caches utilisateur et post nettoyés après réinitialisation.");
-cat_debug("✅ Réinitialisation complète terminée pour l'utilisateur (ID: {$user_id}) sur l'énigme (ID: {$enigme_id})");
-
-}
-
-/**
- * 🔄 Affiche le bouton de réinitialisation si l'utilisateur a résolu l'énigme.
- *
- * Conditions :
- * - Affiche si le statut de l’énigme est "resolue" ou "terminee_resolue".
- *
- * @return string HTML du bouton ou chaîne vide si non applicable.
- */
-function bouton_reinitialiser_enigme_callback() {
-    if (!is_user_logged_in() || !is_singular('enigme') || !current_user_can('administrator')) return ''; // 🚫 Restreint aux admins
-
-    $user_id = get_current_user_id();
-    $enigme_id = get_the_ID();
-    $statut = enigme_get_statut($enigme_id, $user_id); // 🔄 Utilisation du statut centralisé
-
-    // ✅ Affiche le bouton uniquement si l'énigme est resolue ou terminee_resolue
-    if (!in_array($statut, ['resolue', 'terminee_resolue'])) return '';
-
-    return "
-        <form method='post' class='form-reinitialiser-enigme'>
-            <button type='submit' name='reinitialiser_enigme' class='bouton-action bouton-reinitialiser dynamique-{$statut}'>
-                🔄 Réinitialiser l’énigme
-            </button>
-        </form>";
 }
 
 
@@ -644,11 +455,7 @@ function cta_toggle_site_protection(): void
 }
 
 \ChassesAuTresor\Core\Admin\AdminAjaxHandler::configure(
-    static fn(array $requests): string => render_tableau_paiements_admin($requests),
-    static function (int $huntId): void {
-        chasse_clear_infos_affichage_cache($huntId);
-    },
-    static fn() => cat_get_conversion_service()
+    static fn(array $requests): string => render_tableau_paiements_admin($requests)
 );
 
 

@@ -485,9 +485,6 @@ function ajax_load_points_history(): void
 
 if (class_exists(ChassesAuTresor\Core\Points\PointsHistoryAjaxHandler::class)) {
     ChassesAuTresor\Core\Points\PointsHistoryAjaxHandler::configure(
-        static function (int $user_id, int $page, int $per_page): array {
-            return get_user_points_history($user_id, $page, $per_page);
-        },
         static function (array $operations): string {
             return cat_render_points_history_rows($operations);
         }

@@ -93,18 +93,6 @@ if (!function_exists('cat_get_riddle_attempt_service')) {
         ChassesAuTresor\Core\Progress\RiddleAttemptViewAjaxHandler::handle();
     }
 
-if (class_exists(ChassesAuTresor\Core\Progress\RiddleAttemptViewAjaxHandler::class)) {
-    ChassesAuTresor\Core\Progress\RiddleAttemptViewAjaxHandler::configure(
-        static function (string $uid): ?object {
-            return get_tentative_by_uid($uid);
-        },
-        static function (object $attempt): bool {
-            return ca_user_can_view_tentative_proposition($attempt);
-        }
-    );
-}
-
-
     /**
      * Récupère toutes les informations nécessaires à l'affichage d'une tentative.
      *
@@ -197,16 +185,6 @@ function ajax_lister_tentatives_enigme(): void
 
 if (class_exists(ChassesAuTresor\Core\Progress\RiddleAttemptListAjaxHandler::class)) {
     ChassesAuTresor\Core\Progress\RiddleAttemptListAjaxHandler::configure(
-        static function (int $riddle_id): bool {
-            return function_exists('utilisateur_peut_modifier_post')
-                && utilisateur_peut_modifier_post($riddle_id);
-        },
-        static function (int $riddle_id, int $limit, int $offset): array {
-            return recuperer_tentatives_enigme($riddle_id, $limit, $offset);
-        },
-        static function (int $riddle_id): int {
-            return compter_tentatives_enigme($riddle_id);
-        },
         static function (array $arguments): string {
             return cat_render_riddle_attempt_list($arguments);
         }

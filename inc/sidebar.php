@@ -228,16 +228,6 @@ if (!function_exists('ajax_chasse_recuperer_navigation')) {
 
     if (class_exists(ChassesAuTresor\Core\Progress\HuntNavigationAjaxHandler::class)) {
         ChassesAuTresor\Core\Progress\HuntNavigationAjaxHandler::configure(
-            static function (int $user_id, int $hunt_id): bool {
-                return (new ChassesAuTresor\Core\Progress\HuntNavigationAccessService())->canView(
-                    $user_id,
-                    current_user_can('manage_options'),
-                    function_exists('utilisateur_est_organisateur_associe_a_chasse')
-                        && utilisateur_est_organisateur_associe_a_chasse($user_id, $hunt_id),
-                    function_exists('utilisateur_est_engage_dans_chasse')
-                        && utilisateur_est_engage_dans_chasse($user_id, $hunt_id)
-                );
-            },
             static function (int $hunt_id, int $user_id, int $riddle_id): array {
                 return sidebar_prepare_chasse_nav($hunt_id, $user_id, $riddle_id);
             }

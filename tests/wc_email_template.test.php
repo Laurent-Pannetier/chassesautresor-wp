@@ -23,8 +23,8 @@ if (!function_exists('get_theme_file_uri')) {
 }
 
 require_once dirname(__DIR__, 4) . '/vendor/autoload.php';
-require_once __DIR__ . '/../inc/emails/template.php';
-require_once __DIR__ . '/../inc/emails/woocommerce.php';
+require_once __DIR__ . '/../../../plugins/chassesautresor-core/src/Email/template.php';
+require_once __DIR__ . '/../../../plugins/chassesautresor-core/src/Email/woocommerce.php';
 
 class WooCommerceEmailTemplateTest extends TestCase
 {
