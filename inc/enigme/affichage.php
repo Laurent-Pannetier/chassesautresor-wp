@@ -117,7 +117,8 @@ require_once __DIR__ . '/indices.php';
 
         $content = '';
 
-        $hints = (new ChassesAuTresor\Core\Progress\RiddleParticipationService())->hints($enigme_id, $user_id);
+        $participation_service = new ChassesAuTresor\Core\Progress\RiddleParticipationService();
+        $hints = $participation_service->hints($enigme_id, $user_id);
         $indices_enigme = $hints['riddle'];
         $indices_chasse = $hints['hunt'];
 
@@ -202,29 +203,17 @@ require_once __DIR__ . '/indices.php';
             $content .= '<div class="indice-display"></div></div>';
         }
 
-        $mode_validation = get_field('enigme_mode_validation', $enigme_id);
-        $cout            = (int) get_field('enigme_tentative_cout_points', $enigme_id);
-
-        if ($mode_validation === 'aucune') {
-            $cout = 0;
-        }
-
-        $solde_actuel = ($cout > 0 && function_exists('get_user_points'))
-            ? get_user_points($user_id)
-            : 0;
-
-        $afficher_tentatives = $mode_validation === 'automatique' && !$deja_resolue;
-        $afficher_infos      = $mode_validation !== 'aucune'
-            && !$deja_resolue
-            && ($cout > 0 || $afficher_tentatives);
-
-        if ($afficher_tentatives && !function_exists('compter_tentatives_du_jour')) {
-            require_once __DIR__ . '/tentatives.php';
-        }
+        $participation_info = (new ChassesAuTresor\Core\Progress\RiddleParticipationInfoService())
+            ->build($enigme_id, $user_id, $deja_resolue);
+        $mode_validation = $participation_info['validation_mode'];
+        $cout = $participation_info['cost'];
+        $solde_actuel = $participation_info['balance'];
+        $afficher_tentatives = $participation_info['show_attempts'];
+        $afficher_infos = $participation_info['show_info'];
 
         if ($afficher_tentatives) {
-            $tentatives_utilisees = compter_tentatives_du_jour($user_id, $enigme_id);
-            $tentatives_max       = (int) get_field('enigme_tentative_max', $enigme_id);
+            $tentatives_utilisees = $participation_info['attempts_used'];
+            $tentatives_max       = $participation_info['attempts_max'];
             $tentatives_max_aff   = $tentatives_max > 0 ? $tentatives_max : '∞';
         }
 
