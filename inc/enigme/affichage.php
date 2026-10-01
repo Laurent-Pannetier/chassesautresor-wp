@@ -246,27 +246,9 @@ if (!function_exists('cat_get_riddle_statistics_service')) {
             return '';
         }
 
-        $cache_key = 'enigme_sidebar_progression_' . $chasse_id . '_' . $user_id;
-        $data      = wp_cache_get($cache_key, 'chassesautresor');
-
-        if (!is_array($data)) {
-            $enigme_ids    = recuperer_ids_enigmes_pour_chasse($chasse_id);
-            $total_enigmes = count($enigme_ids);
-            $user_rate     = 0;
-
-            if ($total_enigmes > 0) {
-                $engagees = cat_get_hunt_progress_service()->countEngagedRiddles($user_id, $enigme_ids);
-                $user_rate = (100 * $engagees) / $total_enigmes;
-            }
-
-            $avg_rate = chasse_calculer_taux_engagement($chasse_id);
-            $data     = [
-                'user' => (int) round($user_rate),
-                'avg'  => (int) round($avg_rate),
-            ];
-
-            wp_cache_set($cache_key, $data, 'chassesautresor', HOUR_IN_SECONDS);
-        }
+        global $wpdb;
+        $data = ChassesAuTresor\Core\Support\CoreServiceFactory::riddleSidebarStatistics($wpdb)
+            ->progression($chasse_id, $user_id);
 
         return enigme_render_bar_subsection(
             esc_html__('Progression', 'chassesautresor-com'),
@@ -300,14 +282,9 @@ if (!function_exists('cat_get_riddle_statistics_service')) {
             return '';
         }
 
-        $cache_key = 'enigme_sidebar_resolution_' . $enigme_id;
-        $rate      = wp_cache_get($cache_key, 'chassesautresor');
-
-        if (!is_int($rate)) {
-            $rate = (int) round(cat_get_riddle_statistics_service()->calculateResolutionRate($enigme_id));
-
-            wp_cache_set($cache_key, $rate, 'chassesautresor', HOUR_IN_SECONDS);
-        }
+        global $wpdb;
+        $rate = ChassesAuTresor\Core\Support\CoreServiceFactory::riddleSidebarStatistics($wpdb)
+            ->resolution($enigme_id);
 
         return enigme_render_single_bar_subsection(
             esc_html__('Résolution', 'chassesautresor-com'),
@@ -719,10 +696,10 @@ if (!function_exists('cat_get_riddle_statistics_service')) {
      */
     function render_enigme_solution(int $enigme_id, string $style, int $user_id): void
     {
-        $cache_key = ChassesAuTresor\Core\Content\RiddleRenderCacheHookHandler::key('enigme_solution', $enigme_id);
-        $html      = wp_cache_get($cache_key, 'chassesautresor');
+        $cache = ChassesAuTresor\Core\Content\RiddleRenderCacheHookHandler::class;
+        $html = $cache::get('enigme_solution', $enigme_id);
 
-        if ($html === false) {
+        if ($html === null) {
             ob_start();
             ob_start();
             enigme_get_partial(
@@ -744,7 +721,7 @@ if (!function_exists('cat_get_riddle_statistics_service')) {
                 echo '</section>';
             }
             $html = ob_get_clean();
-            wp_cache_set($cache_key, $html, 'chassesautresor', HOUR_IN_SECONDS);
+            $cache::put('enigme_solution', $enigme_id, $html);
         }
 
         echo $html;

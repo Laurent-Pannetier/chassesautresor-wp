@@ -1,16 +1,7 @@
 <?php
 defined('ABSPATH') || exit;
 
-/**
- * Retrieve the expected answers for an enigma, migrating old formats.
- *
- * @param int $enigme_id Enigma post ID.
- * @return array<string>
- */
-function enigme_get_bonnes_reponses(int $enigme_id): array
-{
-    return (new ChassesAuTresor\Core\Progress\RiddleAnswerService())->get($enigme_id);
-}
+
 
 
     // ==================================================

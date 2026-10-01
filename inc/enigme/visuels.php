@@ -10,7 +10,6 @@ defined('ABSPATH') || exit;
  * 🔹 enigme_a_une_image() → Vérifie si l’énigme a une image définie.
  * 🔹 get_url_vignette_enigme() → Retourne l’URL proxy de la première vignette d’une énigme.
  * 🔹 afficher_picture_vignette_enigme() → Affiche un bloc <picture> responsive pour une énigme.
- * 🔹 trouver_chemin_image() → Retourne le chemin absolu et le type MIME d’une image à une taille donnée.
  */
 
 /**
@@ -338,83 +337,6 @@ function afficher_picture_vignette_enigme(int $enigme_id, string $alt = '', arra
     }
 
     echo build_picture_enigme($image_id, $alt, $sizes);
-}
-
-
-
-/**
- * Retourne le chemin absolu (serveur) et le type MIME d’une image à une taille donnée.
- * Si une version WebP existe pour cette taille, elle est priorisée.
- *
- * @param int $image_id ID de l’image WordPress
- * @param string $taille Taille WordPress demandée (ex: 'thumbnail', 'medium', 'full')
- * @return array|null Tableau ['path' => string, 'mime' => string] ou null si introuvable
- */
-function trouver_chemin_image(int $image_id, string $taille = 'full'): ?array
-{
-    $cache_key   = sprintf('%d_%s', $image_id, $taille);
-    $cache_group = 'trouver_chemin_image';
-
-    if (function_exists('wp_cache_get')) {
-        $cached = wp_cache_get($cache_key, $cache_group, false, $found);
-        if ($found) {
-            return $cached;
-        }
-    }
-
-    $wp_size = $taille === 'full' ? 'full' : $taille;
-    $src     = wp_get_attachment_image_src($image_id, $wp_size);
-    $url = $src[0] ?? null;
-    if (!$url) {
-        if (function_exists('wp_cache_set')) {
-            wp_cache_set($cache_key, null, $cache_group);
-        }
-        return null;
-    }
-
-    $upload_dir = wp_get_upload_dir();
-    $path = str_replace($upload_dir['baseurl'], $upload_dir['basedir'], $url);
-
-    // 🔁 Si une version .webp existe, on la préfère
-    $webp_path = preg_replace('/\\.(jpe?g|png|gif)$/i', '.webp', $path);
-    if ($webp_path !== $path && file_exists($webp_path)) {
-        error_log("[trouver_chemin_image] utilisation de $webp_path");
-        $result = ['path' => $webp_path, 'mime' => 'image/webp'];
-        if (function_exists('wp_cache_set')) {
-            wp_cache_set($cache_key, $result, $cache_group);
-        }
-        return $result;
-    }
-
-    // 🔁 Sinon, on vérifie le fichier d’origine
-    if (file_exists($path)) {
-        $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
-        $mime = match ($ext) {
-            'jpg', 'jpeg' => 'image/jpeg',
-            'png'         => 'image/png',
-            'gif'         => 'image/gif',
-            'webp'        => 'image/webp',
-            default       => 'application/octet-stream',
-        };
-        $result = ['path' => $path, 'mime' => $mime];
-        if (function_exists('wp_cache_set')) {
-            wp_cache_set($cache_key, $result, $cache_group);
-        }
-        return $result;
-    }
-
-    if ($taille !== 'full') {
-        $result = trouver_chemin_image($image_id, 'full');
-        if (function_exists('wp_cache_set')) {
-            wp_cache_set($cache_key, $result, $cache_group);
-        }
-        return $result;
-    }
-
-    if (function_exists('wp_cache_set')) {
-        wp_cache_set($cache_key, null, $cache_group);
-    }
-    return null;
 }
 
 

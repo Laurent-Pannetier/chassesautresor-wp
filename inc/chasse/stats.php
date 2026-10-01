@@ -7,14 +7,6 @@ defined('ABSPATH') || exit;
 
 require_once __DIR__ . '/../enigme/stats.php';
 
-if (!function_exists('cat_get_hunt_engagement_service')) {
-    function cat_get_hunt_engagement_service(): ChassesAuTresor\Core\Progress\HuntEngagementService
-    {
-        global $wpdb;
-        return ChassesAuTresor\Core\Support\CoreServiceFactory::huntEngagement($wpdb);
-    }
-}
-
 function cat_get_hunt_statistics_service(): ChassesAuTresor\Core\Progress\HuntStatisticsService
 {
     global $wpdb;
