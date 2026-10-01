@@ -160,6 +160,7 @@ function enqueue_script_enigme_edit()
     [
       'ajaxUrl'   => admin_url('admin-ajax.php'),
       'enigmeId'  => $enigme_id,
+      'nonce'     => wp_create_nonce('statistics_management'),
     ]
   );
 

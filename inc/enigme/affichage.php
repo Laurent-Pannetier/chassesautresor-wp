@@ -991,7 +991,10 @@ if (!function_exists('cat_get_riddle_statistics_service')) {
             echo '<div class="enigme-mobile-panel__content">';
             echo '<div id="panel-enigmes" class="panel-tab-content">' . ($sidebar_sections['navigation'] ?? '') . '</div>';
             $ajax_url = function_exists('admin_url') ? admin_url('admin-ajax.php') : '';
-            echo '<div id="panel-stats" class="panel-tab-content" hidden aria-live="polite" data-ajax-url="' . esc_url($ajax_url) . '" data-enigme-id="' . intval($enigme_id) . '">' . ($sidebar_sections['stats'] ?? '') . '</div>';
+            echo '<div id="panel-stats" class="panel-tab-content" hidden aria-live="polite" data-ajax-url="'
+                . esc_url($ajax_url) . '" data-enigme-id="' . intval($enigme_id) . '" data-nonce="'
+                . esc_attr(wp_create_nonce('statistics_management')) . '">'
+                . ($sidebar_sections['stats'] ?? '') . '</div>';
             echo '</div>';
             echo '</div>';
             echo '</div>';

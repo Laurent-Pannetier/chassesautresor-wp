@@ -1,6 +1,16 @@
 <?php
 defined('ABSPATH') || exit;
 
+if (!class_exists(ChassesAuTresor\Core\Progress\RiddleAnswerService::class, false)) {
+    require_once dirname(__DIR__, 4)
+        . '/plugins/chassesautresor-core/src/Progress/RiddleAnswerService.php';
+}
+
+if (!class_exists(ChassesAuTresor\Core\Progress\RiddleAnswerEvaluationService::class, false)) {
+    require_once dirname(__DIR__, 4)
+        . '/plugins/chassesautresor-core/src/Progress/RiddleAnswerEvaluationService.php';
+}
+
 /**
  * Retrieve the expected answers for an enigma, migrating old formats.
  *
@@ -9,25 +19,7 @@ defined('ABSPATH') || exit;
  */
 function enigme_get_bonnes_reponses(int $enigme_id): array
 {
-    $raw = get_field('enigme_reponse_bonne', $enigme_id);
-
-    if (is_string($raw) && $raw !== '') {
-        $decoded = json_decode($raw, true);
-        if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
-            return array_values(array_filter(array_map('strval', $decoded)));
-        }
-
-        if (function_exists('update_field')) {
-            update_field('enigme_reponse_bonne', wp_json_encode([$raw]), $enigme_id);
-        }
-        return [$raw];
-    }
-
-    if (is_array($raw)) {
-        return array_values(array_filter(array_map('strval', $raw)));
-    }
-
-    return [];
+    return (new ChassesAuTresor\Core\Progress\RiddleAnswerService())->get($enigme_id);
 }
 
 
@@ -289,45 +281,22 @@ function soumettre_reponse_automatique()
     $bonnes_reponses = enigme_get_bonnes_reponses($enigme_id);
     $respecter_casse  = (int) get_field('enigme_reponse_casse', $enigme_id) === 1;
 
-    $saisie_brute = trim($reponse);
-    $saisie_cmp_main = $respecter_casse ? $saisie_brute : mb_strtolower($saisie_brute);
-    $attendues_cmp = array_map(
-        fn($r) => $respecter_casse ? $r : mb_strtolower($r),
-        $bonnes_reponses
-    );
-
-    $resultat = in_array($saisie_cmp_main, $attendues_cmp, true) ? 'bon' : 'faux';
-    $message  = '';
-    $index    = 0;
-
-    if ($resultat === 'faux') {
-        $variantes = [];
-        for ($i = 1; $i <= 4; $i++) {
-            $txt   = trim((string) get_field("texte_{$i}", $enigme_id));
-            $msg   = trim((string) get_field("message_{$i}", $enigme_id));
-            $casse = (int) get_field("respecter_casse_{$i}", $enigme_id) === 1;
-
-            if ($txt !== '') {
-                $variantes[$i] = [
-                    'texte'   => $txt,
-                    'message' => $msg,
-                    'casse'   => $casse,
-                ];
-            }
-        }
-
-        foreach ($variantes as $i => $var) {
-            $cmp_saisie = $var['casse'] ? $saisie_brute : mb_strtolower($saisie_brute);
-            $cmp_txt    = $var['casse'] ? $var['texte'] : mb_strtolower($var['texte']);
-
-            if ($cmp_saisie === $cmp_txt) {
-                $resultat = 'variante';
-                $message  = $var['message'];
-                $index    = $i;
-                break;
-            }
-        }
+    $variantes = [];
+    for ($i = 1; $i <= 4; $i++) {
+        $variantes[$i] = [
+            'texte' => (string) get_field("texte_{$i}", $enigme_id),
+            'message' => (string) get_field("message_{$i}", $enigme_id),
+            'casse' => (int) get_field("respecter_casse_{$i}", $enigme_id) === 1,
+        ];
     }
+    $evaluation = (new ChassesAuTresor\Core\Progress\RiddleAnswerEvaluationService())->evaluate(
+        $reponse,
+        $bonnes_reponses,
+        $respecter_casse,
+        $variantes
+    );
+    $resultat = $evaluation['resultat'];
+    $message = $evaluation['message'];
 
     $lock_key = "enigme_lock_{$enigme_id}_{$user_id}";
     if (!wp_cache_add($lock_key, 1, 'enigme', 15)) {

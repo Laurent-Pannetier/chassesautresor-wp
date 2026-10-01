@@ -86,6 +86,7 @@ function enqueue_script_chasse_edit()
         [
             'ajaxUrl' => admin_url('admin-ajax.php'),
             'chasseId' => $chasse_id,
+            'nonce' => wp_create_nonce('statistics_management'),
         ]
     );
     wp_localize_script(

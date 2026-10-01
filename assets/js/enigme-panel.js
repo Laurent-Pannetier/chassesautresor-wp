@@ -129,6 +129,7 @@
       const data = new FormData();
       data.append('action', 'enigme_recuperer_stats');
       data.append('enigme_id', statsContainer.dataset.enigmeId);
+      data.append('nonce', statsContainer.dataset.nonce);
       fetch(statsContainer.dataset.ajaxUrl, {
         method: 'POST',
         credentials: 'same-origin',

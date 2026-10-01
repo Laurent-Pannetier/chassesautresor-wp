@@ -38,6 +38,25 @@ if (!class_exists(ChassesAuTresor\Core\Content\HuntFeatureService::class, false)
         . '/plugins/chassesautresor-core/src/Content/HuntFeatureService.php';
 }
 
+if (!class_exists(ChassesAuTresor\Core\Content\HuntFeatureCacheManager::class, false)) {
+    require_once dirname(__DIR__, 3)
+        . '/plugins/chassesautresor-core/src/Content/SolutionQueryService.php';
+    require_once dirname(__DIR__, 3)
+        . '/plugins/chassesautresor-core/src/Content/HintQueryService.php';
+    require_once dirname(__DIR__, 3)
+        . '/plugins/chassesautresor-core/src/Content/HuntFeatureCacheManager.php';
+}
+
+if (!class_exists(ChassesAuTresor\Core\Content\AcfRelationshipMutationService::class, false)) {
+    require_once dirname(__DIR__, 3)
+        . '/plugins/chassesautresor-core/src/Content/AcfRelationshipMutationService.php';
+}
+
+if (!class_exists(ChassesAuTresor\Core\Relationships\HuntRiddleCacheSynchronizer::class, false)) {
+    require_once dirname(__DIR__, 3)
+        . '/plugins/chassesautresor-core/src/Relationships/HuntRiddleCacheSynchronizer.php';
+}
+
 function cat_get_organizer_service(): ChassesAuTresor\Core\Relationships\OrganizerService
 {
     global $wpdb;
@@ -467,119 +486,12 @@ function recuperer_ids_enigmes_pour_chasse(int $chasse_id): array
 
 
 /**
- * Clear the cached enigme list for a chasse when an enigme is saved.
- *
- * @param int $post_id Post ID of the enigme being saved.
+ * Compatibility wrapper for callers that explicitly refresh hunt feature flags.
  */
-function clear_enigmes_chasse_cache(int $post_id): void
-{
-    if (get_post_type($post_id) !== 'enigme') {
-        return;
-    }
-
-    $chasse_id = (int) get_field('enigme_chasse_associee', $post_id);
-    if (!$chasse_id) {
-        return;
-    }
-
-    wp_cache_delete('enigmes_chasse_' . $chasse_id, 'chassesautresor');
-}
-add_action('save_post_enigme', 'clear_enigmes_chasse_cache', 20, 1);
-
 function recalculate_chasse_cached_flags(int $chasse_id): void
 {
-    $huntHasSolution = function_exists('solution_existe_pour_objet')
-        && solution_existe_pour_objet($chasse_id, 'chasse');
-    $huntHasHints = function_exists('prochain_rang_indice')
-        && prochain_rang_indice($chasse_id, 'chasse') > 1;
-    $features = cat_get_hunt_feature_service()->summarize(
-        $huntHasSolution,
-        $huntHasHints,
-        recuperer_enigmes_associees($chasse_id),
-        static function (int $riddleId): bool {
-            return function_exists('solution_existe_pour_objet')
-                && solution_existe_pour_objet($riddleId, 'enigme');
-        },
-        static function (int $riddleId): bool {
-            return function_exists('prochain_rang_indice')
-                && prochain_rang_indice($riddleId, 'enigme') > 1;
-        }
-    );
-
-    update_field('chasse_cache_has_solutions', $features['has_solutions'] ? 1 : 0, $chasse_id);
-    update_field('chasse_cache_has_indices', $features['has_indices'] ? 1 : 0, $chasse_id);
+    (new ChassesAuTresor\Core\Content\HuntFeatureCacheManager())->recalculate($chasse_id);
 }
-
-/**
- * Met à jour les indicateurs mis en cache lors de la sauvegarde d'une énigme.
- *
- * @param int $post_id ID de l'énigme.
- * @return void
- */
-function update_chasse_cached_flags_on_enigme_save(int $post_id): void
-{
-    $chasse_id = (int) get_field('enigme_chasse_associee', $post_id);
-    if ($chasse_id) {
-        recalculate_chasse_cached_flags($chasse_id);
-    }
-}
-add_action('save_post_enigme', 'update_chasse_cached_flags_on_enigme_save', 20, 1);
-
-/**
- * Met à jour les indicateurs mis en cache lors de la sauvegarde d'un indice.
- *
- * @param int $post_id ID de l'indice.
- * @return void
- */
-function update_chasse_cached_flags_on_indice_save(int $post_id): void
-{
-    $targetType = (string) get_field('indice_cible_type', $post_id);
-    $riddleId = $targetType === 'enigme'
-        ? (int) get_field('indice_enigme_linked', $post_id)
-        : 0;
-    $directHunt = $targetType === 'chasse'
-        ? get_field('indice_chasse_linked', $post_id)
-        : null;
-    $riddleHunt = $riddleId > 0 ? recuperer_chasse_associee($riddleId) : null;
-    $chasse_id = cat_get_relationship_service()->resolveTargetHuntId(
-        $targetType,
-        $directHunt,
-        $riddleHunt
-    );
-
-    if ($chasse_id !== null) {
-        recalculate_chasse_cached_flags($chasse_id);
-    }
-}
-add_action('save_post_indice', 'update_chasse_cached_flags_on_indice_save', 20, 1);
-
-/**
- * Met à jour les indicateurs mis en cache lors de la sauvegarde d'une solution.
- *
- * @param int $post_id ID de la solution.
- * @return void
- */
-function update_chasse_cached_flags_on_solution_save(int $post_id): void
-{
-    $targetType = (string) get_field('solution_cible_type', $post_id);
-    $riddleId = $targetType === 'enigme'
-        ? (int) get_field('solution_enigme_linked', $post_id)
-        : 0;
-    $directHunt = $targetType === 'chasse'
-        ? get_field('solution_chasse_linked', $post_id)
-        : null;
-    $riddleHunt = $riddleId > 0 ? recuperer_chasse_associee($riddleId) : null;
-    $chasse_id = cat_get_relationship_service()->resolveTargetHuntId(
-        $targetType,
-        $directHunt,
-        $riddleHunt
-    );
-
-    if ($chasse_id !== null) {
-        recalculate_chasse_cached_flags($chasse_id);
-    }
-}
-add_action('save_post_solution', 'update_chasse_cached_flags_on_solution_save', 20, 1);
 
 
 // ==================================================
@@ -620,318 +532,58 @@ add_action('save_post', 'assigner_organisateur_automatiquement', 10, 2);
 // ==================================================
 // 🔁 SYNCHRONISATION CHASSE ↔ ÉNIGMES
 // ==================================================
-/**
- * 🔹 synchroniser_cache_enigmes_chasse() → Lecture + correction automatique du champ ACF chasse_cache_enigmes
- * 🔹 verifier_chasse_cache_enigmes() → Compare énigmes attendues vs. cache
- * 🔹 verifier_cache_chasse_enigmes_valides() → Supprime les ID orphelins du cache
- * 🔹 synchroniser_relations_cache_enigmes() → Met à jour le champ relation avec le format attendu par ACF
- * 🔹 forcer_relation_enigme_dans_chasse_si_absente() → Depuis une fiche énigme, vérifie que la chasse associée référence bien cette énigme
- * 🔹 verifier_et_synchroniser_cache_enigmes_si_autorise() → Vérifie et synchronise le cache des énigmes liées à une chasse, avec protection par transient
- */
 
+function cat_get_hunt_riddle_cache_synchronizer(): ChassesAuTresor\Core\Relationships\HuntRiddleCacheSynchronizer
+{
+    return new ChassesAuTresor\Core\Relationships\HuntRiddleCacheSynchronizer(
+        cat_get_hunt_riddle_cache_service(),
+        cat_get_hunt_riddle_query_service(),
+        cat_get_relationship_service()
+    );
+}
 
-
-
-/**
- * 🔁 Synchronise le champ chasse_cache_enigmes avec la réalité des énigmes liées.
- *
- * @param int  $chasse_id        ID de la chasse concernée.
- * @param bool $forcer_recalcul  Si true, forcer la lecture réelle des énigmes liées.
- * @param bool $nettoyer_cache   Si true, retirer du cache les énigmes qui ne sont plus valides.
- * @return array Résultat de la synchronisation (détail et corrections).
- */
+/** @return array<string, mixed> */
 function synchroniser_cache_enigmes_chasse($chasse_id, $forcer_recalcul = false, $nettoyer_cache = false)
 {
-  cat_debug("🌀 [SYNC] Début de synchronisation pour chasse #$chasse_id");
-
-  $resultat1 = verifier_chasse_cache_enigmes($chasse_id, $forcer_recalcul);
-  $resultat2 = verifier_cache_chasse_enigmes_valides($chasse_id, $nettoyer_cache);
-
-  $valide1     = $resultat1['valide']     ?? false;
-  $valide2     = $resultat2['valide']     ?? false;
-  $synchro1    = $resultat1['synchro']    ?? false;
-  $synchro2    = $resultat2['synchro']    ?? false;
-  $correction1 = $resultat1['correction'] ?? false;
-  $correction2 = $resultat2['correction'] ?? false;
-  $attendu     = $resultat1['attendu']    ?? [];
-  $cache       = $resultat1['cache']      ?? [];
-  $invalides   = $resultat2['invalides']  ?? [];
-
-  cat_debug("📥 [ATTENDU] Énigmes réellement liées à la chasse : " . implode(', ', $attendu));
-  cat_debug("📦 [CACHE AVANT] Contenu actuel de chasse_cache_enigmes : " . implode(', ', $cache));
-  cat_debug("🗑️ [INVALIDES] Énigmes invalides détectées dans le cache : " . implode(', ', $invalides));
-
-  if (!isset($resultat1['synchro'])) {
-    cat_debug("⚠️ [INCOHÉRENCE] Clé 'synchro' manquante dans resultat1 (verifier_chasse_cache_enigmes)");
-  }
-  if (!isset($resultat2['synchro'])) {
-    cat_debug("⚠️ [INCOHÉRENCE] Clé 'synchro' manquante dans resultat2 (verifier_cache_chasse_enigmes_valides)");
-  }
-
-  $ok = null;
-  if ($correction1 || $correction2) {
-    cat_debug("🔧 [ACTION] Mise à jour de chasse_cache_enigmes nécessaire");
-
-    $ok = synchroniser_relations_cache_enigmes($chasse_id);
-
-    if ($ok) {
-      cat_debug("✅ [RÉSULTAT] Relations mises à jour proprement via synchroniser_relations_cache_enigmes()");
-    } else {
-      cat_debug("❌ [ÉCHEC] La synchronisation ACF relation a échoué pour la chasse #$chasse_id");
-    }
-  }
-
-  cat_debug("🌀 [SYNC] Fin de synchronisation pour chasse #$chasse_id");
-
-  return [
-    'valide'                    => $valide1 && $valide2,
-    'chasse_id'                 => $chasse_id,
-    'synchro_realite_vs_cache'  => $synchro1,
-    'synchro_cache_vs_realite'  => $synchro2,
-    'correction_effectuee'     => $correction1 || $correction2,
-    'liste_attendue'           => $attendu,
-    'liste_cache'              => $cache,
-    'invalides_dans_cache'     => $invalides,
-  ];
+    return cat_get_hunt_riddle_cache_synchronizer()->synchronize(
+        (int) $chasse_id,
+        (bool) $forcer_recalcul,
+        (bool) $nettoyer_cache
+    );
 }
 
-
-/**
- * Vérifie la cohérence entre les énigmes liées à une chasse
- * (via leur champ `enigme_chasse_associee`) et le cache ACF
- * `chasse_cache_enigmes` présent sur la chasse.
- *
- * Peut corriger automatiquement le champ si désynchronisé.
- *
- * @param int $chasse_id
- * @param bool $mettre_a_jour Si true, met à jour automatiquement le cache
- * @return array Tableau avec la liste des ID trouvés et l’état de synchro
- */
+/** @return array<string, mixed> */
 function verifier_chasse_cache_enigmes($chasse_id, $mettre_a_jour = false)
 {
-    if (get_post_type($chasse_id) !== 'chasse') {
-        return [
-            'valide' => false,
-            'erreur' => 'ID de chasse invalide.',
-            'attendu' => [],
-            'cache' => [],
-        ];
-    }
-
-    $posts = get_posts([
-        'post_type' => 'enigme',
-        'post_status' => ['draft', 'pending', 'publish'],
-        'posts_per_page' => -1,
-        'fields' => 'ids',
-    ]);
-    $expectedIds = [];
-
-    foreach ($posts as $post_id) {
-        $association = get_field('enigme_chasse_associee', $post_id, false);
-        $associatedIds = cat_get_relationship_service()->normalizeIds(
-            is_array($association) ? $association : [$association]
-        );
-        if (in_array((int) $chasse_id, $associatedIds, true)) {
-            $expectedIds[] = (int) $post_id;
-        }
-    }
-
-    $cache = get_field('chasse_cache_enigmes', $chasse_id);
-    $result = cat_get_hunt_riddle_cache_service()->compare(
-        $expectedIds,
-        is_array($cache) ? array_map('intval', $cache) : [],
+    return cat_get_hunt_riddle_cache_synchronizer()->compareReality(
+        (int) $chasse_id,
         (bool) $mettre_a_jour
     );
-
-    if ($result['correction']) {
-        update_field('chasse_cache_enigmes', $result['expected'], $chasse_id);
-    }
-
-    return [
-        'valide' => true,
-        'synchro' => $result['synced'],
-        'attendu' => $result['expected'],
-        'cache' => $result['cached'],
-        'correction' => $result['correction'],
-    ];
 }
 
-
-/**
- * Vérifie que chaque énigme listée dans chasse_cache_enigmes
- * pointe bien vers la chasse via le champ enigme_chasse_associee.
- *
- * Cette vérification détecte les ID obsolètes ou erronés dans le cache.
- *
- * @param int $chasse_id
- * @param bool $retirer_si_invalide Si true, supprime les ID invalides du cache
- * @return array Résultat de la vérification (synchro, invalides, correction)
- */
+/** @return array<string, mixed> */
 function verifier_cache_chasse_enigmes_valides($chasse_id, $retirer_si_invalide = false)
 {
-    if (get_post_type($chasse_id) !== 'chasse') {
-        return [
-            'valide' => false,
-            'erreur' => 'ID de chasse invalide.',
-            'liste_cache' => [],
-            'invalides' => [],
-        ];
-    }
-
-    $cache = get_field('chasse_cache_enigmes', $chasse_id);
-    $cacheIds = is_array($cache) ? array_map('intval', $cache) : [];
-    $relatedHuntIds = [];
-
-    foreach ($cacheIds as $riddleId) {
-        if (get_post_type($riddleId) !== 'enigme') {
-            $relatedHuntIds[$riddleId] = null;
-            continue;
-        }
-
-        $relatedHuntIds[$riddleId] = cat_get_relationship_service()->normalizeId(
-            get_field('enigme_chasse_associee', $riddleId)
-        );
-    }
-
-    $result = cat_get_hunt_riddle_cache_service()->validate(
+    return cat_get_hunt_riddle_cache_synchronizer()->validateCache(
         (int) $chasse_id,
-        $cacheIds,
-        $relatedHuntIds,
         (bool) $retirer_si_invalide
     );
-
-    if ($result['correction']) {
-        update_field('chasse_cache_enigmes', $result['corrected'], $chasse_id);
-    }
-
-    return [
-        'valide' => true,
-        'synchro' => $result['synced'],
-        'liste_cache' => $result['cached'],
-        'invalides' => $result['invalid'],
-        'correction' => $result['correction'],
-    ];
 }
 
-
-/**
- * 🔁 Synchronise proprement le champ ACF "chasse_cache_enigmes" d'une chasse,
- * en utilisant la fonction centralisée mettre_a_jour_relation_acf() pour garantir le format.
- *
- * @param int $chasse_id ID du post "chasse"
- * @return bool True si au moins une relation a été enregistrée, False sinon.
- */
 function synchroniser_relations_cache_enigmes(int $chasse_id): bool
 {
-    cat_debug("🔄 [SYNC] Début de synchronisation pour chasse #$chasse_id");
-
-    if (get_post_type($chasse_id) !== 'chasse') {
-        cat_debug("❌ [SYNC] ID $chasse_id n’est pas une chasse");
-        return false;
-    }
-
-    $detectedIds = get_posts(
-        cat_get_hunt_riddle_query_service()->getSynchronizedRiddleIdsQueryArgs($chasse_id)
-    );
-    $currentCache = get_field('chasse_cache_enigmes', $chasse_id, false);
-    $cachedIds = cat_get_relationship_service()->normalizeIds(
-        is_array($currentCache) ? $currentCache : []
-    );
-    $comparison = cat_get_hunt_riddle_cache_service()->compare(
-        array_map('intval', $detectedIds),
-        $cachedIds,
-        false
-    );
-
-    if ($comparison['synced']) {
-        cat_debug("✅ [SYNC] Aucune mise à jour nécessaire pour chasse #$chasse_id");
-        return true;
-    }
-
-    cat_debug("🔧 [SYNC] Cache obsolète → écrasement nécessaire pour chasse #$chasse_id");
-    cat_debug("🗑️ Ancien cache : " . implode(', ', $comparison['cached']));
-    cat_debug("🆕 Nouvel ensemble : " . implode(', ', $comparison['expected']));
-
-    $success = update_field('chasse_cache_enigmes', $comparison['expected'], $chasse_id);
-
-    if ($success) {
-        cat_debug("✅ [SYNC] Mise à jour réussie de chasse_cache_enigmes pour chasse #$chasse_id");
-    } else {
-        cat_debug("❌ [SYNC] Échec de la mise à jour pour chasse #$chasse_id");
-    }
-
-    return (bool) $success;
+    return cat_get_hunt_riddle_cache_synchronizer()->synchronizeRelations($chasse_id);
 }
 
-
-
-/**
- * 🔁 Depuis une fiche énigme, vérifie que la chasse associée référence bien cette énigme.
- *
- * Cette vérification utilise un transient pour éviter toute surcharge répétée.
- * Si la relation est absente dans le champ ACF (champs_caches.chasse_cache_enigmes),
- * elle est ajoutée automatiquement via modifier_relation_acf().
- *
- * @param int $enigme_id ID du post de type "énigme"
- * @return void
- */
 function forcer_relation_enigme_dans_chasse_si_absente(int $enigme_id): void
 {
-  if (get_post_type($enigme_id) !== 'enigme') return;
-
-  $transient_key = "verif_chasse_relation_$enigme_id";
-  if (get_transient($transient_key)) return;
-  set_transient($transient_key, 'done', 5 * MINUTE_IN_SECONDS);
-
-  $chasse = get_field('enigme_chasse_associee', $enigme_id, false);
-  $chasse_id = is_object($chasse) ? $chasse->ID : (int)$chasse;
-
-  if (!$chasse_id || get_post_type($chasse_id) !== 'chasse') {
-    cat_debug("❌ [RELATION AUTO] Chasse non valide pour énigme #$enigme_id");
-    return;
-  }
-
-  $liste = is_array(get_field('chasse_cache_enigmes', $chasse_id) ?? null) ? array_map('intval', get_field('chasse_cache_enigmes', $chasse_id)) : [];
-
-  if (!in_array($enigme_id, $liste, true)) {
-    $ok = modifier_relation_acf(
-      $chasse_id,
-      'chasse_cache_enigmes',
-      $enigme_id,
-      'field_67b740025aae0',
-      'add'
-    );
-
-    if ($ok) {
-      cat_debug("✅ [RELATION AUTO] Énigme #$enigme_id ajoutée à la chasse #$chasse_id (groupe champs_caches)");
-    } else {
-      cat_debug("❌ [RELATION AUTO] Échec ajout énigme #$enigme_id → chasse #$chasse_id");
-    }
-  }
+    cat_get_hunt_riddle_cache_synchronizer()->ensureRiddleCached($enigme_id);
 }
 
-
-/**
- * 🔁 Vérifie et synchronise le cache des énigmes liées à une chasse, avec protection par transient.
- *
- * ⚠️ Peut déclencher une mise à jour si le cache est désynchronisé.
- *
- * @param int $chasse_id
- * @return void
- */
 function verifier_et_synchroniser_cache_enigmes_si_autorise(int $chasse_id): void
 {
-  if (!current_user_can('administrator') && !current_user_can(ROLE_ORGANISATEUR) && !current_user_can(ROLE_ORGANISATEUR_CREATION)) {
-    return;
-  }
-
-  if (get_post_type($chasse_id) !== 'chasse') return;
-
-  $transient_key = 'verif_sync_chasse_' . $chasse_id;
-
-  if (!get_transient($transient_key)) {
-    // Lancer la synchronisation réelle
-    synchroniser_cache_enigmes_chasse($chasse_id, true, true);
-    set_transient($transient_key, 'done', 30 * MINUTE_IN_SECONDS);
-  }
+    $authorized = current_user_can('administrator')
+        || current_user_can(ROLE_ORGANISATEUR)
+        || current_user_can(ROLE_ORGANISATEUR_CREATION);
+    cat_get_hunt_riddle_cache_synchronizer()->maybeSynchronize($chasse_id, $authorized);
 }

@@ -25,7 +25,6 @@ if (!class_exists(ChassesAuTresor\Core\Content\PublicLinkService::class, false))
 // 🔹 modifier_champ_organisateur() (AJAX) → Enregistre champs organisateur
 // 🔹 organisateur_get_liste_liens_publics() → Liste des types de lien publics
 // 🔹 organisateur_get_lien_public_infos() → Détails pour un type de lien
-// 🔹 pre_remplir_utilisateur_associe() → Préremplit le champ utilisateurs_associes avec l’auteur si vide
 
 /**
  * Retourne un tableau des liens publics actifs pour un organisateur donné.
@@ -189,24 +188,3 @@ function organisateur_get_lien_public_infos($type_de_lien)
         'icone' => 'fa-solid fa-link',
     ];
 }
-
-
-
-/**
- * Pré-remplit le champ ACF "utilisateurs_associes" avec l'auteur du CPT "organisateur".
- *
- * @param int $post_id ID du post en cours de sauvegarde.
- * @return void
- */
-function pre_remplir_utilisateur_associe($post_id)
-{
-    (new ChassesAuTresor\Core\Content\OrganizerCreationService())->ensureAuthorRelationship(
-        (int) $post_id,
-        (string) get_post_type($post_id),
-        defined('DOING_AUTOSAVE') && DOING_AUTOSAVE,
-        (int) get_post_field('post_author', $post_id),
-        get_post_meta($post_id, 'utilisateurs_associes', true),
-        'update_field'
-    );
-}
-add_action('acf/save_post', 'pre_remplir_utilisateur_associe', 20);

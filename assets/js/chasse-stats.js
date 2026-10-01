@@ -28,6 +28,7 @@ function initChasseStats() {
       action: 'chasse_recuperer_stats',
       chasse_id: ChasseStats.chasseId,
       periode,
+      nonce: ChasseStats.nonce,
     });
 
     fetch(ChasseStats.ajaxUrl, {
@@ -70,6 +71,7 @@ function initChasseStats() {
           page,
           orderby,
           order,
+          nonce: ChasseStats.nonce,
         }),
       })
         .then((r) => r.json())

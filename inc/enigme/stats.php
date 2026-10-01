@@ -6,6 +6,11 @@ if (!class_exists(ChassesAuTresor\Core\Progress\RiddleStatisticsService::class, 
     require_once dirname(__DIR__, 4) . '/plugins/chassesautresor-core/src/Progress/RiddleStatisticsService.php';
 }
 
+if (!class_exists(ChassesAuTresor\Core\Progress\StatisticsCacheService::class, false)) {
+    require_once dirname(__DIR__, 4) . '/plugins/chassesautresor-core/src/Progress/StatisticsPeriodService.php';
+    require_once dirname(__DIR__, 4) . '/plugins/chassesautresor-core/src/Progress/StatisticsCacheService.php';
+}
+
 if (!function_exists('cat_get_riddle_statistics_service')) {
     function cat_get_riddle_statistics_service(): ChassesAuTresor\Core\Progress\RiddleStatisticsService
     {
@@ -32,22 +37,7 @@ function enigme_stats_excluded_user_ids(int $enigme_id): array
 }
 
 function enigme_stats_date_range(string $periode): array {
-    $tz = new DateTimeZone('Europe/Paris');
-    $now = new DateTime('now', $tz);
-    switch ($periode) {
-        case 'jour':
-            $start = (clone $now)->setTime(0,0);
-            break;
-        case 'semaine':
-            $start = (clone $now)->modify('monday this week')->setTime(0,0);
-            break;
-        case 'mois':
-            $start = (clone $now)->modify('first day of this month')->setTime(0,0);
-            break;
-        default:
-            return [null, null];
-    }
-    return [$start->format('Y-m-d H:i:s'), $now->format('Y-m-d H:i:s')];
+    return (new ChassesAuTresor\Core\Progress\StatisticsPeriodService())->range($periode);
 }
 
 function enigme_compter_joueurs_engages(int $enigme_id, string $periode = 'total'): int {
@@ -122,6 +112,10 @@ function enigme_lister_participants(
  */
 function ajax_enigme_recuperer_stats()
 {
+    if (!wp_verify_nonce((string) ($_POST['nonce'] ?? ''), 'statistics_management')) {
+        wp_send_json_error('invalid_nonce', 403);
+    }
+
     $enigme_id = isset($_POST['enigme_id']) ? (int) $_POST['enigme_id'] : 0;
     if ($enigme_id <= 0) {
         wp_send_json_error('missing_enigme', 400);
@@ -131,14 +125,10 @@ function ajax_enigme_recuperer_stats()
         wp_send_json_error('forbidden', 403);
     }
 
-    $periode = isset($_POST['periode']) ? sanitize_text_field($_POST['periode']) : 'total';
-    $periode = in_array($periode, ['jour', 'semaine', 'mois', 'total'], true) ? $periode : 'total';
-
-    $cache_key = enigme_stats_cache_key($enigme_id, $periode);
-    $stats = wp_cache_get($cache_key, 'enigme_stats');
-    if ($stats === false) {
-        $stats = get_transient($cache_key);
-    }
+    $periodService = new ChassesAuTresor\Core\Progress\StatisticsPeriodService();
+    $periode = $periodService->normalize(sanitize_text_field($_POST['periode'] ?? 'total'));
+    $cache = new ChassesAuTresor\Core\Progress\StatisticsCacheService();
+    $stats = $cache->get('enigme', $enigme_id, $periode);
 
     if ($stats === false) {
         $mode = get_field('enigme_mode_validation', $enigme_id) ?? 'automatique';
@@ -157,9 +147,7 @@ function ajax_enigme_recuperer_stats()
             $stats['points'] = enigme_compter_points_depenses($enigme_id, $mode, $periode);
         }
 
-        $ttl = HOUR_IN_SECONDS;
-        wp_cache_set($cache_key, $stats, 'enigme_stats', $ttl);
-        set_transient($cache_key, $stats, $ttl);
+        $cache->put('enigme', $enigme_id, $periode, $stats, HOUR_IN_SECONDS);
     }
 
     wp_send_json_success($stats);
@@ -173,19 +161,15 @@ function enigme_stats_cache_key(int $enigme_id, string $periode): string
 
 function enigme_clear_stats_cache(int $enigme_id): void
 {
-    foreach (['jour', 'semaine', 'mois', 'total'] as $p) {
-        $key = enigme_stats_cache_key($enigme_id, $p);
-        wp_cache_delete($key, 'enigme_stats');
-        delete_transient($key);
-    }
+    (new ChassesAuTresor\Core\Progress\StatisticsCacheService())->clear('enigme', $enigme_id);
 }
-
-add_action('enigme_engagement_created', 'enigme_clear_stats_cache');
-add_action('enigme_tentative_created', 'enigme_clear_stats_cache');
 
 function ajax_enigme_lister_participants() {
     if (!is_user_logged_in()) {
         wp_send_json_error('non_connecte');
+    }
+    if (!wp_verify_nonce((string) ($_POST['nonce'] ?? ''), 'statistics_management')) {
+        wp_send_json_error('invalid_nonce', 403);
     }
 
     $enigme_id = isset($_POST['enigme_id']) ? (int) $_POST['enigme_id'] : 0;

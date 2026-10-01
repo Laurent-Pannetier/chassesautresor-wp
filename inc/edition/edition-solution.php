@@ -67,6 +67,11 @@ if (!class_exists(ChassesAuTresor\Core\Content\SolutionRouteRegistrar::class, fa
         . '/plugins/chassesautresor-core/src/Content/SolutionRouteRegistrar.php';
 }
 
+if (!class_exists(ChassesAuTresor\Core\Content\SolutionCreationRouteHandler::class, false)) {
+    require_once dirname(__DIR__, 4)
+        . '/plugins/chassesautresor-core/src/Content/SolutionCreationRouteHandler.php';
+}
+
 if (!class_exists(ChassesAuTresor\Core\Content\SolutionScheduler::class, false)) {
     require_once dirname(__DIR__, 4)
         . '/plugins/chassesautresor-core/src/Content/SolutionScheduler.php';
@@ -173,50 +178,12 @@ function rediriger_si_affichage_solution(): void
  */
 function creer_solution_pour_objet(int $objet_id, string $objet_type, ?int $user_id = null)
 {
-    $creationService = new ChassesAuTresor\Core\Content\SolutionCreationService();
-    $supportedTarget = $creationService->isSupportedTargetType($objet_type);
-    $targetMatches = $supportedTarget && get_post_type($objet_id) === $objet_type;
-    $authenticated = is_user_logged_in();
-    $canCreate = $authenticated && $targetMatches
-        && solution_action_autorisee('create', $objet_type, $objet_id);
-    $chasse_id = 0;
-    if ($targetMatches) {
-        $chasse_id = $objet_type === 'chasse'
-            ? $objet_id
-            : recuperer_id_chasse_associee($objet_id);
-    }
-    $queryService = new ChassesAuTresor\Core\Content\SolutionQueryService();
-    $existing = $canCreate && $chasse_id
-        ? get_posts($queryService->getExistingSolutionIdsQueryArgs($objet_id, $objet_type))
-        : [];
-    $errorCode = $creationService->getCreationError(
-        $supportedTarget,
-        $targetMatches,
-        $authenticated,
-        $canCreate,
-        (bool) $chasse_id,
-        !empty($existing)
-    );
-    if ($errorCode !== null) {
-        $messages = [
-            'type_invalide' => __('Type de cible invalide.', 'chassesautresor-com'),
-            'cible_invalide' => __('ID cible invalide.', 'chassesautresor-com'),
-            'non_connecte' => __('Utilisateur non connecté.', 'chassesautresor-com'),
-            'permission_refusee' => __('Droits insuffisants.', 'chassesautresor-com'),
-            'existe_deja' => __('Une solution existe déjà pour cet objet.', 'chassesautresor-com'),
-        ];
-
-        return new WP_Error($errorCode, $messages[$errorCode]);
-    }
-
-    return (new ChassesAuTresor\Core\Content\SolutionPostFactory())->create(
+    return ChassesAuTresor\Core\Content\SolutionCreationRouteHandler::create(
         $objet_id,
         $objet_type,
-        $chasse_id,
-        $user_id ?? get_current_user_id(),
-        TITRE_DEFAUT_SOLUTION,
-        __('Solution | %s', 'chassesautresor-com'),
-        SOLUTION_STATE_DESACTIVE
+        $user_id,
+        static fn (string $type, int $id): bool => solution_action_autorisee('create', $type, $id),
+        static fn (int $riddleId): ?int => recuperer_id_chasse_associee($riddleId)
     );
 }
 
@@ -240,50 +207,7 @@ function flush_rewrite_rules_creer_solution(): void
     ChassesAuTresor\Core\Content\SolutionRouteRegistrar::flush();
 }
 
-/**
- * Détecte l’appel à /creer-solution/ et redirige vers la page cible.
- *
- * @return void
- */
-function creer_solution_et_rediriger_si_appel(): void
-{
-    if (get_query_var('creer_solution') !== '1') {
-        return;
-    }
 
-    $nonce = $_GET['nonce'] ?? '';
-    if (!wp_verify_nonce($nonce, 'creer_solution')) {
-        wp_die(__('Action non autorisée.', 'chassesautresor-com'), 'Erreur', ['response' => 403]);
-    }
-
-    if (!is_user_logged_in()) {
-        wp_redirect(wp_login_url());
-        exit;
-    }
-
-    $target = (new ChassesAuTresor\Core\Content\SolutionCreationService())->resolveRequestedTarget(
-        isset($_GET['chasse_id']) ? absint($_GET['chasse_id']) : 0,
-        isset($_GET['enigme_id']) ? absint($_GET['enigme_id']) : 0
-    );
-    if ($target === null) {
-        wp_die(__('ID cible manquant.', 'chassesautresor-com'), 'Erreur', ['response' => 400]);
-    }
-    $cible_id = $target['id'];
-    $cible_type = $target['type'];
-
-    $solution_id = creer_solution_pour_objet($cible_id, $cible_type);
-    if (is_wp_error($solution_id)) {
-        $error_message = sanitize_text_field($solution_id->get_error_message());
-        $referer       = wp_get_referer() ?: get_permalink($cible_id);
-        $redirect_url  = add_query_arg('erreur', $error_message, $referer);
-        wp_safe_redirect($redirect_url);
-        exit;
-    }
-
-    wp_safe_redirect(get_permalink($cible_id));
-    exit;
-}
-add_action('template_redirect', 'creer_solution_et_rediriger_si_appel');
 
 /**
  * Connects the core solution controllers to the theme permission policy.
@@ -294,17 +218,7 @@ function autoriser_gestion_solution(bool $allowed, string $action, string $targe
 }
 add_filter('chassesautresor_can_manage_solution', 'autoriser_gestion_solution', 10, 4);
 
-/**
- * Connects the core solution creation controller to the theme creation adapter.
- *
- * @param mixed $solutionId Previous filtered value.
- * @return int|WP_Error
- */
-function creer_solution_depuis_core($solutionId, int $targetId, string $targetType)
-{
-    return creer_solution_pour_objet($targetId, $targetType);
-}
-add_filter('chassesautresor_create_solution', 'creer_solution_depuis_core', 10, 3);
+
 
 /**
  * Provides riddle IDs to the core solution management controllers.

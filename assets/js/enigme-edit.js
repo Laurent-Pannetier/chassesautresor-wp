@@ -449,7 +449,8 @@ function initEnigmeEdit() {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
         action: 'forcer_recalcul_statut_enigme',
-        post_id: postId
+        post_id: postId,
+        nonce: window.CHP_ENIGME_DEFAUT?.nonce || ''
       })
     })
       .then(r => r.json())

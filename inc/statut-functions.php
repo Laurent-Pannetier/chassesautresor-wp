@@ -7,6 +7,40 @@ if (!defined('ABSPATH')) {
 
 require_once __DIR__ . '/badge-functions.php';
 
+if (!class_exists(ChassesAuTresor\Core\Progress\HuntStatusAjaxHandler::class, false)) {
+    require_once dirname(__DIR__, 3)
+        . '/plugins/chassesautresor-core/src/Progress/HuntStatusAjaxHandler.php';
+}
+
+if (!class_exists(ChassesAuTresor\Core\Progress\HuntStatusScheduler::class, false)) {
+    require_once dirname(__DIR__, 3)
+        . '/plugins/chassesautresor-core/src/Progress/HuntStatusScheduler.php';
+}
+
+if (!class_exists(ChassesAuTresor\Core\Progress\HuntStatusUpdater::class, false)) {
+    require_once dirname(__DIR__, 3)
+        . '/plugins/chassesautresor-core/src/Progress/HuntStatusUpdater.php';
+}
+
+if (!class_exists(ChassesAuTresor\Core\Progress\RiddleStatusAjaxHandler::class, false)) {
+    require_once dirname(__DIR__, 3)
+        . '/plugins/chassesautresor-core/src/Progress/RiddleStatusAjaxHandler.php';
+}
+
+if (!class_exists(ChassesAuTresor\Core\Progress\RiddleSystemStateUpdater::class, false)) {
+    require_once dirname(__DIR__, 3)
+        . '/plugins/chassesautresor-core/src/Progress/RiddleAnswerService.php';
+    require_once dirname(__DIR__, 3)
+        . '/plugins/chassesautresor-core/src/Progress/RiddleSystemStateService.php';
+    require_once dirname(__DIR__, 3)
+        . '/plugins/chassesautresor-core/src/Progress/RiddleSystemStateUpdater.php';
+}
+
+if (!class_exists(ChassesAuTresor\Core\Progress\RiddleParticipationPolicyService::class, false)) {
+    require_once dirname(__DIR__, 3)
+        . '/plugins/chassesautresor-core/src/Progress/RiddleParticipationPolicyService.php';
+}
+
 if (!class_exists(ChassesAuTresor\Core\Progress\HuntProgressService::class, false)) {
     require_once dirname(__DIR__, 3)
         . '/plugins/chassesautresor-core/src/Progress/HuntProgressRepository.php';
@@ -29,6 +63,30 @@ if (!class_exists(ChassesAuTresor\Core\Content\HuntCompletionService::class, fal
         . '/plugins/chassesautresor-core/src/Content/HuntCompletionService.php';
 }
 
+if (!class_exists(ChassesAuTresor\Core\Relationships\RelationshipService::class, false)) {
+    require_once dirname(__DIR__, 3)
+        . '/plugins/chassesautresor-core/src/Relationships/RelationshipService.php';
+}
+
+if (!class_exists(ChassesAuTresor\Core\Relationships\HuntRiddleQueryService::class, false)) {
+    require_once dirname(__DIR__, 3)
+        . '/plugins/chassesautresor-core/src/Relationships/HuntRiddleQueryService.php';
+}
+
+if (!class_exists(ChassesAuTresor\Core\Relationships\HuntRiddleCacheSynchronizer::class, false)) {
+    require_once dirname(__DIR__, 3)
+        . '/plugins/chassesautresor-core/src/Relationships/HuntRiddleCacheService.php';
+    require_once dirname(__DIR__, 3)
+        . '/plugins/chassesautresor-core/src/Content/AcfRelationshipMutationService.php';
+    require_once dirname(__DIR__, 3)
+        . '/plugins/chassesautresor-core/src/Relationships/HuntRiddleCacheSynchronizer.php';
+}
+
+if (!class_exists(ChassesAuTresor\Core\Content\CompletionCacheManager::class, false)) {
+    require_once dirname(__DIR__, 3)
+        . '/plugins/chassesautresor-core/src/Content/CompletionCacheManager.php';
+}
+
 if (!function_exists('cat_get_hunt_progress_service')) {
     function cat_get_hunt_progress_service(): ChassesAuTresor\Core\Progress\HuntProgressService
     {
@@ -43,26 +101,7 @@ if (!function_exists('cat_get_hunt_progress_service')) {
 if (!function_exists('enigme_get_bonnes_reponses')) {
     function enigme_get_bonnes_reponses(int $enigme_id): array
     {
-        $raw = function_exists('get_field') ? get_field('enigme_reponse_bonne', $enigme_id) : '';
-
-        if (is_string($raw) && $raw !== '') {
-            $decoded = json_decode($raw, true);
-            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
-                return array_values(array_filter(array_map('strval', $decoded)));
-            }
-
-            if (function_exists('update_field')) {
-                update_field('enigme_reponse_bonne', wp_json_encode([$raw]), $enigme_id);
-            }
-
-            return [$raw];
-        }
-
-        if (is_array($raw)) {
-            return array_values(array_filter(array_map('strval', $raw)));
-        }
-
-        return [];
+        return (new ChassesAuTresor\Core\Progress\RiddleAnswerService())->get($enigme_id);
     }
 }
 
@@ -239,83 +278,24 @@ function enigme_verifier_verrouillage(int $enigme_id, int $user_id): array
  */
 function traiter_statut_enigme(int $enigme_id, ?int $user_id = null): array
 {
-    $user_id     = $user_id ?: get_current_user_id();
-    $statut       = enigme_get_statut_utilisateur($enigme_id, $user_id);
-    $chasse_id    = recuperer_id_chasse_associee($enigme_id);
-    $post_status  = get_post_status($enigme_id);
-
-    // 🔓 Accès total pour l'administrateur
-    if (current_user_can('manage_options')) {
-        return [
-            'etat' => $statut,
-            'rediriger' => false,
-            'url' => null,
-            'afficher_formulaire' => false,
-            'afficher_message' => false,
-            'message_html' => '',
-        ];
-    }
-
-    // 🚫 Contenu brouillon : aucun accès hors administrateur
-    if ($post_status === 'draft') {
-        return [
-            'etat' => $statut,
-            'rediriger' => true,
-            'url' => $chasse_id ? get_permalink($chasse_id) : home_url('/'),
-            'afficher_formulaire' => false,
-            'afficher_message' => false,
-            'message_html' => '',
-        ];
-    }
-
-    // ✅ Organisateur associé : accès standard
-    if (utilisateur_est_organisateur_associe_a_chasse($user_id, $chasse_id)) {
-        return [
-            'etat' => $statut,
-            'rediriger' => false,
-            'url' => null,
-            'afficher_formulaire' => false,
-            'afficher_message' => false,
-            'message_html' => '',
-        ];
-    }
-
-    // ✅ Chasse terminée = accès libre à toutes les énigmes
-    $statut_chasse = get_field('chasse_cache_statut', $chasse_id);
-    if ($statut_chasse === 'termine') {
-        return [
-            'etat' => 'terminee',
-            'rediriger' => false,
-            'url' => null,
-            'afficher_formulaire' => true,
-            'afficher_message' => false,
-            'message_html' => '',
-        ];
-    }
-
-    // 🔒 Joueur non engagé dans la chasse ou l'énigme
-    if (
-        !utilisateur_est_engage_dans_chasse($user_id, $chasse_id) ||
-        !utilisateur_est_engage_dans_enigme($user_id, $enigme_id)
-    ) {
-        return [
-            'etat' => $statut,
-            'rediriger' => true,
-            'url' => $chasse_id ? get_permalink($chasse_id) : home_url('/'),
-            'afficher_formulaire' => false,
-            'afficher_message' => false,
-            'message_html' => '',
-        ];
-    }
-
-    $condition_acces = get_field('enigme_acces_condition', $enigme_id) ?? 'immediat';
-    if ($condition_acces === 'pre_requis' && !enigme_pre_requis_remplis($enigme_id, $user_id)) {
-        $statut = 'bloquee_pre_requis';
-    }
-
-    $state = cat_get_hunt_progress_service()->getRiddleParticipationState($statut);
+    $user_id = $user_id ?: get_current_user_id();
+    $status = enigme_get_statut_utilisateur($enigme_id, $user_id);
+    $huntId = (int) recuperer_id_chasse_associee($enigme_id);
+    $condition = (string) (get_field('enigme_acces_condition', $enigme_id) ?? 'immediat');
+    $prerequisitesMet = $condition !== 'pre_requis'
+        || enigme_pre_requis_remplis($enigme_id, $user_id);
+    $state = (new ChassesAuTresor\Core\Progress\RiddleParticipationPolicyService())->decide(
+        $status,
+        current_user_can('manage_options'),
+        get_post_status($enigme_id) === 'draft',
+        utilisateur_est_organisateur_associe_a_chasse($user_id, $huntId),
+        get_field('chasse_cache_statut', $huntId) === 'termine',
+        utilisateur_est_engage_dans_chasse($user_id, $huntId),
+        utilisateur_est_engage_dans_enigme($user_id, $enigme_id),
+        $prerequisitesMet
+    );
     $state['url'] = $state['rediriger']
-        ? ($chasse_id ? get_permalink($chasse_id) : home_url('/'))
+        ? ($huntId > 0 ? get_permalink($huntId) : home_url('/'))
         : null;
 
     return $state;
@@ -345,112 +325,43 @@ function enigme_est_visible_pour(int $user_id, int $enigme_id): bool
  * @param int $chasse_id ID de la chasse.
  * @return void
  */
-function mettre_a_jour_statuts_enigmes_de_la_chasse(int $chasse_id): void
+function mettre_a_jour_statuts_enigmes_de_la_chasse(int $chasse_id, ?string $huntStatus = null): void
 {
-
-    if (get_post_type($chasse_id) !== 'chasse') return;
-    $ids_enigmes = recuperer_enigmes_associees($chasse_id);
-    foreach ($ids_enigmes as $enigme_id) {
-        if (get_post_type($enigme_id) === 'enigme') {
-            $resultat = enigme_mettre_a_jour_etat_systeme((int)$enigme_id);
-        }
-    }
-}
-
-
-
-
-/**
- * 🔁 Calcule ou met à jour le champ `enigme_cache_etat_systeme` d'une énigme.
- *
- * Ce champ reflète l'état global de l'énigme (accessible, bloquée, invalide...),
- * en tenant compte du statut de la chasse, de la condition d'accès et des réglages internes.
- *
- * @param int $enigme_id ID de l'énigme à traiter.
- * @param bool $mettre_a_jour Si true, met à jour ACF. Sinon, retourne uniquement.
- * @param string|null $statut_chasse_forcé Permet de passer un statut de chasse sans relecture ACF.
- * @return string Statut calculé.
- */
-function enigme_mettre_a_jour_etat_systeme(int $enigme_id, bool $mettre_a_jour = true, ?string $statut_chasse_forcé = null): string
-{
-    if (get_post_type($enigme_id) !== 'enigme') {
-        cat_debug("❌ [STATUT] Post #$enigme_id n'est pas une énigme");
-        return 'cache_invalide';
-    }
-    $chasse_id = recuperer_id_chasse_associee($enigme_id);
-    $hasValidHunt = $chasse_id > 0 && get_post_type($chasse_id) === 'chasse';
-    $statut_chasse = $hasValidHunt
-        ? (string) ($statut_chasse_forcé ?? get_field('chasse_cache_statut', $chasse_id))
-        : '';
-    $condition = get_field('enigme_acces_condition', $enigme_id) ?? 'immediat';
-    $scheduledDate = $condition === 'date_programmee'
-        ? convertir_en_datetime(get_field('enigme_acces_date', $enigme_id))
-        : null;
-    $mode = get_field('enigme_mode_validation', $enigme_id);
-    $reponses = enigme_get_bonnes_reponses($enigme_id);
-
-    $etat = cat_get_hunt_progress_service()->calculateRiddleSystemState(
-        $hasValidHunt,
-        $statut_chasse,
-        (string) $condition,
-        $scheduledDate ? $scheduledDate->getTimestamp() : null,
-        (string) $mode,
-        !empty($reponses)
+    (new ChassesAuTresor\Core\Progress\RiddleSystemStateUpdater())->refreshHunt(
+        $chasse_id,
+        $huntStatus
     );
-
-    // ✅ Mise à jour ACF si demandé
-    if ($mettre_a_jour) {
-        $actuel = get_field('enigme_cache_etat_systeme', $enigme_id);
-        if ($actuel !== $etat) {
-            update_field('enigme_cache_etat_systeme', $etat, $enigme_id);
-        } else {
-            cat_debug("⏸️ [STATUT] Pas de changement pour #$enigme_id (déjà $etat)");
-        }
-    }
-
-    return $etat;
 }
 
+function enigme_mettre_a_jour_etat_systeme(
+    int $enigme_id,
+    bool $mettre_a_jour = true,
+    ?string $statut_chasse_forcé = null
+): string {
+    return (new ChassesAuTresor\Core\Progress\RiddleSystemStateUpdater())->refresh(
+        $enigme_id,
+        $mettre_a_jour,
+        $statut_chasse_forcé
+    );
+}
 
-
-
-/**
- * Hook automatique ACF : met à jour l’état système d’une énigme après enregistrement.
- *
- * @param int|string $post_id ID de l’énigme ou identifiant ACF (ex : 'options')
- * @return void
- */
 function enigme_mettre_a_jour_etat_systeme_automatiquement($post_id): void
 {
-    if (!is_numeric($post_id) || get_post_type($post_id) !== 'enigme') return;
-    if ($post_id === 'options' || wp_is_post_revision($post_id)) return;
-
-    enigme_mettre_a_jour_etat_systeme((int) $post_id); // appelle la version unifiée
+    if (is_numeric($post_id)) {
+        (new ChassesAuTresor\Core\Progress\RiddleSystemStateUpdater())->refresh((int) $post_id);
+    }
 }
 
 
 /**
  * 🔁 Recalcule le statut système d’une énigme via appel AJAX sécurisé.
  *
- * @hook wp_ajax_forcer_recalcul_statut_enigme
+ * Wrapper de compatibilité ; l’endpoint est enregistré par chassesautresor-core.
  * @return void
  */
-add_action('wp_ajax_forcer_recalcul_statut_enigme', 'forcer_recalcul_statut_enigme');
-
-function forcer_recalcul_statut_enigme()
+function forcer_recalcul_statut_enigme(): void
 {
-    if (!is_user_logged_in()) {
-        wp_send_json_error('non_connecte');
-    }
-
-    $post_id = isset($_POST['post_id']) ? (int) $_POST['post_id'] : 0;
-
-    if (!$post_id || get_post_type($post_id) !== 'enigme') {
-        wp_send_json_error('post_invalide');
-    }
-
-    enigme_mettre_a_jour_etat_systeme($post_id);
-    wp_send_json_success('statut_enigme_recalcule');
+    ChassesAuTresor\Core\Progress\RiddleStatusAjaxHandler::handle();
 }
 
 /**
@@ -492,190 +403,79 @@ function utilisateur_peut_engager_enigme(int $enigme_id, ?int $user_id = null): 
 // ✅ GESTION DE LA COMPLÉTION DES CPT
 // ==================================================
 
+function cat_get_completion_cache_manager(): ChassesAuTresor\Core\Content\CompletionCacheManager
+{
+    return new ChassesAuTresor\Core\Content\CompletionCacheManager();
+}
+
 function organisateur_est_complet(int $organisateur_id): bool
 {
-    if (get_post_type($organisateur_id) !== 'organisateur') {
-        return false;
-    }
-
-    $logo = get_field('logo_organisateur', $organisateur_id);
-
-    return (new ChassesAuTresor\Core\Content\OrganizerCompletionService())->isComplete(
-        titre_est_valide($organisateur_id),
-        !empty($logo),
-        (string) get_field('description_longue', $organisateur_id)
-    );
+    return cat_get_completion_cache_manager()->isOrganizerComplete($organisateur_id, 'titre_est_valide');
 }
 
 function organisateur_mettre_a_jour_complet(int $organisateur_id): bool
 {
-    $complet = organisateur_est_complet($organisateur_id);
-    update_field('organisateur_cache_complet', $complet ? 1 : 0, $organisateur_id);
-    return $complet;
+    return cat_get_completion_cache_manager()->refresh($organisateur_id);
 }
 
 function chasse_has_validatable_enigme(int $chasse_id): bool
 {
-    $enigme_ids = recuperer_ids_enigmes_pour_chasse($chasse_id);
-    $validationModes = [];
-
-    foreach ($enigme_ids as $eid) {
-        $validationModes[] = (string) get_field('enigme_mode_validation', $eid);
-    }
-
-    return (new ChassesAuTresor\Core\Content\HuntCompletionService())->hasValidatableRiddle(
-        $validationModes
-    );
+    $riddleIds = recuperer_ids_enigmes_pour_chasse($chasse_id);
+    $modes = array_map(static fn ($riddleId): string => (string) get_field(
+        'enigme_mode_validation',
+        (int) $riddleId
+    ), $riddleIds);
+    return (new ChassesAuTresor\Core\Content\HuntCompletionService())->hasValidatableRiddle($modes);
 }
 
 function chasse_est_complet(int $chasse_id): bool
 {
-    if (get_post_type($chasse_id) !== 'chasse') {
-        return false;
-    }
-
-    $mode_fin = get_field('chasse_mode_fin', $chasse_id) ?: 'automatique';
-
-    $image    = get_field('chasse_principale_image', $chasse_id);
-    $image_id = is_array($image) ? ($image['ID'] ?? 0) : (int) $image;
-
-    return (new ChassesAuTresor\Core\Content\HuntCompletionService())->isComplete(
-        titre_est_valide($chasse_id),
-        (string) get_field('chasse_principale_description', $chasse_id),
-        (int) $image_id,
-        3902,
-        (string) $mode_fin,
-        chasse_has_validatable_enigme($chasse_id)
+    return cat_get_completion_cache_manager()->isHuntComplete(
+        $chasse_id,
+        chasse_has_validatable_enigme($chasse_id),
+        'titre_est_valide'
     );
 }
 
 function chasse_mettre_a_jour_complet(int $chasse_id): bool
 {
-    $complet = chasse_est_complet($chasse_id);
-    update_field('chasse_cache_complet', $complet ? 1 : 0, $chasse_id);
-    return $complet;
+    return cat_get_completion_cache_manager()->refresh($chasse_id);
 }
 
 function enigme_est_complet(int $enigme_id): bool
 {
-    if (get_post_type($enigme_id) !== 'enigme') {
-        return false;
-    }
-
-    $titre_ok = titre_est_valide($enigme_id);
-
-    $images = get_field('enigme_visuel_image', $enigme_id);
-    $placeholder = defined('ID_IMAGE_PLACEHOLDER_ENIGME') ? ID_IMAGE_PLACEHOLDER_ENIGME : 3925;
-    $first_id = (is_array($images) && !empty($images[0]['ID'])) ? (int) $images[0]['ID'] : 0;
-    $mode = get_field('enigme_mode_validation', $enigme_id);
-    $reponses = enigme_get_bonnes_reponses($enigme_id);
-    $condition_acces = get_field('enigme_acces_condition', $enigme_id) ?? 'immediat';
-    $pre_requis = get_field('enigme_acces_pre_requis', $enigme_id);
-
-    return (new ChassesAuTresor\Core\Content\RiddleCompletionService())->isComplete(
-        $titre_ok,
-        $first_id,
-        $placeholder,
-        (string) $mode,
-        !empty($reponses),
-        (string) $condition_acces,
-        is_array($pre_requis) && !empty($pre_requis)
+    return cat_get_completion_cache_manager()->isRiddleComplete(
+        $enigme_id,
+        'titre_est_valide',
+        static fn (int $riddleId): bool => enigme_get_bonnes_reponses($riddleId) !== []
     );
 }
 
 function enigme_mettre_a_jour_complet(int $enigme_id): bool
 {
-    $complet = enigme_est_complet($enigme_id);
-    update_field('enigme_cache_complet', $complet ? 1 : 0, $enigme_id);
-    return $complet;
+    return cat_get_completion_cache_manager()->refresh($enigme_id);
 }
 
 function mettre_a_jour_cache_complet_automatiquement($post_id): void
 {
-    if (!is_numeric($post_id)) {
-        return;
-    }
-
-    $type = get_post_type($post_id);
-    if ($type === 'organisateur') {
-        organisateur_mettre_a_jour_complet((int) $post_id);
-    } elseif ($type === 'chasse') {
-        chasse_mettre_a_jour_complet((int) $post_id);
-    } elseif ($type === 'enigme') {
-        enigme_mettre_a_jour_complet((int) $post_id);
-
-        // ⚡ Synchronise la chasse parente pour que la complétion soit
-        // immédiatement prise en compte sur la fiche énigme.
-        $chasse_id = recuperer_id_chasse_associee((int) $post_id);
-        if ($chasse_id) {
-            chasse_mettre_a_jour_complet((int) $chasse_id);
-        }
+    if (is_numeric($post_id)) {
+        cat_get_completion_cache_manager()->refresh((int) $post_id);
     }
 }
-add_action('acf/save_post', 'mettre_a_jour_cache_complet_automatiquement', 20);
 
-/**
- * Vérifie la valeur du champ `_cache_complet` d'un post et la
- * synchronise si elle ne correspond pas à la réalité.
- *
- * Cette vérification est légère et peut être appelée à chaque
- * affichage d'un post (ex : pages single) pour s'assurer que les
- * panneaux d'édition ne s'ouvrent pas inutilement.
- *
- * @param int $post_id ID du post à contrôler.
- * @return void
- */
 function verifier_ou_mettre_a_jour_cache_complet(int $post_id): void
 {
-    if (!is_numeric($post_id)) {
-        return;
-    }
-
-    static $deja = [];
-    if (in_array($post_id, $deja, true)) {
-        return;
-    }
-    $deja[] = $post_id;
-
-    $type = get_post_type($post_id);
-
-    switch ($type) {
-        case 'organisateur':
-            $cache = (bool) get_field('organisateur_cache_complet', $post_id);
-            $reel  = organisateur_est_complet($post_id);
-            if ($cache !== $reel) {
-                update_field('organisateur_cache_complet', $reel ? 1 : 0, $post_id);
-            }
-            break;
-
-        case 'chasse':
-            $cache = (bool) get_field('chasse_cache_complet', $post_id);
-            $reel  = chasse_est_complet($post_id);
-            if ($cache !== $reel) {
-                update_field('chasse_cache_complet', $reel ? 1 : 0, $post_id);
-                chasse_clear_infos_affichage_cache($post_id);
-            }
-            break;
-
-        case 'enigme':
-            $cache = (bool) get_field('enigme_cache_complet', $post_id);
-            $reel  = enigme_est_complet($post_id);
-            if ($cache !== $reel) {
-                update_field('enigme_cache_complet', $reel ? 1 : 0, $post_id);
-                if (function_exists('recuperer_id_chasse_associee')) {
-                    $chasse_id = recuperer_id_chasse_associee($post_id);
-                    if ($chasse_id) {
-                        chasse_clear_infos_affichage_cache((int) $chasse_id);
-                    }
-                }
-            }
-            break;
-    }
+    cat_get_completion_cache_manager()->ensureFresh($post_id);
 }
 
-
-
-
+function cat_clear_hunt_display_cache_after_completion(int $huntId): void
+{
+    chasse_clear_infos_affichage_cache($huntId);
+}
+add_action(
+    'chassesautresor_hunt_display_cache_clear_requested',
+    'cat_clear_hunt_display_cache_after_completion'
+);
 
 
 
@@ -683,12 +483,11 @@ function verifier_ou_mettre_a_jour_cache_complet(int $post_id): void
 // 🧠 GESTION DES STATUTS DES CHASSES
 // ==================================================
 /**
- * 🔹 verifier_ou_recalculer_statut_chasse() → Vérifie et met à jour le statut ACF d'une chasse à l'affichage si nécessaire.
+ * 🔹 verifier_ou_recalculer_statut_chasse() → Vérifie le statut ACF à l'affichage.
  * 🔹 mettre_a_jour_statuts_chasse() → Met à jour les statuts de validation et de visibilité d'une chasse.
  * 🔹 forcer_recalcul_statut_chasse() → Forcer un recalcul du statut via une requête AJAX.
- * 🔹 mettre_a_jour_statut_si_chasse() → Déclenche la mise à jour automatique du statut après sauvegarde ACF en admin.
  * 🔹 recuperer_statut_chasse() → Retourne dynamiquement le statut pour mise à jour du badge via JS.
- * 🔹 forcer_statut_selon_validation_chasse() → Applique le statut WordPress selon la validation lors de la sauvegarde admin.
+ * 🔹 forcer_statut_selon_validation_chasse() → Contrôle la cohérence du statut WordPress.
  * 🔹 forcer_statut_apres_acf() → Corrige le post_status après sauvegarde ACF pour éviter les incohérences.
  */
 
@@ -704,206 +503,41 @@ function verifier_ou_mettre_a_jour_cache_complet(int $post_id): void
  */
 function verifier_ou_recalculer_statut_chasse($chasse_id): void
 {
-    if (get_post_type($chasse_id) !== 'chasse') {
-        return;
-    }
-
-    static $chasses_traitees = [];
-
-    if (in_array($chasse_id, $chasses_traitees, true)) {
-        return;
-    }
-    $chasses_traitees[] = $chasse_id;
-
-    $statut           = (string) get_field('chasse_cache_statut', $chasse_id);
-    $validation       = (string) get_field('chasse_cache_statut_validation', $chasse_id);
-    $date_debut_obj   = convertir_en_datetime(get_field('chasse_infos_date_debut', $chasse_id) ?: null);
-    $date_fin_obj     = convertir_en_datetime(get_field('chasse_infos_date_fin', $chasse_id) ?: null);
-    $decouverte_obj   = convertir_en_datetime(get_field('chasse_cache_date_decouverte', $chasse_id) ?: null);
-    $service          = new ChassesAuTresor\Core\Progress\HuntStatusService();
-
-    if ($service->isStale(
-        $statut,
-        $validation,
-        $date_debut_obj ? $date_debut_obj->getTimestamp() : null,
-        $date_fin_obj ? $date_fin_obj->getTimestamp() : null,
-        $decouverte_obj ? $decouverte_obj->getTimestamp() : null,
-        (int) get_field('chasse_infos_cout_points', $chasse_id),
-        !empty(get_field('chasse_infos_duree_illimitee', $chasse_id)),
-        (int) current_time('timestamp')
-    )) {
-        mettre_a_jour_statuts_chasse($chasse_id);
-        chasse_clear_infos_affichage_cache($chasse_id);
-    }
+    (new ChassesAuTresor\Core\Progress\HuntStatusUpdater())->refreshIfStale((int) $chasse_id);
 }
 
-
-/**
- * Met à jour le statut fonctionnel d'une chasse (champ ACF `chasse_cache_statut`).
- *
- * Appelée lors de toute modification importante.
- * Si la chasse devient "termine", planifie (ou déclenche) les déplacements de PDF.
- *
- * @param int $chasse_id ID du post de type "chasse".
- */
 function mettre_a_jour_statuts_chasse($chasse_id)
 {
-    if (get_post_type($chasse_id) !== 'chasse') return;
-
-    $cache = [
-        'validation' => get_field('chasse_cache_statut_validation', $chasse_id),
-        'statut'     => get_field('chasse_cache_statut', $chasse_id),
-        'date'       => get_field('chasse_cache_date_decouverte', $chasse_id),
-    ];
-
-    $carac = [
-        'date_debut'      => get_field('chasse_infos_date_debut', $chasse_id),
-        'date_fin'        => get_field('chasse_infos_date_fin', $chasse_id),
-        'cout_points'     => get_field('chasse_infos_cout_points', $chasse_id),
-        'duree_illimitee' => get_field('chasse_infos_duree_illimitee', $chasse_id),
-    ];
-
-    if (!$cache['validation']) {
-        cat_debug("⚠️ Données manquantes pour chasse #$chasse_id : champs_caches");
-        return;
-    }
-
-    $statut_validation = $cache['validation'] ?? 'creation';
-    $date_debut_obj    = convertir_en_datetime($carac['date_debut'] ?? null);
-    $date_debut        = $date_debut_obj ? $date_debut_obj->getTimestamp() : null;
-    $date_fin_obj      = convertir_en_datetime($carac['date_fin'] ?? null);
-    $date_fin          = $date_fin_obj ? $date_fin_obj->getTimestamp() : null;
-    $date_obj          = convertir_en_datetime($cache['date'] ?? null);
-    $date_decouverte   = $date_obj ? $date_obj->getTimestamp() : null;
-    $cout_points       = intval($carac['cout_points'] ?? 0);
-    $statut            = (new ChassesAuTresor\Core\Progress\HuntStatusService())->calculate(
-        (string) $statut_validation,
-        $date_debut,
-        $date_fin,
-        $date_decouverte,
-        $cout_points,
-        !empty($carac['duree_illimitee']),
-        (int) current_time('timestamp'),
-        (string) ($cache['statut'] ?? 'revision')
-    );
-
-    // ✅ Si terminée, déclenche les planifications PDF
-    if ($statut === 'termine') {
-        $liste_enigmes = recuperer_enigmes_associees($chasse_id);
-
-        foreach ($liste_enigmes as $enigme_id) {
-            ChassesAuTresor\Core\Content\RiddleSolutionFileScheduler::schedule((int) $enigme_id);
-        }
-    }
-
-    update_field('chasse_cache_statut', $statut, $chasse_id);
-
-    if (function_exists('synchroniser_cache_enigmes_chasse')) {
-        synchroniser_cache_enigmes_chasse($chasse_id, true, true);
-    }
-
-    mettre_a_jour_statuts_enigmes_de_la_chasse($chasse_id, $statut);
-    chasse_clear_infos_affichage_cache($chasse_id);
+    return (new ChassesAuTresor\Core\Progress\HuntStatusUpdater())->refresh((int) $chasse_id);
 }
 
-
-
-/**
- * 🔁 Forcer le recalcul du statut d'une chasse via AJAX.
- *
- * Utilisé pour recalculer le statut après une mise à jour front-end
- * sans attendre la sauvegarde naturelle de WordPress/ACF.
- *
- * @hook wp_ajax_forcer_recalcul_statut_chasse
- * @return void
- */
-add_action('wp_ajax_forcer_recalcul_statut_chasse', 'forcer_recalcul_statut_chasse');
-
-/**
- * Forcer le recalcul du statut d'une chasse (via appel AJAX séparé, après modification d’un champ).
- */
-function forcer_recalcul_statut_chasse()
+function forcer_recalcul_statut_chasse(): void
 {
-    if (!is_user_logged_in()) {
-        wp_send_json_error('non_connecte');
-    }
-
-    $post_id = isset($_POST['post_id']) ? (int) $_POST['post_id'] : 0;
-
-    if (!$post_id || get_post_type($post_id) !== 'chasse') {
-        wp_send_json_error('post_invalide');
-    }
-
-    mettre_a_jour_statuts_chasse($post_id);
-    wp_send_json_success('statut_recalcule');
+    ChassesAuTresor\Core\Progress\HuntStatusAjaxHandler::recalculate();
 }
 
-
-/**
- * 🔄 Mettre à jour le statut d'une chasse après enregistrement ACF en admin.
- *
- * Accroché au hook `acf/save_post` pour recalculer automatiquement
- * le statut fonctionnel dès qu'un organisateur modifie ses champs en back-office.
- *
- * @param int $post_id ID du post enregistré par ACF.
- * @return void
- */
-add_action('acf/save_post', 'mettre_a_jour_statut_si_chasse', 20);
-
-function mettre_a_jour_statut_si_chasse($post_id)
+function cat_refresh_hunt_status(int $huntId): void
 {
-    if (!is_numeric($post_id)) return;
-
-    if (get_post_type($post_id) === 'chasse') {
-        // 🔁 Supprimer le champ pour forcer une relecture propre (évite valeurs en cache)
-        delete_transient("acf_field_{$post_id}_champs_caches");
-
-        cat_debug("🔁 Recalcul du statut via acf/save_post pour la chasse $post_id");
-        mettre_a_jour_statuts_chasse($post_id);
-    }
+    mettre_a_jour_statuts_chasse($huntId);
 }
+add_action('chassesautresor_hunt_status_refresh_requested', 'cat_refresh_hunt_status');
 
-
-/**
- * 🔎 Récupère le statut public actuel d'une chasse (via AJAX).
- *
- * Utilisé pour mettre à jour dynamiquement le badge de statut en front,
- * après une modification qui déclenche un recalcul.
- *
- * @hook wp_ajax_recuperer_statut_chasse
- * @return void
- */
-add_action('wp_ajax_recuperer_statut_chasse', 'recuperer_statut_chasse');
-
-function recuperer_statut_chasse()
+function cat_check_stale_hunt_status(int $huntId): void
 {
-    if (!is_user_logged_in()) {
-        wp_send_json_error('non_connecte');
-    }
+    verifier_ou_recalculer_statut_chasse($huntId);
+}
+add_action('chassesautresor_hunt_status_stale_check_requested', 'cat_check_stale_hunt_status');
 
-    $post_id = isset($_POST['post_id']) ? (int) $_POST['post_id'] : 0;
-
-    if (!$post_id || get_post_type($post_id) !== 'chasse') {
-        wp_send_json_error('post_invalide');
-    }
-
-    $statut = get_field('chasse_cache_statut', $post_id);
-    if (!$statut) {
-        wp_send_json_error('statut_indisponible');
-    }
-
-    $statut_str = is_string($statut) ? $statut : '';
-    $validation = get_field('chasse_cache_statut_validation', $post_id);
-    $badge_infos = chasse_preparer_badge_statut($statut_str, is_string($validation) ? $validation : null);
-
-    wp_send_json_success([
-        'statut'       => $badge_infos['statut'],
-        'statut_label' => $badge_infos['label'],
-        'statut_icon'  => $badge_infos['icon_html'],
-        'statut_tooltip' => $badge_infos['label'],
-    ]);
+function recuperer_statut_chasse(): void
+{
+    ChassesAuTresor\Core\Progress\HuntStatusAjaxHandler::getStatus();
 }
 
+function cat_render_hunt_status_badge(array $badge, string $status, ?string $validation): array
+{
+    return chasse_preparer_badge_statut($status, $validation);
+}
+add_filter('chassesautresor_render_hunt_status_badge', 'cat_render_hunt_status_badge', 10, 3);
 
 /**
  * 🔁 Met à jour le champ de validation et force le statut du post en cohérence.
@@ -917,30 +551,11 @@ function recuperer_statut_chasse()
  */
 function forcer_statut_apres_acf($post_id, $nouvelle_validation = null)
 {
-    if (!is_numeric($post_id) || get_post_type($post_id) !== 'chasse') return;
-
-    // Lecture et mise à jour facultative
-    $validation = get_field('chasse_cache_statut_validation', $post_id);
-
-    if ($nouvelle_validation !== null) {
-        update_field('chasse_cache_statut_validation', sanitize_text_field($nouvelle_validation), $post_id);
-        $validation = sanitize_text_field($nouvelle_validation);
-    }
-
-    if (!$validation) return;
-
-    $statut_voulu = (new ChassesAuTresor\Core\Content\HuntPublicationStatusService())->resolve(
-        (string) $validation
+    (new ChassesAuTresor\Core\Progress\HuntStatusUpdater())->synchronizePublication(
+        (int) $post_id,
+        is_string($nouvelle_validation) ? $nouvelle_validation : null
     );
-
-    if (get_post_status($post_id) !== $statut_voulu) {
-        wp_update_post([
-            'ID'          => $post_id,
-            'post_status' => $statut_voulu,
-        ]);
-    }
 }
-add_action('acf/save_post', 'forcer_statut_apres_acf', 99);
 
 
 
@@ -967,82 +582,15 @@ function is_canevas_creation()
 }
 
 
-/**
- * 🔐 Vérifie la cohérence entre post_status natif et statut de validation ACF.
- *
- * Si une incohérence est détectée, elle est loguée.
- * Le changement automatique de statut est désactivé en phase de développement.
- *
- * @hook save_post_chasse
- * @param int     $post_id ID du post.
- * @param WP_Post $post    Objet post complet.
- * @param bool    $update  True si c’est une mise à jour (false si création).
- */
-add_action('save_post_chasse', 'forcer_statut_selon_validation_chasse', 20, 3);
-
-function forcer_statut_selon_validation_chasse($post_id, $post, $update)
-{
-    // Éviter boucle infinie
-    remove_action('save_post_chasse', 'forcer_statut_selon_validation_chasse', 20);
-
-    // Ne pas agir sur autosave ou révisions
-    if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) return;
-    if (wp_is_post_revision($post_id)) return;
-
-    $validation = get_field('chasse_cache_statut_validation', $post_id);
-    if (!$validation) return;
-    $statut_wp = get_post_status($post_id);
-
-    $statut_attendu = (new ChassesAuTresor\Core\Content\HuntPublicationStatusService())->resolve(
-        (string) $validation
-    );
-
-    if ($statut_wp !== $statut_attendu) {
-        cat_debug("⚠️ Décalage statut WP vs ACF pour chasse $post_id → WP = $statut_wp / ACF = $validation");
-
-        // ⛔ EN DÉVELOPPEMENT : synchronisation désactivée
-        // ✅ À ACTIVER EN PROD :
-        /*
-    wp_update_post([
-      'ID'          => $post_id,
-      'post_status' => $statut_attendu,
-    ]);
-    */
-    }
-}
-
-/**
- * Planifie une tâche récurrente pour vérifier le statut des chasses.
- *
- * @return void
- */
 function schedule_cat_recalculate_chasse_statuses(): void
 {
-    if (!wp_next_scheduled('cat_recalculate_chasse_statuses')) {
-        wp_schedule_event(time(), 'hourly', 'cat_recalculate_chasse_statuses');
-    }
+    ChassesAuTresor\Core\Progress\HuntStatusScheduler::schedule();
 }
-add_action('after_switch_theme', 'schedule_cat_recalculate_chasse_statuses');
 
-/**
- * Vérifie périodiquement les statuts des chasses afin de les maintenir à jour.
- *
- * @return void
- */
 function cat_recalculate_chasse_statuses(): void
 {
-    $chasses = get_posts([
-        'post_type'      => 'chasse',
-        'post_status'    => 'any',
-        'fields'         => 'ids',
-        'posts_per_page' => -1,
-    ]);
-
-    foreach ($chasses as $chasse_id) {
-        verifier_ou_recalculer_statut_chasse((int) $chasse_id);
-    }
+    ChassesAuTresor\Core\Progress\HuntStatusScheduler::process();
 }
-add_action('cat_recalculate_chasse_statuses', 'cat_recalculate_chasse_statuses');
 
 
 // ==================================================

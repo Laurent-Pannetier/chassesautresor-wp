@@ -1,6 +1,11 @@
 <?php
 defined('ABSPATH') || exit;
 
+if (!class_exists(ChassesAuTresor\Core\Media\RiddleImageProtectionService::class, false)) {
+    require_once dirname(__DIR__, 4)
+        . '/plugins/chassesautresor-core/src/Media/RiddleImageProtectionService.php';
+}
+
 
 // ==================================================
 // 🔐 PROTECTION DES VISUELS (.htaccess)
@@ -63,61 +68,10 @@ add_filter('acf/upload_file/name=enigme_visuel_image', function ($file) {
  */
 function injecter_htaccess_protection_images_enigme($post_id, bool $forcer = false)
 {
-  $post_id = (int) $post_id;
-  if ($post_id <= 0 || get_post_type($post_id) !== 'enigme') {
-    cat_debug("❌ Post ID invalide ou type incorrect pour htaccess : {$post_id}");
-    return false;
-  }
-
-  $upload_dir = wp_upload_dir();
-  $base_dir = rtrim($upload_dir['basedir'], '/\\') . '/_enigmes/enigme-' . $post_id;
-
-  if (!is_dir($base_dir)) {
-    if (!wp_mkdir_p($base_dir)) {
-      cat_debug("❌ Impossible de créer le dossier {$base_dir}");
-      return false;
-    }
-    cat_debug("📁 Dossier créé : {$base_dir}");
-  }
-
-  $fichier_htaccess = $base_dir . '/.htaccess';
-  $fichier_tmp = $fichier_htaccess . '.tmp';
-
-  if (!$forcer && file_exists($fichier_htaccess)) {
-    cat_debug("ℹ️ .htaccess déjà présent pour énigme {$post_id}, pas de réécriture.");
-    return true;
-  }
-
-  // Supprime le fichier temporaire si présent
-  if (file_exists($fichier_tmp)) {
-    unlink($fichier_tmp);
-    cat_debug("🧹 Fichier temporaire .htaccess.tmp supprimé");
-  }
-
-  $contenu = <<<HTACCESS
-# Protection des images de l'énigme {$post_id}
-<IfModule mod_rewrite.c>
-RewriteEngine On
-
-# ✅ Autorise uniquement l’accès depuis l’administration WordPress
-RewriteCond %{REQUEST_URI} ^/wp-admin/ [OR]
-RewriteCond %{HTTP_REFERER} ^(/wp-admin/|https?://[^/]+/wp-admin/) [NC]
-RewriteRule . - [L]
-
-# ❌ Blocage par défaut
-<FilesMatch "\\.(jpg|jpeg|png|gif|webp)\$">
-  Require all denied
-</FilesMatch>
-</IfModule>
-HTACCESS;
-
-  if (file_put_contents($fichier_htaccess, $contenu, LOCK_EX) === false) {
-    cat_debug("❌ Échec d’écriture du fichier .htaccess pour énigme {$post_id}");
-    return false;
-  }
-
-  cat_debug("✅ .htaccess injecté avec succès pour énigme {$post_id}");
-  return true;
+    return (new ChassesAuTresor\Core\Media\RiddleImageProtectionService())->protect(
+        (int) $post_id,
+        $forcer
+    );
 }
 
 
@@ -205,12 +159,3 @@ function autoriser_gestion_images_enigme(bool $allowed, int $riddleId): bool
   return utilisateur_peut_modifier_post($riddleId);
 }
 add_filter('chassesautresor_can_manage_riddle_images', 'autoriser_gestion_images_enigme', 10, 2);
-
-function reinjecter_protection_images_enigme(int $riddleId): void
-{
-  injecter_htaccess_protection_images_enigme($riddleId, true);
-}
-add_action(
-  'chassesautresor_reinject_riddle_image_protection',
-  'reinjecter_protection_images_enigme'
-);

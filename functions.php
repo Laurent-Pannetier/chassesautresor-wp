@@ -683,26 +683,10 @@ function forcer_acf_form_head_chasse()
  * Cette fonction est appelée par le cron quotidien global du site pour assurer la cohérence
  * entre les chasses et les énigmes qui leur sont réellement associées.
  *
- * Elle utilise la fonction `verifier_et_synchroniser_cache_enigmes_si_autorise()` qui déclenche,
- * si nécessaire, une correction du champ ACF `chasse_cache_enigmes` (relation).
- *
- * 🔧 Cette fonction est placée exceptionnellement dans `functions.php` (racine du thème)
- * car elle fait partie du cœur d'exécution automatique du site, mais ne s’intègre à aucun module métier isolé.
- *
- * 🧱 Si d’autres tâches automatiques internes sont ajoutées à terme (purge, maintenance, synchronisation...),
- * cette logique pourra être déplacée dans un fichier dédié (`inc/cron-functions.php`) pour allègement.
+ * Le traitement par lots est assuré par chassesautresor-core.
  *
  * @return void
  */
 function tache_cron_synchroniser_cache_enigmes(): void {
-    $chasses = get_posts([
-        'post_type'      => 'chasse',
-        'post_status'    => ['publish', 'pending', 'draft'],
-        'posts_per_page' => -1,
-        'fields'         => 'ids',
-    ]);
-
-    foreach ($chasses as $chasse_id) {
-        verifier_et_synchroniser_cache_enigmes_si_autorise($chasse_id);
-    }
+    cat_get_hunt_riddle_cache_synchronizer()->synchronizeAll();
 }

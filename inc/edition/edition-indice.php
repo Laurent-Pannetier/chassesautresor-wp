@@ -76,6 +76,11 @@ if (!class_exists(ChassesAuTresor\Core\Content\HintRouteRegistrar::class, false)
         . '/plugins/chassesautresor-core/src/Content/HintRouteRegistrar.php';
 }
 
+if (!class_exists(ChassesAuTresor\Core\Content\HintCreationRouteHandler::class, false)) {
+    require_once dirname(__DIR__, 4)
+        . '/plugins/chassesautresor-core/src/Content/HintCreationRouteHandler.php';
+}
+
 if (!class_exists(ChassesAuTresor\Core\Content\HintFieldPolicyService::class, false)) {
     require_once dirname(__DIR__, 4)
         . '/plugins/chassesautresor-core/src/Content/HintFieldPolicyService.php';
@@ -136,45 +141,25 @@ function cat_get_hint_cache_service(): ChassesAuTresor\Core\Content\HintCacheSer
     return new ChassesAuTresor\Core\Content\HintCacheService(cat_get_hint_status_service());
 }
 
-function cat_get_hint_cache_updater(): ChassesAuTresor\Core\Content\HintCacheUpdater
-{
-    return new ChassesAuTresor\Core\Content\HintCacheUpdater(cat_get_hint_cache_service());
-}
+
 
 function cat_get_hint_title_service(): ChassesAuTresor\Core\Content\HintTitleService
 {
     return new ChassesAuTresor\Core\Content\HintTitleService();
 }
 
-function cat_get_hint_creation_service(): ChassesAuTresor\Core\Content\HintCreationService
-{
-    return new ChassesAuTresor\Core\Content\HintCreationService();
-}
+
 
 function cat_get_hint_field_policy_service(): ChassesAuTresor\Core\Content\HintFieldPolicyService
 {
     return new ChassesAuTresor\Core\Content\HintFieldPolicyService();
 }
 
-function cat_get_hint_mutation_service(): ChassesAuTresor\Core\Content\HintMutationService
-{
-    return new ChassesAuTresor\Core\Content\HintMutationService(cat_get_hint_status_service());
-}
 
-function cat_get_hint_field_mutation_service(): ChassesAuTresor\Core\Content\HintFieldMutationService
-{
-    return new ChassesAuTresor\Core\Content\HintFieldMutationService(
-        cat_get_hint_field_policy_service(),
-        cat_get_hint_status_service()
-    );
-}
 
-function cat_get_hint_deletion_service(): ChassesAuTresor\Core\Content\HintDeletionService
-{
-    return new ChassesAuTresor\Core\Content\HintDeletionService(
-        new ChassesAuTresor\Core\Relationships\RelationshipService()
-    );
-}
+
+
+
 
 function cat_get_hint_relationship_service(): ChassesAuTresor\Core\Content\HintRelationshipService
 {
@@ -183,10 +168,7 @@ function cat_get_hint_relationship_service(): ChassesAuTresor\Core\Content\HintR
     );
 }
 
-function cat_get_hint_management_service(): ChassesAuTresor\Core\Content\HintManagementService
-{
-    return new ChassesAuTresor\Core\Content\HintManagementService();
-}
+
 
 // ==================================================
 // 💡 GESTION DES INDICES
@@ -264,63 +246,13 @@ function prochain_rang_indice(int $objet_id, string $objet_type): int
  */
 function creer_indice_pour_objet(int $objet_id, string $objet_type, ?int $user_id = null)
 {
-    $creationService = cat_get_hint_creation_service();
-    $supportedTargetType = $creationService->isSupportedTargetType($objet_type);
-    $targetMatchesType = $supportedTargetType && get_post_type($objet_id) === $objet_type;
-    $isAuthenticated = is_user_logged_in();
-    $canModifyTarget = $targetMatchesType
-        && $isAuthenticated
-        && utilisateur_peut_modifier_post($objet_id);
-    $chasse_id = null;
-
-    if ($canModifyTarget) {
-        $chasse_id = $objet_type === 'chasse'
-            ? $objet_id
-            : recuperer_id_chasse_associee($objet_id);
-    }
-
-    $canModifyHunt = $chasse_id !== null
-        && (int) $chasse_id > 0
-        && utilisateur_peut_modifier_post((int) $chasse_id);
-    $creationError = $creationService->getCreationError(
-        $supportedTargetType,
-        $targetMatchesType,
-        $isAuthenticated,
-        $canModifyTarget,
-        $chasse_id !== null && (int) $chasse_id > 0,
-        $canModifyHunt
-    );
-
-    if ($creationError !== null) {
-        $errorMessages = [
-            'type_invalide' => __('Type de cible invalide.', 'chassesautresor-com'),
-            'cible_invalide' => __('ID cible invalide.', 'chassesautresor-com'),
-            'non_connecte' => __('Utilisateur non connecté.', 'chassesautresor-com'),
-            'permission_refusee' => __('Droits insuffisants.', 'chassesautresor-com'),
-        ];
-
-        return new WP_Error($creationError, $errorMessages[$creationError]);
-    }
-
-    $chasse_id = (int) $chasse_id;
-
-    $indice_id = (new ChassesAuTresor\Core\Content\HintPostFactory())->create(
+    return ChassesAuTresor\Core\Content\HintCreationRouteHandler::create(
         $objet_id,
         $objet_type,
-        $chasse_id,
-        $user_id ?? get_current_user_id(),
-        prochain_rang_indice($chasse_id, 'chasse'),
-        build_indice_placeholder_title($chasse_id),
-        (int) current_time('timestamp'),
-        DAY_IN_SECONDS
+        $user_id,
+        static fn (string $type, int $id): bool => utilisateur_peut_modifier_post($id),
+        static fn (int $riddleId): ?int => recuperer_id_chasse_associee($riddleId)
     );
-    if (is_wp_error($indice_id)) {
-        return $indice_id;
-    }
-
-    (new ChassesAuTresor\Core\Content\HintOrderingApplicationService())->applyTarget($objet_id, $objet_type);
-
-    return $indice_id;
 }
 
 /**
@@ -346,58 +278,7 @@ function flush_rewrite_rules_creer_indice(): void
     ChassesAuTresor\Core\Content\HintRouteRegistrar::flush();
 }
 
-/**
- * Détecte l’appel à /creer-indice/ et redirige vers l’indice créé.
- *
- * @return void
- */
-function creer_indice_et_rediriger_si_appel(): void
-{
-    if (get_query_var('creer_indice') !== '1') {
-        return;
-    }
 
-    $requestService = new ChassesAuTresor\Core\Content\HintCreationRequestService();
-    $hasValidNonce = (bool) wp_verify_nonce(
-        sanitize_text_field(wp_unslash($_GET['nonce'] ?? '')),
-        'creer_indice'
-    );
-    $isLoggedIn = $hasValidNonce && is_user_logged_in();
-    $target = $isLoggedIn
-        ? $requestService->resolveTarget(
-            isset($_GET['chasse_id']) ? absint($_GET['chasse_id']) : 0,
-            isset($_GET['enigme_id']) ? absint($_GET['enigme_id']) : 0
-        )
-        : null;
-    $requestError = $requestService->getRequestError($hasValidNonce, $isLoggedIn, $target);
-
-    if ($requestError === 'invalid_nonce') {
-        wp_die(__('Action non autorisée.', 'chassesautresor-com'), 'Erreur', ['response' => 403]);
-    }
-
-    if ($requestError === 'authentication_required') {
-        wp_redirect(wp_login_url());
-        exit;
-    }
-
-    if ($requestError === 'missing_target') {
-        wp_die(__('ID cible manquant.', 'chassesautresor-com'), 'Erreur', ['response' => 400]);
-    }
-
-    $cible_id = $target['id'];
-    $indice_id = creer_indice_pour_objet($cible_id, $target['type']);
-    if (is_wp_error($indice_id)) {
-        $error_message = sanitize_text_field($indice_id->get_error_message());
-        $referer       = wp_get_referer() ?: get_permalink($cible_id);
-        $redirect_url  = add_query_arg('erreur', $error_message, $referer);
-        wp_safe_redirect($redirect_url);
-        exit;
-    }
-
-    wp_safe_redirect(get_permalink($cible_id));
-    exit;
-}
-add_action('template_redirect', 'creer_indice_et_rediriger_si_appel');
 
 function autoriser_gestion_indice(
     bool $allowed,
@@ -489,15 +370,7 @@ function indiquer_solution_cible_indice(bool $exists, int $targetId, string $tar
 }
 add_filter('chassesautresor_hint_target_has_solution', 'indiquer_solution_cible_indice', 10, 3);
 
-/**
- * @param mixed $hintId
- * @return int|WP_Error
- */
-function creer_indice_depuis_modal($hintId, int $targetId, string $targetType)
-{
-    return creer_indice_pour_objet($targetId, $targetType);
-}
-add_filter('chassesautresor_create_hint', 'creer_indice_depuis_modal', 10, 3);
+
 
 
 function autoriser_modification_indice(bool $allowed, int $hintId): bool

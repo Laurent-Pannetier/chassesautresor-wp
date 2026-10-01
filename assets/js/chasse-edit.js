@@ -1409,7 +1409,8 @@ function rafraichirStatutChasse(postId) {
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
       action: 'forcer_recalcul_statut_chasse',
-      post_id: postId
+      post_id: postId,
+      nonce: window.ChasseIndices?.nonce || ''
     })
   })
     .then(res => res.json())
@@ -1424,7 +1425,8 @@ function rafraichirStatutChasse(postId) {
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
           action: 'recuperer_statut_chasse',
-          post_id: postId
+          post_id: postId,
+          nonce: window.ChasseIndices?.nonce || ''
         })
       })
         .then(r => r.json())

@@ -19,6 +19,7 @@ function initEnigmeStats() {
     data.append('action', 'enigme_recuperer_stats');
     data.append('enigme_id', EnigmeStats.enigmeId);
     data.append('periode', periode);
+    data.append('nonce', EnigmeStats.nonce);
 
     fetch(EnigmeStats.ajaxUrl, {
       method: 'POST',
@@ -61,6 +62,7 @@ function initEnigmeStats() {
           page,
           orderby,
           order,
+          nonce: EnigmeStats.nonce,
         }),
       })
         .then((r) => r.json())
@@ -114,4 +116,3 @@ function initEnigmeStats() {
 
 document.addEventListener('DOMContentLoaded', initEnigmeStats);
 initEnigmeStats();
-
