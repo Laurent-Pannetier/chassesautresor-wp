@@ -905,12 +905,14 @@ function confirmer_demande_organisateur(int $user_id, string $token): ?int
 // ==================================================
 // 🌐 ENDPOINT CONFIRMATION ORGANISATEUR
 // ==================================================
-ChassesAuTresor\Core\Relationships\OrganizerConfirmationRouteHandler::configure(
-    'confirmer_demande_organisateur',
-    static function (int $user_id): void {
-        remove_site_message('profil_verification');
-        if (function_exists('myaccount_remove_persistent_message')) {
-            myaccount_remove_persistent_message($user_id, 'profil_verification');
+if (class_exists(ChassesAuTresor\Core\Relationships\OrganizerConfirmationRouteHandler::class)) {
+    ChassesAuTresor\Core\Relationships\OrganizerConfirmationRouteHandler::configure(
+        'confirmer_demande_organisateur',
+        static function (int $user_id): void {
+            remove_site_message('profil_verification');
+            if (function_exists('myaccount_remove_persistent_message')) {
+                myaccount_remove_persistent_message($user_id, 'profil_verification');
+            }
         }
-    }
-);
+    );
+}
