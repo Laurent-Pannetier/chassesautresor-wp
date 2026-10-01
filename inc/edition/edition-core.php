@@ -250,9 +250,6 @@ function enqueue_core_edit_scripts(array $additional = [])
 // ==================================================
 // 🔹 masquer_widgets_footer() → Masque certains widgets selon le rôle
 // 🔹 ajouter_classe_post_edit_non_admin() → Classe <body> personnalisée en admin
-// 🔹 acf_restreindre_utilisateurs_associes() → Filtre les users affichés
-// 🔹 restreindre_admin_menu_pour_roles_non_admins() → Nettoie les menus admin
-// 🔹 masquer_admin_interface_pour_non_admins() → Masque barre + menu admin
 // 🔹 ajouter_barre_progression_top() → Affiche une barre d’étapes dans le back
 
 /**
@@ -333,128 +330,6 @@ function ajouter_classe_post_edit_non_admin($classes)
   return $classes;
 }
 add_filter('admin_body_class', 'ajouter_classe_post_edit_non_admin');
-
-/**
- * Charge uniquement l’auteur du post dans le champ ACF "utilisateurs_associes".
- * SUSCEPTIBLE D ETRE SUPPRIMEE SI PLUSIEURS UTILISATEURS SUR UN CPT organisateur
- * @param array $field Le champ ACF.
- * @return array Le champ avec les choix filtrés.
- */
-function acf_restreindre_utilisateurs_associes($field)
-{
-  global $post;
-
-  if (!$post || get_post_type($post->ID) !== 'organisateur') {
-    return $field;
-  }
-
-  $auteur_id = get_post_field('post_author', $post->ID);
-
-  // Réinitialiser les choix et n'afficher que l'auteur du post
-  $field['choices'] = [];
-  $field['choices'][(string) $auteur_id] = get_the_author_meta('display_name', $auteur_id);
-
-  return $field;
-}
-add_filter('acf/load_field/name=utilisateurs_associes', 'acf_restreindre_utilisateurs_associes');
-
-
-/**
- * Restreint l'affichage des menus admin pour tous les rôles sauf les administrateurs.
- *
- * Cette fonction supprime les menus et sous-menus non autorisés pour les utilisateurs 
- * qui ne sont pas administrateurs. Elle conserve uniquement l'accès aux CPTs spécifiés.
- *
- * @return void
- */
-function restreindre_admin_menu_pour_roles_non_admins()
-{
-  $user = wp_get_current_user();
-
-  // Vérifie si l'utilisateur n'est PAS administrateur
-  if (!in_array('administrator', (array) $user->roles)) {
-    global $menu, $submenu;
-
-    // Liste des menus autorisés (CPTs et leurs sous-menus)
-    $menus_autorises = array(
-      'edit.php?post_type=enigme',      // CPT "énigme"
-      'edit.php?post_type=chasse',      // CPT "chasse"
-      'edit.php?post_type=organisateur' // CPT "organisateur"
-    );
-
-    // Supprime les menus non autorisés
-    foreach ($menu as $key => $item) {
-      if (!in_array($item[2], $menus_autorises)) {
-        unset($menu[$key]);
-      }
-    }
-
-    // Supprime les sous-menus des CPTs non autorisés
-    foreach ($submenu as $parent => $items) {
-      if (!in_array($parent, $menus_autorises)) {
-        unset($submenu[$parent]);
-      }
-    }
-
-    // Supprime le menu "Tableau de bord"
-    remove_menu_page('index.php');
-  }
-}
-add_action('admin_menu', 'restreindre_admin_menu_pour_roles_non_admins', 999);
-
-/**
- * Masque la top bar et le menu admin pour tous les rôles sauf administrateurs.
- * Autorise uniquement l'accès aux pages d'édition et d'ajout de post.
- *
- * @return void
- */
-function masquer_admin_interface_pour_non_admins()
-{
-  $user = wp_get_current_user();
-
-  // Vérifie si l'utilisateur N'EST PAS administrateur
-  if (!in_array('administrator', (array) $user->roles)) {
-
-    // 🔹 Cache la barre d'administration (backend et frontend)
-    add_filter('show_admin_bar', '__return_false');
-
-    // 🔹 Supprime le menu admin via CSS
-    add_action('admin_head', function () {
-      echo '<style>
-                #adminmenumain, #wpadminbar, #wpfooter { display: none !important; }
-                #wpcontent, #wpbody-content { margin-left: 0 !important; padding-top: 0 !important; }
-                html.wp-toolbar { padding-top: 0 !important; }
-            </style>';
-    });
-
-    // 🔹 Supprime aussi le menu WordPress en vidant $menu et $submenu
-    add_action('admin_menu', function () {
-      global $menu, $submenu;
-      $menu = [];
-      $submenu = [];
-    }, 999);
-
-    // 🔹 Liste des pages autorisées + AJAX WordPress (ajout de async-upload.php)
-    $pages_autorisees = ['post.php', 'post-new.php', 'edit.php', 'admin-ajax.php', 'async-upload.php'];
-
-    // 🔹 Redirige les utilisateurs non-admins s'ils essaient d'aller ailleurs
-    add_action('admin_init', function () use ($pages_autorisees) {
-      global $pagenow;
-
-      // ✅ Laisse passer les requêtes AJAX pour éviter de bloquer ACF + async-upload.php pour l'upload
-      if (
-        !in_array($pagenow, $pages_autorisees)
-        && strpos($_SERVER['REQUEST_URI'], 'admin-ajax.php') === false
-        && strpos($_SERVER['REQUEST_URI'], 'async-upload.php') === false
-      ) {
-
-        wp_redirect(admin_url('post-new.php'));
-        exit;
-      }
-    });
-  }
-}
-add_action('init', 'masquer_admin_interface_pour_non_admins');
 
 /**
  * Ajoute une barre de progression en haut des pages d'édition des CPTs "organisateur", "chasse" et "énigme",
@@ -557,8 +432,6 @@ function injection_classe_edition_active( array $classes ): array
         in_array( ROLE_ORGANISATEUR_CREATION, $roles, true ) &&
         ! get_field( 'organisateur_cache_complet', $post->ID )
     ) {
-        verifier_ou_mettre_a_jour_cache_complet( $post->ID );
-
         if (
             get_post_status( $post ) === 'pending' &&
             ! get_field( 'organisateur_cache_complet', $post->ID )
@@ -578,8 +451,6 @@ function injection_classe_edition_active( array $classes ): array
         $associes        = is_array( $associes ) ? array_map( 'strval', $associes ) : [];
 
         if ( in_array( (string) $user_id, $associes, true ) ) {
-            verifier_ou_mettre_a_jour_cache_complet( $post->ID );
-
             $validation = get_field( 'chasse_cache_statut_validation', $post->ID );
             $statut     = get_field( 'chasse_cache_statut', $post->ID );
 

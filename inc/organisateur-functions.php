@@ -689,30 +689,6 @@ function generer_liste_chasses_hierarchique($organisateur_id) {
 // 🎯 CTA PAGE "DEVENIR ORGANISATEUR"
 // ==================================================
 /**
- * Remove any pending organiser request metadata for the given user.
- *
- * @param int $user_id Target user identifier.
- *
- * @return void
- */
-function cat_clear_organisateur_request(int $user_id): void
-{
-    (new ChassesAuTresor\Core\Relationships\OrganizerRequestLifecycleService())->clear($user_id);
-}
-
-/**
- * Retrieve the status of the organiser creation request for a user.
- *
- * @param int $user_id Target user identifier.
- *
- * @return array{token:?string,expired:bool,expires_at?:int} Request status payload.
- */
-function cat_get_organisateur_request_status(int $user_id): array
-{
-    return (new ChassesAuTresor\Core\Relationships\OrganizerRequestLifecycleService())->getStatus($user_id);
-}
-
-/**
  * Retourne le libellé et l'URL du bouton d'appel à l'action
  * présent sur la page "Devenir organisateur".
  *
@@ -820,50 +796,4 @@ function get_cta_devenir_organisateur(?int $user_id = null): array
     [$label, $url, $disabled] = $views[$decision];
 
     return compact('label', 'url', 'disabled');
-}
-
-
-// ==================================================
-// 📩 DEMANDE DE CRÉATION DE PROFIL ORGANISATEUR
-// ==================================================
-/**
- * 🔹 lancer_demande_organisateur() → Génère un token et envoie l'email de confirmation.
- * 🔹 renvoyer_email_confirmation_organisateur() → Réutilise le token existant.
- * 🔹 confirmer_demande_organisateur() → Valide la demande et crée le CPT.
- */
-
-function envoyer_email_confirmation_organisateur(int $user_id, string $token): bool
-{
-    return (new ChassesAuTresor\Core\Relationships\OrganizerConfirmationEmailService())->send(
-        $user_id,
-        $token
-    );
-}
-
-function lancer_demande_organisateur(int $user_id): bool
-{
-    return (new ChassesAuTresor\Core\Relationships\OrganizerRequestLifecycleService())->start(
-        $user_id,
-        'envoyer_email_confirmation_organisateur'
-    );
-}
-
-function renvoyer_email_confirmation_organisateur(int $user_id): bool
-{
-    return (new ChassesAuTresor\Core\Relationships\OrganizerRequestLifecycleService())->resend(
-        $user_id,
-        'envoyer_email_confirmation_organisateur'
-    );
-}
-
-function confirmer_demande_organisateur(int $user_id, string $token): ?int
-{
-    return (new ChassesAuTresor\Core\Relationships\OrganizerRequestLifecycleService())->confirm(
-        $user_id,
-        $token,
-        'creer_organisateur_pour_utilisateur',
-        static function (int $confirmed_user_id): void {
-            (new WP_User($confirmed_user_id))->add_role(ROLE_ORGANISATEUR_CREATION);
-        }
-    );
 }

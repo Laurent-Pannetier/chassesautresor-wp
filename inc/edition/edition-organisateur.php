@@ -5,7 +5,6 @@ defined('ABSPATH') || exit;
 // 👤 CRÉATION & ÉDITION D’UN ORGANISATEUR
 // ==================================================
 // 🔹 organisateur_get_liens_actifs() → Retourne les liens publics valides d’un organisateur
-// 🔹 creer_organisateur_pour_utilisateur() → Crée un CPT organisateur lié à un user
 // 🔹 enqueue_script_organisateur_edit() → Charge JS si modif organisateur possible
 // 🔹 modifier_champ_organisateur() (AJAX) → Enregistre champs organisateur
 // 🔹 organisateur_get_liste_liens_publics() → Liste des types de lien publics
@@ -25,55 +24,6 @@ function organisateur_get_liens_actifs(int $organisateur_id): array
     );
 
     return array_map('esc_url', $links);
-}
-
-
-/**
- * Crée un CPT "organisateur" pour un utilisateur donné, s’il n’en possède pas déjà.
- *
- * - Le post est créé avec le statut "pending"
- * - Le champ ACF "utilisateurs_associes" est rempli
- * - Le champ "profil_public" est prérempli (logo + email)
- *
- * @param int $user_id ID de l’utilisateur.
- * @return int|null ID du post créé ou null si échec ou déjà existant.
- */
-function creer_organisateur_pour_utilisateur($user_id)
-{
-    $user_id = is_int($user_id) ? $user_id : 0;
-    $existing_id = $user_id > 0 ? (int) get_organisateur_from_user($user_id) : 0;
-    $user_data = $user_id > 0 ? get_userdata($user_id) : false;
-    $result = (new ChassesAuTresor\Core\Content\OrganizerCreationService())->create(
-        $user_id,
-        $existing_id,
-        TITRE_DEFAUT_ORGANISATEUR,
-        $user_data ? (string) $user_data->user_email : '',
-        'wp_insert_post',
-        'update_field',
-        'is_wp_error'
-    );
-
-    if ($result['error'] === 'invalid_user') {
-        cat_debug("❌ ID utilisateur invalide : $user_id");
-        return null;
-    }
-
-    if (!$result['created'] && $result['organizer_id']) {
-        cat_debug(
-            "ℹ️ Un organisateur existe déjà pour l'utilisateur $user_id (ID : {$result['organizer_id']})"
-        );
-        return $result['organizer_id'];
-    }
-
-    if ($result['error'] !== null) {
-        cat_debug("❌ Erreur création organisateur pour l'utilisateur $user_id");
-        return null;
-    }
-
-    $organizer_id = (int) $result['organizer_id'];
-    cat_debug("✅ Organisateur créé (pending) pour user $user_id : post ID $organizer_id");
-
-    return $organizer_id;
 }
 
 
@@ -121,22 +71,6 @@ function enqueue_script_organisateur_edit()
   }
 }
 add_action('wp_enqueue_scripts', 'enqueue_script_organisateur_edit');
-
-
-function autoriser_modification_organisateur(bool $allowed, int $organizerId): bool {
-    return utilisateur_peut_modifier_post($organizerId);
-}
-add_filter('chassesautresor_can_modify_organizer', 'autoriser_modification_organisateur', 10, 2);
-
-function autoriser_modification_champs_organisateur(bool $allowed, int $organizerId): bool {
-    return utilisateur_peut_editer_champs($organizerId);
-}
-add_filter(
-    'chassesautresor_can_edit_organizer_fields',
-    'autoriser_modification_champs_organisateur',
-    10,
-    2
-);
 
 
 /**

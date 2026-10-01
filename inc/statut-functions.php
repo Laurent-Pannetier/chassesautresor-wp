@@ -385,17 +385,6 @@ function verifier_ou_mettre_a_jour_cache_complet(int $post_id): void
     cat_get_completion_cache_manager()->ensureFresh($post_id);
 }
 
-function cat_clear_hunt_display_cache_after_completion(int $huntId): void
-{
-    chasse_clear_infos_affichage_cache($huntId);
-}
-add_action(
-    'chassesautresor_hunt_display_cache_clear_requested',
-    'cat_clear_hunt_display_cache_after_completion'
-);
-
-
-
 // ==================================================
 // 🧠 GESTION DES STATUTS DES CHASSES
 // ==================================================
@@ -432,12 +421,6 @@ function forcer_recalcul_statut_chasse(): void
 {
     ChassesAuTresor\Core\Progress\HuntStatusAjaxHandler::recalculate();
 }
-
-function cat_refresh_hunt_status(int $huntId): void
-{
-    mettre_a_jour_statuts_chasse($huntId);
-}
-add_action('chassesautresor_hunt_status_refresh_requested', 'cat_refresh_hunt_status');
 
 function cat_check_stale_hunt_status(int $huntId): void
 {

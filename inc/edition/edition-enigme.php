@@ -95,31 +95,3 @@ function creer_enigme_pour_chasse($chasse_id, $user_id = null)
         static fn (int $huntId): ?int => get_organisateur_from_chasse($huntId)
     );
 }
-
-function initialiser_etat_enigme_creee(int $riddleId): void {
-    enigme_mettre_a_jour_etat_systeme($riddleId);
-}
-add_action('chassesautresor_riddle_created', 'initialiser_etat_enigme_creee');
-
-
-function autoriser_modification_enigme(bool $allowed, int $riddleId): bool {
-    return utilisateur_peut_modifier_post($riddleId);
-}
-add_filter('chassesautresor_can_modify_riddle', 'autoriser_modification_enigme', 10, 2);
-
-function autoriser_modification_champs_enigme(bool $allowed, int $riddleId): bool {
-    return utilisateur_peut_editer_champs($riddleId);
-}
-add_filter('chassesautresor_can_edit_riddle_fields', 'autoriser_modification_champs_enigme', 10, 2);
-
-function actualiser_etat_enigme(int $riddleId): void {
-    enigme_mettre_a_jour_etat_systeme($riddleId);
-}
-add_action('chassesautresor_riddle_state_refresh_requested', 'actualiser_etat_enigme');
-
-function actualiser_completude_enigme(int $riddleId): void {
-    if (function_exists('verifier_ou_mettre_a_jour_cache_complet')) {
-        verifier_ou_mettre_a_jour_cache_complet($riddleId);
-    }
-}
-add_action('chassesautresor_riddle_completeness_refresh_requested', 'actualiser_completude_enigme');

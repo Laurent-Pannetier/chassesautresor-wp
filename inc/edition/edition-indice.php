@@ -48,10 +48,6 @@ function cat_get_hint_relationship_service(): ChassesAuTresor\Core\Content\HintR
 // ==================================================
 // 💡 GESTION DES INDICES
 // ==================================================
-// 🔹 register_endpoint_creer_indice() → Enregistre /creer-indice
-// 🔹 creer_indice_pour_objet() → Crée un indice lié à une chasse ou une énigme
-// 🔹 creer_indice_et_rediriger_si_appel() → Crée un indice et redirige
-// 🔹 rediriger_si_affichage_indice() → Redirige toute page indice vers sa cible
 // 🔹 modifier_champ_indice() → Mise à jour AJAX (champ ACF ou natif)
 
 /**
@@ -79,18 +75,6 @@ function build_indice_placeholder_title(int $chasse_id): string
 }
 
 /**
- * Redirige l’affichage d’un indice vers sa chasse ou son énigme liée.
- *
- * @return void
- */
-function rediriger_si_affichage_indice(): void
-{
-    ChassesAuTresor\Core\Content\HintRedirectHandler::redirectIfViewingHint();
-}
-add_action('template_redirect', 'rediriger_si_affichage_indice');
-
-
-/**
  * Calcule le rang du prochain indice pour une chasse ou une énigme.
  *
  * @param int    $objet_id   ID de la chasse ou de l’énigme.
@@ -111,60 +95,6 @@ function prochain_rang_indice(int $objet_id, string $objet_type): int
     return count($existing_indices) + 1;
 }
 
-/**
- * Crée un indice lié à une chasse ou une énigme.
- *
- * @param int      $objet_id   ID de la chasse ou de l’énigme.
- * @param string   $objet_type Type de cible ('chasse' ou 'enigme').
- * @param int|null $user_id    ID utilisateur (null = courant).
- * @return int|WP_Error
- */
-function creer_indice_pour_objet(int $objet_id, string $objet_type, ?int $user_id = null)
-{
-    return ChassesAuTresor\Core\Content\HintCreationRouteHandler::create(
-        $objet_id,
-        $objet_type,
-        $user_id,
-        static fn (string $type, int $id): bool => utilisateur_peut_modifier_post($id),
-        static fn (int $riddleId): ?int => recuperer_id_chasse_associee($riddleId)
-    );
-}
-
-/**
- * Enregistre l’URL personnalisée /creer-indice/
- *
- * @return void
- */
-function register_endpoint_creer_indice(): void
-{
-    ChassesAuTresor\Core\Content\HintRouteRegistrar::register();
-}
-
-/**
- * S'assure que les règles de réécriture prennent en compte /creer-indice/.
- *
- * Cette fonction est exécutée lors de l'activation du thème ou
- * automatiquement une fois si les règles n'ont pas encore été mises à jour.
- *
- * @return void
- */
-function flush_rewrite_rules_creer_indice(): void
-{
-    ChassesAuTresor\Core\Content\HintRouteRegistrar::flush();
-}
-
-
-
-function autoriser_gestion_indice(
-    bool $allowed,
-    string $action,
-    string $targetType,
-    int $targetId
-): bool {
-    return indice_action_autorisee($action, $targetType, $targetId);
-}
-add_filter('chassesautresor_can_manage_hint', 'autoriser_gestion_indice', 10, 4);
-
 function rendre_carte_indices(string $html, int $huntId): string
 {
     ob_start();
@@ -177,19 +107,6 @@ function rendre_carte_indices(string $html, int $huntId): string
     return (string) ob_get_clean();
 }
 add_filter('chassesautresor_render_hint_card', 'rendre_carte_indices', 10, 2);
-
-/** @return int[] */
-function fournir_ids_enigmes_table_indice(array $riddleIds, int $huntId): array
-{
-    return recuperer_ids_enigmes_pour_chasse($huntId);
-}
-add_filter('chassesautresor_hint_hunt_riddle_ids', 'fournir_ids_enigmes_table_indice', 10, 2);
-
-function fournir_chasse_liee_table_indice(int $huntId, int $riddleId): int
-{
-    return (int) recuperer_id_chasse_associee($riddleId);
-}
-add_filter('chassesautresor_hint_related_hunt_id', 'fournir_chasse_liee_table_indice', 10, 2);
 
 /**
  * @param object[] $hints
@@ -222,74 +139,3 @@ function rendre_table_indices(
     return (string) ob_get_clean();
 }
 add_filter('chassesautresor_render_hint_table', 'rendre_table_indices', 10, 9);
-
-/** @return array<int, object> */
-function fournir_enigmes_cibles_indice(array $riddles, int $huntId): array
-{
-    return recuperer_enigmes_pour_chasse($huntId);
-}
-add_filter('chassesautresor_hint_target_riddles', 'fournir_enigmes_cibles_indice', 10, 2);
-
-function fournir_prochain_rang_indice(
-    int $rank,
-    int $targetId,
-    string $targetType
-): int {
-    return prochain_rang_indice($targetId, $targetType);
-}
-add_filter('chassesautresor_next_hint_rank', 'fournir_prochain_rang_indice', 10, 3);
-
-function indiquer_solution_cible_indice(bool $exists, int $targetId, string $targetType): bool
-{
-    return solution_existe_pour_objet($targetId, $targetType);
-}
-add_filter('chassesautresor_hint_target_has_solution', 'indiquer_solution_cible_indice', 10, 3);
-
-
-
-
-function autoriser_modification_indice(bool $allowed, int $hintId): bool
-{
-    return utilisateur_peut_modifier_post($hintId);
-}
-add_filter('chassesautresor_can_modify_hint', 'autoriser_modification_indice', 10, 2);
-
-function autoriser_modification_champs_indice(bool $allowed, int $hintId): bool
-{
-    return utilisateur_peut_editer_champs($hintId);
-}
-add_filter('chassesautresor_can_edit_hint_fields', 'autoriser_modification_champs_indice', 10, 2);
-
-/**
- * Pré-remplit automatiquement la chasse liée d'un indice lors de sa création.
- *
- * @param array $field Paramètres du champ ACF.
- * @return array Champ modifié.
- */
-function pre_remplir_indice_chasse_linked(array $field): array
-{
-    global $post;
-
-    if (!$post || get_post_type($post->ID) !== 'indice') {
-        return $field;
-    }
-
-    $existing = get_post_meta($post->ID, 'indice_chasse_linked', true);
-    if (!empty($existing)) {
-        return $field;
-    }
-
-    $chasse_id = cat_get_hint_relationship_service()->resolveLinkedHuntId(
-        (string) get_field('indice_cible_type', $post->ID),
-        get_field('indice_enigme_linked', $post->ID),
-        isset($_GET['chasse_id']) ? (int) $_GET['chasse_id'] : null,
-        static fn (int $riddleId) => recuperer_id_chasse_associee($riddleId)
-    );
-
-    if ($chasse_id) {
-        $field['value'] = $chasse_id;
-    }
-
-    return $field;
-}
-add_filter('acf/load_field/name=indice_chasse_linked', 'pre_remplir_indice_chasse_linked');

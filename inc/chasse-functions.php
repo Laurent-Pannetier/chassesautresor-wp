@@ -16,7 +16,6 @@ require_once __DIR__ . '/badge-functions.php';
  * 🔹 chasse_get_champs → Récupérer les champs principaux et cachés structurés d'une chasse
  * 🔹 chasse_install_winners_table → Créer la table des gagnants lors de l’activation du thème.
  * 🔹 enregistrer_gagnant_chasse → Enregistrer ou mettre à jour un gagnant de chasse.
- * 🔹 acf/validate_value/name=date_de_fin (function) → Valider les incohérences de dates dans les chasses.
  * 🔹 gerer_chasse_terminee → Déclencher toutes les actions nécessaires lorsqu’une chasse est terminée.
  * 🔹 compter_chasses_gagnees → Compter les chasses gagnées par un utilisateur.
  */
@@ -153,44 +152,6 @@ function utilisateur_est_engage_dans_chasse(int $user_id, int $chasse_id): bool
     return cat_get_hunt_engagement_service()->isEngaged($user_id, $chasse_id);
 }
 
-/**
- * 📌 Validation des incohérences de dates dans les chasses.
- */
-add_filter('acf/validate_value/name=date_de_fin', function ($valid, $value, $field, $input) {
-    if (!$valid) {
-        return $valid; // 🚫 Ne pas écraser d'autres erreurs
-    }
-
-    if (get_post_type($_POST['post_ID'] ?? 0) !== 'chasse') {
-        return $valid;
-    }
-
-    // 🔄 Reformater `date_de_fin` si nécessaire
-    if (preg_match('/^\d{8}$/', $value)) {
-        $value = substr($value, 0, 4) . '-' . substr($value, 4, 2) . '-' . substr($value, 6, 2);
-    }
-
-    // 🔍 Récupération de la date de début à partir des données du formulaire
-    $caracteristiques_key = 'field_67ca7fd7f5117'; // ID du groupe "caracteristiques"
-    $date_debut_key = 'field_67b58c6fd98ec'; // ID du champ "date_de_debut"
-    $date_debut = $_POST['acf'][$caracteristiques_key][$date_debut_key] ?? null;
-
-    // ✅ Vérification : La date de fin ne peut pas être avant la date de début
-    if (!empty($date_debut) && !empty($value) && strtotime($value) < strtotime($date_debut)) {
-        return __('⚠️ Erreur : La date de fin ne peut pas être antérieure à la date de début.', 'chassesautresor-com');
-    }
-
-    // ✅ Vérification : Si "maintenant" est sélectionné, date_de_fin ne peut pas être antérieure à aujourd'hui
-    if (
-        $_POST['acf'][$caracteristiques_key]['field_67ca858935c21'] === 'maintenant' &&
-        !empty($value) && strtotime($value) < strtotime(date('Y-m-d'))
-    ) {
-        return __('⚠️ Erreur : La date de fin ne peut pas être antérieure à la date du jour si la chasse commence maintenant.', 'chassesautresor-com');
-    }
-
-    return $valid;
-}, 10, 4);
-
 // ==================================================
 // 📦 AFFICHAGE
 // ==================================================
@@ -292,48 +253,6 @@ function afficher_chasse_associee_callback()
  * @param int $user_id   ID de l'utilisateur.
  * @return bool
  */
-function peut_valider_chasse(int $chasse_id, int $user_id): bool
-{
-    if (!$chasse_id || !$user_id) {
-        return false;
-    }
-
-    if (get_post_type($chasse_id) !== 'chasse') {
-        return false;
-    }
-
-    if (!est_organisateur($user_id)) {
-        return false;
-    }
-
-    if (!utilisateur_est_organisateur_associe_a_chasse($user_id, $chasse_id)) {
-        return false;
-    }
-
-    $organisateur_id = get_organisateur_from_chasse($chasse_id);
-
-    // Utilise la requête directe pour lister toutes les énigmes rattachées
-    // afin d'éviter toute incohérence liée au cache "chasse_cache_enigmes".
-    $riddles = [];
-    foreach (recuperer_ids_enigmes_pour_chasse($chasse_id) as $enigme_id) {
-        $riddles[] = [
-            'system_status' => (string) get_field('enigme_cache_etat_systeme', $enigme_id),
-            'is_complete'    => (bool) get_field('enigme_cache_complet', $enigme_id),
-        ];
-    }
-
-    return (new ChassesAuTresor\Core\Content\HuntValidationService())->canRequestValidation(
-        true,
-        true,
-        $organisateur_id > 0 && (bool) get_field('organisateur_cache_complet', $organisateur_id),
-        (bool) get_field('chasse_cache_complet', $chasse_id),
-        (string) get_post_status($chasse_id),
-        (string) get_field('chasse_cache_statut_validation', $chasse_id),
-        (string) get_field('chasse_cache_statut', $chasse_id),
-        $riddles
-    );
-}
-
 /**
  * Calcule la progression d'un joueur dans une chasse.
  *
@@ -406,7 +325,7 @@ function generer_cta_chasse(int $chasse_id, ?int $user_id = null): array
         ];
     }
 
-    if (peut_valider_chasse($chasse_id, $user_id)) {
+    if (function_exists('peut_valider_chasse') && peut_valider_chasse($chasse_id, $user_id)) {
         return [
             'cta_html'    => render_form_validation_chasse($chasse_id),
             'cta_message' => '',
@@ -651,7 +570,7 @@ function trouver_chasse_a_valider(int $user_id): ?int
 
     foreach ($chasses as $chasse_id) {
         $chasse_id = (int) $chasse_id;
-        if (peut_valider_chasse($chasse_id, $user_id)) {
+        if (function_exists('peut_valider_chasse') && peut_valider_chasse($chasse_id, $user_id)) {
             return $chasse_id;
         }
     }
@@ -745,7 +664,10 @@ function cat_build_hunt_validation_cta(int $chasse_id, int $enigme_id): string
     }
 
     ob_start();
-    if (peut_valider_chasse($chasse_id, get_current_user_id())) {
+    if (
+        function_exists('peut_valider_chasse')
+        && peut_valider_chasse($chasse_id, get_current_user_id())
+    ) {
         echo '<div id="cta-validation-chasse" class="cta-chasse-row">';
         echo '<div class="cta-action">' . render_form_validation_chasse($chasse_id) . '</div>';
         echo '<div class="cta-message" aria-live="polite"></div>';
@@ -1834,7 +1756,7 @@ function preparer_infos_affichage_chasse(int $chasse_id, ?int $user_id = null): 
         return $memo[$memo_key];
     }
 
-    $cache_key = chasse_infos_affichage_cache_key($chasse_id);
+    $cache_key = 'chasse_infos_affichage_v2_' . $chasse_id;
     $cache     = wp_cache_get($cache_key, 'chasse_affichage');
     if (!is_array($cache)) {
         $cache = get_transient($cache_key);
@@ -1958,112 +1880,3 @@ function preparer_infos_affichage_chasse(int $chasse_id, ?int $user_id = null): 
 
     return $memo[$memo_key];
 }
-
-function chasse_infos_affichage_cache_key(int $chasse_id): string
-{
-    return "chasse_infos_affichage_v2_{$chasse_id}";
-}
-
-function chasse_clear_infos_affichage_cache_for_organisateur(int $organisateur_id): void
-{
-    if ($organisateur_id <= 0) {
-        return;
-    }
-
-    if (!function_exists('get_chasses_de_organisateur')) {
-        return;
-    }
-
-    $query = get_chasses_de_organisateur($organisateur_id);
-    $raw_ids = [];
-
-    if (is_object($query) && isset($query->posts) && is_array($query->posts)) {
-        $raw_ids = $query->posts;
-    } elseif (is_array($query)) {
-        $raw_ids = $query;
-    }
-
-    foreach ($raw_ids as $maybe_id) {
-        $chasse_id = is_object($maybe_id)
-            ? (int) ($maybe_id->ID ?? 0)
-            : (int) $maybe_id;
-
-        if ($chasse_id > 0) {
-            chasse_clear_infos_affichage_cache($chasse_id);
-        }
-    }
-}
-
-function chasse_clear_infos_affichage_cache(int $chasse_id): void
-{
-    $key = chasse_infos_affichage_cache_key($chasse_id);
-    wp_cache_delete($key, 'chasse_affichage');
-    delete_transient($key);
-}
-
-function chasse_invalidate_infos_affichage_terms(
-    int $object_id,
-    $terms,
-    $tt_ids,
-    string $taxonomy,
-    $append,
-    $old_tt_ids
-): void {
-    if (!in_array($taxonomy, ['chasse_region', 'theme_chasse'], true)) {
-        return;
-    }
-
-    if (get_post_type($object_id) !== 'chasse') {
-        return;
-    }
-
-    chasse_clear_infos_affichage_cache((int) $object_id);
-}
-
-function chasse_invalidate_infos_affichage_cache(int $post_id, \WP_Post $post, bool $update): void
-{
-    if (wp_is_post_revision($post_id)) {
-        return;
-    }
-
-    if ($post->post_type === 'chasse') {
-        chasse_clear_infos_affichage_cache($post_id);
-    } elseif ($post->post_type === 'enigme') {
-        $chasse_id = get_field('chasse_associee', $post_id);
-        if ($chasse_id) {
-            chasse_clear_infos_affichage_cache((int) $chasse_id);
-        }
-    } elseif ($post->post_type === 'organisateur') {
-        chasse_clear_infos_affichage_cache_for_organisateur($post_id);
-    }
-}
-
-function chasse_acf_clear_infos_affichage_cache($post_id): void
-{
-    if (!is_numeric($post_id)) {
-        return;
-    }
-
-    $post_id = (int) $post_id;
-    $type = get_post_type($post_id);
-
-    if ($type === 'chasse') {
-        chasse_clear_infos_affichage_cache($post_id);
-    } elseif ($type === 'organisateur') {
-        chasse_clear_infos_affichage_cache_for_organisateur($post_id);
-    }
-}
-add_action('acf/save_post', 'chasse_acf_clear_infos_affichage_cache', 20);
-add_action('save_post', 'chasse_invalidate_infos_affichage_cache', 10, 3);
-add_action('chasse_engagement_created', 'chasse_clear_infos_affichage_cache');
-add_action('set_object_terms', 'chasse_invalidate_infos_affichage_terms', 10, 6);
-
-function chasse_acf_handle_utilisateurs_associes($value, $post_id)
-{
-    if (is_numeric($post_id) && get_post_type((int) $post_id) === 'organisateur') {
-        chasse_clear_infos_affichage_cache_for_organisateur((int) $post_id);
-    }
-
-    return $value;
-}
-add_filter('acf/update_value/name=utilisateurs_associes', 'chasse_acf_handle_utilisateurs_associes', 20, 2);
