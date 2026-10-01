@@ -50,14 +50,15 @@ $wpdb = new class {
 };
 
 require_once __DIR__ . '/../../../plugins/chassesautresor-core/src/Messages/UserMessageRepository.php';
-class_alias(ChassesAuTresor\Core\Messages\UserMessageRepository::class, 'UserMessageRepository');
-require_once __DIR__ . '/../inc/messages.php';
+require_once __DIR__ . '/../../../plugins/chassesautresor-core/src/Messages/SiteMessageService.php';
+require_once __DIR__ . '/../../../plugins/chassesautresor-core/src/Support/CoreServiceFactory.php';
+require_once __DIR__ . '/../../../plugins/chassesautresor-core/src/Messages/LegacySiteMessageCleanup.php';
 
 class RemoveLegacyTestMessagesTest extends TestCase
 {
     public function test_cleanup_removes_prout_messages(): void
     {
-        cat_remove_legacy_test_messages();
+        ChassesAuTresor\Core\Messages\LegacySiteMessageCleanup::run();
 
         global $wpdb;
         $this->assertArrayNotHasKey(1, $wpdb->data);

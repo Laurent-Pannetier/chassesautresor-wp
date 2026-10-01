@@ -41,14 +41,6 @@ function cat_classify_hunt_riddles(array $riddleIds): array
     return (new ChassesAuTresor\Core\Progress\HuntRiddleClassifier())->classify($riddleIds);
 }
 
-function cat_get_hunt_completion_service(): ChassesAuTresor\Core\Progress\HuntCompletionService
-{
-    return new ChassesAuTresor\Core\Progress\HuntCompletionService(
-        cat_get_hunt_progress_service(),
-        new ChassesAuTresor\Core\Progress\HuntRiddleClassifier()
-    );
-}
-
 // ==================================================
 // 📚 SOMMAIRE DU FICHIER : gamify-functions.php
 // ==================================================
@@ -71,7 +63,6 @@ function cat_get_hunt_completion_service(): ChassesAuTresor\Core\Progress\HuntCo
  * 🔹 get_user_points → Récupérer le solde de points d’un utilisateur.
  * 🔹 update_user_points → Mettre à jour le solde de points de l’utilisateur.
  * 🔹 attribuer_points_apres_achat → Attribuer les points après l’achat d’un pack de points.
- * 🔹 woocommerce_thankyou (function) → Attribuer les points et vider le panier après la commande.
  * 🔹 afficher_points_utilisateur_callback → Afficher les points de l’utilisateur selon le statut de l’énigme.
  * 🔹 ajouter_modal_points → Charger le script du modal des points en ajoutant un paramètre de version dynamique.
  * 🔹 utilisateur_a_assez_de_points → Vérifie si l'utilisateur a suffisamment de points pour une opération donnée.
@@ -135,17 +126,6 @@ function attribuer_points_apres_achat($order_id) {
 
     cat_get_purchase_points_service()->awardOrder($order);
 }
-
-/**
- * 🛒 Attribue les points et vide le panier après la commande.
- */
-add_action('woocommerce_thankyou', function($order_id) {
-    attribuer_points_apres_achat($order_id); // 🎁 Attribution des points
-
-    if (!is_admin() && WC()->cart) {
-        WC()->cart->empty_cart(); // 🧹 Vide le panier
-    }
-});
 
 /**
  * 💎 Affiche les points de l'utilisateur selon le statut de l'énigme.
@@ -330,46 +310,6 @@ function compter_enigmes_resolues($chasse_id, $user_id): int
 
     return $progress['completed'];
 }
-
-/**
- * 🏁 Vérifie si l'utilisateur a terminé toutes les énigmes d'une chasse.
- *
- * 🔎 Si toutes les énigmes sont résolues :
- * - Attribue le trophée de la chasse (si présent).
- * - Si la chasse est de type "enjeu" :
- *   - Met à jour le gagnant, la date de découverte et le statut à "terminé".
- *
- * @param int $user_id  ID de l'utilisateur.
- * @param int $enigme_id ID de l'énigme résolue.
- */
-function verifier_fin_de_chasse($user_id, $enigme_id)
-{
-    cat_debug("🔍 Vérification de fin de chasse pour l'utilisateur {$user_id} (énigme : {$enigme_id})");
-
-    $completion = cat_get_hunt_completion_service()->evaluate((int) $user_id, (int) $enigme_id);
-    $chasse_id = $completion['hunt_id'];
-
-    if (!$chasse_id) {
-        cat_debug("❌ Aucune chasse associée trouvée.");
-        return;
-    }
-
-    if (!$completion['is_automatic']) {
-        return; // 🔁 La complétion se fait manuellement
-    }
-
-    if (!$completion['has_riddles']) {
-        cat_debug("⚠️ Pas d'énigmes associées à la chasse (ID: {$chasse_id})");
-        return;
-    }
-
-    if ($completion['is_complete']) {
-        gerer_chasse_terminee($chasse_id);
-    }
-}
-add_action('enigme_resolue', function($user_id, $enigme_id) {
-    verifier_fin_de_chasse($user_id, $enigme_id); // 🎯 Vérifie et termine la chasse si besoin
-}, 10, 2);
 
 /**
  * Retrieve points history for a user with pagination.

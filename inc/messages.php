@@ -12,17 +12,6 @@ function cat_get_site_message_service(): ChassesAuTresor\Core\Messages\SiteMessa
 }
 
 /**
- * Create the table storing user and site messages.
- *
- * @return void
- */
-function cat_install_user_messages_table(): void
-{
-    ChassesAuTresor\Core\Messages\UserMessagesTable::install();
-}
-add_action('after_switch_theme', 'cat_install_user_messages_table');
-
-/**
  * Store a site-wide message.
  *
  * @param string      $type        Message type used as CSS class.
@@ -194,20 +183,3 @@ function print_site_messages(): void
 
     echo $messages; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 }
-
-/**
- * Remove legacy test messages left in the database.
- *
- * @return void
- */
-function cat_remove_legacy_test_messages(): void
-{
-    if (get_option('cat_removed_test_messages')) {
-        return;
-    }
-
-    cat_get_site_message_service()->removeLegacyTestMessages();
-
-    update_option('cat_removed_test_messages', 1);
-}
-add_action('init', 'cat_remove_legacy_test_messages');

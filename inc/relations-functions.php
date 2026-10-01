@@ -436,41 +436,6 @@ function recalculate_chasse_cached_flags(int $chasse_id): void
 
 
 // ==================================================
-// 📦 ASSIGNATION AUTOMATIQUES
-// ==================================================
-/**
- * 🔹 assigner_organisateur_automatiquement() → Assigne automatiquement l'organisateur d'une chasse lors de sa création.
- */
-
-/**
- * 📌 Assigne automatiquement l'organisateur d'une chasse lors de sa création.
- *
- * 🔹 Vérifie si l'auteur de la chasse a le rôle "organisateur".
- * 🔹 Si oui, enregistre son ID dans le champ ACF "organisateur_id".
- * 🔹 Fonctionne uniquement à la création (pas à l'édition).
- *
- * @param int $post_id ID de la chasse en cours de sauvegarde.
- * @param WP_Post $post Objet du post.
- */
-function assigner_organisateur_automatiquement($post_id, $post)
-{
-  if ($post->post_type !== 'chasse') {
-    return;
-  }
-
-  $auteur_id = $post->post_author;
-
-  if (est_organisateur($auteur_id)) {
-    update_field('organisateur_id', $auteur_id, $post_id);
-  } else {
-    cat_debug("⚠️ Avertissement : L'auteur {$auteur_id} n'a pas un rôle valide (organisateur ou organisateur_creation).");
-  }
-}
-add_action('save_post', 'assigner_organisateur_automatiquement', 10, 2);
-
-
-
-// ==================================================
 // 🔁 SYNCHRONISATION CHASSE ↔ ÉNIGMES
 // ==================================================
 

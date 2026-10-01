@@ -142,7 +142,7 @@ function appliquer_cloture_chasse($result, int $huntId, string $field, $value): 
         [ChassesAuTresor\Core\Content\RiddleSolutionFileScheduler::class, 'schedule'],
         'solution_recuperer_par_objet',
         'solution_planifier_publication',
-        'gerer_chasse_terminee'
+        [ChassesAuTresor\Core\Progress\HuntCompletionHookHandler::class, 'completeHunt']
     );
 }
 add_filter('chassesautresor_apply_hunt_closure', 'appliquer_cloture_chasse', 10, 4);

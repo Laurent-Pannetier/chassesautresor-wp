@@ -30,22 +30,19 @@ if (
 }
 
 // 💚 Réinitialisations
-if (isset($_GET['reset_tentatives'])) {
-  $reset = cat_get_riddle_attempt_service()->deleteForRiddle($enigme_id);
-  echo '<p style="text-align:center;">🧹 ' . $reset . ' tentative(s) supprimée(s).</p>';
-  return;
-}
-
-if (isset($_GET['reset_statuts'])) {
-  $reset = cat_get_hunt_progress_service()->deleteRiddleStatuses($enigme_id);
-  echo '<p style="text-align:center;">🗑️ ' . $reset . ' statut(s) utilisateur supprimé(s).</p>';
-  return;
-}
-
-if (isset($_GET['reset_all'])) {
-  $reset1 = cat_get_riddle_attempt_service()->deleteForRiddle($enigme_id);
-  $reset2 = cat_get_hunt_progress_service()->deleteRiddleStatuses($enigme_id);
-  echo '<p style="text-align:center;">🔥 ' . $reset1 . ' tentative(s) & ' . $reset2 . ' statut(s) supprimés.</p>';
+$reset_action = isset($_GET['reset_all'])
+  ? 'all'
+  : (isset($_GET['reset_tentatives']) ? 'attempts' : (isset($_GET['reset_statuts']) ? 'statuses' : ''));
+if ($reset_action !== '') {
+  $reset = (new ChassesAuTresor\Core\Progress\RiddleAttemptMaintenanceService(
+    cat_get_riddle_attempt_service(),
+    cat_get_hunt_progress_service()
+  ))->reset($reset_action, $enigme_id);
+  echo '<p style="text-align:center;">' . esc_html(sprintf(
+    __('%1$d tentative(s) et %2$d statut(s) supprimé(s).', 'chassesautresor-com'),
+    $reset['attempts'],
+    $reset['statuses']
+  )) . '</p>';
   return;
 }
 
@@ -57,7 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_traitement'], 
 
   if ($uid_post === $uid && in_array($action, ['valider', 'invalider'], true)) {
     $resultat = $action === 'valider' ? 'bon' : 'faux';
-    $effectue = traiter_tentative_manuelle($uid, $resultat);
+    $effectue = ChassesAuTresor\Core\Progress\ManualAttemptReviewHandler::process($uid, $resultat);
     wp_safe_redirect(add_query_arg('done', $effectue ? '1' : '0'));
     exit;
   }

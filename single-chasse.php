@@ -17,14 +17,6 @@ if (!$chasse_id) {
 $user_id          = get_current_user_id();
 $est_orga_associe = utilisateur_est_organisateur_associe_a_chasse($user_id, $chasse_id);
 
-// Mise à jour des statuts réservée aux administrateurs ou organisateurs
-if (current_user_can('manage_options') || $est_orga_associe) {
-    verifier_ou_recalculer_statut_chasse($chasse_id);
-    verifier_et_synchroniser_cache_enigmes_si_autorise($chasse_id);
-    verifier_ou_mettre_a_jour_cache_complet($chasse_id);
-    chasse_clear_infos_affichage_cache($chasse_id);
-}
-
 $points_utilisateur = get_user_points($user_id);
 $est_engage_chasse  = utilisateur_est_engage_dans_chasse($user_id, $chasse_id);
 $peut_voir_aside    = $est_engage_chasse
@@ -305,7 +297,6 @@ $modal_deja_vue = get_post_meta($chasse_id, 'chasse_modal_bienvenue_vue', true);
 if (!$modal_deja_vue) :
   $post_bienvenue = get_post(9004);
   if ($post_bienvenue && $post_bienvenue->post_status === 'publish') :
-    update_post_meta($chasse_id, 'chasse_modal_bienvenue_vue', '1');
     $contenu = apply_filters('the_content', $post_bienvenue->post_content);
     $dom = new DOMDocument();
     libxml_use_internal_errors(true);

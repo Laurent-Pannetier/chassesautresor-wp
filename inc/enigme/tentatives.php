@@ -15,7 +15,6 @@ if (!function_exists('cat_get_riddle_attempt_service')) {
     // ==================================================
     // 🔹 inserer_tentative() → Insère une tentative dans la table personnalisée.
     // 🔹 get_tentative_by_uid() → Récupère une tentative par son identifiant UID.
-    // 🔹 traiter_tentative_manuelle() → Effectue la validation/refus d'une tentative (une seule fois).
     // 🔹 recuperer_infos_tentative() → Renvoie toutes les données pour l'affichage d'une tentative.
     // 🔹 get_etat_tentative() → Retourne l'état logique d'une tentative selon son champ `resultat`.
 
@@ -104,74 +103,6 @@ if (class_exists(ChassesAuTresor\Core\Progress\RiddleAttemptViewAjaxHandler::cla
         }
     );
 }
-
-
-    /**
-     * Traite une tentative manuelle : effectue l'action (validation/refus) une seule fois.
-     *
-     * @param string $uid Identifiant unique de la tentative.
-     * @param string $resultat 'bon' ou 'faux'.
-     * @return bool true si traitement effectué, false si déjà traité ou interdit.
-     */
-    function traiter_tentative_manuelle(string $uid, string $resultat): bool
-
-    {
-        cat_debug("👣 Tentative traitement UID=$uid par IP=" . ($_SERVER['REMOTE_ADDR'] ?? 'inconnue'));
-
-        $attempt_service = cat_get_riddle_attempt_service();
-        $tentative = $attempt_service->processManualAttempt(
-            $uid,
-            $resultat,
-            (int) get_current_user_id(),
-            current_user_can('manage_options'),
-            static function (int $enigme_id): array {
-                $chasse_id = recuperer_id_chasse_associee($enigme_id);
-                $organisateur_id = get_organisateur_from_chasse($chasse_id);
-
-                return (array) get_field('utilisateurs_associes', $organisateur_id);
-            }
-        );
-        if ($tentative === null) {
-            cat_debug("⛔ Tentative manuelle non traitée pour UID=$uid");
-            return false;
-        }
-
-        $user_id = (int) $tentative->user_id;
-        $enigme_id = (int) $tentative->enigme_id;
-        traiter_tentative($user_id, $enigme_id, (string) $tentative->reponse_saisie, $resultat, false, true, true);
-
-        $chasse_id       = recuperer_id_chasse_associee($enigme_id);
-        $organisateur_id = get_organisateur_from_chasse($chasse_id);
-        $orga_users      = (array) get_field('utilisateurs_associes', $organisateur_id);
-        $notification_plan = $attempt_service->buildManualNotificationPlan($user_id, $orga_users, $resultat);
-        $titre_enigme = get_the_title($enigme_id);
-        $message      = sprintf(
-            $notification_plan['approved']
-                ? __(
-                    'Votre demande de résolution de l\'énigme %1$s%2$s%3$s a été validée. Félicitations !',
-                    'chassesautresor-com'
-                )
-                : __(
-                    'Votre demande de résolution de l\'énigme %1$s%2$s%3$s a été invalidée.',
-                    'chassesautresor-com'
-                ),
-            '<a href="' . esc_url(get_permalink($enigme_id)) . '">',
-            esc_html($titre_enigme),
-            '</a>'
-        );
-        foreach ($notification_plan['persistent_recipient_ids'] as $recipient_id) {
-            myaccount_remove_persistent_message($recipient_id, 'tentative_' . $uid);
-        }
-
-        myaccount_add_flash_message(
-            $user_id,
-            $message,
-            $notification_plan['flash_type']
-        );
-
-        cat_debug("✅ Tentative UID=$uid traitée comme $resultat");
-        return true;
-    }
 
 
     /**
@@ -332,63 +263,4 @@ function recuperer_enigmes_tentatives_en_attente(int $organisateur_id): array
 function compter_tentatives_du_jour(int $user_id, int $enigme_id): int
 {
     return cat_get_riddle_attempt_service()->countTodayForUser($user_id, $enigme_id);
-}
-
-/**
- * Traite une tentative d'énigme : déduction des points, enregistrement et
- * mise à jour du statut utilisateur.
- *
- * @param bool $email_echec  Envoyer un email même en cas d'échec
- * @param bool $envoyer_mail Envoyer les notifications de résultat
- * @return string UID de la tentative enregistrée (vide si $inserer = false)
- */
-function traiter_tentative(
-    int $user_id,
-    int $enigme_id,
-    string $reponse,
-    string $resultat,
-    bool $inserer = true,
-    bool $email_echec = false,
-    bool $envoyer_mail = true
-): string
-{
-    $attempt_service = cat_get_riddle_attempt_service();
-    $plan = $attempt_service->buildProcessingPlan(
-        $user_id,
-        $enigme_id,
-        $resultat,
-        (int) get_field('enigme_tentative_cout_points', $enigme_id),
-        $inserer,
-        $email_echec
-    );
-    if ($plan === null) {
-        return '';
-    }
-
-    $cout = $plan['charge'];
-    if ($cout > 0) {
-        $reason = sprintf(
-            __("Tentative de réponse pour l'énigme #%d", 'chassesautresor-com'),
-            $enigme_id
-        );
-        deduire_points_utilisateur($user_id, $cout, $reason, 'tentative', $enigme_id);
-    }
-
-    $uid = '';
-    if ($inserer) {
-        $uid = inserer_tentative($user_id, $enigme_id, $reponse, $resultat, $cout);
-    }
-
-    $outcome = $plan['outcome'];
-    enigme_mettre_a_jour_statut_utilisateur($enigme_id, $user_id, $outcome['user_status']);
-
-    if ($outcome['resolved']) {
-        do_action('enigme_resolue', $user_id, $enigme_id);
-    }
-
-    if ($envoyer_mail && $outcome['notify']) {
-        envoyer_mail_resultat_joueur($user_id, $enigme_id, $resultat);
-    }
-
-    return $uid;
 }
