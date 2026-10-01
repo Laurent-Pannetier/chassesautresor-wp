@@ -97,57 +97,7 @@ defined('ABSPATH') || exit;
         return ob_get_clean();
     }
 
-    add_shortcode('formulaire_reponse_manuelle', function ($atts) {
-        $atts = shortcode_atts(['id' => null], $atts);
-        return afficher_formulaire_reponse_manuelle($atts['id']);
-    });
 
-    /**
-     * Vérifie si un utilisateur peut soumettre une réponse manuelle à une énigme.
-     *
-     * @param int $user_id
-     * @param int $enigme_id
-     * @return bool
-     */
-function utilisateur_peut_repondre_manuelle(int $user_id, int $enigme_id): bool
-{
-    if (!$user_id || !$enigme_id) return false;
-
-        $statut = enigme_get_statut_utilisateur($enigme_id, $user_id);
-
-        // Autoriser uniquement les statuts actifs
-        $autorisés = ['en_cours', 'echouee', 'abandonnee'];
-
-    return in_array($statut, $autorisés, true);
-}
-
-/**
- * Calcule les informations de coût et de points pour le joueur.
- */
-function calculer_contexte_points(int $user_id, int $enigme_id): array
-{
-    $cout = (int) get_field('enigme_tentative_cout_points', $enigme_id);
-    $solde = get_user_points($user_id);
-    $points_manquants = max(0, $cout - $solde);
-    $label_btn = esc_html__('Valider', 'chassesautresor-com');
-    if ($points_manquants <= 0 && $cout > 0) {
-        $label_btn = sprintf(
-            esc_html__('Valider — %d pts', 'chassesautresor-com'),
-            $cout
-        );
-    }
-
-    return [
-        'cout' => $cout,
-        'boutique_url' => esc_url(home_url('/boutique/')),
-        'disabled' => $points_manquants > 0 ? 'disabled' : '',
-        'points_manquants' => $points_manquants,
-        'solde_avant' => $solde,
-        'solde_apres' => $solde - $cout,
-        'seuil' => (int) get_option('enigme_cout_eleve', 300),
-        'label_btn' => $label_btn,
-    ];
-}
 
 
     /**

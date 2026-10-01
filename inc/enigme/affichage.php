@@ -84,25 +84,8 @@ require_once __DIR__ . '/indices.php';
      */
     function render_enigme_participation(int $enigme_id, string $style, int $user_id): void
     {
-        if (!function_exists('est_enigme_resolue_par_utilisateur')) {
-            require_once __DIR__ . '/../statut-functions.php';
-        }
-
-        $deja_resolue = est_enigme_resolue_par_utilisateur($user_id, $enigme_id);
-
-        if ($deja_resolue) {
-            $resolution_date = cat_get_hunt_progress_service()->getRiddleResolutionDate($user_id, $enigme_id);
-            if ($resolution_date) {
-                $formatted_date = wp_date('d/m/y \\à H:i', strtotime($resolution_date));
-                $message        = sprintf(
-                    __('Vous avez résolu cette énigme le %s.', 'chassesautresor-com'),
-                    $formatted_date
-                );
-            } else {
-                $message = __('Énigme résolue', 'chassesautresor-com');
-            }
-            $bloc_reponse = '<p class="message-joueur-statut">✅ ' . esc_html($message) . '</p>';
-        } else {
+        $response = '';
+        if (!est_enigme_resolue_par_utilisateur($user_id, $enigme_id)) {
             ob_start();
             enigme_get_partial(
                 'bloc-reponse',
@@ -112,157 +95,14 @@ require_once __DIR__ . '/indices.php';
                     'user_id' => $user_id,
                 ]
             );
-            $bloc_reponse = trim(ob_get_clean());
+            $response = trim((string) ob_get_clean());
         }
 
-        $content = '';
-
-        $participation_service = new ChassesAuTresor\Core\Progress\RiddleParticipationService();
-        $hints = $participation_service->hints($enigme_id, $user_id);
-        $indices_enigme = $hints['riddle'];
-        $indices_chasse = $hints['hunt'];
-
-        if ($bloc_reponse !== '') {
-            $content .= '<div class="zone-reponse">' . $bloc_reponse . '</div>';
-        }
-
-        if (!empty($indices_enigme) || !empty($indices_chasse)) {
-            $content .= '<hr class="reponse-indices-separator" />';
-            $build_line = function (array $indices, string $title) {
-                $html = '<div class="zone-indices-line"><span class="zone-indices-line__label">'
-                    . esc_html($title)
-                    . '</span><div class="indice-list">';
-                foreach ($indices as $hint) {
-                    $indice_id = $hint['id'];
-                    $cout_indice = $hint['cost'];
-                    $etat_systeme = $hint['state'];
-                    $est_debloque = $hint['unlocked'];
-
-                    if ($etat_systeme === 'programme') {
-                        $timestamp = $hint['available_at'];
-
-                        $now = current_time('timestamp');
-                        if ($timestamp === false || $timestamp > $now) {
-                            $date_txt = '';
-                            if ($timestamp !== false) {
-                                if (wp_date('Y-m-d', $timestamp) === wp_date('Y-m-d', $now)) {
-                                    $date_txt = sprintf(
-                                        esc_html__("Aujourd’hui à %s", 'chassesautresor-com'),
-                                        wp_date('H:i', $timestamp)
-                                    );
-                                } elseif ($timestamp <= $now + WEEK_IN_SECONDS) {
-                                    $date_txt = wp_date('d/m/y \\à H:i', $timestamp);
-                                } else {
-                                    $date_txt = wp_date('d/m/y', $timestamp);
-                                }
-                            }
-                            if ($date_txt === '') {
-                                $date_txt = esc_html__('Bientôt disponible', 'chassesautresor-com');
-                            }
-
-                            $html .= '<span class="indice-label indice-link--upcoming etiquette">'
-                                . '<i class="fa-solid fa-hourglass" aria-hidden="true"></i> '
-                                . esc_html($date_txt)
-                                . '</span>';
-                            continue;
-                        }
-                    }
-                    if ($est_debloque) {
-                        $classes   = 'indice-link indice-link--unlocked etiquette';
-                        $etat_icon = 'fa-eye';
-                    } else {
-                        $classes   = 'indice-link indice-link--locked etiquette';
-                        $etat_icon = 'fa-lightbulb';
-                    }
-
-                    $label = esc_html($hint['title']);
-
-                    $cout_html = $cout_indice > 0
-                        ? ' - ' . $cout_indice . ' <sup>'
-                            . esc_html__('pts', 'chassesautresor-com') . '</sup>'
-                        : '';
-
-                    $html .= '<a href="#" class="' . esc_attr($classes) . '"'
-                        . ' data-indice-id="' . esc_attr($indice_id) . '"'
-                        . ' data-cout="' . esc_attr($cout_indice) . '"'
-                        . ' data-unlocked="' . ($est_debloque ? '1' : '0') . '">'
-                        . '<i class="fa-solid ' . esc_attr($etat_icon) . '" aria-hidden="true"></i> '
-                        . $label . $cout_html . '</a>';
-                }
-                $html .= '</div></div>';
-                return $html;
-            };
-
-            $content .= '<div class="zone-indices">';
-            if (!empty($indices_enigme)) {
-                $content .= $build_line($indices_enigme, esc_html__('Indices énigme', 'chassesautresor-com'));
-            }
-            if (!empty($indices_chasse)) {
-                $content .= $build_line($indices_chasse, esc_html__('Indices chasse', 'chassesautresor-com'));
-            }
-            $content .= '<div class="indice-display"></div></div>';
-        }
-
-        $participation_info = (new ChassesAuTresor\Core\Progress\RiddleParticipationInfoService())
-            ->build($enigme_id, $user_id, $deja_resolue);
-        $mode_validation = $participation_info['validation_mode'];
-        $cout = $participation_info['cost'];
-        $solde_actuel = $participation_info['balance'];
-        $afficher_tentatives = $participation_info['show_attempts'];
-        $afficher_infos = $participation_info['show_info'];
-
-        if ($afficher_tentatives) {
-            $tentatives_utilisees = $participation_info['attempts_used'];
-            $tentatives_max       = $participation_info['attempts_max'];
-            $tentatives_max_aff   = $tentatives_max > 0 ? $tentatives_max : '∞';
-        }
-
-        if ($afficher_infos) {
-            $content .= '<div class="participation-infos txt-small" ';
-            $content .= 'style="color:var(--color-text-primary);display:flex;justify-content:space-between;">';
-
-            if ($cout > 0) {
-                $content .= '<span class="solde">'
-                    . sprintf(esc_html__('Solde : %d pts', 'chassesautresor-com'), $solde_actuel)
-                    . '</span>';
-            } else {
-                $content .= '<span></span>';
-            }
-
-            if ($afficher_tentatives) {
-                $content .= '<span class="tentatives">'
-                    . sprintf(
-                        esc_html__('Tentatives quotidiennes : %1$d/%2$s', 'chassesautresor-com'),
-                        $tentatives_utilisees,
-                        $tentatives_max_aff
-                    )
-                    . '</span>';
-            } elseif ($cout > 0) {
-                $content .= '<span></span>';
-            }
-
-            $content .= '</div>';
-        }
-
-        $cout_badge = '';
-        if ($mode_validation !== 'aucune' && $cout > 0) {
-            $cout_badge = '<span class="badge-cout" aria-label="'
-                . esc_attr(sprintf(
-                    esc_html__('Coût par tentative : %d points.', 'chassesautresor-com'),
-                    $cout
-                ))
-                . '">' . esc_html($cout) . ' '
-                . esc_html__('pts', 'chassesautresor-com') . '</span>';
-        }
-
-        $header = '<div class="participation-header">'
-            . '<span></span>'
-            . $cout_badge
-            . '</div>';
-
-        if ($content !== '') {
-            echo '<section class="participation">' . $header . $content . '</section>';
-        }
+        echo (new ChassesAuTresor\Core\Progress\RiddlePlayerPanelRenderer())->render(
+            $enigme_id,
+            $user_id,
+            $response
+        );
     }
 
     /**

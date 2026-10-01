@@ -67,17 +67,6 @@ function update_user_points(
 }
 
 /**
- * 🎁 Attribue les points après l’achat d’un pack de points.
- *
- * @param int $order_id ID de la commande.
- */
-function attribuer_points_apres_achat($order_id) {
-    $order = wc_get_order($order_id);
-
-    cat_get_purchase_points_service()->awardOrder($order);
-}
-
-/**
  * 💎 Affiche les points de l'utilisateur selon le statut de l'énigme.
  *
  * Cas d'affichage :
@@ -144,59 +133,6 @@ function charger_script_modal_points() {
     );
 }
 add_action('wp_enqueue_scripts', 'charger_script_modal_points');
-
-
-/**
- * 🔒 Vérifie si l'utilisateur a suffisamment de points pour une opération donnée.
- *
- * @param int $user_id
- * @param int $montant Nombre de points nécessaires.
- * @return bool True si le solde est suffisant.
- */
-function utilisateur_a_assez_de_points(int $user_id, int $montant): bool {
-    return cat_get_points_service()->hasEnough($user_id, $montant);
-}
-
-/**
- * ➖ Déduit un montant de points à un utilisateur.
- *
- * @param int      $user_id
- * @param int      $montant     Nombre de points à retirer (doit être positif).
- * @param string   $reason      Motif de la déduction.
- * @param string   $origin_type Catégorie de l'opération.
- * @param int|null $origin_id   Identifiant lié.
- * @return void
- */
-function deduire_points_utilisateur(
-    int $user_id,
-    int $montant,
-    string $reason = '',
-    string $origin_type = 'admin',
-    ?int $origin_id = null
-): void {
-    cat_get_points_service()->deduct($user_id, $montant, $reason, $origin_type, $origin_id);
-}
-
-/**
- * ➕ Ajoute un montant de points à un utilisateur.
- *
- * @param int      $user_id
- * @param int      $montant     Nombre de points à ajouter (doit être positif).
- * @param string   $reason      Motif de l'ajout.
- * @param string   $origin_type Catégorie de l'opération.
- * @param int|null $origin_id   Identifiant lié.
- * @return void
- */
-function ajouter_points_utilisateur(
-    int $user_id,
-    int $montant,
-    string $reason = '',
-    string $origin_type = 'admin',
-    ?int $origin_id = null
-): void {
-    cat_get_points_service()->add($user_id, $montant, $reason, $origin_type, $origin_id);
-}
-
 
 
 // ==================================================

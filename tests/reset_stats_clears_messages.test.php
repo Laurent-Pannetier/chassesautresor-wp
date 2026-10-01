@@ -103,6 +103,7 @@ $wpdb = new class {
 require_once __DIR__ . '/../../../plugins/chassesautresor-core/src/Admin/AdminStatisticsResetService.php';
 require_once __DIR__ . '/../../../plugins/chassesautresor-core/src/Admin/AdminAjaxHandler.php';
 require_once __DIR__ . '/../inc/admin-functions.php';
+require_once __DIR__ . '/../../../plugins/chassesautresor-core/src/Admin/admin-ajax-functions.php';
 
 class ResetStatsClearsMessagesTest extends TestCase
 {

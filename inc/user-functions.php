@@ -1,12 +1,6 @@
 <?php
 defined( 'ABSPATH' ) || exit;
 
-function cat_get_user_attempt_statistics_service(): ChassesAuTresor\Core\Progress\UserAttemptStatisticsService
-{
-    global $wpdb;
-    return ChassesAuTresor\Core\Support\CoreServiceFactory::userAttemptStatistics($wpdb);
-}
-
 // ==================================================
 // 📚 SOMMAIRE DU FICHIER
 // ==================================================
@@ -38,202 +32,9 @@ function cat_get_user_attempt_statistics_service(): ChassesAuTresor\Core\Progres
  */
 
 
-/**
- * Modifier dynamiquement le titre de la page dans l'onglet du navigateur
- *
- * @param string $title Le titre actuel.
- * @return string Le titre modifié.
- */
-function modifier_titre_onglet($title) {
-    global $wp;
-    $current_url = trim($wp->request, '/');
-
-    // Définition des titres pour chaque page
-    $page_titles = [
-        'mon-compte/statistiques'  => __('Statistiques - Chasses au Trésor', 'chassesautresor-com'),
-        'mon-compte/outils'        => __('Outils - Chasses au Trésor', 'chassesautresor-com'),
-        'mon-compte/organisateurs' => __('Organisateur - Chasses au Trésor', 'chassesautresor-com'),
-    ];
-
-    // Si l’URL correspond à une page définie, modifier le titre
-    if (isset($page_titles[$current_url])) {
-        return $page_titles[$current_url];
-    }
-
-    return $title; // Conserver le titre par défaut si l'URL ne correspond pas
-}
-add_filter('pre_get_document_title', 'modifier_titre_onglet');
-
-/**
- * Vérifie si la page actuelle est une page WooCommerce spécifique dans "Mon Compte".
- *
- * Cette fonction analyse l'URL actuelle et détermine si elle correspond à l'une
- * des pages WooCommerce spécifiques où le contenu du compte WooCommerce doit être affiché.
- *
- * Liste des pages WooCommerce prises en compte :
-
- *
- * @return bool True si la page actuelle est une page WooCommerce autorisée, False sinon.
- */
-function is_woocommerce_account_page() {
-    // Récupérer l'URL actuelle
-    $current_url = $_SERVER['REQUEST_URI'];
-
-    // Liste des pages WooCommerce où afficher woocommerce_account_content()
-    $pages_woocommerce = [
-        '/mon-compte/commandes/',
-        '/mon-compte/voir-commandes/',
-        '/mon-compte/modifier-adresse/',
-        '/mon-compte/modifier-compte/',
-        '/mon-compte/telechargements/',
-        '/mon-compte/moyens-paiement/',
-        '/mon-compte/lost-password/',
-        '/mon-compte/customer-logout/'
-    ];
-
-    // Vérifier si l'URL actuelle correspond à une page WooCommerce autorisée
-    foreach ($pages_woocommerce as $page) {
-        if (strpos($current_url, $page) === 0) {
-            return true;
-        }
-    }
-
-    return false;
-}
-
-/**
- * Rename WooCommerce "orders" endpoint title to "Vos commandes".
- *
- * @param string $title Original title.
- * @return string Modified title.
- */
-function ca_orders_endpoint_title($title)
-{
-    return __('Vos commandes', 'chassesautresor-com');
-}
-add_filter('woocommerce_endpoint_orders_title', 'ca_orders_endpoint_title');
-
-/**
- * Rename "edit-account" endpoint title to "Profil".
- *
- * @param string $title Original title.
- * @return string Modified title.
- */
-function ca_profile_endpoint_title($title)
-{
-    return __('Profil', 'chassesautresor');
-}
-add_filter('woocommerce_endpoint_edit-account_title', 'ca_profile_endpoint_title');
-
 // ==================================================
 // 👤 USER PROFILE UTILITIES
 // ==================================================
-/**
- * Check whether the mandatory WooCommerce account fields are filled in.
- *
- * @param int $user_id Target user identifier.
- *
- * @return array{complete:bool,missing:array<int,string>} Tuple containing the completion status and the list of missing field labels.
- */
-function cat_is_user_profile_complete(int $user_id): array
-{
-    $user = get_userdata($user_id);
-
-    if (!$user) {
-        return [
-            'complete' => false,
-            'missing'  => [__('Profil utilisateur introuvable', 'chassesautresor-com')],
-        ];
-    }
-
-    $default_fields = [
-        'first_name'   => [
-            'label'  => __('Prénom', 'chassesautresor-com'),
-            'source' => 'meta',
-        ],
-        'last_name'    => [
-            'label'  => __('Nom', 'chassesautresor-com'),
-            'source' => 'meta',
-        ],
-        'display_name' => [
-            'label'  => __('Nom d’affichage', 'chassesautresor-com'),
-            'source' => 'property',
-        ],
-        'user_email'   => [
-            'label'  => __('Adresse e-mail', 'chassesautresor-com'),
-            'source' => 'property',
-        ],
-    ];
-
-    /** @var array<string, array{label:string,source?:string,callback?:callable}|string> $required_fields */
-    $required_fields = apply_filters('cat_required_user_profile_fields', $default_fields, $user_id, $user);
-
-    $missing = [];
-
-    foreach ($required_fields as $field_key => $config) {
-        if (is_string($config)) {
-            $config = [
-                'label'  => $config,
-                'source' => 'meta',
-            ];
-        }
-
-        if (empty($config['label'])) {
-            continue;
-        }
-
-        $label = (string) $config['label'];
-
-        $value = null;
-        if (!empty($config['callback']) && is_callable($config['callback'])) {
-            $value = call_user_func($config['callback'], $user_id, $user, $field_key, $config);
-        } elseif (($config['source'] ?? 'meta') === 'property') {
-            $value = $user->{$field_key} ?? '';
-        } else {
-            $value = get_user_meta($user_id, $field_key, true);
-        }
-
-        if (is_scalar($value) || $value === null) {
-            $value = trim((string) $value);
-        } elseif (is_array($value)) {
-            $value = implode('', array_map('trim', array_map('strval', $value)));
-        } else {
-            $value = '';
-        }
-
-        if ($value === '') {
-            $missing[] = $label;
-        }
-    }
-
-    return [
-        'complete' => $missing === [],
-        'missing'  => $missing,
-    ];
-}
-
-/**
- * Build a translated message listing missing profile fields.
- *
- * @param array<int, string> $missing_fields Missing field labels.
- *
- * @return string
- */
-function cat_get_missing_profile_fields_message(array $missing_fields): string
-{
-    if ($missing_fields === []) {
-        return __('Veuillez compléter votre profil utilisateur.', 'chassesautresor-com');
-    }
-
-    $fields_list = wp_sprintf_l('%l', $missing_fields);
-
-    return sprintf(
-        /* translators: %s: comma-separated list of missing profile fields */
-        __('Veuillez compléter votre profil utilisateur : %s.', 'chassesautresor-com'),
-        $fields_list
-    );
-}
-
 // ==================================================
 // 🎯 CHASSES ENGAGÉES & 📊 TENTATIVES UTILISATEUR
 // ==================================================
@@ -298,124 +99,7 @@ function ca_get_engaged_hunts_content_html(
  */
 function ca_render_recommended_hunts_empty_state(): string
 {
-    $valid_statuses = ['a_venir', 'en_cours', 'payante'];
-    $base_meta_query = [
-        'relation' => 'AND',
-        [
-            'key'     => 'chasse_cache_statut',
-            'value'   => $valid_statuses,
-            'compare' => 'IN',
-        ],
-        [
-            'key'   => 'chasse_cache_statut_validation',
-            'value' => 'valide',
-        ],
-    ];
-
-    $recent_query_args = apply_filters(
-        'ca_recommended_hunts_recent_query_args',
-        [
-            'post_type'        => 'chasse',
-            'post_status'      => 'publish',
-            'posts_per_page'   => 2,
-            'orderby'          => 'date',
-            'order'            => 'DESC',
-            'no_found_rows'    => true,
-            'fields'           => 'ids',
-            'suppress_filters' => false,
-            'meta_query'       => $base_meta_query,
-        ]
-    );
-
-    $recent_ids = array_map('intval', get_posts($recent_query_args));
-
-    $active_meta_query = $base_meta_query;
-    $active_meta_query[0]['value'] = ['en_cours', 'payante'];
-
-    $popular_query_args = apply_filters(
-        'ca_recommended_hunts_popular_query_args',
-        [
-            'post_type'        => 'chasse',
-            'post_status'      => 'publish',
-            'posts_per_page'   => 1,
-            'meta_key'         => 'ca_total_engagements',
-            'orderby'          => 'meta_value_num',
-            'order'            => 'DESC',
-            'no_found_rows'    => true,
-            'fields'           => 'ids',
-            'suppress_filters' => false,
-            'meta_query'       => $active_meta_query,
-        ]
-    );
-
-    $popular_ids = array_map('intval', get_posts($popular_query_args));
-
-    $recommended_ids = array_values(array_unique(array_merge($recent_ids, $popular_ids)));
-
-    if (count($recommended_ids) < 3) {
-        $fallback_query_args = apply_filters(
-            'ca_recommended_hunts_fallback_query_args',
-            [
-                'post_type'        => 'chasse',
-                'post_status'      => 'publish',
-                'posts_per_page'   => 3 - count($recommended_ids),
-                'orderby'          => 'date',
-                'order'            => 'DESC',
-                'no_found_rows'    => true,
-                'fields'           => 'ids',
-                'suppress_filters' => false,
-                'meta_query'       => $base_meta_query,
-                'post__not_in'     => $recommended_ids,
-            ]
-        );
-
-        $additional_ids = array_map('intval', get_posts($fallback_query_args));
-        if (!empty($additional_ids)) {
-            $recommended_ids = array_values(array_unique(array_merge($recommended_ids, $additional_ids)));
-        }
-    }
-
-    if (count($recommended_ids) < 3) {
-        $completed_query_args = apply_filters(
-            'ca_recommended_hunts_completed_query_args',
-            [
-                'post_type'        => 'chasse',
-                'post_status'      => 'publish',
-                'posts_per_page'   => 3 - count($recommended_ids),
-                'orderby'          => 'date',
-                'order'            => 'DESC',
-                'no_found_rows'    => true,
-                'fields'           => 'ids',
-                'suppress_filters' => false,
-                'meta_query'       => [
-                    [
-                        'key'   => 'chasse_cache_statut',
-                        'value' => 'termine',
-                    ],
-                    [
-                        'key'   => 'chasse_cache_statut_validation',
-                        'value' => 'valide',
-                    ],
-                ],
-                'post__not_in'     => $recommended_ids,
-            ]
-        );
-
-        $completed_ids = array_map('intval', get_posts($completed_query_args));
-        if (!empty($completed_ids)) {
-            $recommended_ids = array_values(array_unique(array_merge($recommended_ids, $completed_ids)));
-        }
-    }
-
-    $recommended_ids = array_slice($recommended_ids, 0, 3);
-
-    /**
-     * Allow third-parties to tweak the final recommended hunts selection.
-     *
-     * @param int[] $recommended_ids Selected hunt identifiers.
-     */
-    $recommended_ids = apply_filters('ca_recommended_hunts_empty_state_ids', $recommended_ids);
-    $recommended_ids = array_values(array_unique(array_filter(array_map('intval', (array) $recommended_ids))));
+    $recommended_ids = (new ChassesAuTresor\Core\Progress\EngagedHuntsRecommendationService())->find(3);
 
     $catalog_url = apply_filters(
         'ca_recommended_hunts_catalog_url',
@@ -522,22 +206,9 @@ function ca_render_dashboard_engaged_hunts(): void
         return;
     }
 
+    global $wpdb;
     $current_user = wp_get_current_user();
-    $user_id      = (int) $current_user->ID;
-
-    if ($user_id <= 0) {
-        return;
-    }
-
-    $roles        = (array) $current_user->roles;
-    $player_roles = ['subscriber', 'customer'];
-    $is_player    = !empty(array_intersect($player_roles, $roles));
-    $is_admin     = current_user_can('administrator');
-    $is_organizer = function_exists('est_organisateur') && est_organisateur($user_id);
-
-    if (!$is_player || $is_admin) {
-        return;
-    }
+    $user_id = (int) $current_user->ID;
 
     $page_param = ca_get_engaged_hunts_page_param();
     $requested_page = isset($_GET[$page_param]) ? absint($_GET[$page_param]) : 1;
@@ -550,8 +221,15 @@ function ca_render_dashboard_engaged_hunts(): void
         $per_page = 6;
     }
 
-    $chasse_ids = ca_get_user_engaged_hunt_ids($user_id);
-    $pagination = ca_prepare_engaged_hunts_pagination($chasse_ids, $requested_page, $per_page);
+    $context = (new ChassesAuTresor\Core\Users\AccountDashboardDataService($wpdb))->engagedHunts(
+        $current_user,
+        $requested_page,
+        $per_page
+    );
+    if (!$context['allowed']) {
+        return;
+    }
+    $pagination = $context['pagination'];
 
     $dir = get_stylesheet_directory();
     $uri = get_stylesheet_directory_uri();
@@ -615,7 +293,6 @@ function ca_render_dashboard_engaged_hunts(): void
     <?php
     echo ob_get_clean();
 }
-add_action('woocommerce_account_dashboard', 'ca_render_dashboard_engaged_hunts', 10);
 
 /**
  * Register the search context used for the tentatives table.
@@ -653,29 +330,15 @@ function ca_register_tentatives_search_context(): void
  */
 function ca_get_tentatives_view_model(int $user_id, int $page = 1, int $per_page = 10): array
 {
-    $per_page  = max(1, $per_page);
-    $page      = max(1, $page);
-    $search    = ca_get_search_term('tentatives');
-    $service    = cat_get_user_attempt_statistics_service();
-    $summary    = $service->summarize($user_id);
-    $pagination = $service->paginate($user_id, $page, $per_page, $search);
+    global $wpdb;
 
-    $message = $search !== ''
-        ? __('Aucune tentative ne correspond à votre recherche.', 'chassesautresor-com')
-        : __('Vous n\'avez pas encore enregistré de tentative.', 'chassesautresor-com');
-
-    return [
-        'pending'            => $summary['pending'],
-        'total'              => $summary['total'],
-        'success'            => $summary['success'],
-        'search_term'        => $search,
-        'page'               => $pagination['page'],
-        'pages'              => $pagination['pages'],
-        'per_page'           => $per_page,
-        'filtered_total'     => $pagination['total'],
-        'tentatives'         => $pagination['items'],
-        'no_results_message' => $message,
-    ];
+    $search = ca_get_search_term('tentatives');
+    return (new ChassesAuTresor\Core\Users\AccountDashboardDataService($wpdb))->attempts(
+        $user_id,
+        $page,
+        $per_page,
+        $search
+    );
 }
 
 /**
@@ -795,28 +458,6 @@ function ca_render_dashboard_tentatives(): void
     <?php
     echo ob_get_clean();
 }
-add_action('woocommerce_account_dashboard', 'ca_render_dashboard_tentatives', 20);
-
-/**
- * Handle AJAX refreshes for the tentatives table.
- *
- * @return void
- */
-function ca_ajax_fetch_tentatives(): void
-{
-    ChassesAuTresor\Core\Progress\UserAttemptsAjaxHandler::handle();
-}
-
-// ==================================================
-/**
- * Dismiss a persistent message via AJAX.
- *
- * @return void
- */
-function ca_dismiss_message(): void
-{
-    ChassesAuTresor\Core\Messages\AccountMessageDismissalAjaxHandler::handle();
-}
 
 // ==================================================
 // 📦 MODIFICATION AVATAR EN FRONT
@@ -841,61 +482,3 @@ function charger_script_avatar_upload() {
     }
 }
 add_action('wp_enqueue_scripts', 'charger_script_avatar_upload');
-
-
-
-// ==================================================
-// 📦 TUILES UTILISATEUR
-// ==================================================
-/**
- * 🔹 afficher_commandes_utilisateur → Récupérer et afficher les 4 dernières commandes d’un utilisateur WooCommerce sous forme de tableau.
- */
-
-
-/**
- * Récupère et affiche les 3 dernières commandes d'un utilisateur WooCommerce sous forme de tableau.
- *
- * @param int $user_id ID de l'utilisateur connecté.
- * @param int $limit Nombre de commandes à afficher (par défaut : 4).
- * @return string HTML du tableau des commandes ou une chaîne vide si aucune commande.
- */
-function afficher_commandes_utilisateur($user_id, $limit = 4) {
-    if (!$user_id || !class_exists('WooCommerce')) {
-        return '';
-    }
-
-    $customer_orders = wc_get_orders([
-        'limit'    => $limit,
-        'customer' => $user_id,
-        'status'   => ['wc-completed'], // Commandes valides
-        'orderby'  => 'date',
-        'order'    => 'DESC'
-    ]);
-    
-    if (empty($customer_orders)) {
-        return ''; // Ne rien afficher si aucune commande
-    }
-
-    ob_start(); // Capture l'affichage HTML
-    ?>
-    <table class="stats-table">
-        <tbody>
-            <?php foreach ($customer_orders as $order) : ?>
-                <?php
-                $order_id = $order->get_id();
-                $order_date = wc_format_datetime($order->get_date_created(), 'd/m/Y');
-                $items = $order->get_items();
-                $first_item = reset($items); // Récupère le premier produit de la commande
-                $product_name = $first_item ? $first_item->get_name() : 'Produit inconnu';
-                ?>
-                <tr>
-                    <td>#<?php echo esc_html($order_id); ?></td>
-                    <td><?php echo esc_html($product_name); ?></td>
-                    <td><?php echo esc_html($order_date); ?></td>
-                </tr>
-            <?php endforeach; ?>
-        </tbody>
-    </table>
-    <?php
-    return ob_get_clean(); // Retourne le HTML capturé
-}

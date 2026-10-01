@@ -24,19 +24,6 @@ const HISTORIQUE_PAIEMENTS_ADMIN_PER_PAGE = 20;
 
  
 /**
- * 📌 Recherche d'utilisateurs en AJAX pour l'autocomplétion.
- *
- * - Recherche sur `user_login`, `display_name`, et `user_email`.
- * - Aucun filtre par rôle : tous les utilisateurs sont inclus.
- * - Vérification des permissions (`administrator` requis).
- * - Retour JSON des résultats.
- */
-function rechercher_utilisateur_ajax(): void
-{
-    \ChassesAuTresor\Core\Admin\AdminAjaxHandler::searchUsers();
-}
-
-/**
  * Enregistre et charge le script de gestion des points pour les administrateurs sur la page "Mon Compte".
  *
  * Cette fonction :
@@ -75,45 +62,6 @@ add_action('wp_enqueue_scripts', 'charger_script_autocomplete_utilisateurs');
  * 🔹 regler_paiement_admin → Traiter le règlement d’une demande de paiement depuis l’admin.
  * 🔹 $_SERVER['REQUEST_METHOD'] === 'POST' && isset(...) → Mettre à jour le statut des demandes de paiement (admin).
  */
-
-/**
- * 📌 Valeur minimale de points requise pour demander une conversion.
- */
-function get_points_conversion_min(): int {
-    return (int) apply_filters('points_conversion_min', 500);
-}
-
-/**
- * 📌 Ajout du champ d'administration pour le taux de conversion
- */
-add_action('acf/init', function () {
-    acf_add_local_field_group([
-        'key' => 'group_taux_conversion',
-        'title' => 'Paramètres de Conversion',
-        'fields' => array(
-            array(
-                'key' => 'field_taux_conversion',
-                'label' => 'Taux de conversion actuel',
-                'name' => 'taux_conversion',
-                'type' => 'number',
-                'instructions' => 'Indiquez le taux de conversion des points en euros (ex : 0.05 pour 1 point = 0.05€).',
-                'default_value' => 0.05,
-                'step' => 0.001,
-                'required' => true,
-            ),
-        ),
-        'location' => array(
-            array(
-                array(
-                    'param' => 'options_page',
-                    'operator' => '==',
-                    'value' => 'options_taux_conversion',
-                ),
-            ),
-        ),
-    ]);
-});
-
 
 /**
  * 📌 Charge le script `taux-conversion.js` uniquement pour les administrateurs sur "Mon Compte" et ses sous-pages (y compris les templates redirigés).
@@ -178,24 +126,6 @@ function afficher_tableau_paiements_admin(): void
     }
 
     echo render_tableau_paiements_admin($requests);
-}
-
-
-
-function ajax_lister_historique_paiements_admin(): void
-{
-    \ChassesAuTresor\Core\Admin\AdminAjaxHandler::listPayments();
-}
-
-// ----------------------------------------------------------
-// 🎛️ Mise à jour du statut des demandes de paiement (Admin)
-// ----------------------------------------------------------
-/**
- * Handle AJAX status updates for payment requests.
- */
-function ajax_update_request_status(): void
-{
-    \ChassesAuTresor\Core\Admin\AdminAjaxHandler::updateConversionStatus();
 }
 
 
@@ -351,27 +281,6 @@ add_action('admin_notices', function() {
 
 */
 
-// =============================================
-// AJAX : récupérer les détails des groupes ACF
-// =============================================
-function recuperer_details_acf(): void
-{
-    \ChassesAuTresor\Core\Admin\AdminAjaxHandler::inspectAcf();
-}
-
-function cta_reset_stats(): void
-{
-    \ChassesAuTresor\Core\Admin\AdminAjaxHandler::resetStatistics();
-}
-
-function cta_toggle_site_protection(): void
-{
-    \ChassesAuTresor\Core\Admin\AdminAjaxHandler::toggleSiteProtection();
-}
-
-
-
-
 /**
  * Charge le script de la carte Développement sur les pages Mon Compte.
  */
@@ -432,81 +341,3 @@ function charger_script_reset_stats_card() {
     }
 }
 add_action('wp_enqueue_scripts', 'charger_script_reset_stats_card');
-
-// ==================================================
-// 📦 TABLEAU ORGANISATEURS EN CRÉATION
-// ==================================================
-/**
- * Récupère la liste des organisateurs en cours de création.
- *
- * @return array[] Tableau des données trié du plus récent au plus ancien.
- */
-function recuperer_organisateurs_en_creation() {
-    if (!current_user_can('administrator')) {
-        return [];
-    }
-
-    $users   = get_users(['role' => ROLE_ORGANISATEUR_CREATION]);
-    $entries = [];
-
-    foreach ($users as $user) {
-        $organisateur_id = get_organisateur_from_user($user->ID);
-        if (!$organisateur_id) {
-            continue;
-        }
-
-        $date_creation = get_post_field('post_date', $organisateur_id);
-        $chasses       = get_chasses_en_creation($organisateur_id);
-        if (empty($chasses)) {
-            continue;
-        }
-
-        $chasse_id  = (int) $chasses[0];
-        $nb_enigmes = count(recuperer_enigmes_associees($chasse_id));
-
-        $entries[] = [
-            'date_creation'      => $date_creation,
-            'organisateur_titre' => get_the_title($organisateur_id),
-            'chasse_id'          => $chasse_id,
-            'chasse_titre'       => get_the_title($chasse_id),
-            'nb_enigmes'         => $nb_enigmes,
-        ];
-    }
-
-    usort($entries, function ($a, $b) {
-        return strtotime($b['date_creation']) <=> strtotime($a['date_creation']);
-    });
-
-    return $entries;
-}
-
-/**
- * Affiche les tableaux des organisateurs en création.
- */
-function afficher_tableau_organisateurs_en_creation() {
-    $liste = recuperer_organisateurs_en_creation();
-    if (empty($liste)) {
-        echo '<p>Aucun organisateur en création.</p>';
-        return;
-    }
-
-    echo '<table class="stats-table"><tbody>';
-
-    foreach ($liste as $entry) {
-        echo '<tr>';
-        echo '<td>' . esc_html($entry['organisateur_titre']) . '</td>';
-        echo '<td><a href="' . esc_url(get_permalink($entry['chasse_id'])) . '">' . esc_html($entry['chasse_titre']) . '</a></td>';
-        echo '<td>' . intval($entry['nb_enigmes']) . ' énigmes</td>';
-        echo '</tr>';
-    }
-    echo '</tbody></table>';
-
-    $oldest = end($liste);
-    echo '<table class="stats-table">';
-    echo '<caption>+ Ancienne création</caption><tbody>';
-    echo '<tr>';
-    echo '<td>' . esc_html($oldest['organisateur_titre']) . '</td>';
-    echo '<td><a href="' . esc_url(get_permalink($oldest['chasse_id'])) . '">' . esc_html($oldest['chasse_titre']) . '</a></td>';
-    echo '<td>' . intval($oldest['nb_enigmes']) . ' énigmes</td>';
-    echo '</tr></tbody></table>';
-}
