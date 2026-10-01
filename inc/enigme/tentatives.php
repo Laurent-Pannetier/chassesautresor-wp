@@ -1,15 +1,6 @@
 <?php
 defined('ABSPATH') || exit;
 
-if (!function_exists('cat_get_riddle_attempt_service')) {
-    function cat_get_riddle_attempt_service(): ChassesAuTresor\Core\Progress\RiddleAttemptService
-    {
-        global $wpdb;
-        return ChassesAuTresor\Core\Support\CoreServiceFactory::riddleAttempts($wpdb);
-    }
-}
-
-
     // ==================================================
     // 📊 GESTION DES TENTATIVES UTILISATEUR
     // ==================================================
@@ -168,27 +159,10 @@ function compter_tentatives_enigme(int $enigme_id): int
     return cat_get_riddle_attempt_service()->countForRiddle($enigme_id);
 }
 
-/** Retourne le rendu HTML thématique d'une page de tentatives. */
-function cat_render_riddle_attempt_list(array $arguments): string
-{
-    ob_start();
-    get_template_part('template-parts/enigme/partials/enigme-partial-tentatives', null, $arguments);
-
-    return (string) ob_get_clean();
-}
-
 /** Compatibility facade for the historical callback. */
 function ajax_lister_tentatives_enigme(): void
 {
     ChassesAuTresor\Core\Progress\RiddleAttemptListAjaxHandler::handle();
-}
-
-if (class_exists(ChassesAuTresor\Core\Progress\RiddleAttemptListAjaxHandler::class)) {
-    ChassesAuTresor\Core\Progress\RiddleAttemptListAjaxHandler::configure(
-        static function (array $arguments): string {
-            return cat_render_riddle_attempt_list($arguments);
-        }
-    );
 }
 
 /**
@@ -197,11 +171,6 @@ if (class_exists(ChassesAuTresor\Core\Progress\RiddleAttemptListAjaxHandler::cla
  * @param int $enigme_id ID de l'énigme.
  * @return int Nombre de tentatives non traitées.
  */
-function compter_tentatives_en_attente(int $enigme_id): int
-{
-    return cat_get_riddle_attempt_service()->countPendingForRiddle($enigme_id);
-}
-
 /**
  * Récupère les énigmes ayant des tentatives manuelles en attente pour un organisateur.
  *
@@ -232,13 +201,4 @@ function recuperer_enigmes_tentatives_en_attente(int $organisateur_id): array
     }
 
     return cat_get_riddle_attempt_service()->findPendingManualRiddleIds($riddle_modes);
-}
-
-/**
- * Compte le nombre de tentatives effectuées par un utilisateur pour une énigme
- * durant la journée courante (heure de Paris).
- */
-function compter_tentatives_du_jour(int $user_id, int $enigme_id): int
-{
-    return cat_get_riddle_attempt_service()->countTodayForUser($user_id, $enigme_id);
 }

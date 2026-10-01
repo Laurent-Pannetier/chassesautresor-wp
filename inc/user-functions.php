@@ -238,72 +238,6 @@ function cat_get_missing_profile_fields_message(array $missing_fields): string
 // 🎯 CHASSES ENGAGÉES & 📊 TENTATIVES UTILISATEUR
 // ==================================================
 /**
- * Get the query parameter used to paginate engaged hunts.
- *
- * @return string
- */
-function ca_get_engaged_hunts_page_param(): string
-{
-    return 'engaged-page';
-}
-
-/**
- * Retrieve all hunt IDs engaged by the given user.
- *
- * @param int $user_id User identifier.
- *
- * @return int[]
- */
-function ca_get_user_engaged_hunt_ids(int $user_id): array
-{
-    $engaged_hunt_ids = cat_get_hunt_engagement_service()->findHuntIdsForUser($user_id);
-    if ($engaged_hunt_ids === []) {
-        return [];
-    }
-
-    $chasse_ids = [];
-
-    foreach ($engaged_hunt_ids as $chasse_id) {
-        if (
-            function_exists('chasse_est_visible_pour_utilisateur')
-            && !chasse_est_visible_pour_utilisateur($chasse_id, $user_id)
-        ) {
-            continue;
-        }
-
-        $chasse_ids[] = $chasse_id;
-    }
-
-    return $chasse_ids;
-}
-
-/**
- * Prepare pagination data for engaged hunts.
- *
- * @param int[] $chasse_ids List of hunt identifiers.
- * @param int   $page       Requested page (1-indexed).
- * @param int   $per_page   Number of hunts per page.
- *
- * @return array{ids:int[],page:int,total_pages:int,total_items:int}
- */
-function ca_prepare_engaged_hunts_pagination(array $chasse_ids, int $page, int $per_page): array
-{
-    $per_page = max(1, $per_page);
-    $total_items = count($chasse_ids);
-    $total_pages = max(1, (int) ceil($total_items / $per_page));
-
-    $page = max(1, min($page, $total_pages));
-    $offset = ($page - 1) * $per_page;
-
-    return [
-        'ids'         => array_slice($chasse_ids, $offset, $per_page),
-        'page'        => $page,
-        'total_pages' => $total_pages,
-        'total_items' => $total_items,
-    ];
-}
-
-/**
  * Build the HTML markup for engaged hunts and the related pager.
  *
  * @param int[]  $chasse_ids  Hunt identifiers to render.
@@ -684,36 +618,6 @@ function ca_render_dashboard_engaged_hunts(): void
 add_action('woocommerce_account_dashboard', 'ca_render_dashboard_engaged_hunts', 10);
 
 /**
- * AJAX handler for engaged hunts pagination.
- *
- * @return void
- */
-function ca_ajax_get_engaged_hunts(): void
-{
-    ChassesAuTresor\Core\Progress\EngagedHuntsAjaxHandler::handle();
-}
-
-function ca_render_engaged_hunts_ajax_content(array $pagination): string
-{
-    return ca_get_engaged_hunts_content_html(
-        $pagination['ids'],
-        $pagination['page'],
-        $pagination['total_pages'],
-        'cards-grid myaccount-chasses-engagees-grid',
-        'carte',
-        ca_get_engaged_hunts_page_param()
-    );
-}
-
-if (class_exists(ChassesAuTresor\Core\Progress\EngagedHuntsAjaxHandler::class)) {
-    ChassesAuTresor\Core\Progress\EngagedHuntsAjaxHandler::configure(
-        static function (array $pagination): string {
-            return ca_render_engaged_hunts_ajax_content($pagination);
-        }
-    );
-}
-
-/**
  * Register the search context used for the tentatives table.
  *
  * @return void
@@ -772,71 +676,6 @@ function ca_get_tentatives_view_model(int $user_id, int $page = 1, int $per_page
         'tentatives'         => $pagination['items'],
         'no_results_message' => $message,
     ];
-}
-
-/**
- * Renders the table rows for the tentatives table.
- *
- * @param array  $tentatives        Tentative rows.
- * @param int    $filtered_total    Number of filtered rows.
- * @param string $no_results_message Message displayed when there are no rows.
- *
- * @return string
- */
-function ca_render_tentatives_rows(array $tentatives, int $filtered_total, string $no_results_message): string
-{
-    ob_start();
-
-    if ($filtered_total <= 0 || empty($tentatives)) {
-        ?>
-        <tr class="tentatives-empty">
-            <td colspan="5"><?php echo esc_html($no_results_message); ?></td>
-        </tr>
-        <?php
-    } else {
-        foreach ($tentatives as $tent) {
-            $chasse_id    = isset($tent->chasse_id) ? (int) $tent->chasse_id : 0;
-            $chasse_title = isset($tent->chasse_title) ? (string) $tent->chasse_title : '';
-            ?>
-            <tr>
-                <td><?php echo esc_html(mysql2date('d/m/Y H:i', $tent->date_tentative)); ?></td>
-                <td>
-                    <?php if ($chasse_id > 0 && $chasse_title !== '') : ?>
-                    <a href="<?php echo esc_url(get_permalink($chasse_id)); ?>">
-                        <?php echo esc_html($chasse_title); ?>
-                    </a>
-                    <?php elseif ($chasse_title !== '') : ?>
-                    <?php echo esc_html($chasse_title); ?>
-                    <?php else : ?>
-                    &mdash;
-                    <?php endif; ?>
-                </td>
-                <td><?php echo esc_html($tent->enigme_title ?? ''); ?></td>
-                <?php
-                $uid     = isset($tent->tentative_uid) ? (string) $tent->tentative_uid : '';
-                $options = $uid !== '' ? cta_prepare_masked_proposition_options($uid) : [];
-                echo cta_render_proposition_cell($uid !== '' ? '' : ($tent->reponse_saisie ?? ''), false, 39, $options);
-                ?>
-                <?php
-                $result = $tent->resultat;
-                $class  = 'etiquette-error';
-                if ($result === 'bon') {
-                    $class = 'etiquette-success';
-                } elseif ($result === 'attente') {
-                    $class = 'etiquette-pending';
-                }
-                ?>
-                <td>
-                    <span class="etiquette <?php echo esc_attr($class); ?>">
-                        <?php echo esc_html__($result, 'chassesautresor-com'); ?>
-                    </span>
-                </td>
-            </tr>
-            <?php
-        }
-    }
-
-    return trim((string) ob_get_clean());
 }
 
 /**
@@ -968,65 +807,7 @@ function ca_ajax_fetch_tentatives(): void
     ChassesAuTresor\Core\Progress\UserAttemptsAjaxHandler::handle();
 }
 
-function ca_render_tentatives_ajax_rows(array $view): string
-{
-    return ca_render_tentatives_rows(
-        $view['tentatives'],
-        $view['filtered_total'],
-        $view['no_results_message']
-    );
-}
-
-function ca_render_tentatives_ajax_pager(array $view): string
-{
-    return cta_render_pager(
-        $view['page'],
-        $view['pages'],
-        'tentatives-pager',
-        ['data-param' => 'tentatives-page', 'data-section' => '', 'data-search-key' => 'tentatives']
-    );
-}
-
-if (class_exists(ChassesAuTresor\Core\Progress\UserAttemptsAjaxHandler::class)) {
-    ChassesAuTresor\Core\Progress\UserAttemptsAjaxHandler::configure(
-        static function (array $view): string {
-            return ca_render_tentatives_ajax_rows($view);
-        },
-        static function (array $view): string {
-            return ca_render_tentatives_ajax_pager($view);
-        }
-    );
-}
 // ==================================================
-/**
- * Load My Account sections via AJAX.
- *
- * @return void
- */
-function ca_render_admin_section(string $template_name): string
-{
-    ob_start();
-    $template = get_stylesheet_directory() . '/templates/myaccount/' . basename($template_name);
-    if (file_exists($template)) {
-        include $template;
-    }
-
-    return (string) ob_get_clean();
-}
-
-function ca_load_admin_section(): void
-{
-    ChassesAuTresor\Core\Messages\AccountSectionAjaxHandler::handle();
-}
-
-if (class_exists(ChassesAuTresor\Core\Messages\AccountSectionAjaxHandler::class)) {
-    ChassesAuTresor\Core\Messages\AccountSectionAjaxHandler::configure(
-        static function (string $template_name): string {
-            return ca_render_admin_section($template_name);
-        }
-    );
-}
-
 /**
  * Dismiss a persistent message via AJAX.
  *

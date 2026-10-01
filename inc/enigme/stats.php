@@ -1,14 +1,6 @@
 <?php
 defined('ABSPATH') || exit;
 
-if (!function_exists('cat_get_riddle_statistics_service')) {
-    function cat_get_riddle_statistics_service(): ChassesAuTresor\Core\Progress\RiddleStatisticsService
-    {
-        global $wpdb;
-        return ChassesAuTresor\Core\Support\CoreServiceFactory::riddleStatistics($wpdb);
-    }
-}
-
 function enigme_stats_excluded_user_ids(int $enigme_id): array
 {
     $excluded = function_exists('get_users') ? get_users(['role' => 'administrator', 'fields' => 'ids']) : [];
@@ -117,35 +109,4 @@ function enigme_clear_stats_cache(int $enigme_id): void
 function ajax_enigme_lister_participants(): void
 {
     ChassesAuTresor\Core\Progress\RiddleStatisticsAjaxHandler::participants();
-}
-
-function cat_render_riddle_statistics_participants(
-    int $riddle_id,
-    array $participants,
-    array $request,
-    int $total,
-    int $pages,
-    string $orderby
-): string {
-    ob_start();
-    get_template_part('template-parts/enigme/partials/enigme-partial-participants', null, [
-        'participants' => $participants,
-        'page' => $request['page'],
-        'par_page' => $request['limit'],
-        'total' => $total,
-        'pages' => $pages,
-        'mode_validation' => get_field('enigme_mode_validation', $riddle_id) ?? 'aucune',
-        'orderby' => $orderby,
-        'order' => $request['order'],
-    ]);
-
-    return (string) ob_get_clean();
-}
-
-if (class_exists(ChassesAuTresor\Core\Progress\RiddleStatisticsAjaxHandler::class)) {
-    ChassesAuTresor\Core\Progress\RiddleStatisticsAjaxHandler::configure(
-        static function (...$arguments): string {
-            return cat_render_riddle_statistics_participants(...$arguments);
-        }
-    );
 }

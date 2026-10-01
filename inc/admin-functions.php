@@ -2,7 +2,6 @@
 defined( 'ABSPATH' ) || exit;
 
 const HISTORIQUE_PAIEMENTS_ADMIN_PER_PAGE = 20;
-const ORGANISATEURS_PENDING_PER_PAGE     = 20;
 
 // ==================================================
 // 📚 SOMMAIRE DU FICHIER
@@ -71,8 +70,6 @@ add_action('wp_enqueue_scripts', 'charger_script_autocomplete_utilisateurs');
 // ==================================================
 /**
  * 🔹 acf_add_local_field_group (conditionnelle) → Ajouter dynamiquement le champ ACF pour le taux de conversion.
- * 🔹 get_taux_conversion_actuel → Récupérer le taux de conversion actuel.
- * 🔹 update_taux_conversion → Mettre à jour le taux de conversion et enregistrer l’historique.
  * 🔹 charger_script_taux_conversion → Charger le script `taux-conversion.js` uniquement pour les administrateurs sur "Mon Compte".
  * 🔹 afficher_tableau_paiements_admin → Afficher les demandes de paiement (en attente ou réglées) pour les administrateurs.
  * 🔹 regler_paiement_admin → Traiter le règlement d’une demande de paiement depuis l’admin.
@@ -117,24 +114,6 @@ add_action('acf/init', function () {
     ]);
 });
 
-
-/**
- * 📌 Récupère le taux de conversion actuel.
- *
- * @return float Le dernier taux enregistré, 85 par défaut.
- */
-function get_taux_conversion_actuel() {
-    return (new ChassesAuTresor\Core\Points\ConversionSettingsService())->getRate();
-}
-
-/**
- * 📌 Met à jour le taux de conversion et enregistre l'historique.
- *
- * @param float $nouveau_taux Nouvelle valeur du taux de conversion.
- */
-function update_taux_conversion($nouveau_taux) {
-    (new ChassesAuTresor\Core\Points\ConversionSettingsService())->updateRate((float) $nouveau_taux);
-}
 
 /**
  * 📌 Charge le script `taux-conversion.js` uniquement pour les administrateurs sur "Mon Compte" et ses sous-pages (y compris les templates redirigés).
@@ -184,70 +163,6 @@ function charger_script_paiements_admin(): void
     );
 }
 add_action('wp_enqueue_scripts', 'charger_script_paiements_admin');
-
-/**
- * 📌 Affiche les demandes de paiement en attente et réglées pour les administrateurs.
- */
-function render_tableau_paiements_admin(array $requests): string
-{
-    ob_start();
-    echo '<table class="widefat fixed">';
-    echo '<thead><tr><th>Organisateur</th><th>Montant / Points</th><th>Date demande</th><th>IBAN / BIC</th><th>Statut</th><th>Action</th></tr></thead>';
-    echo '<tbody>';
-
-    foreach ($requests as $request) {
-        $user = get_userdata((int) $request['user_id']);
-
-        $organisateur_id = get_organisateur_from_user($request['user_id']);
-        $iban            = $organisateur_id ? get_field('iban', $organisateur_id) : '';
-        $bic             = $organisateur_id ? get_field('bic', $organisateur_id) : '';
-        if ($organisateur_id && (empty($iban) || empty($bic))) {
-            $iban = get_field('gagnez_de_largent_iban', $organisateur_id);
-            $bic  = get_field('gagnez_de_largent_bic', $organisateur_id);
-        }
-        $iban = $iban ?: 'Non renseigné';
-
-        switch ($request['request_status']) {
-            case 'paid':
-                $statut = '✅ Réglé';
-                break;
-            case 'cancelled':
-                $statut = '❌ Annulé';
-                break;
-            case 'refused':
-                $statut = '🚫 Refusé';
-                break;
-            default:
-                $statut = '🟡 En attente';
-        }
-
-        $action = '-';
-        if ($request['request_status'] === 'pending') {
-            $action  = '<form class="js-update-request" data-id="' . esc_attr($request['id']) . '">';
-            $action .= '<select name="statut">';
-            $action .= '<option value="regle" selected>' . esc_html__('Régler', 'chassesautresor-com') . '</option>';
-            $action .= '<option value="annule">' . esc_html__('Annuler', 'chassesautresor-com') . '</option>';
-            $action .= '<option value="refuse">' . esc_html__('Refuser', 'chassesautresor-com') . '</option>';
-            $action .= '</select>';
-            $action .= '<button type="submit" class="button">OK</button>';
-            $action .= '</form>';
-        }
-
-        $points_utilises = esc_html(abs((int) $request['points']));
-
-        echo '<tr>';
-        echo '<td>' . esc_html($user->display_name ?? '') . '</td>';
-        echo '<td>' . esc_html($request['amount_eur']) . ' €<br><small>(' . $points_utilises . ' points)</small></td>';
-        echo '<td>' . esc_html(date('Y-m-d H:i', strtotime($request['request_date']))) . '</td>';
-        echo '<td><strong>' . esc_html($iban) . '</strong><br><small>' . esc_html($bic) . '</small></td>';
-        echo '<td class="col-status">' . esc_html($statut) . '</td>';
-        echo '<td>' . $action . '</td>';
-        echo '</tr>';
-    }
-
-    echo '</tbody></table>';
-    return ob_get_clean();
-}
 
 function afficher_tableau_paiements_admin(): void
 {
@@ -454,9 +369,7 @@ function cta_toggle_site_protection(): void
     \ChassesAuTresor\Core\Admin\AdminAjaxHandler::toggleSiteProtection();
 }
 
-\ChassesAuTresor\Core\Admin\AdminAjaxHandler::configure(
-    static fn(array $requests): string => render_tableau_paiements_admin($requests)
-);
+
 
 
 /**
@@ -596,260 +509,4 @@ function afficher_tableau_organisateurs_en_creation() {
     echo '<td><a href="' . esc_url(get_permalink($oldest['chasse_id'])) . '">' . esc_html($oldest['chasse_titre']) . '</a></td>';
     echo '<td>' . intval($oldest['nb_enigmes']) . ' énigmes</td>';
     echo '</tr></tbody></table>';
-}
-
-/**
- * Récupère les organisateurs avec statut pending.
- *
- * @return array[] Liste des données des organisateurs en attente.
- */
-function recuperer_organisateurs_pending()
-{
-    if (!current_user_can('administrator')) {
-        return [];
-    }
-
-    $query = new WP_Query([
-        'post_type'      => 'organisateur',
-        'post_status'    => 'any',
-        'posts_per_page' => -1,
-        'orderby'        => 'date',
-        'order'          => 'DESC',
-        'fields'         => 'ids',
-    ]);
-
-    $resultats = [];
-
-    foreach ($query->posts as $organisateur_id) {
-        $titre     = get_the_title($organisateur_id);
-        $permalink = get_permalink($organisateur_id);
-
-        $users     = (array) get_field('utilisateurs_associes', $organisateur_id);
-        $user_id   = $users ? intval(reset($users)) : null;
-        $user_name = '';
-        $user_link = '';
-        if ($user_id) {
-            $user = get_userdata($user_id);
-            if ($user) {
-                $user_name = $user->display_name;
-                $user_link = get_edit_user_link($user_id);
-            }
-        }
-
-        verifier_ou_mettre_a_jour_cache_complet($organisateur_id);
-
-        $chasses = new WP_Query([
-            'post_type'      => 'chasse',
-            'posts_per_page' => -1,
-            'post_status'    => ['publish', 'pending', 'draft'],
-            'meta_query'     => [
-                [
-                    'key'     => 'chasse_cache_organisateur',
-                    'value'   => '"' . strval($organisateur_id) . '"',
-                    'compare' => 'LIKE',
-                ],
-            ],
-            'fields'         => 'ids',
-        ]);
-
-        if ($chasses->have_posts()) {
-            foreach ($chasses->posts as $chasse_id) {
-                verifier_ou_mettre_a_jour_cache_complet($chasse_id);
-
-                $date_creation = get_post_field('post_date', $chasse_id);
-                $chasse_titre  = get_the_title($chasse_id);
-                $chasse_link   = get_permalink($chasse_id);
-                $enigmes       = recuperer_enigmes_associees($chasse_id);
-                $nb_enigmes    = count($enigmes);
-                $statut        = get_field('chasse_cache_statut_validation', $chasse_id);
-
-                $pending_validation = ($statut === 'en_attente');
-                $pending_attempts   = false;
-                foreach ($enigmes as $enigme_id) {
-                    $mode = enigme_normaliser_mode_validation(get_field('enigme_mode_validation', $enigme_id));
-                    if ($mode === 'manuelle' && compter_tentatives_en_attente($enigme_id) > 0) {
-                        $pending_attempts = true;
-                        break;
-                    }
-                }
-
-                $resultats[] = [
-                    'organisateur_id'        => $organisateur_id,
-                    'organisateur_titre'     => $titre,
-                    'organisateur_permalink' => $permalink,
-                    'user_id'                => $user_id,
-                    'user_name'              => $user_name,
-                    'user_link'              => $user_link,
-                    'chasse_id'              => $chasse_id,
-                    'chasse_titre'           => $chasse_titre,
-                    'chasse_permalink'       => $chasse_link,
-                    'nb_enigmes'             => $nb_enigmes,
-                    'statut'                 => $statut,
-                    'validation'             => $statut,
-                    'pending_validation'     => $pending_validation,
-                    'pending_attempts'       => $pending_attempts,
-                    'date_creation'          => $date_creation,
-                ];
-            }
-        } else {
-            $date_creation = get_post_field('post_date', $organisateur_id);
-            $resultats[]   = [
-                'organisateur_id'        => $organisateur_id,
-                'organisateur_titre'     => $titre,
-                'organisateur_permalink' => $permalink,
-                'user_id'                => $user_id,
-                'user_name'              => $user_name,
-                'user_link'              => $user_link,
-                'chasse_id'              => null,
-                'chasse_titre'           => '',
-                'chasse_permalink'       => '',
-                'nb_enigmes'             => 0,
-                'statut'                 => '',
-                'validation'             => '',
-                'pending_validation'     => false,
-                'pending_attempts'       => false,
-                'date_creation'          => $date_creation,
-            ];
-        }
-    }
-
-    usort($resultats, function ($a, $b) {
-        $timeA = strtotime($a['date_creation']);
-        $timeB = strtotime($b['date_creation']);
-        return $timeA === $timeB ? 0 : ($timeA < $timeB ? 1 : -1);
-    });
-
-    return $resultats;
-}
-
-/**
- * Affiche la liste des organisateurs et leurs chasses dans un tableau.
- *
- * @param array|null $liste Données pré-calculées.
- * @param int        $page  Page courante.
- * @param int        $per_page Nombre d'organisateurs par page.
- */
-function afficher_tableau_organisateurs_pending(?array $liste = null, int $page = 1, int $per_page = ORGANISATEURS_PENDING_PER_PAGE): void
-{
-    if (null === $liste) {
-        $liste = recuperer_organisateurs_pending();
-    }
-    if (empty($liste)) {
-        echo '<p>' . esc_html__('Aucun organisateur.', 'chassesautresor-com') . '</p>';
-        return;
-    }
-
-    $grouped = [];
-    foreach ($liste as $entry) {
-        $oid = $entry['organisateur_id'];
-        if (!isset($grouped[$oid])) {
-            $grouped[$oid] = [
-                'organisateur_titre'     => $entry['organisateur_titre'],
-                'organisateur_permalink' => $entry['organisateur_permalink'],
-                'user_id'                => $entry['user_id'],
-                'user_name'              => $entry['user_name'],
-                'user_link'              => $entry['user_link'],
-                'rows'                   => [],
-            ];
-        }
-        $grouped[$oid]['rows'][] = $entry;
-    }
-
-    $total  = count($grouped);
-    $pages  = max(1, (int) ceil($total / $per_page));
-    $page   = max(1, min($page, $pages));
-    $offset = ($page - 1) * $per_page;
-    $grouped = array_slice($grouped, $offset, $per_page, true);
-
-    echo '<div class="stats-table-wrapper" data-per-page="' . intval($per_page) . '">';
-    echo '<table class="stats-table table-organisateurs">';
-    echo '<thead><tr>';
-    echo '<th scope="col">' . esc_html__('Organisateur', 'chassesautresor-com') . '</th>';
-    echo '<th scope="col">' . esc_html__('Chasse', 'chassesautresor-com') . '</th>';
-    echo '<th scope="col" data-format="etiquette"><span class="etiquette">' . esc_html__('Nb énigmes', 'chassesautresor-com') . '</span></th>';
-    echo '<th scope="col">' . esc_html__('État', 'chassesautresor-com') . '</th>';
-    echo '<th scope="col">' . esc_html__('Utilisateur', 'chassesautresor-com') . '</th>';
-    echo '<th scope="col" data-col="date">' . esc_html__('Créé le', 'chassesautresor-com') . ' <span class="tri-date">&#9650;&#9660;</span></th>';
-    echo '</tr></thead><tbody>';
-
-    foreach ($grouped as $org) {
-        $rows    = $org['rows'];
-        $rowspan = count($rows);
-        $first   = true;
-        foreach ($rows as $row) {
-            echo '<tr data-etat="' . esc_attr($row['statut']) . '" data-date="' . esc_attr($row['date_creation']) . '">';
-            if ($first) {
-                echo '<td rowspan="' . intval($rowspan) . '"><a href="' . esc_url($org['organisateur_permalink']) . '" target="_blank">' . esc_html($org['organisateur_titre']) . '</a></td>';
-            }
-
-            if ($row['chasse_id']) {
-                $statut      = $row['statut'];
-                $badge_class = 'statut-revision';
-
-                switch ($statut) {
-                    case 'valide':
-                        $badge_class  = 'statut-en_cours';
-                        $statut_label = __('valide', 'chassesautresor-com');
-                        break;
-                    case 'correction':
-                        $statut_label = __('correction', 'chassesautresor-com');
-                        break;
-                    case 'en_attente':
-                        $statut_label = __('en attente', 'chassesautresor-com');
-                        break;
-                    case 'creation':
-                        $statut_label = __('création', 'chassesautresor-com');
-                        break;
-                    case 'banni':
-                        $badge_class  = 'statut-termine';
-                        $statut_label = __('banni', 'chassesautresor-com');
-                        break;
-                    default:
-                        $statut_label = $statut;
-                        break;
-                }
-
-                echo '<td class="col-chasse"><a href="' . esc_url($row['chasse_permalink']) . '">'
-                    . esc_html($row['chasse_titre'])
-                    . '</a></td>';
-                echo '<td class="col-enigmes"><span class="etiquette">' . intval($row['nb_enigmes']) . '</span></td>';
-
-                $warning   = $row['pending_validation'] || $row['pending_attempts'];
-                $tooltip   = '';
-                if ($warning) {
-                    if ($row['pending_validation'] && $row['pending_attempts']) {
-                        $tooltip = __('Demande de validation et tentatives manuelles en attente', 'chassesautresor-com');
-                    } elseif ($row['pending_validation']) {
-                        $tooltip = __('Demande de validation en attente', 'chassesautresor-com');
-                    } else {
-                        $tooltip = __('Tentatives manuelles en attente de réponse', 'chassesautresor-com');
-                    }
-                }
-
-                echo '<td data-col="etat"><span class="badge-statut ' . esc_attr($badge_class) . '">' . esc_html($statut_label) . '</span>';
-                if ($warning) {
-                    echo '<span class="required" aria-hidden="true" title="' . esc_attr($tooltip) . '">*</span>';
-                }
-                echo '</td>';
-            } else {
-                echo '<td class="col-chasse">-</td><td class="col-enigmes"><span class="etiquette">-</span></td><td data-col="etat"></td>';
-            }
-
-            if ($first) {
-                if ($org['user_id']) {
-                    echo '<td rowspan="' . intval($rowspan) . '"><a href="' . esc_url($org['user_link']) . '" target="_blank">' . esc_html($org['user_name']) . '</a></td>';
-                } else {
-                    echo '<td rowspan="' . intval($rowspan) . '">-</td>';
-                }
-            }
-
-            echo '<td>' . esc_html(date_i18n('d/m/y', strtotime($row['date_creation']))) . '</td>';
-            echo '</tr>';
-            $first = false;
-        }
-    }
-
-    echo '</tbody></table>';
-    echo cta_render_pager($page, $pages, 'organisateurs-pager');
-    echo '</div>';
 }

@@ -210,35 +210,3 @@ function ajax_chasse_lister_participants(): void
 {
     ChassesAuTresor\Core\Progress\HuntStatisticsAjaxHandler::participants();
 }
-
-function cat_render_hunt_statistics_participants(
-    int $hunt_id,
-    array $participants,
-    array $request,
-    int $total,
-    int $pages,
-    string $orderby
-): string {
-    ob_start();
-    get_template_part('template-parts/chasse/partials/chasse-partial-participants', null, [
-        'participants' => $participants,
-        'page' => $request['page'],
-        'par_page' => $request['limit'],
-        'total' => $total,
-        'pages' => $pages,
-        'chasse_titre' => get_the_title($hunt_id),
-        'total_enigmes' => count(recuperer_ids_enigmes_pour_chasse($hunt_id)),
-        'orderby' => $orderby,
-        'order' => $request['order'],
-    ]);
-
-    return (string) ob_get_clean();
-}
-
-if (class_exists(ChassesAuTresor\Core\Progress\HuntStatisticsAjaxHandler::class)) {
-    ChassesAuTresor\Core\Progress\HuntStatisticsAjaxHandler::configure(
-        static function (...$arguments): string {
-            return cat_render_hunt_statistics_participants(...$arguments);
-        }
-    );
-}

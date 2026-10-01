@@ -65,26 +65,6 @@ function enigme_get_liste_prerequis_possibles(int $enigme_id): array
 
 
 /**
- * Normalise la valeur du mode de validation d'une énigme.
- */
-function enigme_normaliser_mode_validation($mode): string
-{
-    if (is_array($mode)) {
-        $mode = $mode['value'] ?? '';
-    }
-
-    $mode = strtolower(trim((string) $mode));
-
-    if ($mode === '' || strpos($mode, 'aucune') === 0 || $mode === 'none') {
-        return 'aucune';
-    }
-
-    return $mode;
-}
-
-
-
-/**
  * Retourne les données d’affichage du bouton d’engagement d’une énigme.
  *
  * Types possibles :

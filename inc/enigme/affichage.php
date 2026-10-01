@@ -4,14 +4,6 @@ require_once __DIR__ . '/../sidebar.php';
 require_once __DIR__ . '/utils.php';
 require_once __DIR__ . '/indices.php';
 
-if (!function_exists('cat_get_riddle_statistics_service')) {
-    function cat_get_riddle_statistics_service(): ChassesAuTresor\Core\Progress\RiddleStatisticsService
-    {
-        global $wpdb;
-        return ChassesAuTresor\Core\Support\CoreServiceFactory::riddleStatistics($wpdb);
-    }
-}
-
     // ==================================================
     // 🎨 AFFICHAGE STYLISÉ DES ÉNIGMES
     // ==================================================
@@ -19,328 +11,6 @@ if (!function_exists('cat_get_riddle_statistics_service')) {
      * 🔹 afficher_enigme_stylisee() → Affiche l’énigme avec son style d’affichage (structure unique + blocs surchargeables)
      * 🔸 enigme_get_partial() → Charge un partiel adapté au style (ex: pirate/images.php), avec fallback global.
      */
-
-    /**
-     * Determine if the enigma menu should be displayed for a user.
-     *
-     * @param int    $user_id     User identifier.
-     * @param int    $chasse_id   Associated hunt ID.
-     * @param string $chasse_stat Current hunt status.
-     *
-     * @return bool
-     */
-    function enigme_user_can_see_menu(int $user_id, int $chasse_id, string $chasse_stat): bool
-    {
-        if (!$chasse_id) {
-            return false;
-        }
-
-        $validation_status = get_field('chasse_cache_statut_validation', $chasse_id) ?? '';
-        $is_admin          = current_user_can('administrator');
-        $is_associated     = utilisateur_est_organisateur_associe_a_chasse($user_id, $chasse_id);
-        $is_organizer      = est_organisateur($user_id);
-
-        if (($is_admin || ($is_organizer && $is_associated)) && $validation_status !== 'banni') {
-            return true;
-        }
-
-        if (
-            !function_exists('utilisateur_est_engage_dans_chasse')
-            || !utilisateur_est_engage_dans_chasse($user_id, $chasse_id)
-        ) {
-            return false;
-        }
-
-        return !in_array($chasse_stat, ['revision', 'a_venir'], true);
-    }
-
-    /**
-     * Render a bar chart section used for stats.
-     *
-     * @param string $title         Section title.
-     * @param int    $user_rate     Percentage for the current user.
-     * @param int    $avg_rate      Average percentage among players.
-     * @param string $section_class Additional CSS class for the section.
-     *
-     * @return string
-     */
-    function enigme_render_bar_row(string $label, int $rate, string $fill_style = ''): string
-    {
-        $inside = $rate >= 50;
-        $style  = $fill_style === '' ? '' : $fill_style . ';';
-
-        $outside_style = $rate === 0
-            ? 'left:4px;'
-            : 'left:calc(' . $rate . '% + 4px);';
-
-        ob_start();
-        ?>
-        <div class="bar-row">
-          <span class="bar-label"><?= esc_html($label); ?></span>
-          <div class="bar-wrapper">
-            <div class="bar-fill" style="<?= esc_attr($style); ?>width:<?= esc_attr($rate); ?>%;">
-              <?php if ($inside) : ?>
-                <span class="bar-value"><?= esc_html($rate); ?>%</span>
-              <?php endif; ?>
-            </div>
-            <?php if (!$inside) : ?>
-              <span class="bar-value bar-value--outside" style="<?= esc_attr($outside_style); ?>">
-                <?= esc_html($rate); ?>%
-              </span>
-            <?php endif; ?>
-          </div>
-        </div>
-        <?php
-        return (string) ob_get_clean();
-    }
-
-    function enigme_render_bar_section(string $title, int $user_rate, int $avg_rate, string $section_class): string
-    {
-        ob_start();
-        ?>
-        <section class="<?= esc_attr($section_class); ?>">
-          <h3><?= esc_html($title); ?></h3>
-          <div class="stats-bar-chart">
-            <?= enigme_render_bar_row(esc_html__('Vous', 'chassesautresor-com'), $user_rate, 'background-color:var(--color-primary)'); ?>
-            <?= enigme_render_bar_row(esc_html__('Moyenne', 'chassesautresor-com'), $avg_rate); ?>
-          </div>
-        </section>
-        <?php
-        return (string) ob_get_clean();
-    }
-
-    function enigme_render_bar_subsection(
-        string $title,
-        int $user_rate,
-        int $avg_rate,
-        string $section_class,
-        string $help_message = '',
-        string $help_label = ''
-    ): string {
-        ob_start();
-        ?>
-        <div class="<?= esc_attr($section_class); ?>">
-          <p class="aside-subsection-title">
-            <?= esc_html($title); ?>
-            <?php if ($help_message !== '') : ?>
-              <?php
-              $icon_args = [
-                  'aria_label' => $help_label,
-                  'message'    => $help_message,
-                  'classes'    => 'mode-fin-aide stat-help',
-              ];
-
-              if ($help_label !== '') {
-                  $icon_args['attributes'] = [
-                      'data-title' => $help_label,
-                  ];
-              }
-
-              get_template_part(
-                  'template-parts/common/help-icon',
-                  null,
-                  $icon_args
-              );
-              ?>
-            <?php endif; ?>
-          </p>
-          <div class="stats-bar-chart">
-            <?= enigme_render_bar_row(
-                esc_html__('Vous', 'chassesautresor-com'),
-                $user_rate,
-                'background-color:var(--color-primary)'
-            ); ?>
-            <?= enigme_render_bar_row(esc_html__('Moyenne', 'chassesautresor-com'), $avg_rate); ?>
-          </div>
-        </div>
-        <?php
-        return (string) ob_get_clean();
-    }
-
-    function enigme_render_single_bar_subsection(
-        string $title,
-        int $rate,
-        string $section_class,
-        string $help_message = '',
-        string $help_label = ''
-    ): string {
-        ob_start();
-        ?>
-        <div class="<?= esc_attr($section_class); ?>">
-          <p class="aside-subsection-title">
-            <?= esc_html($title); ?>
-            <?php if ($help_message !== '') : ?>
-              <?php
-              $icon_args = [
-                  'aria_label' => $help_label,
-                  'message'    => $help_message,
-                  'classes'    => 'mode-fin-aide stat-help',
-              ];
-
-              if ($help_label !== '') {
-                  $icon_args['attributes'] = [
-                      'data-title' => $help_label,
-                  ];
-              }
-
-              get_template_part(
-                  'template-parts/common/help-icon',
-                  null,
-                  $icon_args
-              );
-              ?>
-            <?php endif; ?>
-          </p>
-          <div class="stats-bar-chart">
-            <?= enigme_render_bar_row($title, $rate); ?>
-          </div>
-        </div>
-        <?php
-        return (string) ob_get_clean();
-    }
-
-    /**
-     * Build meta labels HTML for the sidebar.
-     *
-     * @param int $enigme_id Enigma identifier.
-     *
-     * @return string
-     */
-    function enigme_sidebar_metas_html(int $enigme_id): string
-    {
-        if (!function_exists('enigme_compter_joueurs_engages')) {
-            require_once __DIR__ . '/stats.php';
-        }
-
-        $nb_joueurs = enigme_compter_joueurs_engages($enigme_id);
-        $mode       = get_field('enigme_mode_validation', $enigme_id);
-
-        $html  = '<div class="bloc-metas-inline bloc-metas-inline--compact">';
-        $html .= '<div class="meta-etiquette"><span>'
-            . esc_html__('Nb joueurs :', 'chassesautresor-com')
-            . '</span><strong>' . esc_html($nb_joueurs) . '</strong></div>';
-
-        if ($mode !== 'aucune') {
-            $tentatives = enigme_compter_tentatives($enigme_id);
-            $html      .= '<div class="meta-etiquette"><span>'
-                . esc_html__('Nb tentatives :', 'chassesautresor-com')
-                . '</span><strong>' . esc_html($tentatives) . '</strong></div>';
-        }
-
-        $html .= '</div>';
-
-        return $html;
-    }
-
-    /**
-     * Build progression histogram HTML for the sidebar.
-     *
-     * @param int|null $chasse_id Hunt identifier.
-     * @param int      $user_id   Current user identifier.
-     *
-     * @return string
-     */
-    function enigme_sidebar_progression_html(?int $chasse_id, int $user_id): string
-    {
-        if (!$chasse_id || !$user_id) {
-            return '';
-        }
-
-        global $wpdb;
-        $data = ChassesAuTresor\Core\Support\CoreServiceFactory::riddleSidebarStatistics($wpdb)
-            ->progression($chasse_id, $user_id);
-
-        return enigme_render_bar_subsection(
-            esc_html__('Progression', 'chassesautresor-com'),
-            $data['user'],
-            $data['avg'],
-            'enigme-progression',
-            esc_html__(
-                'Part moyenne des énigmes auxquelles chaque joueur a participé, '
-                . 'rapportée au nombre total d’énigmes de la chasse. '
-                . 'Vous : Part des énigmes auxquelles vous avez accédé '
-                . 'Moyenne : Moyenne sur l’ensemble des joueurs.',
-                'chassesautresor-com'
-            ),
-            esc_attr__(
-                'Définition de la progression',
-                'chassesautresor-com'
-            )
-        );
-    }
-
-    /**
-     * Build resolution histogram HTML for the sidebar.
-     *
-     * @param int $enigme_id Enigma identifier.
-     *
-     * @return string
-     */
-    function enigme_sidebar_resolution_html(int $enigme_id): string
-    {
-        if ($enigme_id <= 0) {
-            return '';
-        }
-
-        global $wpdb;
-        $rate = ChassesAuTresor\Core\Support\CoreServiceFactory::riddleSidebarStatistics($wpdb)
-            ->resolution($enigme_id);
-
-        return enigme_render_single_bar_subsection(
-            esc_html__('Résolution', 'chassesautresor-com'),
-            $rate,
-            'enigme-resolution',
-            esc_html__(
-                'Part moyenne des énigmes auxquelles chaque joueur a participé, '
-                . 'rapportée au nombre total d’énigmes de la chasse.',
-                'chassesautresor-com'
-            ),
-            esc_attr__(
-                'Définition du taux de résolution',
-                'chassesautresor-com'
-            )
-        );
-    }
-
-    /**
-     * Build winners table HTML for the sidebar.
-     *
-     * @param int $enigme_id Enigma identifier.
-     * @param int $user_id   Current user identifier.
-     * @param int $page      Page number.
-     *
-     * @return string
-     */
-    function enigme_sidebar_gagnants_html(int $enigme_id, int $user_id, int $page = 1): string
-    {
-        if (!function_exists('enigme_lister_resolveurs')) {
-            require_once __DIR__ . '/stats.php';
-        }
-
-        global $wpdb;
-        $per_page = 10;
-        $solvers  = property_exists($wpdb, 'users') ? enigme_lister_resolveurs($enigme_id) : [];
-        $total    = count($solvers);
-        $pages    = max(1, (int) ceil($total / $per_page));
-        $page     = max(1, min($page, $pages));
-        $offset   = ($page - 1) * $per_page;
-        $slice    = array_slice($solvers, $offset, $per_page);
-
-        ob_start();
-        get_template_part(
-            'template-parts/enigme/partials/enigme-partial-gagnants',
-            null,
-            [
-                'gagnants'  => $slice,
-                'page'      => $page,
-                'pages'     => $pages,
-                'user_id'   => $user_id,
-                'total'     => $total,
-            ]
-        );
-        return (string) ob_get_clean();
-    }
-
 
     /**
      * Render the hero section for the enigma.
@@ -447,66 +117,9 @@ if (!function_exists('cat_get_riddle_statistics_service')) {
 
         $content = '';
 
-        $chasse_id = recuperer_id_chasse_associee($enigme_id);
-
-        $indices_enigme = function_exists('get_posts')
-            ? get_posts([
-                'post_type'      => 'indice',
-                'post_status'    => ['publish', 'draft', 'future', 'pending'],
-                'meta_query'     => [
-                    [
-                        'key'     => 'indice_cible_type',
-                        'value'   => 'enigme',
-                        'compare' => '=',
-                    ],
-                    [
-                        'key'     => 'indice_enigme_linked',
-                        'value'   => $enigme_id,
-                        'compare' => '=',
-                    ],
-                    [
-                        'key'     => 'indice_cache_etat_systeme',
-                        'value'   => ['accessible', 'programme'],
-                        'compare' => 'IN',
-                    ],
-                ],
-                'orderby'        => 'date',
-                'order'          => 'ASC',
-                'fields'         => 'ids',
-                'no_found_rows'  => true,
-                'posts_per_page' => -1,
-            ])
-            : [];
-
-        $indices_chasse = [];
-        if ($chasse_id && function_exists('get_posts')) {
-            $indices_chasse = get_posts([
-                'post_type'      => 'indice',
-                'post_status'    => ['publish', 'draft', 'future', 'pending'],
-                'meta_query'     => [
-                    [
-                        'key'     => 'indice_cible_type',
-                        'value'   => 'chasse',
-                        'compare' => '=',
-                    ],
-                    [
-                        'key'     => 'indice_chasse_linked',
-                        'value'   => $chasse_id,
-                        'compare' => '=',
-                    ],
-                    [
-                        'key'     => 'indice_cache_etat_systeme',
-                        'value'   => ['accessible', 'programme'],
-                        'compare' => 'IN',
-                    ],
-                ],
-                'orderby'        => 'date',
-                'order'          => 'ASC',
-                'fields'         => 'ids',
-                'no_found_rows'  => true,
-                'posts_per_page' => -1,
-            ]);
-        }
+        $hints = (new ChassesAuTresor\Core\Progress\RiddleParticipationService())->hints($enigme_id, $user_id);
+        $indices_enigme = $hints['riddle'];
+        $indices_chasse = $hints['hunt'];
 
         if ($bloc_reponse !== '') {
             $content .= '<div class="zone-reponse">' . $bloc_reponse . '</div>';
@@ -514,41 +127,18 @@ if (!function_exists('cat_get_riddle_statistics_service')) {
 
         if (!empty($indices_enigme) || !empty($indices_chasse)) {
             $content .= '<hr class="reponse-indices-separator" />';
-            $build_line = function (array $indices, string $title) use ($user_id) {
+            $build_line = function (array $indices, string $title) {
                 $html = '<div class="zone-indices-line"><span class="zone-indices-line__label">'
                     . esc_html($title)
                     . '</span><div class="indice-list">';
-                foreach ($indices as $i => $indice_id) {
-                    $cout_indice  = (int) get_field('indice_cout_points', $indice_id);
-                    $etat_systeme = get_field('indice_cache_etat_systeme', $indice_id) ?: '';
-                    $est_debloque = indice_est_debloque($user_id, $indice_id);
+                foreach ($indices as $hint) {
+                    $indice_id = $hint['id'];
+                    $cout_indice = $hint['cost'];
+                    $etat_systeme = $hint['state'];
+                    $est_debloque = $hint['unlocked'];
 
                     if ($etat_systeme === 'programme') {
-                        $date_raw  = get_field('indice_date_disponibilite', $indice_id);
-                        $timestamp = false;
-                        if ($date_raw) {
-                            $formats = [
-                                'Y-m-d H:i:s',
-                                'd/m/Y H:i',
-                                'Y-m-d\\TH:i:s',
-                                'd/m/Y g:i a',
-                                'd/m/Y g:i A',
-                                'Y-m-d g:i a',
-                            ];
-                            foreach ($formats as $format) {
-                                $date = date_create_from_format($format, $date_raw, wp_timezone());
-                                if ($date !== false) {
-                                    $timestamp = $date->getTimestamp();
-                                    break;
-                                }
-                            }
-                            if ($timestamp === false) {
-                                $date = date_create_from_format('d/m/Y g:i a', $date_raw, wp_timezone());
-                                if ($date !== false) {
-                                    $timestamp = $date->getTimestamp();
-                                }
-                            }
-                        }
+                        $timestamp = $hint['available_at'];
 
                         $now = current_time('timestamp');
                         if ($timestamp === false || $timestamp > $now) {
@@ -584,8 +174,7 @@ if (!function_exists('cat_get_riddle_statistics_service')) {
                         $etat_icon = 'fa-lightbulb';
                     }
 
-                    $title_ind = get_indice_title($indice_id);
-                    $label     = esc_html($title_ind);
+                    $label = esc_html($hint['title']);
 
                     $cout_html = $cout_indice > 0
                         ? ' - ' . $cout_indice . ' <sup>'
@@ -919,20 +508,6 @@ if (!function_exists('cat_get_riddle_statistics_service')) {
     function ajax_enigme_recuperer_progression(): void
     {
         ChassesAuTresor\Core\Progress\RiddleSidebarAjaxHandler::progression();
-    }
-
-    if (class_exists(ChassesAuTresor\Core\Progress\RiddleSidebarAjaxHandler::class)) {
-        ChassesAuTresor\Core\Progress\RiddleSidebarAjaxHandler::configure(
-            static function (int $riddle_id, int $user_id, int $page): string {
-                return enigme_sidebar_gagnants_html($riddle_id, $user_id, $page);
-            },
-            static function (int $hunt_id, int $riddle_id, int $user_id): string {
-                $html = '<h3>' . esc_html__('Statistiques', 'chassesautresor-com') . '</h3>';
-                $html .= enigme_sidebar_metas_html($riddle_id);
-                $html .= enigme_sidebar_progression_html($hunt_id, $user_id);
-                return $html . enigme_sidebar_resolution_html($riddle_id);
-            }
-        );
     }
 
     /**

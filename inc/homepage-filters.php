@@ -39,20 +39,3 @@ function ca_ajax_filter_chasses(): void
 {
     \ChassesAuTresor\Core\Content\HuntFilterAjaxHandler::handle();
 }
-
-function ca_render_filtered_hunts(array $huntIds): string
-{
-    ob_start();
-    get_template_part('template-parts/organisateur/organisateur-partial-boucle-chasses', null, [
-        'chasse_ids'  => $huntIds,
-        'show_header' => false,
-        'grid_class'  => 'organisateur-chasses-grid',
-        'before_items' => '',
-        'after_items'  => '',
-    ]);
-    return (string) ob_get_clean();
-}
-
-\ChassesAuTresor\Core\Content\HuntFilterAjaxHandler::configure(
-    static fn(array $huntIds): string => ca_render_filtered_hunts($huntIds)
-);

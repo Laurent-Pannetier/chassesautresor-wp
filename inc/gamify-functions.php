@@ -1,35 +1,6 @@
 <?php
 defined( 'ABSPATH' ) || exit;
 
-/**
- * Create the service responsible for points operations.
- */
-function cat_get_points_service(): ChassesAuTresor\Core\Points\PointsService
-{
-    global $wpdb;
-    return ChassesAuTresor\Core\Support\CoreServiceFactory::points($wpdb);
-}
-
-/**
- * Create the service responsible for purchased point packs.
- */
-function cat_get_purchase_points_service(): ChassesAuTresor\Core\Points\PurchasePointsService
-{
-    global $wpdb;
-    return ChassesAuTresor\Core\Support\CoreServiceFactory::purchasePoints($wpdb);
-}
-
-/**
- * Create the service responsible for point conversion requests.
- */
-function cat_get_conversion_service(): ChassesAuTresor\Core\Points\ConversionService
-{
-    global $wpdb;
-    return ChassesAuTresor\Core\Support\CoreServiceFactory::conversion($wpdb);
-}
-
-
-
 function cat_classify_hunt_riddles(array $riddleIds): array
 {
     return (new ChassesAuTresor\Core\Progress\HuntRiddleClassifier())->classify($riddleIds);
@@ -63,21 +34,6 @@ function cat_classify_hunt_riddles(array $riddleIds): array
  * 🔹 deduire_points_utilisateur → Déduit un montant de points à un utilisateur.
  * 🔹 ajouter_points_utilisateur → Ajoute un montant de points à un utilisateur .
  */
-
-/**
- * 🔢 Récupère le solde de points d’un utilisateur.
- *
- * @param int|null $user_id ID de l'utilisateur (par défaut : utilisateur courant).
- * @return int Nombre de points (0 si aucun point n'est trouvé).
- */
-function get_user_points($user_id = null): int {
-    $user_id = $user_id ?: get_current_user_id();
-    if (!$user_id) {
-        return 0;
-    }
-
-    return cat_get_points_service()->getBalance((int) $user_id);
-}
 
 /**
  * ➕➖ Met à jour le solde de points de l'utilisateur.
@@ -332,30 +288,6 @@ function count_user_points_history(int $user_id = null): int
 }
 
 /**
- * Format a points operation reason by replacing identifiers with linked titles.
- *
- * @param array $op Single operation data.
- * @return string Formatted reason.
- */
-function format_points_history_reason(array $op): string
-{
-    $reason      = $op['reason'] ?? '';
-    $origin_id   = isset($op['origin_id']) ? (int) $op['origin_id'] : 0;
-    $origin_type = $op['origin_type'] ?? '';
-
-    if ($origin_id > 0 && in_array($origin_type, ['chasse', 'tentative', 'indice', 'enigme'], true)) {
-        $title = get_the_title($origin_id);
-        $link  = get_permalink($origin_id);
-        if ($title && $link) {
-            $replacement = sprintf('<a href="%s">%s</a>', esc_url($link), esc_html($title));
-            $reason      = str_replace('#' . $origin_id, $replacement, $reason);
-        }
-    }
-
-    return $reason;
-}
-
-/**
  * Render points history table for a user.
  *
  * @param int $user_id User identifier.
@@ -449,38 +381,7 @@ function enqueue_points_history_script(): void
 /**
  * AJAX handler for loading paginated points history.
  */
-function cat_render_points_history_rows(array $operations): string
-{
-    ob_start();
-    foreach ($operations as $op) {
-        $variation = (int) $op['points'];
-        $variation_label = $variation > 0 ? '+' . $variation : (string) $variation;
-        $date = !empty($op['request_date']) ? mysql2date('d/m/Y', $op['request_date']) : '';
-        $reason = format_points_history_reason($op);
-        ?>
-        <tr>
-            <td><?php echo esc_html($op['id']); ?></td>
-            <td><?php echo esc_html($date); ?></td>
-            <td><span class="etiquette"><?php echo esc_html($op['origin_type']); ?></span></td>
-            <td><?php echo wp_kses_post($reason); ?></td>
-            <td><span class="etiquette etiquette-grande"><?php echo esc_html($variation_label); ?></span></td>
-            <td><span class="etiquette etiquette-grande"><?php echo esc_html($op['balance']); ?></span></td>
-        </tr>
-        <?php
-    }
-
-    return (string) ob_get_clean();
-}
-
 function ajax_load_points_history(): void
 {
     ChassesAuTresor\Core\Points\PointsHistoryAjaxHandler::handle();
-}
-
-if (class_exists(ChassesAuTresor\Core\Points\PointsHistoryAjaxHandler::class)) {
-    ChassesAuTresor\Core\Points\PointsHistoryAjaxHandler::configure(
-        static function (array $operations): string {
-            return cat_render_points_history_rows($operations);
-        }
-    );
 }
