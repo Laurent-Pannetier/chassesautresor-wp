@@ -3,42 +3,6 @@ defined('ABSPATH') || exit;
 
 require_once __DIR__ . '/badge-functions.php';
 
-if (!class_exists(ChassesAuTresor\Core\Progress\HuntWinnerRepository::class, false)) {
-    require_once dirname(__DIR__, 3)
-        . '/plugins/chassesautresor-core/src/Progress/HuntWinnerRepository.php';
-}
-
-if (!class_exists(ChassesAuTresor\Core\Progress\HuntWinnersTable::class, false)) {
-    require_once dirname(__DIR__, 3)
-        . '/plugins/chassesautresor-core/src/Progress/HuntWinnersTable.php';
-}
-
-if (!class_exists(ChassesAuTresor\Core\Progress\HuntEngagementService::class, false)) {
-    require_once dirname(__DIR__, 3)
-        . '/plugins/chassesautresor-core/src/Progress/HuntEngagementRepository.php';
-    require_once dirname(__DIR__, 3)
-        . '/plugins/chassesautresor-core/src/Progress/HuntEngagementService.php';
-}
-
-if (!class_exists(ChassesAuTresor\Core\Progress\HuntProgressService::class, false)) {
-    require_once dirname(__DIR__, 3)
-        . '/plugins/chassesautresor-core/src/Progress/HuntProgressRepository.php';
-    require_once dirname(__DIR__, 3)
-        . '/plugins/chassesautresor-core/src/Progress/HuntProgressService.php';
-}
-
-if (!class_exists(ChassesAuTresor\Core\Content\SolutionQueryService::class, false)) {
-    require_once dirname(__DIR__, 3)
-        . '/plugins/chassesautresor-core/src/Content/SolutionQueryService.php';
-}
-
-if (!class_exists(ChassesAuTresor\Core\Content\SolutionDisplayService::class, false)) {
-    require_once dirname(__DIR__, 3)
-        . '/plugins/chassesautresor-core/src/Content/SolutionAvailabilityService.php';
-    require_once dirname(__DIR__, 3)
-        . '/plugins/chassesautresor-core/src/Content/SolutionDisplayService.php';
-}
-
 //
 // 1. 📦 FONCTIONS LIÉES À UNE CHASSE
 // 2. 📦 AFFICHAGE
@@ -90,8 +54,7 @@ function chasse_install_winners_table(): void
 function cat_get_hunt_winner_repository(): ChassesAuTresor\Core\Progress\HuntWinnerRepository
 {
     global $wpdb;
-
-    return new ChassesAuTresor\Core\Progress\HuntWinnerRepository($wpdb);
+    return ChassesAuTresor\Core\Support\CoreServiceFactory::huntWinners($wpdb);
 }
 
 /**
@@ -101,10 +64,7 @@ if (!function_exists('cat_get_hunt_engagement_service')) {
     function cat_get_hunt_engagement_service(): ChassesAuTresor\Core\Progress\HuntEngagementService
     {
         global $wpdb;
-
-        return new ChassesAuTresor\Core\Progress\HuntEngagementService(
-            new ChassesAuTresor\Core\Progress\HuntEngagementRepository($wpdb)
-        );
+        return ChassesAuTresor\Core\Support\CoreServiceFactory::huntEngagement($wpdb);
     }
 }
 
@@ -115,10 +75,7 @@ if (!function_exists('cat_get_hunt_progress_service')) {
     function cat_get_hunt_progress_service(): ChassesAuTresor\Core\Progress\HuntProgressService
     {
         global $wpdb;
-
-        return new ChassesAuTresor\Core\Progress\HuntProgressService(
-            new ChassesAuTresor\Core\Progress\HuntProgressRepository($wpdb)
-        );
+        return ChassesAuTresor\Core\Support\CoreServiceFactory::huntProgress($wpdb);
     }
 }
 
@@ -887,54 +844,9 @@ function render_form_annulation_validation_chasse(int $chasse_id): string
     return ob_get_clean();
 }
 
-add_action('wp_ajax_annulation_validation_chasse', 'traiter_annulation_validation_chasse');
-add_action('wp_ajax_nopriv_annulation_validation_chasse', 'traiter_annulation_validation_chasse');
-
 function traiter_annulation_validation_chasse(): void
 {
-    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-        wp_redirect(home_url());
-        exit;
-    }
-
-    $chasse_id = isset($_POST['chasse_id']) ? (int) $_POST['chasse_id'] : 0;
-    $user_id   = get_current_user_id();
-
-    if (!$user_id || !$chasse_id || get_post_type($chasse_id) !== 'chasse') {
-        wp_redirect(home_url());
-        exit;
-    }
-
-    $nonce_action = 'annulation_validation_chasse_' . $chasse_id;
-    if (
-        !isset($_POST['annulation_validation_chasse_nonce']) ||
-        !wp_verify_nonce($_POST['annulation_validation_chasse_nonce'], $nonce_action)
-    ) {
-        wp_die( __( 'Vérification de sécurité échouée.', 'chassesautresor-com' ) );
-    }
-
-    if (
-        !current_user_can('administrator') &&
-        !utilisateur_est_organisateur_associe_a_chasse($user_id, $chasse_id)
-    ) {
-        wp_die( __( 'Conditions non remplies.', 'chassesautresor-com' ) );
-    }
-
-    if (empty($_POST['annuler_validation_chasse'])) {
-        wp_redirect(home_url());
-        exit;
-    }
-
-    require_once get_theme_file_path('inc/statut-functions.php');
-    require_once get_theme_file_path('inc/relations-functions.php');
-    require_once get_theme_file_path('inc/user-functions.php');
-
-    forcer_statut_apres_acf($chasse_id, 'a_venir');
-    update_field('chasse_cache_statut', 'a_venir', $chasse_id);
-    update_field('chasse_cache_statut_validation', 'correction', $chasse_id);
-
-    wp_redirect(add_query_arg('validation_annulee', '1', get_permalink($chasse_id)));
-    exit;
+    ChassesAuTresor\Core\Progress\HuntValidationAjaxHandler::cancel();
 }
 
 /**
@@ -943,24 +855,13 @@ function traiter_annulation_validation_chasse(): void
  * @hook wp_ajax_actualiser_cta_validation_chasse
  * @return void
  */
-add_action('wp_ajax_actualiser_cta_validation_chasse', 'actualiser_cta_validation_chasse');
-
 function actualiser_cta_validation_chasse(): void
 {
-    if (!is_user_logged_in()) {
-        wp_send_json_error('non_connecte');
-    }
+    ChassesAuTresor\Core\Progress\HuntValidationAjaxHandler::refreshCta();
+}
 
-    $enigme_id = isset($_POST['enigme_id']) ? (int) $_POST['enigme_id'] : 0;
-    if (!$enigme_id || get_post_type($enigme_id) !== 'enigme') {
-        wp_send_json_error('post_invalide');
-    }
-
-    $chasse_id = recuperer_id_chasse_associee($enigme_id);
-    if (!$chasse_id || get_post_type($chasse_id) !== 'chasse') {
-        wp_send_json_error('chasse_invalide');
-    }
-
+function cat_build_hunt_validation_cta(int $chasse_id, int $enigme_id): string
+{
     verifier_ou_mettre_a_jour_cache_complet($enigme_id);
     verifier_ou_mettre_a_jour_cache_complet($chasse_id);
 
@@ -990,7 +891,25 @@ function actualiser_cta_validation_chasse(): void
     }
     $html = ob_get_clean();
 
-    wp_send_json_success(['html' => $html]);
+    return (string) $html;
+}
+
+if (class_exists(ChassesAuTresor\Core\Progress\HuntValidationAjaxHandler::class)) {
+    ChassesAuTresor\Core\Progress\HuntValidationAjaxHandler::configure(
+        static function (int $user_id, int $hunt_id): bool {
+            return utilisateur_est_organisateur_associe_a_chasse($user_id, $hunt_id);
+        },
+        static fn (int $riddle_id): int => (int) recuperer_id_chasse_associee($riddle_id),
+        static function (int $hunt_id): void {
+            require_once get_theme_file_path('inc/statut-functions.php');
+            forcer_statut_apres_acf($hunt_id, 'a_venir');
+            update_field('chasse_cache_statut', 'a_venir', $hunt_id);
+            update_field('chasse_cache_statut_validation', 'correction', $hunt_id);
+        },
+        static function (int $hunt_id, int $riddle_id): string {
+            return cat_build_hunt_validation_cta($hunt_id, $riddle_id);
+        }
+    );
 }
 
 /**

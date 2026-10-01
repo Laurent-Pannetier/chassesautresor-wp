@@ -34,42 +34,10 @@ const ORGANISATEURS_PENDING_PER_PAGE     = 20;
  * - Vérification des permissions (`administrator` requis).
  * - Retour JSON des résultats.
  */
-function rechercher_utilisateur_ajax() {
-    // ✅ Vérifier que la requête est bien envoyée par un administrateur
-    if (!current_user_can('administrator')) {
-        wp_send_json_error(['message' => __( '⛔ Accès refusé.', 'chassesautresor-com' )]);
-    }
-
-    // ✅ Vérifier la présence du paramètre de recherche
-    $search = isset($_GET['term']) ? sanitize_text_field($_GET['term']) : '';
-
-    if (empty($search)) {
-        wp_send_json_error(['message' => __( '❌ Requête vide.', 'chassesautresor-com' )]);
-    }
-
-    // ✅ Requête pour récupérer tous les utilisateurs sans restriction de rôle
-    $users = get_users([
-        'search'         => '*' . esc_attr($search) . '*',
-        'search_columns' => ['user_login', 'display_name', 'user_email']
-    ]);
-
-    // ✅ Vérifier que des utilisateurs sont trouvés
-    if (empty($users)) {
-        wp_send_json_error(['message' => __( '❌ Aucun utilisateur trouvé.', 'chassesautresor-com' )]);
-    }
-
-    // ✅ Formatage des résultats en JSON
-    $results = [];
-    foreach ($users as $user) {
-        $results[] = [
-            'id'   => $user->ID,
-            'text' => esc_html($user->display_name) . ' (' . esc_html($user->user_login) . ')'
-        ];
-    }
-
-    wp_send_json_success($results);
+function rechercher_utilisateur_ajax(): void
+{
+    \ChassesAuTresor\Core\Admin\AdminAjaxHandler::searchUsers();
 }
-add_action('wp_ajax_rechercher_utilisateur', 'rechercher_utilisateur_ajax');
 
 /**
  * 📌 Gère l'ajout ou le retrait de points à un utilisateur.
@@ -508,46 +476,12 @@ function afficher_tableau_paiements_admin(): void
     echo render_tableau_paiements_admin($requests);
 }
 
-function recuperer_historique_paiements_admin(int $page = 1): array
-{
-    $per_page = HISTORIQUE_PAIEMENTS_ADMIN_PER_PAGE;
-    $offset   = ($page - 1) * $per_page;
-    $service  = cat_get_conversion_service();
-    $requests = $service->getRequests(null, null, $per_page, $offset);
-    $total = $service->countRequests();
-    $pages = max(1, (int) ceil($total / $per_page));
 
-    if (empty($requests)) {
-        $html = '<p>Aucune demande de paiement.</p>';
-    } else {
-        $html  = render_tableau_paiements_admin($requests);
-        $html .= '<div class="pager">';
-        $html .= '<button class="pager-first" aria-label="Première page"><i class="fa-solid fa-angles-left"></i></button>';
-        $html .= '<button class="pager-prev" aria-label="Page précédente"><i class="fa-solid fa-angle-left"></i></button>';
-        $html .= '<span class="pager-info">' . $page . ' / ' . $pages . '</span>';
-        $html .= '<button class="pager-next" aria-label="Page suivante"><i class="fa-solid fa-angle-right"></i></button>';
-        $html .= '<button class="pager-last" aria-label="Dernière page"><i class="fa-solid fa-angles-right"></i></button>';
-        $html .= '</div>';
-    }
-
-    return [
-        'html'  => $html,
-        'page'  => $page,
-        'pages' => $pages,
-    ];
-}
 
 function ajax_lister_historique_paiements_admin(): void
 {
-    if (!current_user_can('administrator')) {
-        wp_send_json_error();
-    }
-
-    $page = isset($_POST['page']) ? (int) $_POST['page'] : 1;
-    $data = recuperer_historique_paiements_admin(max(1, $page));
-    wp_send_json_success($data);
+    \ChassesAuTresor\Core\Admin\AdminAjaxHandler::listPayments();
 }
-add_action('wp_ajax_lister_historique_paiements', 'ajax_lister_historique_paiements_admin');
 
 /**
  * 💶 Traiter la demande de conversion de points en euros pour un organisateur.
@@ -653,32 +587,8 @@ function mettre_a_jour_paiements_organisateurs(float $amount): void
  */
 function ajax_update_request_status(): void
 {
-    if (!current_user_can('administrator')) {
-        wp_send_json_error();
-    }
-
-    $paiement_id = isset($_POST['paiement_id']) ? intval($_POST['paiement_id']) : 0;
-    $statut      = isset($_POST['statut']) ? sanitize_text_field($_POST['statut']) : '';
-
-    if (!$paiement_id || !in_array($statut, ['regle', 'annule', 'refuse'], true)) {
-        wp_send_json_error();
-    }
-
-    $result = cat_get_conversion_service()->updateStatus(
-        $paiement_id,
-        $statut,
-        current_time('mysql')
-    );
-    $repoStatus = $result['status'];
-    cat_debug("✅ Statut mis à jour pour l'entrée {$paiement_id} : {$repoStatus}");
-
-    if ($result['paid_amount'] > 0) {
-        mettre_a_jour_paiements_organisateurs($result['paid_amount']);
-    }
-
-    wp_send_json_success(['status' => $repoStatus]);
+    \ChassesAuTresor\Core\Admin\AdminAjaxHandler::updateConversionStatus();
 }
-add_action('wp_ajax_update_conversion_status', 'ajax_update_request_status');
 
 
 
@@ -1307,141 +1217,28 @@ add_action('admin_notices', function() {
 // =============================================
 // AJAX : récupérer les détails des groupes ACF
 // =============================================
-function recuperer_details_acf() {
-    if (!current_user_can('administrator')) {
-        wp_send_json_error( __( 'Non autorisé', 'chassesautresor-com' ) );
-    }
-
-    // Utilisation des "keys" ACF directement car les IDs ne sont pas fiables
-    // lorsque les groupes sont chargés via JSON local.
-    $group_keys = [
-        'group_67b58c51b9a49', // Paramètre de la chasse (ID 27)
-        'group_67b58134d7647', // Paramètres de l’énigme (ID 9)
-        'group_67c7dbfea4a39', // Paramètres organisateur (ID 657)
-        'group_68a1fb240748a', // Paramètres indices
-        'group_68abd01f80aee', // Paramètres solution
-    ];
-
-    ob_start();
-    foreach ($group_keys as $key) {
-        acf_inspect_field_group($key);
-        echo "\n";
-    }
-    $output = ob_get_clean();
-    $output = wp_strip_all_tags($output);
-    wp_send_json_success($output);
+function recuperer_details_acf(): void
+{
+    \ChassesAuTresor\Core\Admin\AdminAjaxHandler::inspectAcf();
 }
-add_action('wp_ajax_recuperer_details_acf', 'recuperer_details_acf');
 
-function cta_reset_stats() {
-    if (!current_user_can('administrator')) {
-        wp_send_json_error(__('Non autorisé', 'chassesautresor-com'));
-    }
-
-    check_ajax_referer('cta_reset_stats', 'nonce');
-
-    global $wpdb;
-    $tables = [
-        $wpdb->prefix . 'chasse_winners',
-        $wpdb->prefix . 'engagements',
-        $wpdb->prefix . 'enigme_statuts_utilisateur',
-        $wpdb->prefix . 'enigme_tentatives',
-        $wpdb->prefix . 'user_points',
-        $wpdb->prefix . 'indices_deblocages',
-    ];
-
-    $total_deleted = 0;
-
-    foreach ($tables as $table) {
-        $wpdb->query("DELETE FROM {$table}");
-
-        if (!empty($wpdb->last_error)) {
-            wp_send_json_error($wpdb->last_error);
-        }
-
-        $total_deleted += (int) $wpdb->rows_affected;
-    }
-
-    delete_metadata('user', 0, '_myaccount_messages', '', true);
-
-    if (!empty($wpdb->last_error)) {
-        wp_send_json_error($wpdb->last_error);
-    }
-
-    $total_deleted += (int) $wpdb->rows_affected;
-
-    $user_ids = $wpdb->get_col(
-        "SELECT DISTINCT user_id FROM {$wpdb->usermeta} WHERE meta_key LIKE 'statut_enigme_%' OR meta_key LIKE 'enigme_%_resolution_date' OR meta_key LIKE 'indice_debloque_%' OR meta_key LIKE 'souscription_chasse_%'"
-    );
-
-    $patterns = [
-        'statut_enigme_%',
-        'enigme_%_resolution_date',
-        'indice_debloque_%',
-        'souscription_chasse_%',
-    ];
-
-    foreach ($patterns as $pattern) {
-        $wpdb->query("DELETE FROM {$wpdb->usermeta} WHERE meta_key LIKE '{$pattern}'");
-
-        if (!empty($wpdb->last_error)) {
-            wp_send_json_error($wpdb->last_error);
-        }
-
-        $total_deleted += (int) $wpdb->rows_affected;
-    }
-
-    foreach ($user_ids as $user_id) {
-        clean_user_cache((int) $user_id);
-    }
-
-    $chasses_terminees = get_posts([
-        'post_type'   => 'chasse',
-        'post_status' => 'any',
-        'meta_query'  => [
-            [
-                'key'   => 'chasse_cache_statut',
-                'value' => 'termine',
-            ],
-        ],
-        'fields'   => 'ids',
-        'nopaging' => true,
-    ]);
-
-    foreach ($chasses_terminees as $chasse_id) {
-        update_field('chasse_cache_statut', 'en_cours', $chasse_id);
-        delete_field('chasse_cache_gagnants', $chasse_id);
-        delete_field('chasse_cache_date_decouverte', $chasse_id);
-    }
-
-    $all_chasses = get_posts([
-        'post_type'   => 'chasse',
-        'post_status' => 'any',
-        'fields'      => 'ids',
-        'nopaging'    => true,
-    ]);
-
-    foreach ($all_chasses as $chasse_id) {
-        chasse_clear_infos_affichage_cache((int) $chasse_id);
-    }
-
-    wp_send_json_success(['deleted' => $total_deleted]);
+function cta_reset_stats(): void
+{
+    \ChassesAuTresor\Core\Admin\AdminAjaxHandler::resetStatistics();
 }
-add_action('wp_ajax_cta_reset_stats', 'cta_reset_stats');
 
-function cta_toggle_site_protection() {
-    if (!current_user_can('administrator')) {
-        wp_send_json_error(__('Non autorisé', 'chassesautresor-com'));
-    }
-
-    check_ajax_referer('cta_site_protection', 'nonce');
-
-    $enabled = isset($_POST['enabled']) && $_POST['enabled'] === '1' ? '1' : '0';
-    update_option('ca_site_password_enabled', $enabled);
-
-    wp_send_json_success(['enabled' => $enabled]);
+function cta_toggle_site_protection(): void
+{
+    \ChassesAuTresor\Core\Admin\AdminAjaxHandler::toggleSiteProtection();
 }
-add_action('wp_ajax_cta_toggle_site_protection', 'cta_toggle_site_protection');
+
+\ChassesAuTresor\Core\Admin\AdminAjaxHandler::configure(
+    static fn(array $requests): string => render_tableau_paiements_admin($requests),
+    static function (int $huntId): void {
+        chasse_clear_infos_affichage_cache($huntId);
+    },
+    static fn() => cat_get_conversion_service()
+);
 
 
 /**

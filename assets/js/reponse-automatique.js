@@ -131,6 +131,7 @@ document.addEventListener('DOMContentLoaded', () => {
               const dataW = new URLSearchParams();
               dataW.append('action', 'enigme_recuperer_gagnants');
               dataW.append('enigme_id', enigmeId);
+              dataW.append('nonce', RiddleSidebarAjax.nonce);
               const req = fetch('/wp-admin/admin-ajax.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -150,6 +151,7 @@ document.addEventListener('DOMContentLoaded', () => {
               dataP.append('action', 'enigme_recuperer_progression');
               dataP.append('chasse_id', chasseId);
               dataP.append('enigme_id', enigmeId);
+              dataP.append('nonce', RiddleSidebarAjax.nonce);
               const req = fetch('/wp-admin/admin-ajax.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },

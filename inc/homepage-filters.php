@@ -380,86 +380,23 @@ function ca_home_filter_chasse_ids(array $args): array
  */
 function ca_ajax_filter_chasses(): void
 {
-    check_ajax_referer('ca-filter-chasses', 'nonce');
+    \ChassesAuTresor\Core\Content\HuntFilterAjaxHandler::handle();
+}
 
-    $status_whitelist = ['tous', 'en_cours', 'a_venir', 'termine'];
-    $cost_whitelist   = ['gratuit', 'points'];
-
-    $raw_request = wp_unslash($_POST);
-
-    $filters = [];
-
-    if (isset($raw_request['status']) && is_string($raw_request['status'])) {
-        $status = sanitize_text_field($raw_request['status']);
-        if (in_array($status, $status_whitelist, true)) {
-            $filters['statut'] = $status;
-        }
-    }
-
-    if (array_key_exists('cost', $raw_request)) {
-        $raw_cost = $raw_request['cost'];
-
-        if (is_string($raw_cost)) {
-            $raw_cost = [$raw_cost];
-        }
-
-        if (is_array($raw_cost)) {
-            $raw_cost = array_map('strval', $raw_cost);
-            $filtered_cost = array_values(array_intersect($cost_whitelist, $raw_cost));
-            $filters['cout'] = $filtered_cost;
-        }
-    }
-
-    if (array_key_exists('search', $raw_request)) {
-        $filters['search'] = sanitize_text_field((string) $raw_request['search']);
-    }
-
-    $filter_results = ca_home_filter_chasse_ids($filters);
-
-    if (!is_array($filter_results) || !isset($filter_results['ids'])) {
-        wp_send_json_error([
-            'message' => __('Impossible de charger les chasses.', 'chassesautresor-com'),
-        ]);
-    }
-
-    $chasse_ids = is_array($filter_results['ids']) ? array_map('intval', $filter_results['ids']) : [];
-
+function ca_render_filtered_hunts(array $huntIds): string
+{
     ob_start();
     get_template_part('template-parts/organisateur/organisateur-partial-boucle-chasses', null, [
-        'chasse_ids'  => $chasse_ids,
+        'chasse_ids'  => $huntIds,
         'show_header' => false,
         'grid_class'  => 'organisateur-chasses-grid',
         'before_items' => '',
         'after_items'  => '',
     ]);
-    $html = (string) ob_get_clean();
-
-    $available_filters = [];
-    if (isset($filter_results['available_filters']) && is_array($filter_results['available_filters'])) {
-        $available_filters = $filter_results['available_filters'];
-    }
-
-    $normalized_filters = [];
-    if (isset($filter_results['filters_normalises']) && is_array($filter_results['filters_normalises'])) {
-        $normalized_filters = $filter_results['filters_normalises'];
-    }
-
-    $response_message = '';
-    if (!empty($filter_results['message']) && is_string($filter_results['message'])) {
-        $response_message = $filter_results['message'];
-    }
-
-    wp_send_json_success([
-        'html'     => $html,
-        'total'    => (int) ($filter_results['total'] ?? count($chasse_ids)),
-        'nonce'    => wp_create_nonce('ca-filter-chasses'),
-        'filters'  => [
-            'available'  => $available_filters,
-            'normalized' => $normalized_filters,
-        ],
-        'message'  => $response_message,
-    ]);
+    return (string) ob_get_clean();
 }
 
-add_action('wp_ajax_ca_filter_chasses', 'ca_ajax_filter_chasses');
-add_action('wp_ajax_nopriv_ca_filter_chasses', 'ca_ajax_filter_chasses');
+\ChassesAuTresor\Core\Content\HuntFilterAjaxHandler::configure(
+    static fn(array $filters): array => ca_home_filter_chasse_ids($filters),
+    static fn(array $huntIds): string => ca_render_filtered_hunts($huntIds)
+);

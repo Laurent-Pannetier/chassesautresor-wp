@@ -16,6 +16,7 @@ document.addEventListener('pager:change', (e) => {
   data.append('action', 'enigme_recuperer_gagnants');
   data.append('enigme_id', enigmeId);
   data.append('page', String(page));
+  data.append('nonce', RiddleSidebarAjax.nonce);
   fetch('/wp-admin/admin-ajax.php', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },

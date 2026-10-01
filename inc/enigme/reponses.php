@@ -1,16 +1,6 @@
 <?php
 defined('ABSPATH') || exit;
 
-if (!class_exists(ChassesAuTresor\Core\Progress\RiddleAnswerService::class, false)) {
-    require_once dirname(__DIR__, 4)
-        . '/plugins/chassesautresor-core/src/Progress/RiddleAnswerService.php';
-}
-
-if (!class_exists(ChassesAuTresor\Core\Progress\RiddleAnswerEvaluationService::class, false)) {
-    require_once dirname(__DIR__, 4)
-        . '/plugins/chassesautresor-core/src/Progress/RiddleAnswerEvaluationService.php';
-}
-
 /**
  * Retrieve the expected answers for an enigma, migrating old formats.
  *
@@ -177,155 +167,18 @@ function calculer_contexte_points(int $user_id, int $enigme_id): array
      * - champ réponse + nonce + enigme_id présents
      * - nonce valide
      */
-function soumettre_reponse_manuelle()
+function soumettre_reponse_manuelle(): void
 {
-    if (!is_user_logged_in()) {
-        wp_send_json_error('non_connecte');
-    }
-
-    $user_id   = get_current_user_id();
-    $enigme_id = isset($_POST['enigme_id']) ? (int) $_POST['enigme_id'] : 0;
-    $reponse   = isset($_POST['reponse_manuelle']) ? sanitize_textarea_field($_POST['reponse_manuelle']) : '';
-    $nonce     = $_POST['reponse_manuelle_nonce'] ?? '';
-
-    if (!$enigme_id || $reponse === '' || !wp_verify_nonce($nonce, 'reponse_manuelle_nonce')) {
-        wp_send_json_error('invalide');
-    }
-
-    if (!utilisateur_peut_repondre_manuelle($user_id, $enigme_id)) {
-        wp_send_json_error('interdit');
-    }
-
-    $current_statut = enigme_get_statut_utilisateur($enigme_id, $user_id);
-
-    if (in_array($current_statut, ['resolue', 'terminee'], true)) {
-        wp_send_json_error('deja_resolue');
-    }
-
-    $cout = (int) get_field('enigme_tentative_cout_points', $enigme_id);
-    if ($cout > get_user_points($user_id)) {
-        wp_send_json_error('points_insuffisants');
-    }
-
-    if ($cout > 0) {
-        $reason = sprintf(
-            __("Tentative de réponse pour l'énigme #%d", 'chassesautresor-com'),
-            $enigme_id
-        );
-        deduire_points_utilisateur($user_id, $cout, $reason, 'tentative', $enigme_id);
-    }
-
-    $uid = inserer_tentative($user_id, $enigme_id, $reponse);
-    $tentative_id = get_last_tentative_insert_id();
-    $timestamp = current_time('timestamp');
-    $date = wp_date('d/m/Y', $timestamp);
-    $time = wp_date('H:i', $timestamp);
-    enigme_mettre_a_jour_statut_utilisateur($enigme_id, $user_id, 'soumis', true);
-
-    $titre_enigme = get_the_title($enigme_id);
-    $link         = '<a href="' . esc_url(get_permalink($enigme_id)) . '">' . esc_html($titre_enigme) . '</a>';
-    myaccount_add_persistent_message($user_id, 'tentative_' . $uid, $link, 'info');
-
-    envoyer_mail_reponse_manuelle($user_id, $enigme_id, $reponse, $uid);
-
-    $solde = get_user_points($user_id);
-
-    wp_send_json_success([
-        'uid'    => $uid,
-        'id'     => $tentative_id,
-        'date'   => $date,
-        'time'   => $time,
-        'points' => $solde,
-    ]);
+    ChassesAuTresor\Core\Progress\RiddleAnswerSubmissionAjaxHandler::submitManual();
 }
-add_action('wp_ajax_soumettre_reponse_manuelle', 'soumettre_reponse_manuelle');
-add_action('wp_ajax_nopriv_soumettre_reponse_manuelle', 'soumettre_reponse_manuelle');
 
 /**
  * Traite la soumission d'une réponse automatique via AJAX.
  */
-function soumettre_reponse_automatique()
+function soumettre_reponse_automatique(): void
 {
-    if (!is_user_logged_in()) {
-        wp_send_json_error('non_connecte');
-    }
-
-    $user_id = get_current_user_id();
-    $enigme_id = isset($_POST['enigme_id']) ? (int) $_POST['enigme_id'] : 0;
-    $reponse = isset($_POST['reponse']) ? sanitize_text_field($_POST['reponse']) : '';
-    $nonce   = $_POST['nonce'] ?? '';
-
-    if (!$enigme_id || $reponse === '' || !wp_verify_nonce($nonce, 'reponse_auto_nonce')) {
-        wp_send_json_error('invalide');
-    }
-
-    $etat = enigme_get_etat_systeme($enigme_id);
-    $statut = enigme_get_statut_utilisateur($enigme_id, $user_id);
-
-    $autorisations = ['non_commencee', 'en_cours', 'abandonnee', 'echouee'];
-    if ($etat !== 'accessible' || !in_array($statut, $autorisations, true)) {
-        wp_send_json_error('interdit');
-    }
-
-    $max = (int) get_field('enigme_tentative_max', $enigme_id);
-    $deja = compter_tentatives_du_jour($user_id, $enigme_id);
-    if ($max && $deja >= $max) {
-        wp_send_json_error('tentatives_epuisees');
-    }
-
-    $cout = (int) get_field('enigme_tentative_cout_points', $enigme_id);
-    if ($cout > get_user_points($user_id)) {
-        wp_send_json_error('points_insuffisants');
-    }
-
-    $bonnes_reponses = enigme_get_bonnes_reponses($enigme_id);
-    $respecter_casse  = (int) get_field('enigme_reponse_casse', $enigme_id) === 1;
-
-    $variantes = [];
-    for ($i = 1; $i <= 4; $i++) {
-        $variantes[$i] = [
-            'texte' => (string) get_field("texte_{$i}", $enigme_id),
-            'message' => (string) get_field("message_{$i}", $enigme_id),
-            'casse' => (int) get_field("respecter_casse_{$i}", $enigme_id) === 1,
-        ];
-    }
-    $evaluation = (new ChassesAuTresor\Core\Progress\RiddleAnswerEvaluationService())->evaluate(
-        $reponse,
-        $bonnes_reponses,
-        $respecter_casse,
-        $variantes
-    );
-    $resultat = $evaluation['resultat'];
-    $message = $evaluation['message'];
-
-    $lock_key = "enigme_lock_{$enigme_id}_{$user_id}";
-    if (!wp_cache_add($lock_key, 1, 'enigme', 15)) {
-        wp_send_json_error('doublon');
-    }
-
-    try {
-        $uid = traiter_tentative($user_id, $enigme_id, $reponse, $resultat, true, false, false);
-    } catch (Throwable $e) {
-        wp_cache_delete($lock_key, 'enigme');
-        cat_debug('Erreur tentative : ' . $e->getMessage());
-        wp_send_json_error('erreur_interne');
-    }
-
-    wp_cache_delete($lock_key, 'enigme');
-
-    $compteur = compter_tentatives_du_jour($user_id, $enigme_id);
-    $solde = get_user_points($user_id);
-
-    wp_send_json_success([
-        'resultat' => $resultat,
-        'message'  => $message,
-        'uid'      => $uid,
-        'compteur' => $compteur,
-        'points'   => $solde,
-    ]);
+    ChassesAuTresor\Core\Progress\RiddleAnswerSubmissionAjaxHandler::submitAutomatic();
 }
-add_action('wp_ajax_soumettre_reponse_automatique', 'soumettre_reponse_automatique');
-add_action('wp_ajax_nopriv_soumettre_reponse_automatique', 'soumettre_reponse_automatique');
 
 
 
@@ -571,6 +424,9 @@ function charger_script_reponse_automatique() {
             filemtime(get_stylesheet_directory() . $path),
             true
         );
+        wp_localize_script('reponse-automatique', 'RiddleSidebarAjax', [
+            'nonce' => wp_create_nonce('riddle_sidebar'),
+        ]);
     }
 }
 add_action('wp_enqueue_scripts', 'charger_script_reponse_automatique');

@@ -7,38 +7,18 @@ defined('ABSPATH') || exit;
 
 require_once __DIR__ . '/../enigme/stats.php';
 
-if (!class_exists(ChassesAuTresor\Core\Progress\HuntEngagementService::class, false)) {
-    require_once dirname(__DIR__, 4)
-        . '/plugins/chassesautresor-core/src/Progress/HuntEngagementRepository.php';
-    require_once dirname(__DIR__, 4)
-        . '/plugins/chassesautresor-core/src/Progress/HuntEngagementService.php';
-}
-
-if (!class_exists(ChassesAuTresor\Core\Progress\HuntStatisticsService::class, false)) {
-    require_once dirname(__DIR__, 4)
-        . '/plugins/chassesautresor-core/src/Progress/HuntStatisticsRepository.php';
-    require_once dirname(__DIR__, 4)
-        . '/plugins/chassesautresor-core/src/Progress/HuntStatisticsService.php';
-}
-
 if (!function_exists('cat_get_hunt_engagement_service')) {
     function cat_get_hunt_engagement_service(): ChassesAuTresor\Core\Progress\HuntEngagementService
     {
         global $wpdb;
-
-        return new ChassesAuTresor\Core\Progress\HuntEngagementService(
-            new ChassesAuTresor\Core\Progress\HuntEngagementRepository($wpdb)
-        );
+        return ChassesAuTresor\Core\Support\CoreServiceFactory::huntEngagement($wpdb);
     }
 }
 
 function cat_get_hunt_statistics_service(): ChassesAuTresor\Core\Progress\HuntStatisticsService
 {
     global $wpdb;
-
-    return new ChassesAuTresor\Core\Progress\HuntStatisticsService(
-        new ChassesAuTresor\Core\Progress\HuntStatisticsRepository($wpdb)
-    );
+    return ChassesAuTresor\Core\Support\CoreServiceFactory::huntStatistics($wpdb);
 }
 
 function chasse_stats_excluded_user_ids(int $chasse_id): array
@@ -207,39 +187,11 @@ function chasse_lister_participants(int $chasse_id, int $limit, int $offset, str
 /**
  * AJAX handler retrieving hunt statistics.
  */
-function ajax_chasse_recuperer_stats()
+function ajax_chasse_recuperer_stats(): void
 {
-    if (!wp_verify_nonce((string) ($_POST['nonce'] ?? ''), 'statistics_management')) {
-        wp_send_json_error('invalid_nonce', 403);
-    }
-
-    $chasse_id = isset($_POST['chasse_id']) ? (int) $_POST['chasse_id'] : 0;
-    if ($chasse_id <= 0) {
-        wp_send_json_error('missing_chasse', 400);
-    }
-
-    if (!utilisateur_est_organisateur_associe_a_chasse(get_current_user_id(), $chasse_id)) {
-        wp_send_json_error('forbidden', 403);
-    }
-
-    $periodService = new ChassesAuTresor\Core\Progress\StatisticsPeriodService();
-    $periode = $periodService->normalize(sanitize_text_field($_POST['periode'] ?? 'total'));
-    $cache = new ChassesAuTresor\Core\Progress\StatisticsCacheService();
-    $stats = $cache->get('chasse', $chasse_id, $periode);
-
-    if ($stats === false) {
-        $stats = [
-            'participants'   => chasse_compter_participants($chasse_id, $periode),
-            'tentatives'     => chasse_compter_tentatives($chasse_id, $periode),
-            'points'         => chasse_compter_points_collectes($chasse_id, $periode),
-            'engagement_rate' => (int) round(chasse_calculer_taux_engagement($chasse_id, $periode)),
-        ];
-        $cache->put('chasse', $chasse_id, $periode, $stats, HOUR_IN_SECONDS);
-    }
-
-    wp_send_json_success($stats);
+    ChassesAuTresor\Core\Progress\HuntStatisticsAjaxHandler::summary();
 }
-add_action('wp_ajax_chasse_recuperer_stats', 'ajax_chasse_recuperer_stats');
+
 
 function chasse_stats_cache_key(int $chasse_id, string $periode): string
 {
@@ -262,55 +214,54 @@ function chasse_invalidate_cache_from_enigme(int $enigme_id): void
 /**
  * AJAX handler listing hunt participants.
  */
-function ajax_chasse_lister_participants()
+function ajax_chasse_lister_participants(): void
 {
-    if (!is_user_logged_in()) {
-        wp_send_json_error('non_connecte');
-    }
-    if (!wp_verify_nonce((string) ($_POST['nonce'] ?? ''), 'statistics_management')) {
-        wp_send_json_error('invalid_nonce', 403);
-    }
+    ChassesAuTresor\Core\Progress\HuntStatisticsAjaxHandler::participants();
+}
 
-    $chasse_id = isset($_POST['chasse_id']) ? (int) $_POST['chasse_id'] : 0;
-    $page      = max(1, (int) ($_POST['page'] ?? 1));
-    $order     = isset($_POST['order']) ? sanitize_text_field($_POST['order']) : 'ASC';
-    $orderby   = isset($_POST['orderby']) ? sanitize_text_field($_POST['orderby']) : 'inscription';
-    $order     = strtoupper($order) === 'DESC' ? 'DESC' : 'ASC';
-    $orderby   = in_array($orderby, ['inscription', 'username', 'participation', 'resolution'], true) ? $orderby : 'inscription';
-
-    if (!$chasse_id || get_post_type($chasse_id) !== 'chasse') {
-        wp_send_json_error('post_invalide');
-    }
-
-    if (!utilisateur_est_organisateur_associe_a_chasse(get_current_user_id(), $chasse_id)) {
-        wp_send_json_error('acces_refuse');
-    }
-
-    $par_page = 25;
-    $offset = ($page - 1) * $par_page;
-    $participants = chasse_lister_participants($chasse_id, $par_page, $offset, $orderby, $order);
-    $total = chasse_compter_participants($chasse_id);
-    $pages = (int) ceil($total / $par_page);
-
+function cat_render_hunt_statistics_participants(
+    int $hunt_id,
+    array $participants,
+    array $request,
+    int $total,
+    int $pages,
+    string $orderby
+): string {
     ob_start();
     get_template_part('template-parts/chasse/partials/chasse-partial-participants', null, [
         'participants' => $participants,
-        'page' => $page,
-        'par_page' => $par_page,
+        'page' => $request['page'],
+        'par_page' => $request['limit'],
         'total' => $total,
         'pages' => $pages,
-        'chasse_titre' => get_the_title($chasse_id),
-        'total_enigmes' => count(recuperer_ids_enigmes_pour_chasse($chasse_id)),
+        'chasse_titre' => get_the_title($hunt_id),
+        'total_enigmes' => count(recuperer_ids_enigmes_pour_chasse($hunt_id)),
         'orderby' => $orderby,
-        'order' => $order,
+        'order' => $request['order'],
     ]);
-    $html = ob_get_clean();
 
-    wp_send_json_success([
-        'html' => $html,
-        'total' => $total,
-        'page' => $page,
-        'pages' => $pages,
-    ]);
+    return (string) ob_get_clean();
 }
-add_action('wp_ajax_chasse_lister_participants', 'ajax_chasse_lister_participants');
+
+if (class_exists(ChassesAuTresor\Core\Progress\HuntStatisticsAjaxHandler::class)) {
+    ChassesAuTresor\Core\Progress\HuntStatisticsAjaxHandler::configure(
+        static function (int $id): bool {
+            return utilisateur_est_organisateur_associe_a_chasse(get_current_user_id(), $id);
+        },
+        static function (int $id, string $period): array {
+            return [
+                'participants' => chasse_compter_participants($id, $period),
+                'tentatives' => chasse_compter_tentatives($id, $period),
+                'points' => chasse_compter_points_collectes($id, $period),
+                'engagement_rate' => (int) round(chasse_calculer_taux_engagement($id, $period)),
+            ];
+        },
+        static function (int $id, int $limit, int $offset, string $orderby, string $order): array {
+            return chasse_lister_participants($id, $limit, $offset, $orderby, $order);
+        },
+        static fn (int $id): int => chasse_compter_participants($id),
+        static function (...$arguments): string {
+            return cat_render_hunt_statistics_participants(...$arguments);
+        }
+    );
+}

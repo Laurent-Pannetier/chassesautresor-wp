@@ -223,41 +223,26 @@ if (!function_exists('ajax_chasse_recuperer_navigation')) {
      */
     function ajax_chasse_recuperer_navigation(): void
     {
-        $chasse_id = isset($_POST['chasse_id']) ? (int) $_POST['chasse_id'] : 0;
-        if (!$chasse_id || get_post_type($chasse_id) !== 'chasse') {
-            wp_send_json_error('post_invalide', 400);
-        }
-
-        $user_id = get_current_user_id();
-        $is_privileged = current_user_can('manage_options') || (
-            function_exists('utilisateur_est_organisateur_associe_a_chasse')
-            && utilisateur_est_organisateur_associe_a_chasse($user_id, $chasse_id)
-        );
-
-        if (
-            !$is_privileged
-            && (
-                !function_exists('utilisateur_est_engage_dans_chasse')
-                || !utilisateur_est_engage_dans_chasse($user_id, $chasse_id)
-            )
-        ) {
-            wp_send_json_error('non_engage', 403);
-        }
-
-        $current_enigme = isset($_POST['enigme_id']) ? (int) $_POST['enigme_id'] : 0;
-        $data           = sidebar_prepare_chasse_nav(
-            $chasse_id,
-            $user_id,
-            $current_enigme
-        );
-
-        wp_send_json_success([
-            'html' => implode('', $data['menu_items']),
-            'ids'  => $data['visible_ids'],
-        ]);
+        ChassesAuTresor\Core\Progress\HuntNavigationAjaxHandler::handle();
     }
-    add_action('wp_ajax_chasse_recuperer_navigation', 'ajax_chasse_recuperer_navigation');
-    add_action('wp_ajax_nopriv_chasse_recuperer_navigation', 'ajax_chasse_recuperer_navigation');
+
+    if (class_exists(ChassesAuTresor\Core\Progress\HuntNavigationAjaxHandler::class)) {
+        ChassesAuTresor\Core\Progress\HuntNavigationAjaxHandler::configure(
+            static function (int $user_id, int $hunt_id): bool {
+                return (new ChassesAuTresor\Core\Progress\HuntNavigationAccessService())->canView(
+                    $user_id,
+                    current_user_can('manage_options'),
+                    function_exists('utilisateur_est_organisateur_associe_a_chasse')
+                        && utilisateur_est_organisateur_associe_a_chasse($user_id, $hunt_id),
+                    function_exists('utilisateur_est_engage_dans_chasse')
+                        && utilisateur_est_engage_dans_chasse($user_id, $hunt_id)
+                );
+            },
+            static function (int $hunt_id, int $user_id, int $riddle_id): array {
+                return sidebar_prepare_chasse_nav($hunt_id, $user_id, $riddle_id);
+            }
+        );
+    }
 }
 
 if (!function_exists('render_sidebar')) {
@@ -417,4 +402,3 @@ if (!function_exists('render_sidebar')) {
         ];
     }
 }
-

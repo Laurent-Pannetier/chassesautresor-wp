@@ -1112,39 +1112,8 @@ function recuperer_enigmes_possibles_pre_requis($enigme_id)
  */
 function verifier_et_enregistrer_condition_pre_requis()
 {
-    $is_authenticated = is_user_logged_in();
-    $user_id = $is_authenticated ? get_current_user_id() : 0;
-    $post_id = isset($_POST['post_id']) ? (int) $_POST['post_id'] : 0;
-    $is_riddle = $is_authenticated && $post_id > 0 && get_post_type($post_id) === 'enigme';
-    $prerequisites = $is_riddle ? get_field('enigme_acces_pre_requis', $post_id) : [];
-    $prerequisite_ids = is_array($prerequisites) ? $prerequisites : [];
-    $service = new ChassesAuTresor\Core\Content\RiddlePrerequisiteService();
-    $error = $service->getConditionUpdateError(
-        $is_authenticated,
-        $is_riddle,
-        $is_riddle && (int) get_post_field('post_author', $post_id) === $user_id,
-        $prerequisite_ids
-    );
-
-    if ($error !== null) {
-        $messages = [
-            ChassesAuTresor\Core\Content\RiddlePrerequisiteService::ERROR_UNAUTHENTICATED =>
-                __('Utilisateur non connecté.', 'chassesautresor-com'),
-            ChassesAuTresor\Core\Content\RiddlePrerequisiteService::ERROR_INVALID_RIDDLE =>
-                __('Identifiant ou type de contenu invalide.', 'chassesautresor-com'),
-            ChassesAuTresor\Core\Content\RiddlePrerequisiteService::ERROR_FORBIDDEN =>
-                __('Accès refusé.', 'chassesautresor-com'),
-            ChassesAuTresor\Core\Content\RiddlePrerequisiteService::ERROR_MISSING_PREREQUISITES =>
-                __('Aucun prérequis sélectionné.', 'chassesautresor-com'),
-        ];
-        wp_send_json_error($messages[$error]);
-    }
-
-    update_field('enigme_acces_condition', 'pre_requis', $post_id);
-
-    wp_send_json_success(__('Condition « prérequis » enregistrée.', 'chassesautresor-com'));
+    ChassesAuTresor\Core\Content\RiddlePrerequisiteAjaxHandler::handle();
 }
-add_action('wp_ajax_verifier_et_enregistrer_condition_pre_requis', 'verifier_et_enregistrer_condition_pre_requis');
 
 
 

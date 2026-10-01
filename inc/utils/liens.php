@@ -1,11 +1,6 @@
 <?php
 defined( 'ABSPATH' ) || exit;
 
-if (!class_exists(ChassesAuTresor\Core\Content\PublicLinkService::class, false)) {
-    require_once dirname(__DIR__, 4)
-        . '/plugins/chassesautresor-core/src/Content/PublicLinkService.php';
-}
-
 /**
  * ============================================================
  * 🎛️  CONFIGURATION DES TYPES DE LIENS PUBLICS

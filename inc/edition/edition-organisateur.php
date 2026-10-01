@@ -1,21 +1,6 @@
 <?php
 defined('ABSPATH') || exit;
 
-if (!class_exists(ChassesAuTresor\Core\Content\OrganizerCreationService::class, false)) {
-    require_once dirname(__DIR__, 4)
-        . '/plugins/chassesautresor-core/src/Content/OrganizerCreationService.php';
-}
-
-if (!class_exists(ChassesAuTresor\Core\Content\OrganizerMutationService::class, false)) {
-    require_once dirname(__DIR__, 4)
-        . '/plugins/chassesautresor-core/src/Content/OrganizerMutationService.php';
-}
-
-if (!class_exists(ChassesAuTresor\Core\Content\PublicLinkService::class, false)) {
-    require_once dirname(__DIR__, 4)
-        . '/plugins/chassesautresor-core/src/Content/PublicLinkService.php';
-}
-
 // ==================================================
 // 👤 CRÉATION & ÉDITION D’UN ORGANISATEUR
 // ==================================================

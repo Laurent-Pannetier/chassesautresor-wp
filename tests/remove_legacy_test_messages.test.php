@@ -49,7 +49,8 @@ $wpdb = new class {
     }
 };
 
-require_once __DIR__ . '/../inc/messages/class-user-message-repository.php';
+require_once __DIR__ . '/../../../plugins/chassesautresor-core/src/Messages/UserMessageRepository.php';
+class_alias(ChassesAuTresor\Core\Messages\UserMessageRepository::class, 'UserMessageRepository');
 require_once __DIR__ . '/../inc/messages.php';
 
 class RemoveLegacyTestMessagesTest extends TestCase

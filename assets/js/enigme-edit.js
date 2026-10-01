@@ -473,7 +473,8 @@ function initEnigmeEdit() {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
         action: 'actualiser_cta_validation_chasse',
-        enigme_id: postId
+        enigme_id: postId,
+        nonce: window.CHP_ENIGME_DEFAUT?.nonce || ''
       })
     })
       .then(r => r.json())

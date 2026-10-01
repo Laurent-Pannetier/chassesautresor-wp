@@ -1,69 +1,10 @@
 <?php
 defined('ABSPATH') || exit;
 
-if (!class_exists(ChassesAuTresor\Core\Relationships\OrganizerService::class, false)) {
-    require_once dirname(__DIR__, 3)
-        . '/plugins/chassesautresor-core/src/Relationships/OrganizerRepository.php';
-    require_once dirname(__DIR__, 3)
-        . '/plugins/chassesautresor-core/src/Relationships/OrganizerService.php';
-}
-
-if (!class_exists(ChassesAuTresor\Core\Relationships\RelationshipService::class, false)) {
-    require_once dirname(__DIR__, 3)
-        . '/plugins/chassesautresor-core/src/Relationships/RelationshipService.php';
-}
-
-if (!class_exists(ChassesAuTresor\Core\Relationships\HuntRiddleQueryService::class, false)) {
-    require_once dirname(__DIR__, 3)
-        . '/plugins/chassesautresor-core/src/Relationships/HuntRiddleQueryService.php';
-}
-
-if (!class_exists(ChassesAuTresor\Core\Relationships\OrganizerHuntQueryService::class, false)) {
-    require_once dirname(__DIR__, 3)
-        . '/plugins/chassesautresor-core/src/Relationships/OrganizerHuntQueryService.php';
-}
-
-if (!class_exists(ChassesAuTresor\Core\Content\HuntManagementService::class, false)) {
-    require_once dirname(__DIR__, 3)
-        . '/plugins/chassesautresor-core/src/Content/HuntManagementService.php';
-}
-
-if (!class_exists(ChassesAuTresor\Core\Relationships\HuntRiddleCacheService::class, false)) {
-    require_once dirname(__DIR__, 3)
-        . '/plugins/chassesautresor-core/src/Relationships/HuntRiddleCacheService.php';
-}
-
-if (!class_exists(ChassesAuTresor\Core\Content\HuntFeatureService::class, false)) {
-    require_once dirname(__DIR__, 3)
-        . '/plugins/chassesautresor-core/src/Content/HuntFeatureService.php';
-}
-
-if (!class_exists(ChassesAuTresor\Core\Content\HuntFeatureCacheManager::class, false)) {
-    require_once dirname(__DIR__, 3)
-        . '/plugins/chassesautresor-core/src/Content/SolutionQueryService.php';
-    require_once dirname(__DIR__, 3)
-        . '/plugins/chassesautresor-core/src/Content/HintQueryService.php';
-    require_once dirname(__DIR__, 3)
-        . '/plugins/chassesautresor-core/src/Content/HuntFeatureCacheManager.php';
-}
-
-if (!class_exists(ChassesAuTresor\Core\Content\AcfRelationshipMutationService::class, false)) {
-    require_once dirname(__DIR__, 3)
-        . '/plugins/chassesautresor-core/src/Content/AcfRelationshipMutationService.php';
-}
-
-if (!class_exists(ChassesAuTresor\Core\Relationships\HuntRiddleCacheSynchronizer::class, false)) {
-    require_once dirname(__DIR__, 3)
-        . '/plugins/chassesautresor-core/src/Relationships/HuntRiddleCacheSynchronizer.php';
-}
-
 function cat_get_organizer_service(): ChassesAuTresor\Core\Relationships\OrganizerService
 {
     global $wpdb;
-
-    return new ChassesAuTresor\Core\Relationships\OrganizerService(
-        new ChassesAuTresor\Core\Relationships\OrganizerRepository($wpdb)
-    );
+    return ChassesAuTresor\Core\Support\CoreServiceFactory::organizer($wpdb);
 }
 
 function cat_get_relationship_service(): ChassesAuTresor\Core\Relationships\RelationshipService

@@ -1,11 +1,6 @@
 <?php
 defined('ABSPATH') || exit;
 
-if (!class_exists(ChassesAuTresor\Core\Media\RiddleImageProtectionService::class, false)) {
-    require_once dirname(__DIR__, 4)
-        . '/plugins/chassesautresor-core/src/Media/RiddleImageProtectionService.php';
-}
-
 
 // ==================================================
 // 🔐 PROTECTION DES VISUELS (.htaccess)

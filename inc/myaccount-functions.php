@@ -7,16 +7,6 @@
 
 defined('ABSPATH') || exit;
 
-if (!class_exists(ChassesAuTresor\Core\Content\OrganizerNavigationService::class, false)) {
-    require_once dirname(__DIR__, 3)
-        . '/plugins/chassesautresor-core/src/Content/OrganizerNavigationService.php';
-}
-
-if (!class_exists(ChassesAuTresor\Core\Relationships\OrganizerHuntQueryService::class, false)) {
-    require_once dirname(__DIR__, 3)
-        . '/plugins/chassesautresor-core/src/Relationships/OrganizerHuntQueryService.php';
-}
-
 /**
  * Retrieve organizer navigation data for the sidebar.
  *

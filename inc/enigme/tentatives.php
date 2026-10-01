@@ -1,21 +1,11 @@
 <?php
 defined('ABSPATH') || exit;
 
-if (!class_exists(ChassesAuTresor\Core\Progress\RiddleAttemptService::class, false)) {
-    require_once dirname(__DIR__, 4)
-        . '/plugins/chassesautresor-core/src/Progress/RiddleAttemptRepository.php';
-    require_once dirname(__DIR__, 4)
-        . '/plugins/chassesautresor-core/src/Progress/RiddleAttemptService.php';
-}
-
 if (!function_exists('cat_get_riddle_attempt_service')) {
     function cat_get_riddle_attempt_service(): ChassesAuTresor\Core\Progress\RiddleAttemptService
     {
         global $wpdb;
-
-        return new ChassesAuTresor\Core\Progress\RiddleAttemptService(
-            new ChassesAuTresor\Core\Progress\RiddleAttemptRepository($wpdb)
-        );
+        return ChassesAuTresor\Core\Support\CoreServiceFactory::riddleAttempts($wpdb);
     }
 }
 
@@ -80,21 +70,19 @@ if (!function_exists('cat_get_riddle_attempt_service')) {
     {
         $current_user_id = (int) get_current_user_id();
 
-        return cat_get_riddle_attempt_service()->canViewAttempt(
-            $tentative,
+        $is_organizer = false;
+        if (function_exists('recuperer_id_chasse_associee')) {
+            $chasse_id = (int) recuperer_id_chasse_associee((int) ($tentative->enigme_id ?? 0));
+            $is_organizer = $chasse_id > 0
+                && function_exists('utilisateur_est_organisateur_associe_a_chasse')
+                && utilisateur_est_organisateur_associe_a_chasse($current_user_id, $chasse_id);
+        }
+
+        return (new ChassesAuTresor\Core\Progress\RiddleAttemptAccessPolicy())->canView(
             $current_user_id,
+            (int) ($tentative->user_id ?? 0),
             current_user_can('manage_options'),
-            static function (int $user_id, int $enigme_id): bool {
-                if (!function_exists('recuperer_id_chasse_associee')) {
-                    return false;
-                }
-
-                $chasse_id = (int) recuperer_id_chasse_associee($enigme_id);
-
-                return $chasse_id > 0
-                    && function_exists('utilisateur_est_organisateur_associe_a_chasse')
-                    && utilisateur_est_organisateur_associe_a_chasse($user_id, $chasse_id);
-            }
+            $is_organizer
         );
     }
 
@@ -103,41 +91,19 @@ if (!function_exists('cat_get_riddle_attempt_service')) {
      */
     function ca_ajax_view_tentative_proposition(): void
     {
-        if (!is_user_logged_in()) {
-            wp_send_json_error(['message' => __('Unauthorized', 'chassesautresor-com')], 403);
-        }
-
-        $uid = isset($_POST['uid']) ? sanitize_text_field(wp_unslash((string) $_POST['uid'])) : '';
-        if ($uid === '') {
-            wp_send_json_error(['message' => __('Identifiant de tentative invalide.', 'chassesautresor-com')], 400);
-        }
-
-        $nonce_valid = true;
-        if (function_exists('check_ajax_referer')) {
-            $nonce_valid = check_ajax_referer('ca_view_tentative_' . $uid, 'nonce', false);
-        }
-
-        if ($nonce_valid === false) {
-            wp_send_json_error(['message' => __('Vérification de sécurité échouée.', 'chassesautresor-com')], 403);
-        }
-
-        $tentative = get_tentative_by_uid($uid);
-        if (!$tentative) {
-            wp_send_json_error(['message' => __('Tentative introuvable.', 'chassesautresor-com')], 404);
-        }
-
-        if (!ca_user_can_view_tentative_proposition($tentative)) {
-            wp_send_json_error(['message' => __('Unauthorized', 'chassesautresor-com')], 403);
-        }
-
-        $proposition = isset($tentative->reponse_saisie) ? (string) $tentative->reponse_saisie : '';
-
-        wp_send_json_success([
-            'proposition' => $proposition,
-        ]);
+        ChassesAuTresor\Core\Progress\RiddleAttemptViewAjaxHandler::handle();
     }
-    add_action('wp_ajax_ca_view_tentative_proposition', 'ca_ajax_view_tentative_proposition');
-    add_action('wp_ajax_nopriv_ca_view_tentative_proposition', 'ca_ajax_view_tentative_proposition');
+
+if (class_exists(ChassesAuTresor\Core\Progress\RiddleAttemptViewAjaxHandler::class)) {
+    ChassesAuTresor\Core\Progress\RiddleAttemptViewAjaxHandler::configure(
+        static function (string $uid): ?object {
+            return get_tentative_by_uid($uid);
+        },
+        static function (object $attempt): bool {
+            return ca_user_can_view_tentative_proposition($attempt);
+        }
+    );
+}
 
 
     /**
@@ -283,52 +249,37 @@ function compter_tentatives_enigme(int $enigme_id): int
     return cat_get_riddle_attempt_service()->countForRiddle($enigme_id);
 }
 
-/**
- * Retourne la liste HTML des tentatives pour une page donnée via AJAX.
- *
- * @hook wp_ajax_lister_tentatives_enigme
- */
-add_action('wp_ajax_lister_tentatives_enigme', 'ajax_lister_tentatives_enigme');
-
-function ajax_lister_tentatives_enigme()
+/** Retourne le rendu HTML thématique d'une page de tentatives. */
+function cat_render_riddle_attempt_list(array $arguments): string
 {
-    if (!is_user_logged_in()) {
-        wp_send_json_error('non_connecte');
-    }
-
-    $enigme_id = isset($_POST['enigme_id']) ? (int) $_POST['enigme_id'] : 0;
-    $page      = max(1, (int) ($_POST['page'] ?? 1));
-    $par_page  = 20;
-
-    if (!$enigme_id || get_post_type($enigme_id) !== 'enigme') {
-        wp_send_json_error('post_invalide');
-    }
-
-    if (!utilisateur_peut_modifier_post($enigme_id)) {
-        wp_send_json_error('acces_refuse');
-    }
-
-    $offset     = ($page - 1) * $par_page;
-    $tentatives = recuperer_tentatives_enigme($enigme_id, $par_page, $offset);
-    $total      = compter_tentatives_enigme($enigme_id);
-    $pages      = (int) ceil($total / $par_page);
-
     ob_start();
-    get_template_part('template-parts/enigme/partials/enigme-partial-tentatives', null, [
-        'tentatives' => $tentatives,
-        'page'       => $page,
-        'par_page'   => $par_page,
-        'total'      => $total,
-        'pages'      => $pages,
-    ]);
-    $html = ob_get_clean();
+    get_template_part('template-parts/enigme/partials/enigme-partial-tentatives', null, $arguments);
 
-    wp_send_json_success([
-        'html'  => $html,
-        'total' => $total,
-        'page'  => $page,
-        'pages' => $pages,
-    ]);
+    return (string) ob_get_clean();
+}
+
+/** Compatibility facade for the historical callback. */
+function ajax_lister_tentatives_enigme(): void
+{
+    ChassesAuTresor\Core\Progress\RiddleAttemptListAjaxHandler::handle();
+}
+
+if (class_exists(ChassesAuTresor\Core\Progress\RiddleAttemptListAjaxHandler::class)) {
+    ChassesAuTresor\Core\Progress\RiddleAttemptListAjaxHandler::configure(
+        static function (int $riddle_id): bool {
+            return function_exists('utilisateur_peut_modifier_post')
+                && utilisateur_peut_modifier_post($riddle_id);
+        },
+        static function (int $riddle_id, int $limit, int $offset): array {
+            return recuperer_tentatives_enigme($riddle_id, $limit, $offset);
+        },
+        static function (int $riddle_id): int {
+            return compter_tentatives_enigme($riddle_id);
+        },
+        static function (array $arguments): string {
+            return cat_render_riddle_attempt_list($arguments);
+        }
+    );
 }
 
 /**

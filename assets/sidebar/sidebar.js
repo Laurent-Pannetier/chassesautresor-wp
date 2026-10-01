@@ -60,6 +60,7 @@
       const data = new URLSearchParams();
       data.append('action', 'chasse_recuperer_navigation');
       data.append('chasse_id', chasseId);
+      data.append('nonce', sidebarData.nonce);
       fetch(sidebarData.ajaxUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },

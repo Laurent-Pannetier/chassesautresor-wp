@@ -4,21 +4,11 @@ require_once __DIR__ . '/../sidebar.php';
 require_once __DIR__ . '/utils.php';
 require_once __DIR__ . '/indices.php';
 
-if (!class_exists(ChassesAuTresor\Core\Progress\RiddleStatisticsService::class, false)) {
-    require_once dirname(__DIR__, 4)
-        . '/plugins/chassesautresor-core/src/Progress/RiddleStatisticsRepository.php';
-    require_once dirname(__DIR__, 4)
-        . '/plugins/chassesautresor-core/src/Progress/RiddleStatisticsService.php';
-}
-
 if (!function_exists('cat_get_riddle_statistics_service')) {
     function cat_get_riddle_statistics_service(): ChassesAuTresor\Core\Progress\RiddleStatisticsService
     {
         global $wpdb;
-
-        return new ChassesAuTresor\Core\Progress\RiddleStatisticsService(
-            new ChassesAuTresor\Core\Progress\RiddleStatisticsRepository($wpdb)
-        );
+        return ChassesAuTresor\Core\Support\CoreServiceFactory::riddleStatistics($wpdb);
     }
 }
 
@@ -1047,56 +1037,35 @@ if (!function_exists('cat_get_riddle_statistics_service')) {
      */
     function ajax_enigme_recuperer_gagnants(): void
     {
-        $enigme_id = isset($_POST['enigme_id']) ? (int) $_POST['enigme_id'] : 0;
-        $page      = isset($_POST['page']) ? (int) $_POST['page'] : 1;
-
-        if ($enigme_id <= 0) {
-            wp_send_json_error('missing_enigme', 400);
-        }
-
-        if (get_field('enigme_mode_validation', $enigme_id) === 'aucune') {
-            wp_send_json_error('disabled', 400);
-        }
-
-        $user_id = get_current_user_id();
-        $html    = enigme_sidebar_gagnants_html($enigme_id, $user_id, $page);
-        wp_send_json_success(['html' => $html]);
+        ChassesAuTresor\Core\Progress\RiddleSidebarAjaxHandler::winners();
     }
-
-    add_action('wp_ajax_enigme_recuperer_gagnants', 'ajax_enigme_recuperer_gagnants');
-    add_action('wp_ajax_nopriv_enigme_recuperer_gagnants', 'ajax_enigme_recuperer_gagnants');
 
     /**
      * AJAX handler to refresh the statistics section.
      */
     function ajax_enigme_recuperer_progression(): void
     {
-        if (!is_user_logged_in()) {
-            wp_send_json_error('non_connecte', 403);
-        }
-
-        $chasse_id = isset($_POST['chasse_id']) ? (int) $_POST['chasse_id'] : 0;
-        $enigme_id = isset($_POST['enigme_id']) ? (int) $_POST['enigme_id'] : 0;
-        if ($chasse_id <= 0 || $enigme_id <= 0) {
-            wp_send_json_error('missing_chasse', 400);
-        }
-
-        $user_id = get_current_user_id();
-
-        // Ensure stats are recalculated with up-to-date engagement data.
-        enigme_clear_sidebar_cache($chasse_id, $user_id);
-        wp_cache_delete('enigme_sidebar_resolution_' . $enigme_id, 'chassesautresor');
-
-        $html    = '<h3>' . esc_html__('Statistiques', 'chassesautresor-com') . '</h3>';
-        $html   .= enigme_sidebar_metas_html($enigme_id);
-        $html   .= enigme_sidebar_progression_html($chasse_id, $user_id);
-        $html   .= enigme_sidebar_resolution_html($enigme_id);
-
-        wp_send_json_success(['html' => $html]);
+        ChassesAuTresor\Core\Progress\RiddleSidebarAjaxHandler::progression();
     }
 
-    add_action('wp_ajax_enigme_recuperer_progression', 'ajax_enigme_recuperer_progression');
-    add_action('wp_ajax_nopriv_enigme_recuperer_progression', 'ajax_enigme_recuperer_progression');
+    if (class_exists(ChassesAuTresor\Core\Progress\RiddleSidebarAjaxHandler::class)) {
+        ChassesAuTresor\Core\Progress\RiddleSidebarAjaxHandler::configure(
+            static fn (int $riddle_id): int => (int) recuperer_id_chasse_associee($riddle_id),
+            static function (int $riddle_id, int $user_id, int $page): string {
+                return enigme_sidebar_gagnants_html($riddle_id, $user_id, $page);
+            },
+            static function (int $hunt_id, int $riddle_id, int $user_id): string {
+                $html = '<h3>' . esc_html__('Statistiques', 'chassesautresor-com') . '</h3>';
+                $html .= enigme_sidebar_metas_html($riddle_id);
+                $html .= enigme_sidebar_progression_html($hunt_id, $user_id);
+                return $html . enigme_sidebar_resolution_html($riddle_id);
+            },
+            static function (int $hunt_id, int $riddle_id, int $user_id): void {
+                enigme_clear_sidebar_cache($hunt_id, $user_id);
+                wp_cache_delete('enigme_sidebar_resolution_' . $riddle_id, 'chassesautresor');
+            }
+        );
+    }
 
     /**
      * Enqueue scripts for the winners pager.
@@ -1122,7 +1091,6 @@ if (!function_exists('cat_get_riddle_statistics_service')) {
             filemtime($dir . '/assets/js/core/pager.js'),
             true
         );
-
         $path = '/assets/js/enigme-gagnants.js';
         wp_enqueue_script(
             'enigme-gagnants',
@@ -1131,5 +1099,8 @@ if (!function_exists('cat_get_riddle_statistics_service')) {
             filemtime($dir . $path),
             true
         );
+        wp_localize_script('enigme-gagnants', 'RiddleSidebarAjax', [
+            'nonce' => wp_create_nonce('riddle_sidebar'),
+        ]);
     }
     add_action('wp_enqueue_scripts', 'enigme_enqueue_gagnants_scripts');

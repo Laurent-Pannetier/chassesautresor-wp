@@ -1,48 +1,13 @@
 <?php
 defined( 'ABSPATH' ) || exit;
 
-if (!class_exists(ChassesAuTresor\Core\Points\PointsService::class, false)) {
-    require_once dirname(__DIR__, 3)
-        . '/plugins/chassesautresor-core/src/Points/PointsService.php';
-}
-
-if (!class_exists(ChassesAuTresor\Core\Points\PurchasePointsService::class, false)) {
-    require_once dirname(__DIR__, 3)
-        . '/plugins/chassesautresor-core/src/Points/PurchasePointsService.php';
-}
-
-if (!class_exists(ChassesAuTresor\Core\Points\ConversionService::class, false)) {
-    require_once dirname(__DIR__, 3)
-        . '/plugins/chassesautresor-core/src/Points/ConversionService.php';
-}
-
-if (!class_exists(ChassesAuTresor\Core\Progress\HuntProgressService::class, false)) {
-    require_once dirname(__DIR__, 3)
-        . '/plugins/chassesautresor-core/src/Progress/HuntProgressRepository.php';
-    require_once dirname(__DIR__, 3)
-        . '/plugins/chassesautresor-core/src/Progress/HuntProgressService.php';
-}
-
-if (!class_exists(ChassesAuTresor\Core\Progress\HuntRiddleClassifier::class, false)) {
-    require_once dirname(__DIR__, 3)
-        . '/plugins/chassesautresor-core/src/Progress/HuntRiddleClassifier.php';
-}
-
-if (!class_exists(ChassesAuTresor\Core\Progress\HuntCompletionService::class, false)) {
-    require_once dirname(__DIR__, 3)
-        . '/plugins/chassesautresor-core/src/Progress/HuntCompletionService.php';
-}
-
 /**
  * Create the service responsible for points operations.
  */
 function cat_get_points_service(): ChassesAuTresor\Core\Points\PointsService
 {
     global $wpdb;
-
-    return new ChassesAuTresor\Core\Points\PointsService(
-        new PointsRepository($wpdb)
-    );
+    return ChassesAuTresor\Core\Support\CoreServiceFactory::points($wpdb);
 }
 
 /**
@@ -50,7 +15,8 @@ function cat_get_points_service(): ChassesAuTresor\Core\Points\PointsService
  */
 function cat_get_purchase_points_service(): ChassesAuTresor\Core\Points\PurchasePointsService
 {
-    return new ChassesAuTresor\Core\Points\PurchasePointsService(cat_get_points_service());
+    global $wpdb;
+    return ChassesAuTresor\Core\Support\CoreServiceFactory::purchasePoints($wpdb);
 }
 
 /**
@@ -59,23 +25,14 @@ function cat_get_purchase_points_service(): ChassesAuTresor\Core\Points\Purchase
 function cat_get_conversion_service(): ChassesAuTresor\Core\Points\ConversionService
 {
     global $wpdb;
-
-    $repository = new PointsRepository($wpdb);
-
-    return new ChassesAuTresor\Core\Points\ConversionService(
-        $repository,
-        new ChassesAuTresor\Core\Points\PointsService($repository)
-    );
+    return ChassesAuTresor\Core\Support\CoreServiceFactory::conversion($wpdb);
 }
 
 if (!function_exists('cat_get_hunt_progress_service')) {
     function cat_get_hunt_progress_service(): ChassesAuTresor\Core\Progress\HuntProgressService
     {
         global $wpdb;
-
-        return new ChassesAuTresor\Core\Progress\HuntProgressService(
-            new ChassesAuTresor\Core\Progress\HuntProgressRepository($wpdb)
-        );
+        return ChassesAuTresor\Core\Support\CoreServiceFactory::huntProgress($wpdb);
     }
 }
 
@@ -558,26 +515,14 @@ function enqueue_points_history_script(): void
 /**
  * AJAX handler for loading paginated points history.
  */
-function ajax_load_points_history(): void
+function cat_render_points_history_rows(array $operations): string
 {
-    if (!is_user_logged_in()) {
-        wp_send_json_error();
-    }
-
-    check_ajax_referer('points-history-nonce', 'nonce');
-
-    $page = isset($_POST['page']) ? (int) $_POST['page'] : 1;
-    $page = max(1, $page);
-    $per_page = 20;
-    $user_id = get_current_user_id();
-    $operations = get_user_points_history($user_id, $page, $per_page);
-
     ob_start();
     foreach ($operations as $op) {
-        $variation       = (int) $op['points'];
+        $variation = (int) $op['points'];
         $variation_label = $variation > 0 ? '+' . $variation : (string) $variation;
-        $date            = !empty($op['request_date']) ? mysql2date('d/m/Y', $op['request_date']) : '';
-        $reason          = format_points_history_reason($op);
+        $date = !empty($op['request_date']) ? mysql2date('d/m/Y', $op['request_date']) : '';
+        $reason = format_points_history_reason($op);
         ?>
         <tr>
             <td><?php echo esc_html($op['id']); ?></td>
@@ -589,8 +534,22 @@ function ajax_load_points_history(): void
         </tr>
         <?php
     }
-    $rows = ob_get_clean();
 
-    wp_send_json_success(['rows' => $rows]);
+    return (string) ob_get_clean();
 }
-add_action('wp_ajax_load_points_history', 'ajax_load_points_history');
+
+function ajax_load_points_history(): void
+{
+    ChassesAuTresor\Core\Points\PointsHistoryAjaxHandler::handle();
+}
+
+if (class_exists(ChassesAuTresor\Core\Points\PointsHistoryAjaxHandler::class)) {
+    ChassesAuTresor\Core\Points\PointsHistoryAjaxHandler::configure(
+        static function (int $user_id, int $page, int $per_page): array {
+            return get_user_points_history($user_id, $page, $per_page);
+        },
+        static function (array $operations): string {
+            return cat_render_points_history_rows($operations);
+        }
+    );
+}

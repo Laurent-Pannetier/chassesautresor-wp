@@ -1,46 +1,6 @@
 <?php
 defined('ABSPATH') || exit;
 
-if (!class_exists(ChassesAuTresor\Core\Content\HuntDateMutationService::class, false)) {
-    require_once dirname(__DIR__, 4)
-        . '/plugins/chassesautresor-core/src/Content/HuntDateMutationService.php';
-}
-
-if (!class_exists(ChassesAuTresor\Core\Content\HuntLinkMutationService::class, false)) {
-    require_once dirname(__DIR__, 4)
-        . '/plugins/chassesautresor-core/src/Content/HuntLinkMutationService.php';
-}
-
-if (!class_exists(ChassesAuTresor\Core\Content\HuntRewardMutationService::class, false)) {
-    require_once dirname(__DIR__, 4)
-        . '/plugins/chassesautresor-core/src/Content/HuntRewardMutationService.php';
-}
-
-if (!class_exists(ChassesAuTresor\Core\Content\HuntFieldMutationService::class, false)) {
-    require_once dirname(__DIR__, 4)
-        . '/plugins/chassesautresor-core/src/Content/HuntFieldMutationService.php';
-}
-
-if (!class_exists(ChassesAuTresor\Core\Content\HuntClosureService::class, false)) {
-    require_once dirname(__DIR__, 4)
-        . '/plugins/chassesautresor-core/src/Content/HuntClosureService.php';
-}
-
-if (!class_exists(ChassesAuTresor\Core\Content\HuntCreationRequestService::class, false)) {
-    require_once dirname(__DIR__, 4)
-        . '/plugins/chassesautresor-core/src/Content/HuntCreationRequestService.php';
-}
-
-if (!class_exists(ChassesAuTresor\Core\Content\HuntPostFactory::class, false)) {
-    require_once dirname(__DIR__, 4)
-        . '/plugins/chassesautresor-core/src/Content/HuntPostFactory.php';
-}
-
-if (!class_exists(ChassesAuTresor\Core\Content\HuntDeletionService::class, false)) {
-    require_once dirname(__DIR__, 4)
-        . '/plugins/chassesautresor-core/src/Content/HuntDeletionService.php';
-}
-
 // ==================================================
 // 🗺️ CRÉATION & ÉDITION D’UNE CHASSE
 // ==================================================

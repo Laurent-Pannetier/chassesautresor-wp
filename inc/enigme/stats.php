@@ -1,23 +1,11 @@
 <?php
 defined('ABSPATH') || exit;
 
-if (!class_exists(ChassesAuTresor\Core\Progress\RiddleStatisticsService::class, false)) {
-    require_once dirname(__DIR__, 4) . '/plugins/chassesautresor-core/src/Progress/RiddleStatisticsRepository.php';
-    require_once dirname(__DIR__, 4) . '/plugins/chassesautresor-core/src/Progress/RiddleStatisticsService.php';
-}
-
-if (!class_exists(ChassesAuTresor\Core\Progress\StatisticsCacheService::class, false)) {
-    require_once dirname(__DIR__, 4) . '/plugins/chassesautresor-core/src/Progress/StatisticsPeriodService.php';
-    require_once dirname(__DIR__, 4) . '/plugins/chassesautresor-core/src/Progress/StatisticsCacheService.php';
-}
-
 if (!function_exists('cat_get_riddle_statistics_service')) {
     function cat_get_riddle_statistics_service(): ChassesAuTresor\Core\Progress\RiddleStatisticsService
     {
         global $wpdb;
-        return new ChassesAuTresor\Core\Progress\RiddleStatisticsService(
-            new ChassesAuTresor\Core\Progress\RiddleStatisticsRepository($wpdb)
-        );
+        return ChassesAuTresor\Core\Support\CoreServiceFactory::riddleStatistics($wpdb);
     }
 }
 
@@ -110,49 +98,11 @@ function enigme_lister_participants(
  *
  * @return void
  */
-function ajax_enigme_recuperer_stats()
+function ajax_enigme_recuperer_stats(): void
 {
-    if (!wp_verify_nonce((string) ($_POST['nonce'] ?? ''), 'statistics_management')) {
-        wp_send_json_error('invalid_nonce', 403);
-    }
-
-    $enigme_id = isset($_POST['enigme_id']) ? (int) $_POST['enigme_id'] : 0;
-    if ($enigme_id <= 0) {
-        wp_send_json_error('missing_enigme', 400);
-    }
-
-    if (!utilisateur_peut_voir_panneau($enigme_id)) {
-        wp_send_json_error('forbidden', 403);
-    }
-
-    $periodService = new ChassesAuTresor\Core\Progress\StatisticsPeriodService();
-    $periode = $periodService->normalize(sanitize_text_field($_POST['periode'] ?? 'total'));
-    $cache = new ChassesAuTresor\Core\Progress\StatisticsCacheService();
-    $stats = $cache->get('enigme', $enigme_id, $periode);
-
-    if ($stats === false) {
-        $mode = get_field('enigme_mode_validation', $enigme_id) ?? 'automatique';
-        $cout = (int) get_field('enigme_tentative_cout_points', $enigme_id);
-
-        $stats = [
-            'participants' => enigme_compter_joueurs_engages($enigme_id, $periode),
-        ];
-
-        if ($mode !== 'aucune') {
-            $stats['tentatives'] = enigme_compter_tentatives($enigme_id, $mode, $periode);
-            $stats['solutions'] = enigme_compter_bonnes_solutions($enigme_id, $mode, $periode);
-        }
-
-        if ($cout > 0) {
-            $stats['points'] = enigme_compter_points_depenses($enigme_id, $mode, $periode);
-        }
-
-        $cache->put('enigme', $enigme_id, $periode, $stats, HOUR_IN_SECONDS);
-    }
-
-    wp_send_json_success($stats);
+    ChassesAuTresor\Core\Progress\RiddleStatisticsAjaxHandler::summary();
 }
-add_action('wp_ajax_enigme_recuperer_stats', 'ajax_enigme_recuperer_stats');
+
 
 function enigme_stats_cache_key(int $enigme_id, string $periode): string
 {
@@ -164,52 +114,58 @@ function enigme_clear_stats_cache(int $enigme_id): void
     (new ChassesAuTresor\Core\Progress\StatisticsCacheService())->clear('enigme', $enigme_id);
 }
 
-function ajax_enigme_lister_participants() {
-    if (!is_user_logged_in()) {
-        wp_send_json_error('non_connecte');
-    }
-    if (!wp_verify_nonce((string) ($_POST['nonce'] ?? ''), 'statistics_management')) {
-        wp_send_json_error('invalid_nonce', 403);
-    }
+function ajax_enigme_lister_participants(): void
+{
+    ChassesAuTresor\Core\Progress\RiddleStatisticsAjaxHandler::participants();
+}
 
-    $enigme_id = isset($_POST['enigme_id']) ? (int) $_POST['enigme_id'] : 0;
-    $page = max(1, (int) ($_POST['page'] ?? 1));
-    $orderby = isset($_POST['orderby']) ? sanitize_text_field($_POST['orderby']) : 'date';
-    $order = isset($_POST['order']) ? sanitize_text_field($_POST['order']) : 'ASC';
-
-    if (!$enigme_id || get_post_type($enigme_id) !== 'enigme') {
-        wp_send_json_error('post_invalide');
-    }
-
-    if (!utilisateur_peut_modifier_post($enigme_id)) {
-        wp_send_json_error('acces_refuse');
-    }
-
-    $mode = get_field('enigme_mode_validation', $enigme_id) ?? 'aucune';
-    $par_page = 25;
-    $offset = ($page - 1) * $par_page;
-    $participants = enigme_lister_participants($enigme_id, $mode, $par_page, $offset, $orderby, $order);
-    $total = enigme_compter_joueurs_engages($enigme_id);
-    $pages = (int) ceil($total / $par_page);
-
+function cat_render_riddle_statistics_participants(
+    int $riddle_id,
+    array $participants,
+    array $request,
+    int $total,
+    int $pages,
+    string $orderby
+): string {
     ob_start();
     get_template_part('template-parts/enigme/partials/enigme-partial-participants', null, [
         'participants' => $participants,
-        'page' => $page,
-        'par_page' => $par_page,
+        'page' => $request['page'],
+        'par_page' => $request['limit'],
         'total' => $total,
         'pages' => $pages,
-        'mode_validation' => $mode,
+        'mode_validation' => get_field('enigme_mode_validation', $riddle_id) ?? 'aucune',
         'orderby' => $orderby,
-        'order' => $order,
+        'order' => $request['order'],
     ]);
-    $html = ob_get_clean();
 
-    wp_send_json_success([
-        'html' => $html,
-        'total' => $total,
-        'page' => $page,
-        'pages' => $pages,
-    ]);
+    return (string) ob_get_clean();
 }
-add_action('wp_ajax_enigme_lister_participants', 'ajax_enigme_lister_participants');
+
+if (class_exists(ChassesAuTresor\Core\Progress\RiddleStatisticsAjaxHandler::class)) {
+    ChassesAuTresor\Core\Progress\RiddleStatisticsAjaxHandler::configure(
+        static fn (int $id): bool => utilisateur_peut_voir_panneau($id),
+        static fn (int $id): bool => utilisateur_peut_modifier_post($id),
+        static function (int $id, string $period): array {
+            $mode = get_field('enigme_mode_validation', $id) ?? 'automatique';
+            $cost = (int) get_field('enigme_tentative_cout_points', $id);
+            $stats = ['participants' => enigme_compter_joueurs_engages($id, $period)];
+            if ($mode !== 'aucune') {
+                $stats['tentatives'] = enigme_compter_tentatives($id, $mode, $period);
+                $stats['solutions'] = enigme_compter_bonnes_solutions($id, $mode, $period);
+            }
+            if ($cost > 0) {
+                $stats['points'] = enigme_compter_points_depenses($id, $mode, $period);
+            }
+            return $stats;
+        },
+        static function (int $id, int $limit, int $offset, string $orderby, string $order): array {
+            $mode = get_field('enigme_mode_validation', $id) ?? 'aucune';
+            return enigme_lister_participants($id, $mode, $limit, $offset, $orderby, $order);
+        },
+        static fn (int $id): int => enigme_compter_joueurs_engages($id),
+        static function (...$arguments): string {
+            return cat_render_riddle_statistics_participants(...$arguments);
+        }
+    );
+}

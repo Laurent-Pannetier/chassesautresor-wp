@@ -7,94 +7,11 @@ if (!defined('ABSPATH')) {
 
 require_once __DIR__ . '/badge-functions.php';
 
-if (!class_exists(ChassesAuTresor\Core\Progress\HuntStatusAjaxHandler::class, false)) {
-    require_once dirname(__DIR__, 3)
-        . '/plugins/chassesautresor-core/src/Progress/HuntStatusAjaxHandler.php';
-}
-
-if (!class_exists(ChassesAuTresor\Core\Progress\HuntStatusScheduler::class, false)) {
-    require_once dirname(__DIR__, 3)
-        . '/plugins/chassesautresor-core/src/Progress/HuntStatusScheduler.php';
-}
-
-if (!class_exists(ChassesAuTresor\Core\Progress\HuntStatusUpdater::class, false)) {
-    require_once dirname(__DIR__, 3)
-        . '/plugins/chassesautresor-core/src/Progress/HuntStatusUpdater.php';
-}
-
-if (!class_exists(ChassesAuTresor\Core\Progress\RiddleStatusAjaxHandler::class, false)) {
-    require_once dirname(__DIR__, 3)
-        . '/plugins/chassesautresor-core/src/Progress/RiddleStatusAjaxHandler.php';
-}
-
-if (!class_exists(ChassesAuTresor\Core\Progress\RiddleSystemStateUpdater::class, false)) {
-    require_once dirname(__DIR__, 3)
-        . '/plugins/chassesautresor-core/src/Progress/RiddleAnswerService.php';
-    require_once dirname(__DIR__, 3)
-        . '/plugins/chassesautresor-core/src/Progress/RiddleSystemStateService.php';
-    require_once dirname(__DIR__, 3)
-        . '/plugins/chassesautresor-core/src/Progress/RiddleSystemStateUpdater.php';
-}
-
-if (!class_exists(ChassesAuTresor\Core\Progress\RiddleParticipationPolicyService::class, false)) {
-    require_once dirname(__DIR__, 3)
-        . '/plugins/chassesautresor-core/src/Progress/RiddleParticipationPolicyService.php';
-}
-
-if (!class_exists(ChassesAuTresor\Core\Progress\HuntProgressService::class, false)) {
-    require_once dirname(__DIR__, 3)
-        . '/plugins/chassesautresor-core/src/Progress/HuntProgressRepository.php';
-    require_once dirname(__DIR__, 3)
-        . '/plugins/chassesautresor-core/src/Progress/HuntProgressService.php';
-}
-
-if (!class_exists(ChassesAuTresor\Core\Content\RiddleCompletionService::class, false)) {
-    require_once dirname(__DIR__, 3)
-        . '/plugins/chassesautresor-core/src/Content/RiddleCompletionService.php';
-}
-
-if (!class_exists(ChassesAuTresor\Core\Content\OrganizerCompletionService::class, false)) {
-    require_once dirname(__DIR__, 3)
-        . '/plugins/chassesautresor-core/src/Content/OrganizerCompletionService.php';
-}
-
-if (!class_exists(ChassesAuTresor\Core\Content\HuntCompletionService::class, false)) {
-    require_once dirname(__DIR__, 3)
-        . '/plugins/chassesautresor-core/src/Content/HuntCompletionService.php';
-}
-
-if (!class_exists(ChassesAuTresor\Core\Relationships\RelationshipService::class, false)) {
-    require_once dirname(__DIR__, 3)
-        . '/plugins/chassesautresor-core/src/Relationships/RelationshipService.php';
-}
-
-if (!class_exists(ChassesAuTresor\Core\Relationships\HuntRiddleQueryService::class, false)) {
-    require_once dirname(__DIR__, 3)
-        . '/plugins/chassesautresor-core/src/Relationships/HuntRiddleQueryService.php';
-}
-
-if (!class_exists(ChassesAuTresor\Core\Relationships\HuntRiddleCacheSynchronizer::class, false)) {
-    require_once dirname(__DIR__, 3)
-        . '/plugins/chassesautresor-core/src/Relationships/HuntRiddleCacheService.php';
-    require_once dirname(__DIR__, 3)
-        . '/plugins/chassesautresor-core/src/Content/AcfRelationshipMutationService.php';
-    require_once dirname(__DIR__, 3)
-        . '/plugins/chassesautresor-core/src/Relationships/HuntRiddleCacheSynchronizer.php';
-}
-
-if (!class_exists(ChassesAuTresor\Core\Content\CompletionCacheManager::class, false)) {
-    require_once dirname(__DIR__, 3)
-        . '/plugins/chassesautresor-core/src/Content/CompletionCacheManager.php';
-}
-
 if (!function_exists('cat_get_hunt_progress_service')) {
     function cat_get_hunt_progress_service(): ChassesAuTresor\Core\Progress\HuntProgressService
     {
         global $wpdb;
-
-        return new ChassesAuTresor\Core\Progress\HuntProgressService(
-            new ChassesAuTresor\Core\Progress\HuntProgressRepository($wpdb)
-        );
+        return ChassesAuTresor\Core\Support\CoreServiceFactory::huntProgress($wpdb);
     }
 }
 

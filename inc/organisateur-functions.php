@@ -291,14 +291,19 @@ function render_conversion_modal_content($access_message = null): string
  */
 function ajax_conversion_modal_content(): void
 {
-    $access_message = verifier_acces_conversion(get_current_user_id());
-    $html           = render_conversion_modal_content($access_message);
-    wp_send_json_success([
-        'html'   => $html,
-        'access' => $access_message === true,
-    ]);
+    ChassesAuTresor\Core\Points\ConversionModalAjaxHandler::handle();
 }
-add_action('wp_ajax_conversion_modal_content', 'ajax_conversion_modal_content');
+
+if (class_exists(ChassesAuTresor\Core\Points\ConversionModalAjaxHandler::class)) {
+    ChassesAuTresor\Core\Points\ConversionModalAjaxHandler::configure(
+        static function (int $user_id) {
+            return verifier_acces_conversion($user_id);
+        },
+        static function ($access_message): string {
+            return render_conversion_modal_content($access_message);
+        }
+    );
+}
 
 /**
  * Affiche le tableau des demandes de paiement d'un organisateur.
@@ -515,23 +520,8 @@ add_action('wp_enqueue_scripts', 'maybe_enqueue_conversion_history_script');
 /**
  * AJAX handler for loading paginated conversion history.
  */
-function ajax_load_conversion_history(): void
+function cat_render_conversion_history_rows(array $requests, bool $is_admin): string
 {
-    if (!is_user_logged_in()) {
-        wp_send_json_error();
-    }
-
-    check_ajax_referer('conversion-history-nonce', 'nonce');
-
-    $page     = isset($_POST['page']) ? (int) $_POST['page'] : 1;
-    $page     = max(1, $page);
-    $per_page = 10;
-    $offset   = ($page - 1) * $per_page;
-    $user_id  = current_user_can('administrator') ? null : get_current_user_id();
-    $is_admin = $user_id === null;
-
-    $requests = cat_get_conversion_service()->getRequests($user_id, null, $per_page, $offset);
-
     ob_start();
     foreach ($requests as $paiement) {
         switch ($paiement['request_status']) {
@@ -548,10 +538,12 @@ function ajax_load_conversion_history(): void
                 $statut_affiche = '🟡 ' . __('En attente', 'chassesautresor-com');
         }
         $points_utilises = esc_html(abs((int) $paiement['points']));
-        $user_name       = '';
+        $user_name = '';
         if ($is_admin) {
-            $user      = get_userdata((int) $paiement['user_id']);
-            $user_name = $user ? $user->display_name : sprintf(__('ID %d', 'chassesautresor-com'), (int) $paiement['user_id']);
+            $user = get_userdata((int) $paiement['user_id']);
+            $user_name = $user
+                ? $user->display_name
+                : sprintf(__('ID %d', 'chassesautresor-com'), (int) $paiement['user_id']);
         }
         ?>
         <tr>
@@ -565,11 +557,25 @@ function ajax_load_conversion_history(): void
         </tr>
         <?php
     }
-    $rows = ob_get_clean();
 
-    wp_send_json_success(['rows' => $rows]);
+    return (string) ob_get_clean();
 }
-add_action('wp_ajax_load_conversion_history', 'ajax_load_conversion_history');
+
+function ajax_load_conversion_history(): void
+{
+    ChassesAuTresor\Core\Points\ConversionHistoryAjaxHandler::handle();
+}
+
+if (class_exists(ChassesAuTresor\Core\Points\ConversionHistoryAjaxHandler::class)) {
+    ChassesAuTresor\Core\Points\ConversionHistoryAjaxHandler::configure(
+        static function (?int $user_id, int $limit, int $offset): array {
+            return cat_get_conversion_service()->getRequests($user_id, null, $limit, $offset);
+        },
+        static function (array $requests, bool $is_admin): string {
+            return cat_render_conversion_history_rows($requests, $is_admin);
+        }
+    );
+}
 
 
 // ==================================================

@@ -25,18 +25,9 @@ if (!function_exists('trouver_chemin_image')) {
 if (!function_exists('utilisateur_peut_voir_enigme')) {
     require_once get_stylesheet_directory() . '/inc/access-functions.php';
 }
-if (!class_exists(ChassesAuTresor\Core\Media\RiddleImageService::class, false)) {
-    require_once dirname(__DIR__, 4)
-        . '/plugins/chassesautresor-core/src/Media/RiddleImageRepository.php';
-    require_once dirname(__DIR__, 4)
-        . '/plugins/chassesautresor-core/src/Media/RiddleImageService.php';
-}
-
 // 🧩 Récupération de l'énigme associée à cette image
 global $wpdb;
-$image_service = new ChassesAuTresor\Core\Media\RiddleImageService(
-    new ChassesAuTresor\Core\Media\RiddleImageRepository($wpdb)
-);
+$image_service = ChassesAuTresor\Core\Support\CoreServiceFactory::riddleImages($wpdb);
 $enigme_id = $image_service->findRiddleId($image_id);
 
 if (!$enigme_id) {

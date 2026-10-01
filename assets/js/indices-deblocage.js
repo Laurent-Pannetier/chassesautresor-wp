@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var fd = new FormData();
     fd.append('action', 'debloquer_indice');
     fd.append('indice_id', id);
+    fd.append('nonce', indicesUnlock.nonce);
     fetch(indicesUnlock.ajaxUrl, { method: 'POST', credentials: 'same-origin', body: fd })
       .then(function (r) { return r.json(); })
       .then(function (res) {
