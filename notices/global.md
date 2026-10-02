@@ -1366,6 +1366,7 @@ Index :
 | tentative_uid | varchar(64) | identifiant unique |
 | user_id | bigint unsigned | identifiant du joueur |
 | enigme_id | bigint unsigned | identifiant de l'énigme |
+| etape_id | bigint unsigned NULL | étape intermédiaire concernée, ou `NULL` pour la réponse finale |
 | reponse_saisie | text NULL | texte saisi |
 | resultat | enum('bon','variante','faux','attente') DEFAULT 'attente' | résultat |
 | points_utilises | int unsigned NULL DEFAULT 0 | points consommés |
@@ -1373,6 +1374,20 @@ Index :
 | ip | varchar(45) NULL | adresse IP |
 | user_agent | text NULL | navigateur |
 | traitee | tinyint(1) NULL DEFAULT 0 | état de traitement |
+
+#### `wp_enigme_etapes_progression`
+
+| Colonne | Type | Commentaire |
+|---------|------|-------------|
+| id | bigint unsigned AUTO_INCREMENT | clé primaire |
+| user_id | bigint unsigned | identifiant du joueur |
+| enigme_id | bigint unsigned | identifiant de l'énigme |
+| etape_id | bigint unsigned | étape intermédiaire trouvée |
+| statut | varchar(20) DEFAULT `trouvee` | état de progression |
+| date_decouverte | datetime | date de réussite de l'étape |
+| tentative_uid | varchar(64) NULL | tentative ayant validé l'étape |
+| created_at | datetime | date de création |
+| updated_at | datetime | dernière modification |
 
 #### `wp_user_points`
 
