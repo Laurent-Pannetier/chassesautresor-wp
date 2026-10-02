@@ -3776,6 +3776,17 @@ a.addtoany_share span {
   color: var(--color-editor-error);
 }
 
+.riddle-steps-editor__lock-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-xs);
+  margin: 0 0 var(--space-md);
+  padding: var(--space-sm);
+  border-radius: 6px;
+  background: var(--color-gris-1);
+  color: var(--color-gris-4);
+}
+
 .riddle-step-form {
   display: grid;
   gap: var(--space-md);
@@ -7264,6 +7275,36 @@ li.active .enigme-menu__edit {
 }
 body.no-scroll {
   overflow: hidden;
+}
+
+.riddle-steps-player {
+  display: grid;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
+.riddle-player-step {
+  padding: var(--space-md);
+  border: 1px solid var(--color-editor-border);
+  border-radius: 8px;
+  background: var(--color-white);
+}
+
+.riddle-player-step__image {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto var(--space-md);
+}
+
+.riddle-player-step__status {
+  color: var(--color-editor-success);
+}
+
+.riddle-step-click-form__feedback {
+  min-height: 1.5em;
+  color: var(--color-editor-error);
 }
 
 /* Placeholder for future enigma style variants */

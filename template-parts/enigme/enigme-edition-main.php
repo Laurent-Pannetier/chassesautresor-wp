@@ -684,7 +684,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['uid'], $_POST['action
             null,
             [
                 'enigme_id' => $enigme_id,
-                'editable' => $peut_editer,
+                'editable' => $peut_modifier,
             ]
         );
         ?>

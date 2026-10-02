@@ -7,8 +7,22 @@ $editable = !empty($args['editable']);
 $stepIds = $riddleId > 0
     ? (new ChassesAuTresor\Core\Content\RiddleStepQueryService())->findOrderedIds($riddleId)
     : [];
+$structureLocked = false;
+if ($riddleId > 0) {
+    global $wpdb;
+    $structureLocked = (new ChassesAuTresor\Core\Content\RiddleStepStructureLockService())->isLocked(
+        $riddleId,
+        static fn (string $field, int $postId) => get_field($field, $postId),
+        static fn (int $id): bool => ChassesAuTresor\Core\Support\CoreServiceFactory::riddleStepProgress($wpdb)
+            ->hasProgressForRiddle($id)
+    );
+}
 ?>
-<section class="riddle-steps-editor" data-riddle-id="<?= esc_attr($riddleId); ?>">
+<section
+  class="riddle-steps-editor"
+  data-riddle-id="<?= esc_attr($riddleId); ?>"
+  data-structure-locked="<?= $structureLocked ? '1' : '0'; ?>"
+>
   <div class="riddle-steps-editor__overview">
   <div class="riddle-steps-editor__header">
     <div>
@@ -20,13 +34,23 @@ $stepIds = $riddleId > 0
         ); ?>
       </p>
     </div>
-    <?php if ($editable) : ?>
+    <?php if ($editable && !$structureLocked) : ?>
       <button type="button" class="bouton-secondaire riddle-step-add">
         <i class="fa-solid fa-plus" aria-hidden="true"></i>
         <?= esc_html__('Ajouter une étape', 'chassesautresor-com'); ?>
       </button>
     <?php endif; ?>
   </div>
+
+  <?php if ($structureLocked) : ?>
+    <p class="riddle-steps-editor__lock-notice">
+      <i class="fa-solid fa-lock" aria-hidden="true"></i>
+      <?= esc_html__(
+          'Le parcours a commencé : les étapes sont figées, mais leur contenu reste modifiable.',
+          'chassesautresor-com'
+      ); ?>
+    </p>
+  <?php endif; ?>
 
   <ol
     class="riddle-steps-editor__list"
@@ -39,11 +63,13 @@ $stepIds = $riddleId > 0
       <li
         class="riddle-step-card"
         data-step-id="<?= esc_attr($stepId); ?>"
-        draggable="<?= $editable ? 'true' : 'false'; ?>"
+        draggable="<?= $editable && !$structureLocked ? 'true' : 'false'; ?>"
       >
-        <span class="riddle-step-card__handle" aria-hidden="true">
-          <i class="fa-solid fa-grip-vertical"></i>
-        </span>
+        <?php if ($editable && !$structureLocked) : ?>
+          <span class="riddle-step-card__handle" aria-hidden="true">
+            <i class="fa-solid fa-grip-vertical"></i>
+          </span>
+        <?php endif; ?>
         <span class="riddle-step-card__rank"><?= esc_html((string) ($index + 1)); ?></span>
         <span class="riddle-step-card__content">
           <strong><?= esc_html($label); ?></strong>
@@ -53,9 +79,11 @@ $stepIds = $riddleId > 0
             <button type="button" class="bouton-tertiaire riddle-step-edit">
               <?= esc_html__('Modifier', 'chassesautresor-com'); ?>
             </button>
-            <button type="button" class="bouton-texte secondaire riddle-step-delete">
-              <?= esc_html__('Supprimer', 'chassesautresor-com'); ?>
-            </button>
+            <?php if (!$structureLocked) : ?>
+              <button type="button" class="bouton-texte secondaire riddle-step-delete">
+                <?= esc_html__('Supprimer', 'chassesautresor-com'); ?>
+              </button>
+            <?php endif; ?>
           </span>
         <?php endif; ?>
       </li>
@@ -108,6 +136,32 @@ $stepIds = $riddleId > 0
           <?= esc_html__('Une étape doit contenir au moins un texte ou une image.', 'chassesautresor-com'); ?>
         </p>
       </div>
+      <?php if (!$structureLocked) : ?>
+        <fieldset class="riddle-step-form__field">
+          <legend><?= esc_html__('Réponse de l’étape', 'chassesautresor-com'); ?></legend>
+          <label for="riddle-step-widget"><?= esc_html__('Mode de réponse', 'chassesautresor-com'); ?></label>
+          <select id="riddle-step-widget" name="widget">
+            <option value="click"><?= esc_html__('Simple clic', 'chassesautresor-com'); ?></option>
+          </select>
+          <label for="riddle-step-button-label">
+            <?= esc_html__('Libellé du bouton', 'chassesautresor-com'); ?>
+          </label>
+          <input
+            id="riddle-step-button-label"
+            name="button_label"
+            type="text"
+            maxlength="80"
+            value="<?= esc_attr__('Continuer', 'chassesautresor-com'); ?>"
+            required
+          >
+          <p class="txt-small">
+            <?= esc_html__(
+                'Le clic valide l’étape sans consommer de tentative.',
+                'chassesautresor-com'
+            ); ?>
+          </p>
+        </fieldset>
+      <?php endif; ?>
       <p class="riddle-step-form__feedback" role="alert" aria-live="assertive"></p>
       <div class="riddle-step-form__actions">
         <button type="button" class="bouton-secondaire riddle-step-cancel">

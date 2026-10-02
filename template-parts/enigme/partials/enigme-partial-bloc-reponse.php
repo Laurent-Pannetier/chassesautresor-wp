@@ -40,6 +40,24 @@ if (
     return;
   }
 
+$stepIds = (new ChassesAuTresor\Core\Content\RiddleStepQueryService())->findOrderedIds((int) $post_id);
+if ($stepIds !== []) {
+    global $wpdb;
+    $stepState = ChassesAuTresor\Core\Support\CoreServiceFactory::riddleStepProgress($wpdb)->getState(
+        (int) $user_id,
+        (int) $post_id,
+        $stepIds
+    );
+    get_template_part(
+        'template-parts/enigme/partials/enigme-partial-etapes-joueur',
+        null,
+        ['riddle_id' => (int) $post_id, 'state' => $stepState]
+    );
+    if (!$stepState['final_answer_unlocked']) {
+        return;
+    }
+}
+
 // Récupération du mode de validation
 $mode_validation = get_field('enigme_mode_validation', $post_id);
 if (!in_array($mode_validation, ['automatique', 'manuelle'])) return;

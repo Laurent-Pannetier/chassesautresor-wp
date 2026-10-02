@@ -144,6 +144,27 @@ function charger_script_reponse_automatique() {
 }
 add_action('wp_enqueue_scripts', 'charger_script_reponse_automatique');
 
+function charger_script_etapes_enigme(): void
+{
+    if (!is_singular('enigme') || !is_user_logged_in()) {
+        return;
+    }
+
+    $path = '/assets/js/riddle-step-player.js';
+    wp_enqueue_script(
+        'riddle-step-player',
+        get_stylesheet_directory_uri() . $path,
+        [],
+        filemtime(get_stylesheet_directory() . $path),
+        true
+    );
+    wp_localize_script('riddle-step-player', 'RiddleStepPlayer', [
+        'ajaxUrl' => admin_url('admin-ajax.php'),
+        'error' => __('Impossible de valider cette étape.', 'chassesautresor-com'),
+    ]);
+}
+add_action('wp_enqueue_scripts', 'charger_script_etapes_enigme');
+
 /**
  * Charge le script gérant la soumission manuelle des réponses.
  */

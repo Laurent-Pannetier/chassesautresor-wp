@@ -117,6 +117,17 @@
   color: var(--color-editor-error);
 }
 
+.riddle-steps-editor__lock-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-xs);
+  margin: 0 0 var(--space-md);
+  padding: var(--space-sm);
+  border-radius: 6px;
+  background: var(--color-gris-1);
+  color: var(--color-gris-4);
+}
+
 .riddle-step-form {
   display: grid;
   gap: var(--space-md);
