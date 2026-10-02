@@ -142,24 +142,32 @@ if ($riddleId > 0) {
           <label for="riddle-step-widget"><?= esc_html__('Mode de réponse', 'chassesautresor-com'); ?></label>
           <select id="riddle-step-widget" name="widget">
             <option value="click"><?= esc_html__('Simple clic', 'chassesautresor-com'); ?></option>
+            <option value="text"><?= esc_html__('Réponse texte', 'chassesautresor-com'); ?></option>
           </select>
-          <label for="riddle-step-button-label">
-            <?= esc_html__('Libellé du bouton', 'chassesautresor-com'); ?>
-          </label>
-          <input
-            id="riddle-step-button-label"
-            name="button_label"
-            type="text"
-            maxlength="80"
-            value="<?= esc_attr__('Continuer', 'chassesautresor-com'); ?>"
-            required
-          >
-          <p class="txt-small">
-            <?= esc_html__(
-                'Le clic valide l’étape sans consommer de tentative.',
-                'chassesautresor-com'
-            ); ?>
-          </p>
+          <div class="riddle-step-widget-config" data-widget="click">
+            <label for="riddle-step-button-label">
+              <?= esc_html__('Libellé du bouton', 'chassesautresor-com'); ?>
+            </label>
+            <input id="riddle-step-button-label" name="button_label" type="text" maxlength="80"
+              value="<?= esc_attr__('Continuer', 'chassesautresor-com'); ?>">
+          </div>
+          <div class="riddle-step-widget-config" data-widget="text" hidden>
+            <label for="riddle-step-accepted-answers">
+              <?= esc_html__('Réponses acceptées — une par ligne', 'chassesautresor-com'); ?>
+            </label>
+            <textarea id="riddle-step-accepted-answers" name="accepted_answers" rows="4"></textarea>
+            <label>
+              <input type="checkbox" name="case_sensitive" value="1">
+              <?= esc_html__('Respecter les majuscules et minuscules', 'chassesautresor-com'); ?>
+            </label>
+            <label for="riddle-step-variants">
+              <?= esc_html__('Variantes personnalisées — réponse | message', 'chassesautresor-com'); ?>
+            </label>
+            <textarea id="riddle-step-variants" name="variants" rows="4"></textarea>
+            <p class="txt-small">
+              <?= esc_html__('Une variante affiche un message d’aide sans consommer de tentative.', 'chassesautresor-com'); ?>
+            </p>
+          </div>
         </fieldset>
       <?php endif; ?>
       <p class="riddle-step-form__feedback" role="alert" aria-live="assertive"></p>

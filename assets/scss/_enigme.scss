@@ -912,6 +912,13 @@ body.no-scroll {
   border: 1px solid var(--color-editor-border);
   border-radius: 8px;
   background: var(--color-white);
+  color: var(--color-text-fond-clair);
+}
+
+.riddle-player-step label,
+.riddle-player-step__content,
+.riddle-player-step__content p {
+  color: var(--color-text-fond-clair);
 }
 
 .riddle-player-step__image {
@@ -929,4 +936,17 @@ body.no-scroll {
 .riddle-step-click-form__feedback {
   min-height: 1.5em;
   color: var(--color-editor-error);
+}
+
+.riddle-step-text-form {
+  display: grid;
+  gap: var(--space-sm);
+}
+
+.riddle-step-text-form input[type='text'] {
+  width: 100%;
+}
+
+.riddle-step-text-form .riddle-step-click-form__feedback {
+  margin: 0;
 }

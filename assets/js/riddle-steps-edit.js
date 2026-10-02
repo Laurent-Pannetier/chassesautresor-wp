@@ -17,6 +17,14 @@ document.addEventListener('DOMContentLoaded', () => {
   let dragged = null;
   let savedScroll = 0;
 
+  const updateWidgetConfig = () => {
+    if (structureLocked) return;
+    const widget = form.querySelector('[name="widget"]').value;
+    form.querySelectorAll('.riddle-step-widget-config').forEach(config => {
+      config.hidden = config.dataset.widget !== widget;
+    });
+  };
+
   const request = async (action, values = {}) => {
     const data = new URLSearchParams({
       action,
@@ -49,6 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
     contentEditor.innerHTML = '';
     formFeedback.textContent = '';
     setImage();
+    updateWidgetConfig();
     form.querySelector('[name="etape_id"]').value = stepId || '';
     heading.textContent = stepId ? RiddleStepsEdit.texts.editTitle : RiddleStepsEdit.texts.newTitle;
     if (stepId) {
@@ -60,6 +69,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!structureLocked) {
           form.querySelector('[name="widget"]').value = step.widget || 'click';
           form.querySelector('[name="button_label"]').value = step.button_label;
+          form.querySelector('[name="accepted_answers"]').value = step.accepted_answers || '';
+          form.querySelector('[name="case_sensitive"]').checked = Boolean(step.case_sensitive);
+          form.querySelector('[name="variants"]').value = step.variants || '';
+          updateWidgetConfig();
         }
       } catch (error) {
         feedback.textContent = error.message;
@@ -104,6 +117,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   editor.querySelector('.riddle-step-add')?.addEventListener('click', () => openForm(0));
+  form?.querySelector('[name="widget"]')?.addEventListener('change', updateWidgetConfig);
   editor.querySelectorAll('.riddle-step-cancel').forEach(button => button.addEventListener('click', closeForm));
 
   list?.addEventListener('click', async event => {

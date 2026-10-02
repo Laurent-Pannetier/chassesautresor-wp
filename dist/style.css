@@ -3820,6 +3820,15 @@ a.addtoany_share span {
   gap: var(--space-xs);
 }
 
+.riddle-step-widget-config {
+  display: grid;
+  gap: var(--space-xs);
+}
+
+.riddle-step-widget-config[hidden] {
+  display: none;
+}
+
 .riddle-step-form__field input[type=text],
 .riddle-step-form__field textarea,
 .riddle-step-form__content-editor {
@@ -7288,6 +7297,13 @@ body.no-scroll {
   border: 1px solid var(--color-editor-border);
   border-radius: 8px;
   background: var(--color-white);
+  color: var(--color-text-fond-clair);
+}
+
+.riddle-player-step label,
+.riddle-player-step__content,
+.riddle-player-step__content p {
+  color: var(--color-text-fond-clair);
 }
 
 .riddle-player-step__image {
@@ -7305,6 +7321,19 @@ body.no-scroll {
 .riddle-step-click-form__feedback {
   min-height: 1.5em;
   color: var(--color-editor-error);
+}
+
+.riddle-step-text-form {
+  display: grid;
+  gap: var(--space-sm);
+}
+
+.riddle-step-text-form input[type=text] {
+  width: 100%;
+}
+
+.riddle-step-text-form .riddle-step-click-form__feedback {
+  margin: 0;
 }
 
 /* Placeholder for future enigma style variants */

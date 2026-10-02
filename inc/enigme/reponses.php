@@ -161,6 +161,9 @@ function charger_script_etapes_enigme(): void
     wp_localize_script('riddle-step-player', 'RiddleStepPlayer', [
         'ajaxUrl' => admin_url('admin-ajax.php'),
         'error' => __('Impossible de valider cette étape.', 'chassesautresor-com'),
+        'wrong' => __('Cette réponse n’est pas correcte.', 'chassesautresor-com'),
+        'limitReached' => __('Limite quotidienne atteinte.', 'chassesautresor-com'),
+        'attemptsLabel' => __('Tentatives quotidiennes :', 'chassesautresor-com'),
     ]);
 }
 add_action('wp_enqueue_scripts', 'charger_script_etapes_enigme');

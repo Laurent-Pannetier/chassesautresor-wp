@@ -161,6 +161,15 @@
   gap: var(--space-xs);
 }
 
+.riddle-step-widget-config {
+  display: grid;
+  gap: var(--space-xs);
+}
+
+.riddle-step-widget-config[hidden] {
+  display: none;
+}
+
 .riddle-step-form__field input[type='text'],
 .riddle-step-form__field textarea,
 .riddle-step-form__content-editor {
