@@ -678,6 +678,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['uid'], $_POST['action
       </div>
       </div>
 
+        <?php
+        get_template_part(
+            'template-parts/enigme/partials/enigme-partial-etapes-edition',
+            null,
+            [
+                'enigme_id' => $enigme_id,
+                'editable' => $peut_editer,
+            ]
+        );
+        ?>
       </div> <!-- .edition-panel-body -->
     <?php if (utilisateur_peut_supprimer_enigme($enigme_id)) : ?>
       <div class="edition-panel-footer">

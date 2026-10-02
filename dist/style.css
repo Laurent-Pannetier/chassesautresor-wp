@@ -3701,6 +3701,88 @@ a.addtoany_share span {
 /* ==================================================
    🌐 GLOBAL
    ================================================== */
+.riddle-steps-editor {
+  margin-top: var(--space-lg);
+  padding: var(--space-md);
+  border: 1px solid var(--color-editor-border);
+  border-radius: 8px;
+}
+
+.riddle-steps-editor__header,
+.riddle-step-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.riddle-steps-editor__header {
+  flex-direction: column;
+  align-items: stretch;
+  margin-bottom: var(--space-md);
+}
+
+.riddle-steps-editor__list {
+  display: grid;
+  gap: var(--space-xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.riddle-steps-editor__list:empty::after {
+  content: attr(data-empty);
+  color: var(--color-gris-3);
+}
+
+.riddle-step-card {
+  padding: var(--space-sm);
+  border: 1px solid var(--color-editor-border);
+  border-radius: 6px;
+  background: var(--color-white);
+}
+
+.riddle-step-card.is-dragging {
+  opacity: 0.5;
+}
+
+.riddle-step-card__handle {
+  cursor: grab;
+}
+
+.riddle-step-card__rank {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--color-gris-1);
+  font-weight: 700;
+}
+
+.riddle-step-card__content {
+  display: grid;
+  flex: 1;
+}
+
+.riddle-step-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+}
+
+.riddle-steps-editor__feedback {
+  min-height: 1.5em;
+  margin-bottom: 0;
+  color: var(--color-editor-error);
+}
+
+@media (min-width: 768px) {
+  .riddle-steps-editor__header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
 /* ========== ✅ AFFICHAGE DYNAMIQUE DE COMPLÉTION ========== */
 .resume-infos .champ-rempli .icon-attente {
   display: none;

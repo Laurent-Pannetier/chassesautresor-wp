@@ -43,6 +43,7 @@ function enqueue_script_enigme_edit()
     'solutions-create',
     'indices-pager',
     'indices-create',
+    'riddle-steps-edit',
   ]);
 
   wp_localize_script(
@@ -73,6 +74,17 @@ function enqueue_script_enigme_edit()
     'image_slug' => 'defaut-enigme',
     'nonce' => wp_create_nonce('modifier_champ_enigme'),
     'deleteNonce' => wp_create_nonce('supprimer_enigme'),
+  ]);
+
+  wp_localize_script('riddle-steps-edit', 'RiddleStepsEdit', [
+    'ajaxUrl' => admin_url('admin-ajax.php'),
+    'riddleId' => $enigme_id,
+    'nonce' => wp_create_nonce('riddle_step_management'),
+    'texts' => [
+      'newTitle' => __('Nom de la nouvelle étape', 'chassesautresor-com'),
+      'confirmDelete' => __('Supprimer définitivement cette étape ?', 'chassesautresor-com'),
+      'error' => __('Une erreur est survenue. Rechargez la page et réessayez.', 'chassesautresor-com'),
+    ],
   ]);
 
   wp_enqueue_media();
