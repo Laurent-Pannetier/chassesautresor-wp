@@ -9,6 +9,7 @@ $stepIds = $riddleId > 0
     : [];
 ?>
 <section class="riddle-steps-editor" data-riddle-id="<?= esc_attr($riddleId); ?>">
+  <div class="riddle-steps-editor__overview">
   <div class="riddle-steps-editor__header">
     <div>
       <h3><?= esc_html__('Étapes intermédiaires', 'chassesautresor-com'); ?></h3>
@@ -33,10 +34,7 @@ $stepIds = $riddleId > 0
   >
     <?php foreach ($stepIds as $index => $stepId) : ?>
       <?php
-      $label = trim((string) get_field('etape_libelle', $stepId));
-      $label = $label !== '' ? $label : get_the_title($stepId);
-      $widget = (string) get_field('etape_widget_type', $stepId);
-      $editLink = get_edit_post_link($stepId, 'raw');
+      $label = get_the_title($stepId);
       ?>
       <li
         class="riddle-step-card"
@@ -49,21 +47,12 @@ $stepIds = $riddleId > 0
         <span class="riddle-step-card__rank"><?= esc_html((string) ($index + 1)); ?></span>
         <span class="riddle-step-card__content">
           <strong><?= esc_html($label); ?></strong>
-          <span class="txt-small">
-            <?= esc_html(
-                $widget === 'directions_8'
-                    ? __('8 directions', 'chassesautresor-com')
-                    : __('Texte', 'chassesautresor-com')
-            ); ?>
-          </span>
         </span>
         <?php if ($editable) : ?>
           <span class="riddle-step-card__actions">
-            <?php if ($editLink) : ?>
-              <a class="bouton-tertiaire" href="<?= esc_url($editLink); ?>">
-                <?= esc_html__('Configurer', 'chassesautresor-com'); ?>
-              </a>
-            <?php endif; ?>
+            <button type="button" class="bouton-tertiaire riddle-step-edit">
+              <?= esc_html__('Modifier', 'chassesautresor-com'); ?>
+            </button>
             <button type="button" class="bouton-texte secondaire riddle-step-delete">
               <?= esc_html__('Supprimer', 'chassesautresor-com'); ?>
             </button>
@@ -73,4 +62,61 @@ $stepIds = $riddleId > 0
     <?php endforeach; ?>
   </ol>
   <p class="riddle-steps-editor__feedback" role="status" aria-live="polite"></p>
+  </div>
+
+  <?php if ($editable) : ?>
+    <form class="riddle-step-form" hidden>
+      <div class="riddle-step-form__header">
+        <button type="button" class="bouton-texte riddle-step-cancel">
+          <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+          <?= esc_html__('Retour aux étapes', 'chassesautresor-com'); ?>
+        </button>
+        <h3 class="riddle-step-form__heading"><?= esc_html__('Nouvelle étape', 'chassesautresor-com'); ?></h3>
+      </div>
+      <input type="hidden" name="etape_id" value="">
+      <div class="riddle-step-form__field">
+        <label for="riddle-step-title"><?= esc_html__('Nom interne de l’étape', 'chassesautresor-com'); ?></label>
+        <input id="riddle-step-title" name="titre" type="text" maxlength="120" required>
+        <p class="txt-small"><?= esc_html__('Ce nom n’est jamais affiché aux joueurs.', 'chassesautresor-com'); ?></p>
+      </div>
+      <div class="riddle-step-form__field">
+        <label id="riddle-step-content-label" for="riddle-step-content">
+          <?= esc_html__('Texte de l’étape', 'chassesautresor-com'); ?>
+        </label>
+        <div
+          class="riddle-step-form__content-editor"
+          contenteditable="true"
+          role="textbox"
+          aria-labelledby="riddle-step-content-label"
+          aria-multiline="true"
+        ></div>
+        <textarea id="riddle-step-content" name="contenu" hidden></textarea>
+      </div>
+      <div class="riddle-step-form__field">
+        <label><?= esc_html__('Image de l’étape', 'chassesautresor-com'); ?></label>
+        <input type="hidden" name="image_id" value="">
+        <div class="riddle-step-form__image-preview"></div>
+        <div class="riddle-step-form__image-actions">
+          <button type="button" class="bouton-secondaire riddle-step-image-select">
+            <?= esc_html__('Choisir une image', 'chassesautresor-com'); ?>
+          </button>
+          <button type="button" class="bouton-texte riddle-step-image-remove" hidden>
+            <?= esc_html__('Retirer l’image', 'chassesautresor-com'); ?>
+          </button>
+        </div>
+        <p class="txt-small">
+          <?= esc_html__('Une étape doit contenir au moins un texte ou une image.', 'chassesautresor-com'); ?>
+        </p>
+      </div>
+      <p class="riddle-step-form__feedback" role="alert" aria-live="assertive"></p>
+      <div class="riddle-step-form__actions">
+        <button type="button" class="bouton-secondaire riddle-step-cancel">
+          <?= esc_html__('Annuler', 'chassesautresor-com'); ?>
+        </button>
+        <button type="submit" class="bouton-principal">
+          <?= esc_html__('Enregistrer l’étape', 'chassesautresor-com'); ?>
+        </button>
+      </div>
+    </form>
+  <?php endif; ?>
 </section>

@@ -81,7 +81,11 @@ function enqueue_script_enigme_edit()
     'riddleId' => $enigme_id,
     'nonce' => wp_create_nonce('riddle_step_management'),
     'texts' => [
-      'newTitle' => __('Nom de la nouvelle étape', 'chassesautresor-com'),
+      'newTitle' => __('Nouvelle étape', 'chassesautresor-com'),
+      'editTitle' => __('Modifier l’étape', 'chassesautresor-com'),
+      'imageTitle' => __('Choisir l’image de l’étape', 'chassesautresor-com'),
+      'edit' => __('Modifier', 'chassesautresor-com'),
+      'delete' => __('Supprimer', 'chassesautresor-com'),
       'confirmDelete' => __('Supprimer définitivement cette étape ?', 'chassesautresor-com'),
       'error' => __('Une erreur est survenue. Rechargez la page et réessayez.', 'chassesautresor-com'),
     ],

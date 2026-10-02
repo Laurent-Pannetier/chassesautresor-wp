@@ -3776,11 +3776,86 @@ a.addtoany_share span {
   color: var(--color-editor-error);
 }
 
+.riddle-step-form {
+  display: grid;
+  gap: var(--space-md);
+}
+
+.riddle-step-form[hidden],
+.riddle-steps-editor__overview[hidden] {
+  display: none;
+}
+
+.riddle-step-form__header,
+.riddle-step-form__actions,
+.riddle-step-form__image-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.riddle-step-form__header {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.riddle-step-form__heading {
+  margin: 0;
+}
+
+.riddle-step-form__field {
+  display: grid;
+  gap: var(--space-xs);
+}
+
+.riddle-step-form__field input[type=text],
+.riddle-step-form__field textarea,
+.riddle-step-form__content-editor {
+  width: 100%;
+}
+
+.riddle-step-form__content-editor {
+  min-height: 10rem;
+  padding: var(--space-sm);
+  overflow-y: auto;
+  border: 1px solid var(--color-editor-border);
+  border-radius: 6px;
+  background: var(--color-white);
+}
+
+.riddle-step-form__content-editor:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.riddle-step-form__image-preview img {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  max-height: 240px;
+  border-radius: 6px;
+}
+
+.riddle-step-form__feedback {
+  min-height: 1.5em;
+  margin: 0;
+  color: var(--color-editor-error);
+}
+
+.riddle-step-form__actions {
+  justify-content: flex-end;
+}
+
 @media (min-width: 768px) {
   .riddle-steps-editor__header {
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
+  }
+  .riddle-step-form__header {
+    flex-direction: row;
+    align-items: center;
   }
 }
 /* ========== ✅ AFFICHAGE DYNAMIQUE DE COMPLÉTION ========== */

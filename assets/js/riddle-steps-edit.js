@@ -2,9 +2,19 @@ document.addEventListener('DOMContentLoaded', () => {
   const editor = document.querySelector('.riddle-steps-editor');
   if (!editor || typeof RiddleStepsEdit === 'undefined') return;
 
+  const overview = editor.querySelector('.riddle-steps-editor__overview');
   const list = editor.querySelector('.riddle-steps-editor__list');
   const feedback = editor.querySelector('.riddle-steps-editor__feedback');
+  const form = editor.querySelector('.riddle-step-form');
+  const formFeedback = editor.querySelector('.riddle-step-form__feedback');
+  const heading = editor.querySelector('.riddle-step-form__heading');
+  const imageInput = form?.querySelector('[name="image_id"]');
+  const contentInput = form?.querySelector('[name="contenu"]');
+  const contentEditor = form?.querySelector('.riddle-step-form__content-editor');
+  const imagePreview = editor.querySelector('.riddle-step-form__image-preview');
+  const imageRemove = editor.querySelector('.riddle-step-image-remove');
   let dragged = null;
+  let savedScroll = 0;
 
   const request = async (action, values = {}) => {
     const data = new URLSearchParams({
@@ -13,11 +23,8 @@ document.addEventListener('DOMContentLoaded', () => {
       enigme_id: RiddleStepsEdit.riddleId
     });
     Object.entries(values).forEach(([key, value]) => {
-      if (Array.isArray(value)) {
-        value.forEach(item => data.append(key, item));
-      } else {
-        data.append(key, value);
-      }
+      if (Array.isArray(value)) value.forEach(item => data.append(key, item));
+      else data.append(key, value);
     });
     const response = await fetch(RiddleStepsEdit.ajaxUrl, {
       method: 'POST',
@@ -25,35 +32,117 @@ document.addEventListener('DOMContentLoaded', () => {
       body: data
     });
     const result = await response.json();
-    if (!result.success) throw new Error(result.data || 'request_failed');
+    if (!result.success) throw new Error(result.data?.message || RiddleStepsEdit.texts.error);
     return result.data;
   };
 
-  editor.querySelector('.riddle-step-add')?.addEventListener('click', async () => {
-    const title = window.prompt(RiddleStepsEdit.texts.newTitle, '');
-    if (title === null) return;
-    try {
-      await request('creer_etape_enigme', { titre: title });
-      window.location.reload();
-    } catch (error) {
-      feedback.textContent = RiddleStepsEdit.texts.error;
+  const setImage = (id = '', url = '') => {
+    imageInput.value = id;
+    imagePreview.innerHTML = url ? `<img src="${url}" alt="">` : '';
+    imageRemove.hidden = !url;
+  };
+
+  const openForm = async stepId => {
+    savedScroll = window.scrollY;
+    form.reset();
+    contentEditor.innerHTML = '';
+    formFeedback.textContent = '';
+    setImage();
+    form.querySelector('[name="etape_id"]').value = stepId || '';
+    heading.textContent = stepId ? RiddleStepsEdit.texts.editTitle : RiddleStepsEdit.texts.newTitle;
+    if (stepId) {
+      try {
+        const step = await request('charger_etape_enigme', { etape_id: stepId });
+        form.querySelector('[name="titre"]').value = step.title;
+        contentEditor.innerHTML = step.content;
+        setImage(step.image_id || '', step.image_url || '');
+      } catch (error) {
+        feedback.textContent = error.message;
+        return;
+      }
     }
+    overview.hidden = true;
+    form.hidden = false;
+    form.querySelector('[name="titre"]').focus();
+  };
+
+  const closeForm = () => {
+    form.hidden = true;
+    overview.hidden = false;
+    window.scrollTo({ top: savedScroll });
+  };
+
+  const renumber = () => [...list.children].forEach((item, index) => {
+    item.querySelector('.riddle-step-card__rank').textContent = index + 1;
   });
 
+  const updateCard = step => {
+    let card = list.querySelector(`[data-step-id="${step.step_id}"]`);
+    if (!card) {
+      card = document.createElement('li');
+      card.className = 'riddle-step-card';
+      card.dataset.stepId = step.step_id;
+      card.draggable = true;
+      card.innerHTML = '<span class="riddle-step-card__handle" aria-hidden="true">' +
+        '<i class="fa-solid fa-grip-vertical"></i></span>' +
+        '<span class="riddle-step-card__rank"></span>' +
+        '<span class="riddle-step-card__content"><strong></strong></span>' +
+        '<span class="riddle-step-card__actions"><button type="button" ' +
+        'class="bouton-tertiaire riddle-step-edit"></button><button type="button" ' +
+        'class="bouton-texte secondaire riddle-step-delete"></button></span>';
+      card.querySelector('.riddle-step-edit').textContent = RiddleStepsEdit.texts.edit;
+      card.querySelector('.riddle-step-delete').textContent = RiddleStepsEdit.texts.delete;
+      list.append(card);
+    }
+    card.querySelector('.riddle-step-card__content strong').textContent = step.title;
+    renumber();
+  };
+
+  editor.querySelector('.riddle-step-add')?.addEventListener('click', () => openForm(0));
+  editor.querySelectorAll('.riddle-step-cancel').forEach(button => button.addEventListener('click', closeForm));
+
   list?.addEventListener('click', async event => {
+    const card = event.target.closest('.riddle-step-card');
+    if (!card) return;
+    if (event.target.closest('.riddle-step-edit')) {
+      openForm(card.dataset.stepId);
+      return;
+    }
     const button = event.target.closest('.riddle-step-delete');
     if (!button || !window.confirm(RiddleStepsEdit.texts.confirmDelete)) return;
-    const card = button.closest('.riddle-step-card');
     try {
       await request('supprimer_etape_enigme', { etape_id: card.dataset.stepId });
       card.remove();
-      [...list.children].forEach((item, index) => {
-        item.querySelector('.riddle-step-card__rank').textContent = index + 1;
-      });
+      renumber();
     } catch (error) {
-      feedback.textContent = RiddleStepsEdit.texts.error;
+      feedback.textContent = error.message;
     }
   });
+
+  form?.addEventListener('submit', async event => {
+    event.preventDefault();
+    contentInput.value = contentEditor.innerHTML;
+    const values = Object.fromEntries(new FormData(form).entries());
+    formFeedback.textContent = '';
+    try {
+      const step = await request('enregistrer_etape_enigme', values);
+      updateCard(step);
+      closeForm();
+    } catch (error) {
+      formFeedback.textContent = error.message;
+    }
+  });
+
+  editor.querySelector('.riddle-step-image-select')?.addEventListener('click', () => {
+    if (!window.wp?.media) return;
+    const frame = wp.media({ title: RiddleStepsEdit.texts.imageTitle, multiple: false, library: { type: 'image' } });
+    frame.on('select', () => {
+      const image = frame.state().get('selection').first().toJSON();
+      setImage(image.id, image.sizes?.medium?.url || image.url);
+    });
+    frame.open();
+  });
+  imageRemove?.addEventListener('click', () => setImage());
 
   list?.addEventListener('dragstart', event => {
     dragged = event.target.closest('.riddle-step-card');
@@ -65,11 +154,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const ids = [...list.querySelectorAll('.riddle-step-card')].map(card => card.dataset.stepId);
     try {
       await request('reordonner_etapes_enigme', { 'etape_ids[]': ids });
-      [...list.children].forEach((item, index) => {
-        item.querySelector('.riddle-step-card__rank').textContent = index + 1;
-      });
+      renumber();
     } catch (error) {
-      feedback.textContent = RiddleStepsEdit.texts.error;
+      feedback.textContent = error.message;
       window.location.reload();
     }
   });
