@@ -177,16 +177,18 @@ if (!function_exists('render_sidebar')) {
         echo '</div>';
 
         echo '<div class="menu-lateral__content">' . $navigation_html . '</div>';
-        echo '<div class="menu-lateral__accordeons">';
-        echo '<div class="accordeon-bloc">';
-        echo '<div class="accordeon-contenu accordeon-ferme">' . $stats_section_html . '</div>';
-        echo '<button class="accordeon-toggle" type="button" aria-expanded="false">'
-            . '<i class="fa-solid fa-chevron-down" aria-hidden="true"></i>'
-            . '<span class="screen-reader-text">'
-            . esc_html__('Afficher les statistiques', 'chassesautresor-com')
-            . '</span></button>';
-        echo '</div>';
-        echo '</div>';
+        if ($context === 'enigme') {
+            echo '<div class="menu-lateral__accordeons">';
+            echo '<div class="accordeon-bloc">';
+            echo '<div class="accordeon-contenu accordeon-ferme">' . $stats_section_html . '</div>';
+            echo '<button class="accordeon-toggle" type="button" aria-expanded="false">'
+                . '<i class="fa-solid fa-chevron-down" aria-hidden="true"></i>'
+                . '<span class="screen-reader-text">'
+                . esc_html__('Afficher les statistiques', 'chassesautresor-com')
+                . '</span></button>';
+            echo '</div>';
+            echo '</div>';
+        }
         echo '</aside>';
 
         return [

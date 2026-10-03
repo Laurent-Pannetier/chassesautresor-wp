@@ -53,6 +53,11 @@ function enigme_lister_resolveurs(int $enigme_id): array
     );
 }
 
+function enigme_compter_joueurs_resolveurs(int $enigme_id): int
+{
+    return count(enigme_lister_resolveurs($enigme_id));
+}
+
 function enigme_lister_participants(
     int $enigme_id,
     string $mode = 'automatique',

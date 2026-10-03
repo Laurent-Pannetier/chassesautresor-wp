@@ -45,9 +45,6 @@ $unlimited = !empty($fields['illimitee']);
 $rewardTitle = trim((string) ($fields['titre_recompense'] ?? ''));
 $huntUrl = get_permalink($huntId);
 $detailsUrl = $isDemoMode ? home_url('/#single-hunt-story-title') : $huntUrl;
-$riddlesUrl = $isDemoMode || get_post_status($huntId) !== 'publish'
-    ? home_url('/#home-enigmes')
-    : $huntUrl . '#chasse-enigmes-wrapper';
 $cta = function_exists('cta_get_primary_hunt_cta')
     ? cta_get_primary_hunt_cta($huntId, $userId)
     : ['cta_html' => '', 'cta_message' => '', 'type' => ''];
@@ -164,9 +161,6 @@ $editorialContent = $frontPage instanceof WP_Post
                     </p>
                 </div>
                 <div class="single-hunt-journey__actions">
-                    <?php
-                    echo $cta['cta_html'] ?? ''; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-                    ?>
                     <?php if (get_option('users_can_register')) : ?>
                         <a
                             class="bouton-secondaire"
@@ -215,11 +209,6 @@ $editorialContent = $frontPage instanceof WP_Post
                         </progress>
                     </div>
                 </div>
-                <div class="single-hunt-journey__actions">
-                    <?php
-                    echo $cta['cta_html'] ?? ''; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-                    ?>
-                </div>
             <?php else : ?>
                 <div class="single-hunt-journey__content">
                     <p class="single-hunt-home__eyebrow">
@@ -246,11 +235,6 @@ $editorialContent = $frontPage instanceof WP_Post
                         );
                         ?>
                     </p>
-                </div>
-                <div class="single-hunt-journey__actions">
-                    <?php
-                    echo $cta['cta_html'] ?? ''; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-                    ?>
                 </div>
             <?php endif; ?>
         </div>
@@ -280,24 +264,17 @@ $editorialContent = $frontPage instanceof WP_Post
                         ?>
                     </p>
                 <?php endif; ?>
-                <div class="single-hunt-home__actions">
-                    <?php
-                    echo $cta['cta_html'] ?? ''; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-                    ?>
-                    <a
-                        class="single-hunt-home__details-link"
-                        href="<?php echo esc_url($detailsUrl); ?>"
-                        data-single-hunt-event="single_hunt_details"
-                    >
-                        <?php
-                        echo esc_html(
-                            $isDemoMode
-                                ? __('Voir la présentation', 'chassesautresor-com')
-                                : __('Voir tous les détails', 'chassesautresor-com')
-                        );
-                        ?>
-                    </a>
-                </div>
+                <?php if (!$isDemoMode) : ?>
+                    <div class="single-hunt-home__actions">
+                        <a
+                            class="single-hunt-home__details-link"
+                            href="<?php echo esc_url($detailsUrl); ?>"
+                            data-single-hunt-event="single_hunt_details"
+                        >
+                            <?php esc_html_e('Voir tous les détails', 'chassesautresor-com'); ?>
+                        </a>
+                    </div>
+                <?php endif; ?>
                 <?php if (!empty($cta['cta_message'])) : ?>
                     <div class="single-hunt-home__cta-message">
                         <?php echo wp_kses_post($cta['cta_message']); ?>
@@ -365,7 +342,11 @@ $editorialContent = $frontPage instanceof WP_Post
         </section>
     <?php endif; ?>
 
-    <section id="home-enigmes" class="single-hunt-home__riddles" aria-labelledby="single-hunt-riddles-title">
+    <section
+        id="home-enigmes"
+        class="single-hunt-home__riddles page-chasse-wrapper--compact"
+        aria-labelledby="single-hunt-riddles-title"
+    >
         <div class="conteneur">
             <div class="single-hunt-home__section-heading">
                 <div>
@@ -374,12 +355,6 @@ $editorialContent = $frontPage instanceof WP_Post
                         <?php esc_html_e('Les énigmes vous attendent', 'chassesautresor-com'); ?>
                     </h2>
                 </div>
-                <a
-                    href="<?php echo esc_url($riddlesUrl); ?>"
-                    data-single-hunt-event="single_hunt_riddles_access"
-                >
-                    <?php esc_html_e('Accéder aux énigmes', 'chassesautresor-com'); ?>
-                </a>
             </div>
             <?php if ($canShowRiddles) : ?>
                 <?php
