@@ -532,6 +532,175 @@ li.active .enigme-menu__edit {
   margin-top: var(--space-md);
 }
 
+/* Expérience de jeu recentrée pour les sites Chasse unique et Démo. */
+.page-enigme--compact {
+  width: 100%;
+  max-width: 1600px;
+  margin: var(--space-lg) auto 0;
+  padding-inline: var(--space-md);
+  gap: var(--space-xl);
+  text-align: left;
+
+  .enigme-hunt-context {
+    display: none;
+    align-items: center;
+    align-self: flex-start;
+    gap: var(--space-xs);
+    min-height: 44px;
+    padding: var(--space-xs) var(--space-sm);
+    color: var(--color-text-secondary);
+    font-weight: 600;
+    text-decoration: none;
+    border-radius: 6px;
+  }
+
+  .enigme-hunt-context:hover,
+  .enigme-hunt-context:focus-visible {
+    color: var(--color-primary);
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .enigme-header {
+    width: 100%;
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 0 0 var(--space-md);
+    text-align: left;
+  }
+
+  .enigme-header .enigme-titre {
+    margin: 0;
+    font-size: clamp(2rem, 6vw, 3.75rem);
+    line-height: 1.08;
+  }
+
+  .enigme-header .enigme-soustitre {
+    margin-top: var(--space-sm);
+    font-size: clamp(1rem, 2.5vw, 1.5rem);
+  }
+
+  .contenu-principal,
+  .solution {
+    width: 100%;
+    max-width: 920px;
+    margin-inline: auto;
+  }
+
+  .hero-visuel {
+    width: 100%;
+    max-width: none;
+    overflow: hidden;
+    border-radius: 10px;
+  }
+
+  .hero-visuel .galerie-enigme-wrapper,
+  .hero-visuel .image-principale,
+  .hero-visuel picture {
+    display: block;
+    width: 100%;
+    margin: 0;
+  }
+
+  .hero-visuel img {
+    width: 100%;
+    max-height: none;
+    height: auto;
+  }
+
+  .enigme-texte {
+    max-width: 72ch;
+    padding-inline: 0;
+  }
+
+  .participation {
+    width: 100%;
+    max-width: none;
+    margin-inline: auto;
+    padding: var(--space-lg);
+    text-align: left;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 10px;
+  }
+
+  .participation-header--empty {
+    display: none;
+  }
+
+  .participation-infos {
+    display: flex;
+    justify-content: space-between;
+    color: var(--color-text-primary);
+  }
+
+  .zone-reponse h3,
+  .zone-indices-line__label {
+    color: var(--color-text-primary);
+  }
+
+  .zone-reponse .bouton-cta,
+  .zone-reponse button[type='submit'] {
+    width: 100%;
+  }
+
+  .reponse-indices-separator {
+    margin-block: var(--space-lg);
+  }
+
+  .zone-indices {
+    padding: var(--space-md);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    opacity: 1;
+  }
+
+  .zone-indices .zone-indices-line {
+    align-items: flex-start;
+  }
+
+  .zone-indices .zone-indices-line__label {
+    flex-basis: 100%;
+  }
+
+  .solution details {
+    border-radius: 10px;
+  }
+
+  .riddle-steps-player,
+  .riddle-player-step {
+    width: 100%;
+  }
+
+  .riddle-player-step__image {
+    width: 100%;
+    max-width: none;
+    height: auto;
+  }
+
+  @media (--bp-tablet) {
+    padding-inline: var(--space-xl);
+    gap: var(--space-2xl);
+
+    .enigme-hunt-context {
+      display: inline-flex;
+    }
+
+    .participation {
+      width: 100%;
+      padding: var(--space-xl);
+    }
+
+    .zone-reponse .bouton-cta,
+    .zone-reponse button[type='submit'] {
+      width: auto;
+      align-self: flex-start;
+    }
+
+    .zone-indices .zone-indices-line__label {
+      flex-basis: 140px;
+    }
+  }
+}
+
 
 /* Titre + sous-titre */
 .page-enigme .enigme-header {

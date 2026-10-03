@@ -292,7 +292,19 @@ require_once __DIR__ . '/indices.php';
             echo '</div>';
         }
 
-        echo '<main class="page-enigme enigme-style-' . esc_attr($style) . '">';
+        $compact_experience = function_exists('cat_is_single_hunt_mode') && cat_is_single_hunt_mode();
+        $page_class = 'page-enigme enigme-style-' . $style;
+        if ($compact_experience) {
+            $page_class .= ' page-enigme--compact';
+        }
+
+        echo '<main class="' . esc_attr($page_class) . '">';
+        if ($compact_experience && $chasse_id) {
+            echo '<a class="enigme-hunt-context" href="' . esc_url($retour_url) . '">';
+            echo '<span aria-hidden="true">&larr;</span> ';
+            echo esc_html(get_the_title($chasse_id));
+            echo '</a>';
+        }
         render_enigme_title($enigme_id, $style, $user_id);
         render_enigme_hero($enigme_id, $style, $user_id);
         render_enigme_content($enigme_id, $style, $user_id);

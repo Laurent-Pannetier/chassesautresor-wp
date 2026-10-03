@@ -74,6 +74,7 @@ $has_indices   = (bool) get_field('chasse_cache_has_indices', $chasse_id);
 
 $titre_chasse   = get_the_title($chasse_id);
 $enigmes_intro  = '';
+$compact_experience = function_exists('cat_is_single_hunt_mode') && cat_is_single_hunt_mode();
 
 $mode_fin = get_field('chasse_mode_fin', $chasse_id) ?: 'automatique';
 $statut = $infos_chasse['statut'];
@@ -204,7 +205,10 @@ if ($peut_voir_aside) {
 }
 ?>
 
-<div id="primary" class="content-area page-chasse-wrapper">
+<div
+    id="primary"
+    class="content-area page-chasse-wrapper<?= $compact_experience ? ' page-chasse-wrapper--compact' : ''; ?>"
+>
   <main id="main" class="site-main">
 
     <?php
@@ -240,7 +244,11 @@ if ($peut_voir_aside) {
     <!-- 🧩 Liste des énigmes -->
     <section class="chasse-enigmes-wrapper" id="chasse-enigmes-wrapper">
         <div class="titre-enigmes-wrapper">
-            <h2><?php printf(esc_html__('Énigmes de %s', 'chassesautresor-com'), esc_html($titre_chasse)); ?></h2>
+            <?php if ($compact_experience) : ?>
+                <h2><?php esc_html_e('Les énigmes', 'chassesautresor-com'); ?></h2>
+            <?php else : ?>
+                <h2><?php printf(esc_html__('Énigmes de %s', 'chassesautresor-com'), esc_html($titre_chasse)); ?></h2>
+            <?php endif; ?>
             <?php if ($enigmes_intro !== '') : ?>
                 <p class="enigmes-intro"><?= $enigmes_intro; ?></p>
             <?php endif; ?>

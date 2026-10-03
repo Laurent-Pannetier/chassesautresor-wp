@@ -112,7 +112,11 @@ if (current_user_can('administrator')) {
 }
 
 
+$compact_experience = function_exists('cat_is_single_hunt_mode') && cat_is_single_hunt_mode();
 $classe_intro = 'chasse-section-intro';
+if ($compact_experience) {
+    $classe_intro .= ' chasse-section-intro--compact';
+}
 $est_complet = chasse_est_complet($chasse_id);
 if ($edition_active && !$est_complet) {
   $classe_intro .= ' champ-vide-obligatoire';
@@ -441,7 +445,10 @@ if ($edition_active && !$est_complet) {
       </div>
         <?php
         $cta_data = $infos_chasse['cta_data'] ?? [];
+        $cta_type = (string) ($cta_data['type'] ?? '');
+        $show_cta_section = !$compact_experience || $cta_type !== 'engage';
         ?>
+        <?php if ($show_cta_section) : ?>
         <div class="chasse-cta-section cta-chasse">
           <div class="chasse-caracteristiques">
             <?php if ($date_label && $date_value) : ?>
@@ -554,7 +561,6 @@ if ($edition_active && !$est_complet) {
           </div>
 
           <?php
-          $cta_type = $cta_data['type'] ?? '';
           $cta_id   = $cta_type === 'validation' ? 'cta-validation-chasse' : '';
           ?>
           <div class="cta-chasse-row"<?php echo $cta_id ? ' id="' . esc_attr($cta_id) . '"' : ''; ?>>
@@ -564,6 +570,7 @@ if ($edition_active && !$est_complet) {
             </div>
           </div>
           </div>
+        <?php endif; ?>
 
         <?php
         get_template_part(

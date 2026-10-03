@@ -24,6 +24,140 @@
   gap: var(--grid-gap);
 }
 
+/* Bandeau de jeu réservé aux expériences Chasse unique et Démo. */
+.page-chasse-wrapper--compact {
+  .chasse-section-intro--compact {
+    border-bottom: 1px solid var(--color-secondary);
+  }
+
+  .chasse-fiche-container {
+    margin-top: var(--space-lg);
+    padding-bottom: var(--space-lg);
+    display: grid;
+    grid-template-columns: 72px minmax(0, 1fr);
+    gap: var(--space-md);
+    align-items: center;
+  }
+
+  .chasse-visuel-wrapper {
+    width: 72px;
+    margin: 0;
+    align-self: start;
+  }
+
+  .champ-chasse.champ-img,
+  .header-chasse__image,
+  .header-chasse__image .image {
+    width: 72px;
+    height: 72px;
+  }
+
+  .header-chasse__image {
+    overflow: hidden;
+    border: 1px solid var(--color-secondary);
+    border-radius: 10px;
+  }
+
+  .header-chasse__image .chasse-image {
+    width: 100%;
+    height: 100%;
+    max-height: none;
+    object-fit: cover;
+  }
+
+  .header-chasse__image .badge-statut,
+  .header-chasse__image .badge-cout,
+  .header-chasse__image .mode-fin-icone,
+  .chasse-visuel-wrapper .champ-liens,
+  .chasse-details-wrapper > .separateur-3,
+  .chasse-caracteristiques,
+  .chasse-description,
+  .chasse-lot-complet,
+  .chasse-fiche-metas {
+    display: none;
+  }
+
+  .chasse-details-wrapper {
+    min-width: 0;
+  }
+
+  .chasse-organisateur {
+    margin-bottom: var(--space-xxs);
+  }
+
+  .chasse-organisateur__logo {
+    width: 28px;
+    height: 28px;
+  }
+
+  .header-chasse {
+    margin: 0 3rem var(--space-xs) 0;
+  }
+
+  .meta-row--headline {
+    margin: 0;
+    justify-content: flex-start;
+    gap: var(--space-md);
+  }
+
+  .chasse-cta-section {
+    margin-top: var(--space-sm);
+  }
+
+  .cta-chasse-row {
+    justify-content: flex-start;
+  }
+
+  .chasse-enigmes-wrapper {
+    margin-top: var(--space-xl);
+  }
+
+  .titre-enigmes-wrapper {
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  @media (--bp-mobile) {
+    .chasse-fiche-container {
+      grid-template-columns: 96px minmax(0, 1fr);
+    }
+
+    .chasse-visuel-wrapper,
+    .champ-chasse.champ-img,
+    .header-chasse__image,
+    .header-chasse__image .image {
+      width: 96px;
+      height: 96px;
+    }
+  }
+
+  @media (--bp-tablet) {
+    .chasse-fiche-container {
+      grid-template-columns: 120px minmax(0, 1fr);
+      padding-bottom: var(--space-xl);
+    }
+
+    .chasse-visuel-wrapper,
+    .champ-chasse.champ-img,
+    .header-chasse__image,
+    .header-chasse__image .image {
+      width: 120px;
+      height: 120px;
+    }
+  }
+
+  @media (--bp-desktop) {
+    .chasse-fiche-container {
+      display: grid;
+    }
+
+    .chasse-visuel-wrapper {
+      position: static;
+      max-width: none;
+    }
+  }
+}
+
 .chasse-visuel-wrapper {
   flex: 0 0 auto;
   display: flex;

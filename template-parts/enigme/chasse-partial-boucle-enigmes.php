@@ -96,6 +96,8 @@ if (!function_exists('compter_tentatives_du_jour') || !function_exists('compter_
         ? sprintf(__('Ouvrir l\'énigme — %s', 'chassesautresor-com'), $cta['label'])
         : '';
       $statut_utilisateur = $cta['statut_utilisateur'] ?? '';
+      $badge_label = (string) ($cta['badge'] ?? '');
+      $badge_class = 'carte-enigme-statut--' . sanitize_html_class($type_cta);
       $afficher_validation = in_array(
         $statut_utilisateur,
         ['resolue', 'terminee'],
@@ -148,6 +150,11 @@ if (!function_exists('compter_tentatives_du_jour') || !function_exists('compter_
             <?php endif; ?>
                 <div class="carte-core">
                   <div class="carte-enigme-image <?= esc_attr($mapping_visuel['filtre'] ?? ''); ?>" title="<?= esc_attr($mapping_visuel['sens'] ?? ''); ?>">
+                    <?php if ($badge_label !== '') : ?>
+                      <span class="carte-enigme-statut <?= esc_attr($badge_class); ?>">
+                        <?= esc_html($badge_label); ?>
+                      </span>
+                    <?php endif; ?>
                     <?php if ($mapping_visuel['image_reelle']) : ?>
                       <?php afficher_picture_vignette_enigme($enigme_id, 'Vignette de l’énigme', ['medium']); ?>
                     <?php else : ?>
@@ -179,6 +186,13 @@ if (!function_exists('compter_tentatives_du_jour') || !function_exists('compter_
                 <?php elseif (($mapping_visuel['etat_systeme'] ?? '') === 'bloquee_date') : ?>
                   <h3><span class="carte-enigme-titre"><?= esc_html__('Parution programmée', 'chassesautresor-com'); ?></span></h3>
                 <?php endif; ?>
+
+                <span class="carte-enigme-action <?= esc_attr($classes_bouton); ?>">
+                  <?= esc_html($cta['label']); ?>
+                  <?php if ($linkable) : ?>
+                    <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+                  <?php endif; ?>
+                </span>
 
               </div>
           <?php if ($linkable) : ?>
