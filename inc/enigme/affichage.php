@@ -216,6 +216,14 @@ require_once __DIR__ . '/indices.php';
         }
 
         $retour_url   = $chasse_id ? get_permalink($chasse_id) : home_url('/');
+        $hunt_image = $chasse_id ? get_field('chasse_principale_image', $chasse_id) : null;
+        $hunt_image_id = is_array($hunt_image) ? (int) ($hunt_image['ID'] ?? 0) : (int) $hunt_image;
+        $hunt_thumbnail = $hunt_image_id > 0
+            ? wp_get_attachment_image($hunt_image_id, 'thumbnail', false, [
+                'class' => 'enigme-hunt-back__image',
+                'alt' => '',
+            ])
+            : '';
         $settings_icon = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none"'
             . ' stroke="currentColor" stroke-width="2" stroke-linecap="round"'
             . ' stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path'
@@ -231,9 +239,12 @@ require_once __DIR__ . '/indices.php';
             . ' a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2'
             . ' 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>';
         echo '<header class="enigme-mobile-header">';
-        echo '<a class="enigme-mobile-back" href="' . esc_url($retour_url) . '">';
-        echo '<span class="screen-reader-text">' . esc_html__('Retour', 'chassesautresor-com') . '</span>';
-        echo '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>';
+        echo '<a class="enigme-mobile-back enigme-hunt-back" href="' . esc_url($retour_url) . '" aria-label="'
+            . esc_attr__('Retour à la chasse', 'chassesautresor-com') . '">';
+        echo $hunt_thumbnail;
+        echo '<span class="enigme-hunt-back__icon"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none"'
+            . ' stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">'
+            . '<path d="M15 18l-6-6 6-6"/></svg></span>';
         echo '</a>';
         echo '<div class="enigme-mobile-actions">';
         if (function_exists('utilisateur_peut_modifier_enigme') && utilisateur_peut_modifier_enigme($enigme_id)) {

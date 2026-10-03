@@ -8,9 +8,10 @@ function timeUntilMidnight() {
   return `${h}h et ${m}mn avant réactivation`;
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+function initFormulaireAutomatique() {
   const form = document.querySelector('.formulaire-reponse-auto');
-  if (!form) return;
+  if (!form || form.dataset.responseHandlerReady === '1') return;
+  form.dataset.responseHandlerReady = '1';
   const feedback = form.querySelector('.reponse-feedback');
   const compteur = document.querySelector('.tentatives-counter');
   const compteurValeur = compteur ? compteur.querySelector('.valeur') : null;
@@ -230,4 +231,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
   });
-});
+}
+
+document.addEventListener('DOMContentLoaded', initFormulaireAutomatique);
+document.addEventListener('riddle-step-content-updated', initFormulaireAutomatique);

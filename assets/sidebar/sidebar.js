@@ -84,7 +84,7 @@
       const chasseId = nav ? nav.dataset.chasseId : null;
       reloadNav(chasseId);
     });
-    showAside();
+    hideAside();
     window.sidebarAside = { show: showAside, reload: reloadNav };
     window.enigmeAside = window.sidebarAside;
   }

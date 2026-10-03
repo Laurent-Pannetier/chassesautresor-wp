@@ -133,41 +133,61 @@ if ($riddleId > 0) {
           </button>
         </div>
         <p class="txt-small">
-          <?= esc_html__('Une étape doit contenir au moins un texte ou une image.', 'chassesautresor-com'); ?>
+          <?= esc_html__(
+              'Un texte ou une image est obligatoire pour Simple clic et Réponse texte.',
+              'chassesautresor-com'
+          ); ?>
         </p>
       </div>
       <?php if (!$structureLocked) : ?>
+        <?php $widgetDefinitions = (new ChassesAuTresor\Core\Progress\AnswerWidgetEditorViewService())->widgets(); ?>
         <fieldset class="riddle-step-form__field">
           <legend><?= esc_html__('Réponse de l’étape', 'chassesautresor-com'); ?></legend>
           <label for="riddle-step-widget"><?= esc_html__('Mode de réponse', 'chassesautresor-com'); ?></label>
           <select id="riddle-step-widget" name="widget">
-            <option value="click"><?= esc_html__('Simple clic', 'chassesautresor-com'); ?></option>
-            <option value="text"><?= esc_html__('Réponse texte', 'chassesautresor-com'); ?></option>
+            <?php foreach ($widgetDefinitions as $widgetDefinition) : ?>
+              <option value="<?= esc_attr($widgetDefinition['type']); ?>">
+                <?= esc_html($widgetDefinition['label']); ?>
+              </option>
+            <?php endforeach; ?>
           </select>
-          <div class="riddle-step-widget-config" data-widget="click">
-            <label for="riddle-step-button-label">
-              <?= esc_html__('Libellé du bouton', 'chassesautresor-com'); ?>
-            </label>
-            <input id="riddle-step-button-label" name="button_label" type="text" maxlength="80"
-              value="<?= esc_attr__('Continuer', 'chassesautresor-com'); ?>">
-          </div>
-          <div class="riddle-step-widget-config" data-widget="text" hidden>
-            <label for="riddle-step-accepted-answers">
-              <?= esc_html__('Réponses acceptées — une par ligne', 'chassesautresor-com'); ?>
-            </label>
-            <textarea id="riddle-step-accepted-answers" name="accepted_answers" rows="4"></textarea>
-            <label>
-              <input type="checkbox" name="case_sensitive" value="1">
-              <?= esc_html__('Respecter les majuscules et minuscules', 'chassesautresor-com'); ?>
-            </label>
-            <label for="riddle-step-variants">
-              <?= esc_html__('Variantes personnalisées — réponse | message', 'chassesautresor-com'); ?>
-            </label>
-            <textarea id="riddle-step-variants" name="variants" rows="4"></textarea>
-            <p class="txt-small">
-              <?= esc_html__('Une variante affiche un message d’aide sans consommer de tentative.', 'chassesautresor-com'); ?>
-            </p>
-          </div>
+          <?php foreach ($widgetDefinitions as $widgetIndex => $widgetDefinition) : ?>
+            <div
+              class="riddle-step-widget-config"
+              data-widget="<?= esc_attr($widgetDefinition['type']); ?>"
+              <?= $widgetIndex === 0 ? '' : 'hidden'; ?>
+            >
+              <?php foreach ($widgetDefinition['fields'] as $field) : ?>
+                <?php $fieldId = 'riddle-step-' . str_replace('_', '-', $field['name']); ?>
+                <?php if ($field['control'] === 'checkbox') : ?>
+                  <label>
+                    <input type="checkbox" name="<?= esc_attr($field['name']); ?>" value="1">
+                    <?= esc_html($field['label']); ?>
+                  </label>
+                <?php else : ?>
+                  <label for="<?= esc_attr($fieldId); ?>"><?= esc_html($field['label']); ?></label>
+                  <?php if ($field['control'] === 'textarea') : ?>
+                    <textarea
+                      id="<?= esc_attr($fieldId); ?>"
+                      name="<?= esc_attr($field['name']); ?>"
+                      rows="<?= esc_attr($field['rows'] ?? 4); ?>"
+                    ></textarea>
+                  <?php else : ?>
+                    <input
+                      id="<?= esc_attr($fieldId); ?>"
+                      name="<?= esc_attr($field['name']); ?>"
+                      type="text"
+                      maxlength="<?= esc_attr($field['maxlength'] ?? 120); ?>"
+                      value="<?= esc_attr($field['default'] ?? ''); ?>"
+                    >
+                  <?php endif; ?>
+                <?php endif; ?>
+                <?php if (!empty($field['help'])) : ?>
+                  <p class="txt-small"><?= esc_html($field['help']); ?></p>
+                <?php endif; ?>
+              <?php endforeach; ?>
+            </div>
+          <?php endforeach; ?>
         </fieldset>
       <?php endif; ?>
       <p class="riddle-step-form__feedback" role="alert" aria-live="assertive"></p>

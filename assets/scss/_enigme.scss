@@ -720,7 +720,49 @@ li.active .enigme-menu__edit {
 }
 
 .enigme-mobile-header {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  padding: var(--space-md) var(--space-md) 0;
+  background-color: transparent;
+}
+
+.enigme-mobile-actions {
   display: none;
+}
+
+.enigme-hunt-back {
+  position: relative;
+  width: 3rem;
+  height: 3rem;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--color-white);
+  box-shadow: 0 2px 8px rgba(var(--color-black-rgb, 0, 0, 0), 0.2);
+}
+
+.enigme-hunt-back__image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.enigme-hunt-back__icon {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(var(--color-black-rgb, 0, 0, 0), 0.28);
+}
+
+.enigme-hunt-back__icon svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  filter: drop-shadow(0 1px 2px rgba(var(--color-black-rgb, 0, 0, 0), 0.6));
 }
 
 .enigme-edit-toggle--desktop {
@@ -748,8 +790,7 @@ li.active .enigme-menu__edit {
   }
 
   .enigme-mobile-header {
-    display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
     align-items: center;
     gap: var(--space-md);
     padding-top: calc(var(--space-sm) + env(safe-area-inset-top));
@@ -776,6 +817,14 @@ li.active .enigme-menu__edit {
     display: flex;
     align-items: center;
     justify-content: center;
+  }
+
+  .enigme-mobile-header .enigme-hunt-back {
+    width: 3rem;
+    height: 3rem;
+    padding: 0;
+    color: var(--color-white);
+    border-color: rgba(255, 255, 255, 0.45);
   }
 
   .enigme-mobile-header svg {
@@ -947,6 +996,238 @@ body.no-scroll {
   width: 100%;
 }
 
+.riddle-directions {
+  --direction-key-bg: #1976d2;
+  --direction-key-color: #fff;
+  --direction-key-shadow: #0d47a1;
+  --direction-key-size: clamp(3.25rem, 18vw, 5.5rem);
+  --direction-arrow-stroke: 1.5px;
+  display: grid;
+  grid-template-columns: repeat(3, var(--direction-key-size));
+  gap: var(--space-sm);
+  justify-content: center;
+}
+
+.riddle-direction {
+  aspect-ratio: 1;
+  border: 0;
+  border-radius: 0.8rem;
+  background: var(--direction-key-bg);
+  color: var(--direction-key-color);
+  box-shadow: 0 0.3rem 0 var(--direction-key-shadow);
+  font-size: 2.5rem;
+  font-weight: 900;
+  line-height: 1;
+  -webkit-text-stroke: var(--direction-arrow-stroke) currentColor;
+  cursor: pointer;
+}
+
+.riddle-direction:active {
+  transform: translateY(0.2rem);
+  box-shadow: 0 0.1rem 0 var(--direction-key-shadow);
+}
+
+.riddle-directions__title,
+.riddle-directions__sequence {
+  display: block;
+  text-align: center;
+}
+
+.riddle-directions__sequence {
+  min-height: 1.5em;
+  font-weight: 700;
+}
+
+.riddle-directions__actions {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
+
+.riddle-directions-reset {
+  width: 3rem;
+  height: 3rem;
+  padding: 0;
+  border: 2px solid var(--color-primary);
+  border-radius: 50%;
+  background: rgba(var(--color-white-rgb, 255, 255, 255), 0.9);
+  color: var(--color-primary);
+  box-shadow: 0 2px 5px rgba(var(--color-black-rgb, 0, 0, 0), 0.2);
+  font-size: 1.75rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.riddle-directions-reset:hover,
+.riddle-directions-reset:focus-visible {
+  background: var(--color-primary);
+  color: var(--color-white);
+}
+
 .riddle-step-text-form .riddle-step-click-form__feedback {
   margin: 0;
 }
+
+.riddle-colors {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(4.5rem, 5.75rem));
+  gap: var(--space-sm);
+  justify-content: center;
+}
+
+.riddle-color {
+  min-height: 3.4rem;
+  border: 0;
+  border-radius: 0.8rem;
+  color: var(--color-white);
+  box-shadow: 0 0.28rem 0 color-mix(in srgb, currentColor 25%, #333);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.riddle-color--red { background: var(--riddle-color-red, #e53935); }
+.riddle-color--orange { background: var(--riddle-color-orange, #fb8c00); }
+.riddle-color--yellow { background: var(--riddle-color-yellow, #fdd835); }
+.riddle-color--green { background: var(--riddle-color-green, #43a047); }
+.riddle-color--blue { background: var(--riddle-color-blue, #1e88e5); }
+.riddle-color--purple { background: var(--riddle-color-purple, #8e24aa); }
+.riddle-color--indigo { background: var(--riddle-color-indigo, #3949ab); }
+.riddle-color--pink { background: var(--riddle-color-pink, #ec5f91); }
+.riddle-color--brown { background: var(--riddle-color-brown, #795548); }
+.riddle-color--grey { background: var(--riddle-color-grey, #808080); }
+.riddle-color--black { background: var(--riddle-color-black, #000); }
+.riddle-color--white { background: var(--riddle-color-white, #fff); color: #68717d; border: 1px solid #ccc; }
+
+.riddle-colors__title,
+.riddle-colors__sequence { display: flex; justify-content: center; gap: 0.35rem; min-height: 1.5rem; }
+.riddle-color-dot { width: 1.25rem; height: 1.25rem; border-radius: 50%; }
+.riddle-colors__actions { display: flex; justify-content: space-around; align-items: center; }
+.riddle-colors-reset { font-size: 1.75rem; color: var(--color-primary); background: transparent; border: 0; cursor: pointer; }
+
+.riddle-numbers {
+  --number-key-bg: #1976d2;
+  --number-key-color: #fff;
+  --number-key-shadow: #0d47a1;
+  --number-key-size: clamp(3.75rem, 20vw, 5.75rem);
+  display: grid;
+  grid-template-columns: repeat(3, var(--number-key-size));
+  gap: var(--space-sm);
+  justify-content: center;
+}
+
+.riddle-number {
+  min-height: var(--number-key-size);
+  border: 0;
+  border-radius: 0.8rem;
+  background: var(--number-key-bg);
+  color: var(--number-key-color);
+  box-shadow: 0 0.3rem 0 var(--number-key-shadow);
+  font-size: 2.5rem;
+  cursor: pointer;
+}
+
+.riddle-number--zero { grid-column: 2; }
+.riddle-numbers__title,
+.riddle-numbers__sequence,
+.riddle-safe__title,
+.riddle-safe__sequence { display: block; min-height: 1.5em; text-align: center; }
+.riddle-numbers__sequence {
+  display: flex;
+  gap: 0.35rem;
+  justify-content: center;
+  font-weight: 700;
+}
+
+.riddle-numbers__sequence span {
+  min-width: 2rem;
+  padding: 0.25rem 0.4rem;
+  border-radius: 0.25rem;
+  background: #171717;
+  color: #fff;
+  text-align: center;
+}
+
+.riddle-widget-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+}
+
+.riddle-widget-reset {
+  border: 0;
+  background: transparent;
+  color: var(--color-primary);
+  font-size: 1.75rem;
+  cursor: pointer;
+}
+
+.riddle-safe {
+  --safe-angle: 0deg;
+  --safe-size: min(82vw, 22rem);
+  position: relative;
+  width: var(--safe-size);
+  height: var(--safe-size);
+  margin: 0 auto;
+  border: clamp(0.75rem, 3vw, 1.1rem) solid var(--safe-ring, #888);
+  border-radius: 50%;
+  background: #fff;
+  touch-action: none;
+  cursor: grab;
+}
+
+.riddle-safe:active { cursor: grabbing; }
+.riddle-safe:focus-visible { outline: 3px solid var(--color-primary); outline-offset: 4px; }
+.riddle-safe::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: repeating-conic-gradient(#222 0 1deg, transparent 1deg 3.6deg);
+  box-shadow: inset 0 0 0 0.55rem #fff;
+  transform: rotate(var(--safe-angle));
+  pointer-events: none;
+}
+
+.riddle-safe__marker {
+  position: absolute;
+  z-index: 2;
+  top: calc(-1 * clamp(0.75rem, 3vw, 1.1rem));
+  left: 50%;
+  border-right: 0.65rem solid transparent;
+  border-left: 0.65rem solid transparent;
+  border-top: 1.3rem solid #222;
+  transform: translateX(-50%);
+}
+
+.riddle-safe__dial {
+  position: absolute;
+  inset: 25%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, #ddd, #777 70%);
+}
+
+.riddle-safe__value {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  font-size: clamp(1.5rem, 8vw, 2.5rem);
+  font-weight: 700;
+  transform: translate(-50%, -50%);
+}
+
+.riddle-safe__number {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  left: 50%;
+  padding: 0.1rem;
+  background: #fff;
+  transform: translate(-50%, -50%) rotate(calc(var(--safe-index) * 36deg + var(--safe-angle)))
+    translateY(calc(-0.36 * var(--safe-size)))
+    rotate(calc(var(--safe-index) * -36deg - var(--safe-angle)));
+  font-weight: 700;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.riddle-safe__sequence { margin-top: var(--space-md); font-weight: 700; }

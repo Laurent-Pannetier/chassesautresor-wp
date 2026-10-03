@@ -1,6 +1,7 @@
 function initFormulaireManuel() {
   const form = document.querySelector('.formulaire-reponse-manuelle');
-  if (!form) return;
+  if (!form || form.dataset.responseHandlerReady === '1') return;
+  form.dataset.responseHandlerReady = '1';
   const feedback = form.nextElementSibling;
   const input = form.querySelector('textarea[name="reponse_manuelle"]');
   const pointsMsg = form.querySelector('.message-limite');
@@ -88,3 +89,4 @@ function initFormulaireManuel() {
 }
 
 document.addEventListener('DOMContentLoaded', initFormulaireManuel);
+document.addEventListener('riddle-step-content-updated', initFormulaireManuel);
