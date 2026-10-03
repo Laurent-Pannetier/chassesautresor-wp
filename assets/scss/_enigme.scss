@@ -1027,6 +1027,15 @@ body.no-scroll {
   box-shadow: 0 0.1rem 0 var(--direction-key-shadow);
 }
 
+.riddle-direction:focus-visible,
+.riddle-color:focus-visible,
+.riddle-number:focus-visible,
+.riddle-widget-reset:focus-visible,
+.riddle-colors-reset:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 3px;
+}
+
 .riddle-directions__title,
 .riddle-directions__sequence {
   display: block;
@@ -1102,7 +1111,7 @@ body.no-scroll {
 .riddle-colors__sequence { display: flex; justify-content: center; gap: 0.35rem; min-height: 1.5rem; }
 .riddle-color-dot { width: 1.25rem; height: 1.25rem; border-radius: 50%; }
 .riddle-colors__actions { display: flex; justify-content: space-around; align-items: center; }
-.riddle-colors-reset { font-size: 1.75rem; color: var(--color-primary); background: transparent; border: 0; cursor: pointer; }
+.riddle-colors-reset { min-width: 3rem; min-height: 3rem; font-size: 1.75rem; color: var(--color-primary); background: transparent; border: 0; cursor: pointer; }
 
 .riddle-numbers {
   --number-key-bg: #1976d2;
@@ -1154,6 +1163,8 @@ body.no-scroll {
 }
 
 .riddle-widget-reset {
+  min-width: 3rem;
+  min-height: 3rem;
   border: 0;
   background: transparent;
   color: var(--color-primary);

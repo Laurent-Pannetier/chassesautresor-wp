@@ -12,6 +12,12 @@ const waitForImage = image => {
   });
 };
 
+const setWidgetSequenceLabel = (output, values = []) => {
+  if (!output) return;
+  const value = values.length ? values.join(', ') : RiddleStepPlayer.emptySequenceLabel;
+  output.setAttribute('aria-label', `${RiddleStepPlayer.sequenceLabel}: ${value}`);
+};
+
 const positionRiddleStepTarget = async target => {
   const element = target === 'final'
     ? document.querySelector('.formulaire-reponse-auto, .formulaire-reponse-manuelle') ||
@@ -61,6 +67,12 @@ const unlockRiddleStepContent = (form, data) => {
   return finalForm;
 };
 
+const focusUnlockedContent = target => {
+  if (!target) return;
+  if (!target.hasAttribute('tabindex')) target.setAttribute('tabindex', '-1');
+  target.focus({ preventScroll: true });
+};
+
 document.addEventListener('DOMContentLoaded', async () => {
   const target = window.sessionStorage.getItem('riddleStepScrollTarget');
   if (!target) return;
@@ -77,10 +89,20 @@ document.addEventListener('submit', async event => {
   const feedback = form.querySelector('.riddle-step-click-form__feedback');
   const data = new FormData(form);
   data.append('action', form.dataset.widgetAction);
+  form.setAttribute('aria-busy', 'true');
+  feedback.setAttribute('role', 'status');
+  feedback.textContent = '';
   button.disabled = true;
+  let keepDisabled = false;
   try {
     const response = await fetch(RiddleStepPlayer.ajaxUrl, { method: 'POST', body: data });
-    const result = await response.json();
+    let result;
+    try {
+      result = await response.json();
+    } catch (error) {
+      throw new Error(RiddleStepPlayer.error);
+    }
+    if (!result || typeof result !== 'object') throw new Error(RiddleStepPlayer.error);
     if (!result.success) throw new Error(result.data?.message || RiddleStepPlayer.error);
     if (result.data.resultat && result.data.resultat !== 'bon') {
       feedback.textContent = result.data.resultat === 'variante' && result.data.message
@@ -92,11 +114,13 @@ document.addEventListener('submit', async event => {
       form.querySelector('.riddle-colors__sequence')?.replaceChildren();
       form.querySelector('.riddle-numbers__sequence')?.replaceChildren();
       form.querySelector('.riddle-safe__sequence')?.replaceChildren();
+      form.querySelectorAll('[class$="__sequence"]').forEach(output => setWidgetSequenceLabel(output));
       const safeDial = form.querySelector('.riddle-safe');
       if (safeDial) {
         safeDial.dataset.value = '0';
         safeDial.style.setProperty('--safe-angle', '0deg');
         safeDial.setAttribute('aria-valuenow', '0');
+        safeDial.setAttribute('aria-valuetext', `${RiddleStepPlayer.safeValueLabel}: 0`);
         safeDial.querySelector('.riddle-safe__value').textContent = '0';
       }
       const counter = document.querySelector('.tentatives-counter .valeur');
@@ -110,22 +134,29 @@ document.addEventListener('submit', async event => {
       const maximum = Number.parseInt(form.dataset.maxFailures || '0', 10);
       if (maximum > 0 && result.data.compteur >= maximum) {
         answerInput?.setAttribute('disabled', 'disabled');
-        button.disabled = true;
+        keepDisabled = true;
         feedback.textContent = RiddleStepPlayer.limitReached;
         return;
       }
-      button.disabled = false;
       return;
     }
     const target = unlockRiddleStepContent(form, result.data);
     if (!target) throw new Error(RiddleStepPlayer.error);
+    focusUnlockedContent(target);
     target.scrollIntoView({
       behavior: window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
       block: 'start'
     });
   } catch (error) {
-    feedback.textContent = error.message;
-    button.disabled = false;
+    feedback.setAttribute('role', 'alert');
+    feedback.textContent = error instanceof Error && error.message
+      ? error.message
+      : RiddleStepPlayer.error;
+  } finally {
+    if (form.isConnected) {
+      form.setAttribute('aria-busy', 'false');
+      button.disabled = keepDisabled;
+    }
   }
 });
 
@@ -137,6 +168,7 @@ document.addEventListener('click', event => {
   if (event.target.closest('.riddle-directions-reset')) {
     input.value = '';
     output.textContent = '';
+    setWidgetSequenceLabel(output);
     return;
   }
   const button = event.target.closest('.riddle-direction');
@@ -146,6 +178,8 @@ document.addEventListener('click', event => {
   input.value = sequence.join(',');
   const symbols = { NW: '↖', N: '↑', NE: '↗', W: '←', E: '→', SW: '↙', S: '↓', SE: '↘' };
   output.textContent = sequence.map(direction => symbols[direction]).join(' ');
+  setWidgetSequenceLabel(output, sequence.map(direction => button.closest('form')
+    .querySelector(`[data-direction="${direction}"]`)?.dataset.label || direction));
 });
 
 document.addEventListener('click', event => {
@@ -156,6 +190,7 @@ document.addEventListener('click', event => {
   if (event.target.closest('.riddle-colors-reset')) {
     input.value = '';
     output.replaceChildren();
+    setWidgetSequenceLabel(output);
     return;
   }
   const button = event.target.closest('.riddle-color');
@@ -165,7 +200,10 @@ document.addEventListener('click', event => {
   input.value = sequence.join(',');
   const dot = document.createElement('span');
   dot.className = `riddle-color-dot riddle-color--${button.dataset.color}`;
+  dot.setAttribute('aria-hidden', 'true');
   output.append(dot);
+  setWidgetSequenceLabel(output, sequence.map(color => form
+    .querySelector(`[data-color="${color}"]`)?.dataset.label || color));
 });
 
 document.addEventListener('click', event => {
@@ -176,6 +214,7 @@ document.addEventListener('click', event => {
   if (event.target.closest('.riddle-widget-reset')) {
     input.value = '';
     output.textContent = '';
+    setWidgetSequenceLabel(output);
     return;
   }
   const button = event.target.closest('.riddle-number');
@@ -184,6 +223,7 @@ document.addEventListener('click', event => {
   const digit = document.createElement('span');
   digit.textContent = button.dataset.number;
   output.append(digit);
+  setWidgetSequenceLabel(output, input.value.split(''));
 });
 
 const safeDialAngle = (dial, event) => {
@@ -198,6 +238,7 @@ const setSafeDialValue = (dial, value) => {
   dial.dataset.value = normalized;
   dial.style.setProperty('--safe-angle', `${normalized * 3.6}deg`);
   dial.setAttribute('aria-valuenow', normalized);
+  dial.setAttribute('aria-valuetext', `${RiddleStepPlayer.safeValueLabel}: ${normalized}`);
   dial.querySelector('.riddle-safe__value').textContent = normalized;
 };
 
@@ -210,6 +251,12 @@ const commitSafeDialMovement = (form, direction, value) => {
   sequence.push(movement);
   input.value = sequence.join(',');
   output.textContent = sequence.map(item => `${item.startsWith('H') ? '↻' : '↺'} ${item.slice(1)}`).join('  ');
+  setWidgetSequenceLabel(output, sequence.map(item => {
+    const direction = item.startsWith('H')
+      ? RiddleStepPlayer.clockwiseLabel
+      : RiddleStepPlayer.counterclockwiseLabel;
+    return `${direction} ${item.slice(1)}`;
+  }));
 };
 
 document.addEventListener('pointerdown', event => {
@@ -237,18 +284,29 @@ document.addEventListener('pointermove', event => {
   setSafeDialValue(dial, Math.round(Number(dial.dataset.startValue) + rotation / 3.6));
 });
 
-document.addEventListener('pointerup', event => {
+const finishSafeDialPointer = (event, shouldCommit) => {
   const dial = event.target.closest('.riddle-safe');
   if (!dial || Number(dial.dataset.pointerId) !== event.pointerId) return;
   const rotation = Number(dial.dataset.rotation);
+  const startValue = Number(dial.dataset.startValue || 0);
   delete dial.dataset.pointerId;
+  delete dial.dataset.previousAngle;
+  delete dial.dataset.rotation;
+  delete dial.dataset.startValue;
+  if (!shouldCommit) {
+    setSafeDialValue(dial, startValue);
+    return;
+  }
   if (Math.abs(rotation) < 1.8) return;
   commitSafeDialMovement(
     dial.closest('.riddle-step-safe_dial-form'),
     rotation > 0 ? 'H' : 'A',
     Number(dial.dataset.value || 0)
   );
-});
+};
+
+document.addEventListener('pointerup', event => finishSafeDialPointer(event, true));
+document.addEventListener('pointercancel', event => finishSafeDialPointer(event, false));
 
 document.addEventListener('keydown', event => {
   const dial = event.target.closest('.riddle-safe');
@@ -275,5 +333,6 @@ document.addEventListener('click', event => {
   if (!form || !event.target.closest('.riddle-widget-reset')) return;
   form.querySelector('input[name="reponse"]').value = '';
   form.querySelector('.riddle-safe__sequence').textContent = '';
+  setWidgetSequenceLabel(form.querySelector('.riddle-safe__sequence'));
   setSafeDialValue(form.querySelector('.riddle-safe'), 0);
 });

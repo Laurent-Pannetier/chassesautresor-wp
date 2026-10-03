@@ -164,6 +164,11 @@ function charger_script_etapes_enigme(): void
         'wrong' => __('Cette réponse n’est pas correcte.', 'chassesautresor-com'),
         'limitReached' => __('Limite quotidienne atteinte.', 'chassesautresor-com'),
         'attemptsLabel' => __('Tentatives quotidiennes :', 'chassesautresor-com'),
+        'sequenceLabel' => __('Séquence saisie', 'chassesautresor-com'),
+        'emptySequenceLabel' => __('vide', 'chassesautresor-com'),
+        'safeValueLabel' => __('Valeur de la molette', 'chassesautresor-com'),
+        'clockwiseLabel' => __('sens horaire', 'chassesautresor-com'),
+        'counterclockwiseLabel' => __('sens antihoraire', 'chassesautresor-com'),
     ]);
 }
 add_action('wp_enqueue_scripts', 'charger_script_etapes_enigme');
