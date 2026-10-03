@@ -19,7 +19,7 @@ const HISTORIQUE_PAIEMENTS_ADMIN_PER_PAGE = 20;
 // ==================================================
 /**
  * 🔹 rechercher_utilisateur_ajax → Rechercher des utilisateurs en AJAX pour l’autocomplétion.
- * 🔹 charger_script_autocomplete_utilisateurs → Enregistrer et charger le script de gestion des points dans l’admin (page "Mon Compte").
+ * 🔹 charger_script_autocomplete_utilisateurs → Charger la gestion des points dans "Mon Compte".
  */
 
  
@@ -57,14 +57,14 @@ add_action('wp_enqueue_scripts', 'charger_script_autocomplete_utilisateurs');
 // ==================================================
 /**
  * 🔹 acf_add_local_field_group (conditionnelle) → Ajouter dynamiquement le champ ACF pour le taux de conversion.
- * 🔹 charger_script_taux_conversion → Charger le script `taux-conversion.js` uniquement pour les administrateurs sur "Mon Compte".
- * 🔹 afficher_tableau_paiements_admin → Afficher les demandes de paiement (en attente ou réglées) pour les administrateurs.
+ * 🔹 charger_script_taux_conversion → Charger `taux-conversion.js` pour les administrateurs.
+ * 🔹 afficher_tableau_paiements_admin → Afficher les demandes de paiement pour les administrateurs.
  * 🔹 regler_paiement_admin → Traiter le règlement d’une demande de paiement depuis l’admin.
- * 🔹 $_SERVER['REQUEST_METHOD'] === 'POST' && isset(...) → Mettre à jour le statut des demandes de paiement (admin).
+ * 🔹 Les requêtes POST mettent à jour le statut des demandes de paiement.
  */
 
 /**
- * 📌 Charge le script `taux-conversion.js` uniquement pour les administrateurs sur "Mon Compte" et ses sous-pages (y compris les templates redirigés).
+ * 📌 Charge `taux-conversion.js` pour les administrateurs sur "Mon Compte" et ses sous-pages.
  *
  * - Vérifie si l'URL commence par "/mon-compte/" pour inclure toutes les pages et templates associés.
  * - Vérifie si l'utilisateur a le rôle d'administrateur (`current_user_can('administrator')`).
@@ -134,7 +134,7 @@ function afficher_tableau_paiements_admin(): void
 // 🛠️ DÉVELOPPEMENT
 // ==================================================
 /**
- * 🔹 acf_inspect_field_group → Affiche les détails d’un groupe de champs ACF dans le navigateur pour documentation manuelle.
+ * 🔹 acf_inspect_field_group → Affiche les détails d’un groupe ACF pour documentation manuelle.
  */
 
 
@@ -324,7 +324,12 @@ function charger_script_site_protection_card() {
 add_action('wp_enqueue_scripts', 'charger_script_site_protection_card');
 
 function charger_script_reset_stats_card() {
-    if (preg_match('#^/mon-compte(?:/|$|\\?)#', $_SERVER['REQUEST_URI'] ?? '')) {
+    $is_account_area = preg_match('#^/mon-compte(?:/|$|\\?)#', $_SERVER['REQUEST_URI'] ?? '');
+    $is_demo_user = is_user_logged_in()
+        && function_exists('cat_is_demo_mode')
+        && cat_is_demo_mode();
+
+    if ($is_account_area || $is_demo_user) {
         wp_enqueue_script(
             'reset-stats-card',
             get_stylesheet_directory_uri() . '/assets/js/reset-stats-card.js',
@@ -337,7 +342,36 @@ function charger_script_reset_stats_card() {
             'nonce'    => wp_create_nonce('cta_reset_stats'),
             'confirm'  => __('Confirmez-vous la réinitialisation des statistiques ?', 'chassesautresor-com'),
             'success'  => __('Statistiques effacées.', 'chassesautresor-com'),
+            'error'    => __('La réinitialisation a échoué.', 'chassesautresor-com'),
+            'ajaxError' => __('Impossible de contacter le serveur.', 'chassesautresor-com'),
         ]);
     }
 }
 add_action('wp_enqueue_scripts', 'charger_script_reset_stats_card');
+
+/**
+ * Renders the demo statistics reset shortcut for authenticated users.
+ */
+function cta_render_demo_reset_stats_button(): void
+{
+    if (!is_user_logged_in() || !function_exists('cat_is_demo_mode') || !cat_is_demo_mode()) {
+        return;
+    }
+    ?>
+    <aside
+        class="demo-reset-stats"
+        aria-label="<?php esc_attr_e('Outils de démonstration', 'chassesautresor-com'); ?>"
+    >
+        <button
+            type="button"
+            class="demo-reset-stats__button"
+            data-reset-stats
+            title="<?php esc_attr_e('Effacer toutes les statistiques de démonstration', 'chassesautresor-com'); ?>"
+        >
+            <i class="fa-solid fa-arrow-rotate-left" aria-hidden="true"></i>
+            <span><?php esc_html_e('Reset stats', 'chassesautresor-com'); ?></span>
+        </button>
+    </aside>
+    <?php
+}
+add_action('wp_footer', 'cta_render_demo_reset_stats_button', 20);

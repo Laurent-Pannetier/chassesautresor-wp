@@ -90,6 +90,10 @@ add_action( 'init', 'cta_handle_language' );
  * @return void
  */
 function ca_register_home_hunts_search_context(): void {
+    if (function_exists('cat_is_single_hunt_mode') && cat_is_single_hunt_mode()) {
+        return;
+    }
+
     ca_register_search_context('home-hunts', [
         'fields' => [
             'sql' => [
@@ -175,7 +179,12 @@ function cta_render_lang_switcher( $row, $column ) {
     $current_url = remove_query_arg( 'lang', $current_url );
     ?>
     <div class="lang-switcher ast-builder-layout-element site-header-focus-item">
-        <button class="lang-switcher__toggle" aria-haspopup="true" aria-expanded="false" aria-label="<?php esc_attr_e( 'Change language', 'chassesautresor-com' ); ?>">
+        <button
+            class="lang-switcher__toggle"
+            aria-haspopup="true"
+            aria-expanded="false"
+            aria-label="<?php esc_attr_e( 'Change language', 'chassesautresor-com' ); ?>"
+        >
             <span class="lang-switcher__flag">
                 <?php echo esc_html( $available_langs[ $active_locale ]['flag'] ?? '🇫🇷' ); ?>
             </span>
@@ -369,41 +378,52 @@ add_action('wp_enqueue_scripts', function () {
     wp_set_script_translations('help-modal', 'chassesautresor-com');
 
     if (is_front_page()) {
-        wp_enqueue_script(
-            'home-hero',
-            $script_dir . 'home-hero.js',
-            [],
-            filemtime($theme_path . '/assets/js/home-hero.js'),
-            true
-        );
+        $is_single_hunt_site = function_exists('cat_is_single_hunt_mode') && cat_is_single_hunt_mode();
 
-        wp_enqueue_script(
-            'home-hunts-filters',
-            $script_dir . 'home-hunts-filters.js',
-            [],
-            filemtime($theme_path . '/assets/js/home-hunts-filters.js'),
-            true
-        );
+        if ($is_single_hunt_site) {
+            wp_enqueue_script(
+                'single-hunt-analytics',
+                $script_dir . 'single-hunt-analytics.js',
+                [],
+                filemtime($theme_path . '/assets/js/single-hunt-analytics.js'),
+                true
+            );
+        } else {
+            wp_enqueue_script(
+                'home-hero',
+                $script_dir . 'home-hero.js',
+                [],
+                filemtime($theme_path . '/assets/js/home-hero.js'),
+                true
+            );
 
-        $home_hunts_context = ca_resolve_search_context('home-hunts');
-        $home_hunts_ui      = is_array($home_hunts_context['ui'] ?? null) ? $home_hunts_context['ui'] : [];
-        $no_results_label   = isset($home_hunts_ui['no_results_message']) && $home_hunts_ui['no_results_message'] !== ''
-            ? (string) $home_hunts_ui['no_results_message']
-            : __('Aucune chasse trouvée', 'chassesautresor-com');
-
-        wp_localize_script(
-            'home-hunts-filters',
-            'homeHuntsFilters',
-            [
-                'ajaxUrl' => admin_url('admin-ajax.php'),
-                'nonce'   => wp_create_nonce('ca-filter-chasses'),
-                'labels'  => [
-                    'error' => __('Impossible de charger les chasses.', 'chassesautresor-com'),
-                    'reset' => __('Réinitialiser', 'chassesautresor-com'),
-                    'empty' => $no_results_label,
-                ],
-            ]
-        );
+            wp_enqueue_script(
+                'home-hunts-filters',
+                $script_dir . 'home-hunts-filters.js',
+                [],
+                filemtime($theme_path . '/assets/js/home-hunts-filters.js'),
+                true
+            );
+            $home_hunts_context = ca_resolve_search_context('home-hunts');
+            $home_hunts_ui = is_array($home_hunts_context['ui'] ?? null) ? $home_hunts_context['ui'] : [];
+            $no_results_label = isset($home_hunts_ui['no_results_message'])
+                && $home_hunts_ui['no_results_message'] !== ''
+                ? (string) $home_hunts_ui['no_results_message']
+                : __('Aucune chasse trouvée', 'chassesautresor-com');
+            wp_localize_script(
+                'home-hunts-filters',
+                'homeHuntsFilters',
+                [
+                    'ajaxUrl' => admin_url('admin-ajax.php'),
+                    'nonce' => wp_create_nonce('ca-filter-chasses'),
+                    'labels' => [
+                        'error' => __('Impossible de charger les chasses.', 'chassesautresor-com'),
+                        'reset' => __('Réinitialiser', 'chassesautresor-com'),
+                        'empty' => $no_results_label,
+                    ],
+                ]
+            );
+        }
     }
 
     if (is_account_page() && is_user_logged_in()) {
@@ -435,6 +455,16 @@ add_action('wp_enqueue_scripts', function () {
     }
 
     if (is_singular('enigme')) {
+        if (function_exists('cat_is_single_hunt_mode') && cat_is_single_hunt_mode()) {
+            wp_enqueue_script(
+                'single-hunt-analytics',
+                $script_dir . 'single-hunt-analytics.js',
+                [],
+                filemtime($theme_path . '/assets/js/single-hunt-analytics.js'),
+                true
+            );
+        }
+
         wp_enqueue_script(
             'accordeon',
             $script_dir . 'accordeon.js',
@@ -628,6 +658,8 @@ require_once $inc_path . 'search/registry.php';
 require_once $inc_path . 'search/helpers.php';
 require_once $inc_path . 'search/form.php';
 require_once $inc_path . 'homepage-filters.php';
+require_once $inc_path . 'single-hunt-navigation.php';
+require_once $inc_path . 'single-hunt-seo.php';
 
 require_once $inc_path . 'edition/edition-core.php';
 require_once $inc_path . 'edition/edition-organisateur.php';
@@ -645,7 +677,8 @@ require_once $inc_path . 'edition/edition-securite.php';
  *
  * - Il doit être exécuté avant toute sortie HTML.
  * - Il active la prise en charge des redirections, messages de succès, et champs ACF dynamiques.
- * - ACF recommande son appel dans le `header.php`, mais ici on l'injecte proprement via `wp_head` uniquement pour les chasses.
+ * - ACF recommande son appel dans le `header.php`, mais ici on l'injecte proprement via `wp_head`
+ *   uniquement pour les chasses.
  *
  * 💡 À terme, cette fonction pourrait être déplacée dans un fichier dédié (ex : acf-hooks.php)
  *

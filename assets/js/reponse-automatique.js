@@ -84,6 +84,7 @@ function initFormulaireAutomatique() {
               feedback.style.display = 'block';
             }
           } else if (res.data.resultat === 'bon') {
+            document.dispatchEvent(new CustomEvent('cta:riddle-resolved'));
             feedback.innerHTML = `<i class="fa-solid fa-circle-check" style="color:var(--color-success);"></i> ${__('Bonne réponse', 'chassesautresor-com')}`;
             feedback.style.display = 'block';
             const enigmeId = form.querySelector('input[name="enigme_id"]')?.value;

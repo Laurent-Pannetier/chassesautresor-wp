@@ -208,28 +208,6 @@ if ($peut_voir_aside) {
   <main id="main" class="site-main">
 
     <?php
-    // 🧭 Fil d'Ariane
-    $breadcrumb_items = [
-      [
-        'label'      => esc_html__('Accueil', 'chassesautresor-com'),
-        'label_html' => '<i class="fa-solid fa-house" aria-hidden="true"></i><span class="screen-reader-text">' . esc_html__('Accueil', 'chassesautresor-com') . '</span>',
-        'url'        => home_url('/'),
-      ],
-    ];
-    if ($organisateur_id) {
-      $breadcrumb_items[] = [
-        'label' => get_the_title($organisateur_id),
-        'url'   => get_permalink($organisateur_id),
-      ];
-    }
-    $breadcrumb_items[] = [
-      'label'   => get_the_title($chasse_id),
-      'current' => true,
-    ];
-    get_template_part('template-parts/common/breadcrumb', null, ['items' => $breadcrumb_items]);
-    ?>
-
-    <?php
     if (current_user_can('administrator') && $statut_validation === 'en_attente') {
       get_template_part('template-parts/chasse/chasse-validation-actions', null, [
         'chasse_id' => $chasse_id,
