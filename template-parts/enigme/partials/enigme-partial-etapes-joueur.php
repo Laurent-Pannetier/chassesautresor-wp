@@ -48,13 +48,13 @@ if ($riddleId <= 0 || $visibleIds === []) {
       <?php if (!$completed && $stepId === $currentId) : ?>
         <?php
         $configuration = (new ChassesAuTresor\Core\Progress\AnswerWidgetConfigurationService())->forStep($stepId);
-        $maxFailures = (int) get_field('enigme_tentative_max', $riddleId);
+        $maxFailures = 0;
         $usedFailures = 0;
-        if (in_array($configuration['type'], ['text', 'directions', 'colors', 'numbers', 'safe_dial'], true)) {
-            global $wpdb;
-            $usedFailures = ChassesAuTresor\Core\Support\CoreServiceFactory::riddleAttempts($wpdb)
-                ->countFailuresTodayForUser((int) get_current_user_id(), $riddleId);
-        }
+        global $wpdb;
+        $retryState = ChassesAuTresor\Core\Support\CoreServiceFactory::riddleRetry($wpdb)->getState(
+            (int) get_current_user_id(),
+            $riddleId
+        );
         $widgetView = (new ChassesAuTresor\Core\Progress\AnswerWidgetPlayerViewService())->build(
             $configuration,
             $maxFailures,
@@ -64,7 +64,7 @@ if ($riddleId <= 0 || $visibleIds === []) {
         <form
           class="<?= esc_attr($widgetView['form_class']); ?>"
           data-widget-action="<?= esc_attr($widgetView['action']); ?>"
-          data-max-failures="<?= esc_attr($maxFailures); ?>"
+          data-retry-state="<?= esc_attr(wp_json_encode($retryState)); ?>"
           aria-busy="false"
         >
           <input type="hidden" name="enigme_id" value="<?= esc_attr($riddleId); ?>">

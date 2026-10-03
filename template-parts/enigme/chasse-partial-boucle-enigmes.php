@@ -136,10 +136,6 @@ if (!function_exists('compter_tentatives_du_jour') || !function_exists('compter_
       $cout_points    = (int) get_field('enigme_tentative_cout_points', $enigme_id);
       $nb_participants = enigme_compter_joueurs_engages($enigme_id);
       $nb_resolutions  = enigme_compter_bonnes_solutions($enigme_id);
-      $tentatives_max  = (int) get_field('enigme_tentative_max', $enigme_id);
-      $tentatives_utilisees = ($tentatives_max > 0 && $mode_validation === 'automatique')
-        ? compter_tentatives_du_jour($utilisateur_id, $enigme_id)
-        : 0;
     ?>
         <article class="<?= esc_attr($classes_carte); ?>" data-enigme-id="<?= esc_attr($enigme_id); ?>"<?= $attr_draggable; ?>>
             <?php if ($peut_reordonner) : ?>
@@ -249,12 +245,6 @@ if (!function_exists('compter_tentatives_du_jour') || !function_exists('compter_
                     <span class="footer-item footer-item--resolutions" title="<?= esc_attr__('nombre de joueurs ayant trouvé la bonne réponse', 'chassesautresor-com'); ?>" aria-label="<?= esc_attr__('nombre de joueurs ayant trouvé la bonne réponse', 'chassesautresor-com'); ?>">
                       <?= get_svg_icon('idea'); ?>
                       <?= esc_html($nb_resolutions); ?>
-                    </span>
-                  <?php endif; ?>
-                  <?php if ($mode_validation === 'automatique' && $tentatives_max > 0) : ?>
-                    <span class="footer-item" title="<?= esc_attr__('tentatives quotidiennes utilisées', 'chassesautresor-com'); ?>" aria-label="<?= esc_attr__('tentatives quotidiennes utilisées', 'chassesautresor-com'); ?>">
-                      <i class="fa-solid fa-repeat" aria-hidden="true"></i>
-                      <?= esc_html($tentatives_utilisees . '/' . $tentatives_max); ?>
                     </span>
                   <?php endif; ?>
                 </div>

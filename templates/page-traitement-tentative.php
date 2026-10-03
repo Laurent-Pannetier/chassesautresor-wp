@@ -34,9 +34,11 @@ $reset_action = isset($_GET['reset_all'])
   ? 'all'
   : (isset($_GET['reset_tentatives']) ? 'attempts' : (isset($_GET['reset_statuts']) ? 'statuses' : ''));
 if ($reset_action !== '') {
+  global $wpdb;
   $reset = (new ChassesAuTresor\Core\Progress\RiddleAttemptMaintenanceService(
     cat_get_riddle_attempt_service(),
-    cat_get_hunt_progress_service()
+    cat_get_hunt_progress_service(),
+    ChassesAuTresor\Core\Support\CoreServiceFactory::riddleRetry($wpdb)
   ))->reset($reset_action, $enigme_id);
   echo '<p style="text-align:center;">' . esc_html(sprintf(
     __('%1$d tentative(s) et %2$d statut(s) supprimé(s).', 'chassesautresor-com'),

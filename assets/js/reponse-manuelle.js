@@ -44,6 +44,9 @@ function initFormulaireManuel() {
       })
       .then(res => {
         if (!feedback) return;
+        if (!res.success && res.data?.blocked) {
+          window.RiddleRetryCountdown?.apply(form, res.data);
+        }
         if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
         feedback.style.display = 'none';
 
@@ -80,7 +83,7 @@ function initFormulaireManuel() {
 
           setTimeout(() => { msgSuccess.remove(); }, 5000);
         } else {
-          feedback.textContent = res.data;
+          feedback.textContent = res.data?.message || res.data;
           feedback.style.display = 'block';
           hideTimer = setTimeout(() => { feedback.style.display = 'none'; }, 5000);
         }

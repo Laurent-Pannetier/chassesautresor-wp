@@ -56,6 +56,11 @@ defined('ABSPATH') || exit;
 
         $data  = calculer_contexte_points($user_id, $enigme_id);
         $nonce = wp_create_nonce('reponse_manuelle_nonce');
+        global $wpdb;
+        $retry_state = ChassesAuTresor\Core\Support\CoreServiceFactory::riddleRetry($wpdb)->getState(
+            (int) $user_id,
+            (int) $enigme_id
+        );
         ob_start();
     ?>
     <form
@@ -65,6 +70,7 @@ defined('ABSPATH') || exit;
         data-solde-avant="<?php echo esc_attr($data['solde_avant']); ?>"
         data-solde-apres="<?php echo esc_attr($data['solde_apres']); ?>"
         data-seuil="<?php echo esc_attr($data['seuil']); ?>"
+        data-retry-state="<?php echo esc_attr(wp_json_encode($retry_state)); ?>"
     >
         <h3><?php echo $badge_html . esc_html__('Votre réponse', 'chassesautresor-com'); ?></h3>
         <?php if ($data['points_manquants'] > 0) : ?>
@@ -129,11 +135,12 @@ defined('ABSPATH') || exit;
  */
 function charger_script_reponse_automatique() {
     if (is_singular('enigme')) {
+        charger_script_delai_soumission();
         $path = '/assets/js/reponse-automatique.js';
         wp_enqueue_script(
             'reponse-automatique',
             get_stylesheet_directory_uri() . $path,
-            [],
+            ['riddle-retry-countdown'],
             filemtime(get_stylesheet_directory() . $path),
             true
         );
@@ -150,11 +157,12 @@ function charger_script_etapes_enigme(): void
         return;
     }
 
+    charger_script_delai_soumission();
     $path = '/assets/js/riddle-step-player.js';
     wp_enqueue_script(
         'riddle-step-player',
         get_stylesheet_directory_uri() . $path,
-        [],
+        ['riddle-retry-countdown'],
         filemtime(get_stylesheet_directory() . $path),
         true
     );
@@ -162,8 +170,6 @@ function charger_script_etapes_enigme(): void
         'ajaxUrl' => admin_url('admin-ajax.php'),
         'error' => __('Impossible de valider cette étape.', 'chassesautresor-com'),
         'wrong' => __('Cette réponse n’est pas correcte.', 'chassesautresor-com'),
-        'limitReached' => __('Limite quotidienne atteinte.', 'chassesautresor-com'),
-        'attemptsLabel' => __('Tentatives quotidiennes :', 'chassesautresor-com'),
         'sequenceLabel' => __('Séquence saisie', 'chassesautresor-com'),
         'emptySequenceLabel' => __('vide', 'chassesautresor-com'),
         'safeValueLabel' => __('Valeur de la molette', 'chassesautresor-com'),
@@ -173,16 +179,36 @@ function charger_script_etapes_enigme(): void
 }
 add_action('wp_enqueue_scripts', 'charger_script_etapes_enigme');
 
+function charger_script_delai_soumission(): void
+{
+    if (wp_script_is('riddle-retry-countdown', 'enqueued')) {
+        return;
+    }
+
+    $path = '/assets/js/riddle-retry-countdown.js';
+    wp_enqueue_script(
+        'riddle-retry-countdown',
+        get_stylesheet_directory_uri() . $path,
+        [],
+        filemtime(get_stylesheet_directory() . $path),
+        true
+    );
+    wp_localize_script('riddle-retry-countdown', 'RiddleRetryCountdownConfig', [
+        'message' => __('Nouvelle tentative disponible dans', 'chassesautresor-com'),
+    ]);
+}
+
 /**
  * Charge le script gérant la soumission manuelle des réponses.
  */
 function charger_script_reponse_manuelle() {
     if (is_singular('enigme')) {
+        charger_script_delai_soumission();
         $path = '/assets/js/reponse-manuelle.js';
         wp_enqueue_script(
             'reponse-manuelle',
             get_stylesheet_directory_uri() . $path,
-            [],
+            ['riddle-retry-countdown'],
             filemtime(get_stylesheet_directory() . $path),
             true
         );

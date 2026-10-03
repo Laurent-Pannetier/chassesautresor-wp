@@ -103,7 +103,12 @@ document.addEventListener('submit', async event => {
       throw new Error(RiddleStepPlayer.error);
     }
     if (!result || typeof result !== 'object') throw new Error(RiddleStepPlayer.error);
+    if (!result.success && result.data?.blocked) {
+      window.RiddleRetryCountdown?.apply(form, result.data);
+      keepDisabled = true;
+    }
     if (!result.success) throw new Error(result.data?.message || RiddleStepPlayer.error);
+    window.RiddleRetryCountdown?.apply(form, result.data.retry);
     if (result.data.resultat && result.data.resultat !== 'bon') {
       feedback.textContent = result.data.resultat === 'variante' && result.data.message
         ? result.data.message
@@ -122,21 +127,6 @@ document.addEventListener('submit', async event => {
         safeDial.setAttribute('aria-valuenow', '0');
         safeDial.setAttribute('aria-valuetext', `${RiddleStepPlayer.safeValueLabel}: 0`);
         safeDial.querySelector('.riddle-safe__value').textContent = '0';
-      }
-      const counter = document.querySelector('.tentatives-counter .valeur');
-      const footer = document.querySelector('.participation-infos .tentatives');
-      if (counter) counter.textContent = result.data.compteur;
-      if (footer) {
-        const maximum = footer.dataset.max || footer.textContent.split('/')[1]?.trim() || '∞';
-        footer.dataset.max = maximum;
-        footer.textContent = `${RiddleStepPlayer.attemptsLabel} ${result.data.compteur}/${maximum}`;
-      }
-      const maximum = Number.parseInt(form.dataset.maxFailures || '0', 10);
-      if (maximum > 0 && result.data.compteur >= maximum) {
-        answerInput?.setAttribute('disabled', 'disabled');
-        keepDisabled = true;
-        feedback.textContent = RiddleStepPlayer.limitReached;
-        return;
       }
       return;
     }

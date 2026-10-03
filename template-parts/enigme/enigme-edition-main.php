@@ -27,7 +27,7 @@ $texte_enigme = (string) get_field('enigme_visuel_texte', $enigme_id);
 $reponses = enigme_get_bonnes_reponses($enigme_id);
 $reponse = implode(', ', $reponses);
 $casse = get_field('enigme_reponse_casse', $enigme_id);
-$max = (int) get_field('enigme_tentative_max', $enigme_id);
+$retry_delay = max(0, (int) get_field('enigme_tentative_delai_secondes', $enigme_id));
 $cout = get_field('enigme_tentative_cout_points', $enigme_id);
 $mode_validation = get_field('enigme_mode_validation', $enigme_id) ?? 'aucune';
 $date_raw = get_field('enigme_acces_date', $enigme_id);
@@ -478,9 +478,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['uid'], $_POST['action
                 'template-parts/common/edition-row',
                 null,
                 [
-                    'class'      => 'champ-enigme champ-nb-tentatives ' . (empty($max) ? 'champ-vide' : 'champ-rempli') . ($peut_editer ? '' : ' champ-desactive') . ($mode_validation === 'automatique' ? '' : ' cache'),
+                    'class'      => 'champ-enigme champ-delai-tentative ' . (empty($retry_delay) ? 'champ-vide' : 'champ-rempli') . ($peut_editer ? '' : ' champ-desactive') . ($mode_validation === 'automatique' ? '' : ' cache'),
                     'attributes' => [
-                        'data-champ'   => 'enigme_tentative.enigme_tentative_max',
+                        'data-champ'   => 'enigme_tentative.enigme_tentative_delai_secondes',
                         'data-cpt'     => 'enigme',
                         'data-post-id' => $enigme_id,
                         'data-no-edit' => '1',
@@ -488,29 +488,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['uid'], $_POST['action
                     ],
                     'label' => function () {
                         ?>
-                        <label for="enigme-nb-tentatives"><?= esc_html__('Nb tentatives', 'chassesautresor-com'); ?>
+                        <label for="enigme-delai-tentative"><?= esc_html__('Délai avant nouvel essai', 'chassesautresor-com'); ?>
                             <?php
                             get_template_part(
                                 'template-parts/common/help-icon',
                                 null,
                                 [
-                                    'aria_label' => __('Explication du nombre de tentatives', 'chassesautresor-com'),
+                                    'aria_label' => __('Explication du délai entre deux essais', 'chassesautresor-com'),
                                     'classes'    => 'tentatives-aide',
                                     'variant'    => 'info',
-                                    'title'      => __('Plafond nb de tentatives quotidiennes', 'chassesautresor-com'),
-                                    'message'    => __("Nombre maximal de tentatives quotidiennes par joueur:\n\nMode payant : illimitées\n\nMode gratuit : 24 tentatives par jour", 'chassesautresor-com'),
+                                    'title'      => __('Délai après une mauvaise réponse', 'chassesautresor-com'),
+                                    'message'    => __('Durée en secondes avant une nouvelle soumission. Saisissez 0 pour désactiver le délai.', 'chassesautresor-com'),
                                 ]
                             );
                             ?>
                         </label>
                         <?php
                     },
-                    'content' => function () use ($max, $peut_editer) {
+                    'content' => function () use ($retry_delay, $peut_editer) {
                         ?>
                         <div class="champ-edition">
-                            <input type="number" id="enigme-nb-tentatives" class="champ-input champ-nb-tentatives champ-number" min="1" max="999999" step="1" value="<?= esc_attr($max); ?>" placeholder="5" <?= $peut_editer ? '' : 'disabled'; ?> />
+                            <input type="number" id="enigme-delai-tentative" class="champ-input champ-delai-tentative champ-number" min="0" max="86400" step="1" value="<?= esc_attr($retry_delay); ?>" placeholder="0" <?= $peut_editer ? '' : 'disabled'; ?> />
                             <span class="champ-status"></span>
-                            <span class="txt-small"><?= esc_html__('max par jour', 'chassesautresor-com'); ?></span>
+                            <span class="txt-small"><?= esc_html__('secondes', 'chassesautresor-com'); ?></span>
                         </div>
                         <div class="champ-feedback"></div>
                         <?php

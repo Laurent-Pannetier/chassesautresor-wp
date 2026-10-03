@@ -608,10 +608,10 @@ document.querySelector('#panneau-images-enigme .panneau-fermer')?.addEventListen
   }
 });
 // ================================
-// 🔢 Initialisation champ enigme_tentative_max (tentatives/jour)
+// ⏱️ Initialisation du délai entre deux mauvaises réponses
 // ================================
 function initChampNbTentatives() {
-  const bloc = document.querySelector('[data-champ="enigme_tentative.enigme_tentative_max"]');
+  const bloc = document.querySelector('[data-champ="enigme_tentative.enigme_tentative_delai_secondes"]');
   if (!bloc) return;
 
   const input = bloc.querySelector('.champ-input');
@@ -621,62 +621,18 @@ function initChampNbTentatives() {
 
   let timerDebounce;
 
-  function mettreAJourAideTentatives() {
-    const coutInput = document.querySelector('[data-champ="enigme_tentative.enigme_tentative_cout_points"] .champ-input');
-    if (!coutInput) return;
-
-    const cout = parseInt(coutInput.value.trim(), 10);
-    const estGratuit = isNaN(cout) || cout === 0;
-    const valeur = parseInt(input.value.trim(), 10);
-
-    if (estGratuit) {
-      input.max = 24;
-      if (valeur > 24) {
-        input.value = '24';
-      }
-    } else {
-      input.removeAttribute('max');
-    }
-  }
-
-  // 💾 Enregistrement avec limite si nécessaire
   input.addEventListener('input', () => {
     clearTimeout(timerDebounce);
 
     let valeur = parseInt(input.value.trim(), 10);
-
-    // 🔐 Forcer affichage visuel et valeur logique à 1 min
-    if (isNaN(valeur) || valeur < 1) {
-      valeur = 1;
-      input.value = '1';
-    }
-
-    const coutInput = document.querySelector('[data-champ="enigme_tentative.enigme_tentative_cout_points"] .champ-input');
-    const cout = parseInt(coutInput?.value.trim() || '0', 10);
-    const estGratuit = isNaN(cout) || cout === 0;
-
-    if (estGratuit && valeur > 24) {
-      valeur = 24;
-      input.value = '24';
-    }
+    if (isNaN(valeur) || valeur < 0) valeur = 0;
+    if (valeur > 86400) valeur = 86400;
+    input.value = String(valeur);
 
     timerDebounce = setTimeout(() => {
       modifierChampSimple(champ, valeur, postId, cpt);
     }, 400);
   });
-
-
-  // 💬 Mise à jour immédiate au chargement
-  mettreAJourAideTentatives();
-
-  // 🔁 Lié aux modifs de coût (input + checkbox)
-  const coutInput = document.querySelector('[data-champ="enigme_tentative.enigme_tentative_cout_points"] .champ-input');
-  const checkbox = document.querySelector('[data-champ="enigme_tentative.enigme_tentative_cout_points"] input[type="checkbox"]');
-  if (coutInput) coutInput.addEventListener('input', mettreAJourAideTentatives);
-  if (checkbox) checkbox.addEventListener('change', mettreAJourAideTentatives);
-
-  // 🔄 Fonction exportée globalement
-  window.mettreAJourMessageTentatives = mettreAJourAideTentatives;
 }
 
 // ================================
@@ -769,26 +725,17 @@ function initChampCoutPoints() {
     appliquerEtat();
     enregistrer();
     mettreAJourCartesStats();
-    if (typeof window.mettreAJourMessageTentatives === 'function') {
-      window.mettreAJourMessageTentatives();
-    }
   });
 
   input.addEventListener('change', () => {
     if (!toggle.checked) return;
     enregistrer();
     mettreAJourCartesStats();
-    if (typeof window.mettreAJourMessageTentatives === 'function') {
-      window.mettreAJourMessageTentatives();
-    }
   });
 
   ['input'].forEach(evt => input.addEventListener(evt, () => {
     if (!toggle.checked) return;
     mettreAJourCartesStats();
-    if (typeof window.mettreAJourMessageTentatives === 'function') {
-      window.mettreAJourMessageTentatives();
-    }
   }));
 
   appliquerEtat();
@@ -799,28 +746,7 @@ function initChampCoutPoints() {
 // ================================
 // 💰 Hook personnalisé – Réaction au champ coût (CPT énigme uniquement)
 // ================================
-window.onCoutPointsUpdated = function (bloc, champ, valeur, postId, cpt) {
-  if (champ === 'enigme_tentative_cout_points') {
-    const champMax = document.querySelector('[data-champ="enigme_tentative.enigme_tentative_max"] .champ-input');
-    if (champMax) {
-      const valeurActuelle = parseInt(champMax.value, 10);
-
-      if (valeur === 0) {
-        // Mode gratuit → limite à 24 max
-        champMax.max = 24;
-
-        // Si supérieur, on ramène à 24 (ou 5 selon logique métier ? à vérifier)
-        if (valeurActuelle > 24) {
-          champMax.value = '24';
-          modifierChampSimple('enigme_tentative_max', 24, postId, cpt);
-        }
-      } else {
-        // Mode payant → aucune limite
-        champMax.removeAttribute('max');
-      }
-    }
-  }
-};
+window.onCoutPointsUpdated = function () {};
 
 
 
