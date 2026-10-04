@@ -444,6 +444,8 @@ add_action('wp_enqueue_scripts', function () {
         );
         wp_localize_script('myaccount', 'ctaMyAccount', [
             'ajaxUrl' => admin_url('admin-ajax.php'),
+            'dismissNonce' => wp_create_nonce('cta_dismiss_message'),
+            'sectionNonce' => wp_create_nonce('cta_load_admin_section'),
         ]);
         wp_enqueue_script(
             'tentatives-toggle',

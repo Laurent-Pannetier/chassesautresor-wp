@@ -76,6 +76,9 @@ document.addEventListener('DOMContentLoaded', () => {
           form.querySelector('[name="color_sequences"]').value = step.color_sequences || '';
           form.querySelector('[name="number_sequences"]').value = step.number_sequences || '';
           form.querySelector('[name="safe_dial_sequences"]').value = step.safe_dial_sequences || '';
+          form.querySelector('[name="piano_sequences"]').value = step.piano_sequences || '';
+          form.querySelector('[name="gps_coordinates"]').value = step.gps_coordinates || '';
+          form.querySelector('[name="gps_tolerance"]').value = step.gps_tolerance || '25';
           updateWidgetConfig();
         }
       } catch (error) {

@@ -158,11 +158,24 @@ function charger_script_etapes_enigme(): void
     }
 
     charger_script_delai_soumission();
+    wp_enqueue_style(
+        'leaflet',
+        'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
+        [],
+        '1.9.4'
+    );
+    wp_enqueue_script(
+        'leaflet',
+        'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
+        [],
+        '1.9.4',
+        true
+    );
     $path = '/assets/js/riddle-step-player.js';
     wp_enqueue_script(
         'riddle-step-player',
         get_stylesheet_directory_uri() . $path,
-        ['riddle-retry-countdown'],
+        ['riddle-retry-countdown', 'leaflet'],
         filemtime(get_stylesheet_directory() . $path),
         true
     );

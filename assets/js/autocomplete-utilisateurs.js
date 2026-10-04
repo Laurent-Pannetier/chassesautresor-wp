@@ -52,7 +52,9 @@ document.addEventListener("DOMContentLoaded", () => {
             fetch(
                 ajax_object.ajax_url +
                     "?action=rechercher_utilisateur&term=" +
-                    encodeURIComponent(searchTerm),
+                    encodeURIComponent(searchTerm) +
+                    "&nonce=" +
+                    encodeURIComponent((ajax_object && ajax_object.nonce) || ""),
                 { credentials: "same-origin" }
             )
                 .then((response) => response.json())

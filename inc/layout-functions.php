@@ -233,6 +233,10 @@ function charger_scripts_personnalises() {
       filemtime(get_stylesheet_directory() . '/assets/js/validation-chasse.js'),
       true
     );
+    wp_localize_script('validation-chasse', 'ctaDismissMessage', [
+      'ajaxUrl' => admin_url('admin-ajax.php'),
+      'nonce' => wp_create_nonce('cta_dismiss_message'),
+    ]);
 
     wp_enqueue_script(
       'validation-admin',

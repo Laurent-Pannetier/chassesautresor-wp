@@ -13,10 +13,11 @@ document.addEventListener('submit', (e) => {
     fetch('/wp-admin/admin-ajax.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({
+    body: new URLSearchParams({
             action: 'update_conversion_status',
             paiement_id: id,
             statut: select.value,
+            nonce: (window.ctaAdminTools && ctaAdminTools.nonce) || '',
         }),
     })
         .then((res) => res.json())

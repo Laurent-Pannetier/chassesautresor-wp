@@ -382,6 +382,7 @@ function ca_render_dashboard_tentatives(): void
         [
             'ajaxUrl' => admin_url('admin-ajax.php'),
             'action'  => 'ca_fetch_tentatives',
+            'nonce'   => wp_create_nonce('ca_fetch_tentatives'),
             'errorMessage' => esc_html__(
                 'Unable to load attempts. Please try again.',
                 'chassesautresor-com'
@@ -479,6 +480,10 @@ function charger_script_avatar_upload() {
             null,
             true
         );
+        wp_localize_script('avatar-upload', 'avatarUpload', [
+            'ajaxUrl' => admin_url('admin-ajax.php'),
+            'nonce' => wp_create_nonce('upload_user_avatar'),
+        ]);
     }
 }
 add_action('wp_enqueue_scripts', 'charger_script_avatar_upload');

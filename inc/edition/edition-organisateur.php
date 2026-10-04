@@ -65,6 +65,7 @@ function enqueue_script_organisateur_edit()
     wp_localize_script('organisateur-edit', 'organisateurData', [
       'defaultEmail' => esc_js($default_email),
       'nonce' => wp_create_nonce('organizer_management'),
+      'conversionNonce' => wp_create_nonce('conversion-history-nonce'),
     ]);
 
     wp_enqueue_media();

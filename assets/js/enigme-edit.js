@@ -1338,7 +1338,8 @@ function initChampPreRequis() {
               headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
               body: new URLSearchParams({
                 action: 'verifier_et_enregistrer_condition_pre_requis',
-                post_id: postId
+                post_id: postId,
+                nonce: (window.CHP_ENIGME_DEFAUT && CHP_ENIGME_DEFAUT.nonce) || ''
               })
             })
               .then(r => r.json())
@@ -1395,7 +1396,8 @@ function initEnregistrementPreRequis() {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
         action: 'verifier_et_enregistrer_condition_pre_requis',
-        post_id: postId
+        post_id: postId,
+        nonce: (window.CHP_ENIGME_DEFAUT && CHP_ENIGME_DEFAUT.nonce) || ''
       })
     })
       .then(r => r.json())
@@ -1465,7 +1467,8 @@ function initPagerTentatives() {
       body: new URLSearchParams({
         action: 'lister_tentatives_enigme',
         enigme_id: postId,
-        page
+        page,
+        nonce: (window.CHP_ENIGME_DEFAUT && CHP_ENIGME_DEFAUT.nonce) || ''
       })
     })
       .then(r => r.json())

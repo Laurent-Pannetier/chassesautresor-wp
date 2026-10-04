@@ -1305,6 +1305,165 @@ body.no-scroll {
 }
 
 .riddle-number--zero { grid-column: 2; }
+
+.riddle-step-piano-form {
+  gap: 0.75rem;
+}
+
+.riddle-piano__title {
+  display: block;
+  margin: 0 0 var(--space-sm);
+  text-align: center;
+}
+
+.riddle-piano {
+  display: flex;
+  width: 100%;
+  max-width: 44rem;
+  margin-inline: auto;
+  overflow-x: auto;
+  padding: 0 0.15rem 2rem;
+}
+
+.riddle-piano__octave {
+  position: relative;
+  display: grid;
+  flex: 0 0 21rem;
+  grid-template-columns: repeat(7, 3rem);
+}
+
+.riddle-piano__key {
+  padding: 0;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.riddle-piano__key--white {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  height: 9.5rem;
+  padding-bottom: 0.45rem;
+  border: 1px solid #252525;
+  border-radius: 0 0 0.4rem 0.4rem;
+  background: linear-gradient(90deg, #fff 0%, #f7f7f7 82%, #dedede 100%);
+  color: #343434;
+  box-shadow: 0 0.25rem 0 rgba(0, 0, 0, 0.18);
+}
+
+.riddle-piano__key--black {
+  position: absolute;
+  z-index: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  left: calc(var(--key-position, 1) * 3rem - 0.72rem);
+  width: 1.45rem;
+  height: 5.75rem;
+  padding-bottom: 0.35rem;
+  border: 1px solid #111;
+  border-radius: 0 0 0.45rem 0.45rem;
+  background: linear-gradient(90deg, #252525, #111 72%, #353535);
+  color: #fff;
+  box-shadow: 0 0.25rem 0 rgba(0, 0, 0, 0.5);
+  font-size: 0.75rem;
+}
+
+@for $position from 1 through 6 {
+  .riddle-piano__key--black[data-position='#{$position}'] { --key-position: #{$position}; }
+}
+
+.riddle-piano__key:active,
+.riddle-piano__key.is-playing { transform: translateY(0.2rem); box-shadow: none; }
+.riddle-piano__key:focus-visible { z-index: 2; outline: 3px solid var(--color-primary); outline-offset: -3px; }
+
+.riddle-piano__octave-label {
+  position: absolute;
+  bottom: -1.8rem;
+  width: 100%;
+  color: #777;
+  letter-spacing: 0.45em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.riddle-piano__controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.85rem;
+  width: min(100%, 18rem);
+  margin: 0.35rem auto 0;
+}
+
+.riddle-piano__sequence {
+  display: block;
+  min-height: 1.5em;
+  margin: 0;
+  color: #1a1a1a;
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-align: center;
+}
+
+.riddle-piano__play {
+  width: 100%;
+  padding: 0.75rem 1.1rem;
+  border: 1px solid #8f8f8f;
+  border-radius: 0.35rem;
+  background: linear-gradient(180deg, #ececec 0%, #d2d2d2 100%);
+  color: #222;
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.2;
+  box-shadow: 0 0.12rem 0 rgba(0, 0, 0, 0.12);
+  cursor: pointer;
+}
+
+.riddle-piano__play:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.riddle-piano__play:not(:disabled):hover {
+  background: linear-gradient(180deg, #f4f4f4 0%, #dadada 100%);
+}
+
+.riddle-piano__play:not(:disabled):active {
+  transform: translateY(0.08rem);
+  box-shadow: none;
+}
+
+.riddle-piano__actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  width: 100%;
+}
+
+.riddle-piano__controls .riddle-widget-reset {
+  flex: 0 0 auto;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #1f1f1f;
+  font-size: 1.7rem;
+  line-height: 1;
+  box-shadow: none;
+}
+
+.riddle-piano__submit {
+  flex: 1 1 auto;
+  width: auto !important;
+  min-width: 7.5rem;
+  max-width: 11rem;
+  margin: 0;
+}
+
 .riddle-numbers__title,
 .riddle-numbers__sequence,
 .riddle-safe__title,
@@ -1427,3 +1586,48 @@ body.no-scroll {
 .riddle-safe__direction { font-size: 11px; }
 
 .riddle-safe__sequence { margin-top: var(--space-md); font-weight: 700; }
+
+.riddle-gps__title,
+.riddle-gps__privacy {
+  text-align: center;
+}
+
+.riddle-gps__map {
+  width: 100%;
+  height: 18rem;
+  border: 1px solid var(--color-gris-3);
+  border-radius: 6px;
+  overflow: hidden;
+  color: var(--color-text-fond-clair);
+  z-index: 0;
+}
+
+.riddle-gps__fields {
+  display: grid;
+  gap: var(--space-md);
+}
+
+.riddle-gps__fields label {
+  display: grid;
+  gap: var(--space-xs);
+  text-align: left;
+}
+
+.riddle-gps__fields input {
+  width: 100%;
+}
+
+.riddle-gps-reset {
+  min-width: 2.75rem;
+  font-size: 1.5rem;
+}
+
+@media (--bp-tablet) {
+  .riddle-gps__map {
+    height: 28rem;
+  }
+
+  .riddle-gps__fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

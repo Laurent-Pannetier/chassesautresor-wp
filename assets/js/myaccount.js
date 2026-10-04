@@ -170,6 +170,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const searchParams = new URLSearchParams(window.location.search);
     searchParams.set('action', 'cta_load_admin_section');
     searchParams.set('section', section);
+    if (ctaMyAccount.sectionNonce) {
+      searchParams.set('nonce', ctaMyAccount.sectionNonce);
+    }
     const url = `${ctaMyAccount.ajaxUrl}?${searchParams.toString()}`;
 
     try {

@@ -101,7 +101,12 @@ document.addEventListener("DOMContentLoaded", () => {
         fetch("/wp-admin/admin-ajax.php", {
             method: "POST",
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: new URLSearchParams({ action: "conversion_modal_content" })
+            body: new URLSearchParams({
+                action: "conversion_modal_content",
+                nonce: (window.ConversionModalAjax && ConversionModalAjax.nonce)
+                    || (window.ConversionHistoryAjax && ConversionHistoryAjax.nonce)
+                    || ''
+            })
         })
             .then((res) => res.json())
             .then((res) => {

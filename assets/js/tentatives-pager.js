@@ -297,6 +297,9 @@
     var action = form ? form.dataset.ajaxAction || SEARCH_ACTION : SEARCH_ACTION;
     data.set('action', action);
     data.set('page', String(page));
+    if (config && typeof config.nonce === 'string' && config.nonce) {
+      data.set('nonce', config.nonce);
+    }
 
     var perPageAttr = wrapper ? wrapper.getAttribute('data-per-page') : null;
     var perPage = parseInt(perPageAttr || '10', 10);

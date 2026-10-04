@@ -18,6 +18,90 @@ const setWidgetSequenceLabel = (output, values = []) => {
   output.setAttribute('aria-label', `${RiddleStepPlayer.sequenceLabel}: ${value}`);
 };
 
+const pianoFrequencies = {
+  C1: 261.63, 'C#1': 277.18, D1: 293.66, 'D#1': 311.13, E1: 329.63, F1: 349.23,
+  'F#1': 369.99, G1: 392, 'G#1': 415.3, A1: 440, 'A#1': 466.16, B1: 493.88,
+  C2: 523.25, 'C#2': 554.37, D2: 587.33, 'D#2': 622.25, E2: 659.25, F2: 698.46,
+  'F#2': 739.99, G2: 783.99, 'G#2': 830.61, A2: 880, 'A#2': 932.33, B2: 987.77
+};
+
+let pianoAudioContext;
+const playPianoNote = (note, delay = 0, key = null) => {
+  const AudioContext = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContext || !pianoFrequencies[note]) return;
+  pianoAudioContext ||= new AudioContext();
+  if (pianoAudioContext.state === 'suspended') {
+    pianoAudioContext.resume().catch(() => {});
+  }
+  const start = pianoAudioContext.currentTime + delay;
+  const oscillator = pianoAudioContext.createOscillator();
+  const gain = pianoAudioContext.createGain();
+  oscillator.type = 'triangle';
+  oscillator.frequency.value = pianoFrequencies[note];
+  gain.gain.setValueAtTime(0.0001, start);
+  gain.gain.exponentialRampToValueAtTime(0.35, start + 0.015);
+  gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.55);
+  oscillator.connect(gain).connect(pianoAudioContext.destination);
+  oscillator.start(start);
+  oscillator.stop(start + 0.56);
+  if (!key) return;
+  const highlightDelay = Math.max(0, delay * 1000);
+  window.setTimeout(() => {
+    key.classList.add('is-playing');
+    window.setTimeout(() => key.classList.remove('is-playing'), 280);
+  }, highlightDelay);
+};
+
+const initializeGpsWidgets = root => {
+  if (typeof window.L === 'undefined') return;
+  root.querySelectorAll('.riddle-step-gps-form:not([data-map-ready])').forEach(form => {
+    const container = form.querySelector('.riddle-gps__map');
+    const latitude = form.querySelector('.riddle-gps__latitude');
+    const longitude = form.querySelector('.riddle-gps__longitude');
+    const answer = form.querySelector('input[name="reponse"]');
+    const submit = form.querySelector('button[type="submit"]');
+    const map = window.L.map(container, { center: [20, 0], zoom: 2 });
+    window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      maxZoom: 19
+    }).addTo(map);
+    let marker;
+
+    const setCoordinates = (lat, lng, pan = false) => {
+      if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) return;
+      const point = window.L.latLng(lat, lng);
+      if (!marker) {
+        marker = window.L.marker(point, { draggable: true }).addTo(map);
+        marker.on('dragend', () => setCoordinates(marker.getLatLng().lat, marker.getLatLng().lng));
+      } else {
+        marker.setLatLng(point);
+      }
+      latitude.value = point.lat.toFixed(6);
+      longitude.value = point.lng.toFixed(6);
+      answer.value = `${latitude.value} ${longitude.value}`;
+      submit.disabled = false;
+      if (pan) map.setView(point, Math.max(map.getZoom(), 12));
+    };
+
+    map.on('click', event => setCoordinates(event.latlng.lat, event.latlng.lng));
+    [latitude, longitude].forEach(input => input.addEventListener('input', () => {
+      setCoordinates(Number.parseFloat(latitude.value), Number.parseFloat(longitude.value), true);
+    }));
+    form.querySelector('.riddle-gps-reset').addEventListener('click', () => {
+      if (marker) marker.remove();
+      marker = undefined;
+      latitude.value = '';
+      longitude.value = '';
+      answer.value = '';
+      submit.disabled = true;
+      map.setView([20, 0], 2);
+      latitude.focus();
+    });
+    form.dataset.mapReady = '1';
+    window.setTimeout(() => map.invalidateSize(), 0);
+  });
+};
+
 const hasMeaningfulStepContent = article => {
   if (article.querySelector('.riddle-player-step__image')) return true;
   const content = article.querySelector('.riddle-player-step__content');
@@ -65,6 +149,7 @@ const unlockRiddleStepContent = (form, data) => {
     const nextArticle = parsed.querySelector(selector);
     if (!nextArticle || player.querySelector(selector)) return null;
     player.append(nextArticle);
+    initializeGpsWidgets(nextArticle);
     return nextArticle;
   }
 
@@ -84,6 +169,7 @@ const focusUnlockedContent = target => {
 };
 
 document.addEventListener('DOMContentLoaded', async () => {
+  initializeGpsWidgets(document);
   const target = window.sessionStorage.getItem('riddleStepScrollTarget');
   if (!target) return;
   window.history.scrollRestoration = 'manual';
@@ -125,6 +211,8 @@ document.addEventListener('submit', async event => {
         : RiddleStepPlayer.wrong;
       const answerInput = form.querySelector('input[name="reponse"]');
       if (answerInput) answerInput.value = '';
+      form.querySelector('.riddle-gps-reset')?.click();
+      if (form.classList.contains('riddle-step-piano-form')) form.querySelector('.riddle-widget-reset')?.click();
       form.querySelector('.riddle-directions__sequence')?.replaceChildren();
       form.querySelector('.riddle-colors__sequence')?.replaceChildren();
       form.querySelector('.riddle-numbers__sequence')?.replaceChildren();
@@ -156,6 +244,40 @@ document.addEventListener('submit', async event => {
       button.disabled = keepDisabled;
     }
   }
+});
+
+document.addEventListener('click', event => {
+  const form = event.target.closest('.riddle-step-piano-form');
+  if (!form) return;
+  const input = form.querySelector('input[name="reponse"]');
+  const output = form.querySelector('.riddle-piano__sequence');
+  const playButton = form.querySelector('.riddle-piano__play');
+  const submitButton = form.querySelector('button[type="submit"]');
+  if (event.target.closest('.riddle-widget-reset')) {
+    input.value = '';
+    output.textContent = '';
+    playButton.disabled = true;
+    submitButton.disabled = true;
+    setWidgetSequenceLabel(output);
+    return;
+  }
+  if (event.target.closest('.riddle-piano__play')) {
+    input.value.split(',').filter(Boolean).forEach((note, index) => {
+      const key = form.querySelector(`.riddle-piano__key[data-note="${note}"]`);
+      playPianoNote(note, index * 0.45, key);
+    });
+    return;
+  }
+  const key = event.target.closest('.riddle-piano__key');
+  if (!key) return;
+  const sequence = input.value ? input.value.split(',') : [];
+  sequence.push(key.dataset.note);
+  input.value = sequence.join(',');
+  output.textContent = sequence.join(' ');
+  playButton.disabled = false;
+  submitButton.disabled = false;
+  setWidgetSequenceLabel(output, sequence);
+  playPianoNote(key.dataset.note, 0, key);
 });
 
 document.addEventListener('click', event => {

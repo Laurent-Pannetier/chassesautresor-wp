@@ -12,10 +12,17 @@ document.addEventListener('DOMContentLoaded', () => {
         const params = new URLSearchParams();
         params.set('action', 'cta_dismiss_message');
         params.set('key', key);
+        if (typeof ctaMyAccount !== 'undefined' && ctaMyAccount.dismissNonce) {
+          params.set('nonce', ctaMyAccount.dismissNonce);
+        } else if (typeof ctaDismissMessage !== 'undefined' && ctaDismissMessage.nonce) {
+          params.set('nonce', ctaDismissMessage.nonce);
+        }
         const ajaxUrl =
           typeof ctaMyAccount !== 'undefined'
             ? ctaMyAccount.ajaxUrl
-            : '/wp-admin/admin-ajax.php';
+            : (typeof ctaDismissMessage !== 'undefined' && ctaDismissMessage.ajaxUrl)
+              ? ctaDismissMessage.ajaxUrl
+              : '/wp-admin/admin-ajax.php';
         fetch(ajaxUrl, {
           method: 'POST',
           credentials: 'include',
@@ -102,11 +109,18 @@ function ouvrirModalConfirmation(form) {
       const params = new URLSearchParams();
       params.set('action', 'cta_dismiss_message');
       params.set('key', key);
+      if (typeof ctaMyAccount !== 'undefined' && ctaMyAccount.dismissNonce) {
+        params.set('nonce', ctaMyAccount.dismissNonce);
+      } else if (typeof ctaDismissMessage !== 'undefined' && ctaDismissMessage.nonce) {
+        params.set('nonce', ctaDismissMessage.nonce);
+      }
 
       const ajaxUrl =
         typeof ctaMyAccount !== 'undefined'
           ? ctaMyAccount.ajaxUrl
-          : '/wp-admin/admin-ajax.php';
+          : (typeof ctaDismissMessage !== 'undefined' && ctaDismissMessage.ajaxUrl)
+            ? ctaDismissMessage.ajaxUrl
+            : '/wp-admin/admin-ajax.php';
 
       fetch(ajaxUrl, {
         method: 'POST',

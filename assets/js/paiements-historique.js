@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
             body: new URLSearchParams({
                 action: 'lister_historique_paiements',
                 page,
+                nonce: (window.ctaAdminTools && ctaAdminTools.nonce) || '',
             }),
         })
             .then((r) => r.json())

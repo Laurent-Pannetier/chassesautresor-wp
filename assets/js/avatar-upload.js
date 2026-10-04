@@ -50,14 +50,14 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
             }
 
-            // ✅ Envoi de la requête AJAX
             let formData = new FormData();
             formData.append("action", "upload_user_avatar");
+            formData.append("nonce", (window.avatarUpload && avatarUpload.nonce) || "");
             formData.append("avatar", file);
 
             DEBUG && console.log("📤 Envoi de la requête AJAX...");
             
-            fetch(ajaxurl, {
+            fetch((window.avatarUpload && avatarUpload.ajaxUrl) || ajaxurl, {
                 method: "POST",
                 body: formData,
                 credentials: "same-origin"

@@ -46,7 +46,8 @@ function charger_script_autocomplete_utilisateurs() {
 
         // Rendre l'URL AJAX disponible pour le script
         wp_localize_script('autocomplete-utilisateurs', 'ajax_object', [
-            'ajax_url' => admin_url('admin-ajax.php')
+            'ajax_url' => admin_url('admin-ajax.php'),
+            'nonce' => wp_create_nonce('cta_admin_tools'),
         ]);
     }
 }
@@ -109,6 +110,16 @@ function charger_script_paiements_admin(): void
         filemtime($history_path),
         true
     );
+
+    $adminNonce = wp_create_nonce('cta_admin_tools');
+    wp_localize_script('paiements-admin', 'ctaAdminTools', [
+        'ajaxUrl' => admin_url('admin-ajax.php'),
+        'nonce' => $adminNonce,
+    ]);
+    wp_localize_script('paiements-historique', 'ctaAdminTools', [
+        'ajaxUrl' => admin_url('admin-ajax.php'),
+        'nonce' => $adminNonce,
+    ]);
 }
 add_action('wp_enqueue_scripts', 'charger_script_paiements_admin');
 
@@ -295,6 +306,7 @@ function charger_script_developpement_card() {
         );
         wp_localize_script('developpement-card', 'ajax_object', [
             'ajax_url' => admin_url('admin-ajax.php'),
+            'nonce' => wp_create_nonce('cta_admin_tools'),
         ]);
     }
 }

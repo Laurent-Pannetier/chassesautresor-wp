@@ -104,6 +104,10 @@ function charger_script_conversion(bool $force = false): void
         $version,
         true
     );
+    wp_localize_script('conversion', 'ConversionModalAjax', [
+        'ajaxUrl' => admin_url('admin-ajax.php'),
+        'nonce' => wp_create_nonce('conversion-history-nonce'),
+    ]);
 }
 add_action('wp_enqueue_scripts', 'charger_script_conversion');
 

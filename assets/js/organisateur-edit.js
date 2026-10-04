@@ -289,7 +289,13 @@ window.mettreAJourCarteConversion = function () {
   fetch('/wp-admin/admin-ajax.php', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({ action: 'conversion_modal_content' }),
+    body: new URLSearchParams({
+      action: 'conversion_modal_content',
+      nonce: (window.organisateurData && organisateurData.conversionNonce)
+        || (window.ConversionModalAjax && ConversionModalAjax.nonce)
+        || (window.ConversionHistoryAjax && ConversionHistoryAjax.nonce)
+        || '',
+    }),
   })
     .then(res => res.json())
     .then(res => {

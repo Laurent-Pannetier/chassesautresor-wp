@@ -14,7 +14,7 @@ function initDeveloppementCard() {
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
             },
-            body: 'action=recuperer_details_acf',
+            body: 'action=recuperer_details_acf&nonce=' + encodeURIComponent((ajax_object && ajax_object.nonce) || ''),
         })
             .then((resp) => resp.json())
             .then((data) => {
