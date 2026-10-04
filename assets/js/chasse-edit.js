@@ -921,6 +921,12 @@ function mettreAJourCaracteristiqueDate() {
 
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const calendarDaysBetween = (start, end) => {
+    const startDay = Date.UTC(start.getFullYear(), start.getMonth(), start.getDate());
+    const endDay = Date.UTC(end.getFullYear(), end.getMonth(), end.getDate());
+
+    return Math.max(0, Math.round((endDay - startDay) / (1000 * 60 * 60 * 24)));
+  };
 
   if (!isNaN(fin.getTime())) {
     if (today > fin) {
@@ -928,27 +934,18 @@ function mettreAJourCaracteristiqueDate() {
       const pad = (n) => String(n).padStart(2, '0');
       valueSpan.textContent = `${pad(fin.getDate())}/${pad(fin.getMonth() + 1)}/${fin.getFullYear()}`;
     } else if (today < debut) {
-      const diff = Math.max(
-        0,
-        Math.floor((debut - today) / (1000 * 60 * 60 * 24))
-      );
+      const diff = calendarDaysBetween(today, debut);
       labelSpan.textContent = wp.i18n.__('début dans', 'chassesautresor-com');
       const tpl = wp.i18n._n('%d jour', '%d jours', diff, 'chassesautresor-com');
       valueSpan.textContent = tpl.replace('%d', diff);
     } else {
-      const diff = Math.max(
-        0,
-        Math.floor((fin - today) / (1000 * 60 * 60 * 24))
-      );
+      const diff = calendarDaysBetween(today, fin);
       labelSpan.textContent = wp.i18n.__('jours restants', 'chassesautresor-com');
       const tpl = wp.i18n._n('%d jour', '%d jours', diff, 'chassesautresor-com');
       valueSpan.textContent = tpl.replace('%d', diff);
     }
   } else if (today < debut) {
-    const diff = Math.max(
-      0,
-      Math.floor((debut - today) / (1000 * 60 * 60 * 24))
-    );
+    const diff = calendarDaysBetween(today, debut);
     labelSpan.textContent = wp.i18n.__('début dans', 'chassesautresor-com');
     const tpl = wp.i18n._n('%d jour', '%d jours', diff, 'chassesautresor-com');
     valueSpan.textContent = tpl.replace('%d', diff);
