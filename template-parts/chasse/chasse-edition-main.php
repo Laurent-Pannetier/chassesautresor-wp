@@ -933,8 +933,6 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
           </form>
         <?php endif; ?>
       </div>
-
-      </div>
   </section>
 <?php endif; ?>
 

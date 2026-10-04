@@ -82,8 +82,12 @@ if (!function_exists('compter_tentatives_du_jour') || !function_exists('compter_
 }
 ?>
 
+<?php
+$poster_cards = function_exists('cat_is_single_hunt_mode') && cat_is_single_hunt_mode();
+$cards_grid_class = $poster_cards ? 'cards-grid cards-grid--poster' : 'cards-grid';
+?>
 <div class="bloc-enigmes-chasse">
-  <div class="cards-grid" data-chasse-id="<?= esc_attr($chasse_id); ?>">
+  <div class="<?= esc_attr($cards_grid_class); ?>" data-chasse-id="<?= esc_attr($chasse_id); ?>">
     <?php foreach ($posts_visibles as $post):
       $enigme_id = $post->ID;
       $titre = get_the_title($enigme_id);

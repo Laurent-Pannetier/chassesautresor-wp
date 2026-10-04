@@ -96,71 +96,74 @@ $sidebar_data = sidebar_prepare_chasse_nav(
     0
 );
 
-$solved_label  = _n('énigme résolue', 'énigmes résolues', $enigmes_resolues, 'chassesautresor-com');
-$engaged_label = _n('engagée', 'engagées', $nb_engagees, 'chassesautresor-com');
+// Intro texte utile en mode plateforme ; en mono-chasse le bandeau + CTA suffisent.
+if (!$compact_experience) {
+    $solved_label  = _n('énigme résolue', 'énigmes résolues', $enigmes_resolues, 'chassesautresor-com');
+    $engaged_label = _n('engagée', 'engagées', $nb_engagees, 'chassesautresor-com');
 
-if ($statut === 'termine') {
-    $enigmes_intro = ($has_solutions || $has_indices)
-        ? esc_html__('La chasse est terminée. Vous pouvez revoir toutes les énigmes ainsi que leurs solutions et indices.', 'chassesautresor-com')
-        : esc_html__('La chasse est terminée. Les énigmes restent consultables.', 'chassesautresor-com');
-} elseif ($statut === 'a_venir') {
-    $enigmes_intro = sprintf(
-        esc_html__('Les énigmes seront affichées au début de la chasse, le %s.', 'chassesautresor-com'),
-        esc_html($date_debut_formatee)
-    );
-} elseif (in_array($statut, ['en_cours', 'payante'], true) && $statut_validation === 'valide') {
-    $est_engage = utilisateur_est_engage_dans_chasse($user_id, $chasse_id);
-    if (!$est_engage) {
-        if ($est_orga_associe) {
-            if ($titre_recompense) {
-                $enigmes_intro = sprintf(
-                    esc_html__('Voici les énigmes de cette chasse. Résolvez-les pour tenter de remporter %s.', 'chassesautresor-com'),
-                    esc_html($titre_recompense)
-                );
+    if ($statut === 'termine') {
+        $enigmes_intro = ($has_solutions || $has_indices)
+            ? esc_html__('La chasse est terminée. Vous pouvez revoir toutes les énigmes ainsi que leurs solutions et indices.', 'chassesautresor-com')
+            : esc_html__('La chasse est terminée. Les énigmes restent consultables.', 'chassesautresor-com');
+    } elseif ($statut === 'a_venir') {
+        $enigmes_intro = sprintf(
+            esc_html__('Les énigmes seront affichées au début de la chasse, le %s.', 'chassesautresor-com'),
+            esc_html($date_debut_formatee)
+        );
+    } elseif (in_array($statut, ['en_cours', 'payante'], true) && $statut_validation === 'valide') {
+        $est_engage = utilisateur_est_engage_dans_chasse($user_id, $chasse_id);
+        if (!$est_engage) {
+            if ($est_orga_associe) {
+                if ($titre_recompense) {
+                    $enigmes_intro = sprintf(
+                        esc_html__('Voici les énigmes de cette chasse. Résolvez-les pour tenter de remporter %s.', 'chassesautresor-com'),
+                        esc_html($titre_recompense)
+                    );
+                } else {
+                    $enigmes_intro = esc_html__('Voici les énigmes de cette chasse.', 'chassesautresor-com');
+                }
             } else {
-                $enigmes_intro = esc_html__('Voici les énigmes de cette chasse.', 'chassesautresor-com');
+                $enigmes_intro = esc_html__('L\'accès aux énigmes est réservé aux participants de chasse. Inscrivez-vous !', 'chassesautresor-com');
             }
         } else {
-            $enigmes_intro = esc_html__('L\'accès aux énigmes est réservé aux participants de chasse. Inscrivez-vous !', 'chassesautresor-com');
+            if ($nb_engagees === 0) {
+                $enigmes_intro = esc_html__(
+                    'commencez par consulter des énigmes parmi celles ci-dessous. Bonne chasse !',
+                    'chassesautresor-com'
+                );
+            } else {
+                $enigmes_intro = sprintf(
+                    esc_html__('Progression : %1$d/%2$d %3$s — %4$d/%5$d %6$s.', 'chassesautresor-com'),
+                    $enigmes_resolues,
+                    $nb_resolvables,
+                    esc_html($solved_label),
+                    $nb_engagees,
+                    $total_enigmes,
+                    esc_html($engaged_label)
+                );
+            }
         }
-    } else {
-        if ($nb_engagees === 0) {
-            $enigmes_intro = esc_html__(
-                'commencez par consulter des énigmes parmi celles ci-dessous. Bonne chasse !',
-                'chassesautresor-com'
-            );
-        } else {
-            $enigmes_intro = sprintf(
-                esc_html__('Progression : %1$d/%2$d %3$s — %4$d/%5$d %6$s.', 'chassesautresor-com'),
-                $enigmes_resolues,
-                $nb_resolvables,
-                esc_html($solved_label),
-                $nb_engagees,
-                $total_enigmes,
-                esc_html($engaged_label)
-            );
-        }
+    } elseif ($est_orga_associe && in_array($statut_validation, ['creation', 'correction'], true)) {
+        $enigmes_intro = esc_html__(
+            'Voici vos énigmes : ajoutez, modifiez ou supprimez celles dont vous n’avez plus besoin !',
+            'chassesautresor-com'
+        );
     }
-} elseif ($est_orga_associe && in_array($statut_validation, ['creation', 'correction'], true)) {
-    $enigmes_intro = esc_html__(
-        'Voici vos énigmes : ajoutez, modifiez ou supprimez celles dont vous n’avez plus besoin !',
-        'chassesautresor-com'
-    );
-}
 
-if (!is_user_logged_in()) {
-    $redirect_url     = get_permalink($chasse_id);
-    $registration_url = add_query_arg('redirect_to', rawurlencode($redirect_url), wp_registration_url());
-    $login_url        = wp_login_url($redirect_url);
-    $enigmes_intro    = sprintf(
-        wp_kses(
-            /* translators: 1: registration URL, 2: login URL */
-            __('Énigmes accessibles uniquement pour les joueurs connectés. Nouveau ? <a href="%1$s">S\'enregistrer</a> Déjà inscrit ? <a href="%2$s">Se connecter</a>', 'chassesautresor-com'),
-            ['a' => ['href' => []]]
-        ),
-        esc_url($registration_url),
-        esc_url($login_url)
-    );
+    if (!is_user_logged_in()) {
+        $redirect_url     = get_permalink($chasse_id);
+        $registration_url = add_query_arg('redirect_to', rawurlencode($redirect_url), wp_registration_url());
+        $login_url        = wp_login_url($redirect_url);
+        $enigmes_intro    = sprintf(
+            wp_kses(
+                /* translators: 1: registration URL, 2: login URL */
+                __('Énigmes accessibles uniquement pour les joueurs connectés. Nouveau ? <a href="%1$s">S\'enregistrer</a> Déjà inscrit ? <a href="%2$s">Se connecter</a>', 'chassesautresor-com'),
+                ['a' => ['href' => []]]
+            ),
+            esc_url($registration_url),
+            esc_url($login_url)
+        );
+    }
 }
 
 get_header();
@@ -235,17 +238,17 @@ if ($peut_voir_aside) {
 
     <!-- 🧩 Liste des énigmes -->
     <section class="chasse-enigmes-wrapper" id="chasse-enigmes-wrapper">
-        <div class="titre-enigmes-wrapper">
-            <?php if ($compact_experience) : ?>
-                <h2><?php esc_html_e('Les énigmes', 'chassesautresor-com'); ?></h2>
-            <?php else : ?>
+        <?php if ($compact_experience) : ?>
+            <h2 class="screen-reader-text"><?php esc_html_e('Les énigmes', 'chassesautresor-com'); ?></h2>
+        <?php else : ?>
+            <div class="titre-enigmes-wrapper">
                 <h2><?php printf(esc_html__('Énigmes de %s', 'chassesautresor-com'), esc_html($titre_chasse)); ?></h2>
-            <?php endif; ?>
-            <?php if ($enigmes_intro !== '') : ?>
-                <p class="enigmes-intro"><?= $enigmes_intro; ?></p>
-            <?php endif; ?>
-            <div class="separateur-3"></div>
-        </div>
+                <?php if ($enigmes_intro !== '') : ?>
+                    <p class="enigmes-intro"><?= $enigmes_intro; ?></p>
+                <?php endif; ?>
+                <div class="separateur-3"></div>
+            </div>
+        <?php endif; ?>
         <div id="liste-enigmes" class="chasse-enigmes-liste">
             <?php
             get_template_part('template-parts/enigme/chasse-partial-boucle-enigmes', null, [

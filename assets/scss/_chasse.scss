@@ -97,24 +97,76 @@
   .meta-row--headline {
     margin: 0;
     justify-content: flex-start;
-    gap: var(--space-md);
+    align-items: center;
+    gap: var(--space-sm);
+    flex-wrap: wrap;
+    row-gap: var(--space-xs);
+  }
+
+  .chasse-details-actions {
+    top: 0.35rem;
+    right: 0;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    max-width: calc(100% - 0.25rem);
+  }
+
+  .chasse-details-actions__cta {
+    flex: 0 1 auto;
+    display: flex;
+    align-items: center;
+    min-width: 0;
+  }
+
+  .chasse-details-actions__cta .cta-action {
+    display: flex;
+    align-items: center;
+  }
+
+  .chasse-details-actions__cta .bouton-cta,
+  .chasse-details-actions__cta .cta-chasse-action,
+  .chasse-details-actions__cta .cta-chasse-link {
+    margin: 0;
+    padding: 0.3rem 0.55rem;
+    font-size: 0.8125rem;
+    line-height: 1.2;
+    white-space: nowrap;
+  }
+
+  .chasse-details-actions__cta .bouton-cta,
+  .chasse-details-actions__cta .cta-chasse-action {
+    margin-top: 0;
   }
 
   .chasse-cta-section {
     margin-top: var(--space-sm);
+    gap: 0;
+  }
+
+  .chasse-cta-section--has-action {
+    width: auto;
   }
 
   .cta-chasse-row {
+    flex: 0 0 auto;
+    align-items: flex-start;
     justify-content: flex-start;
+    text-align: left;
+  }
+
+  .cta-action .bouton-cta,
+  .cta-action .cta-chasse-action {
+    margin-top: 0;
   }
 
   .chasse-enigmes-wrapper {
-    margin-top: var(--space-xl);
+    margin-top: var(--space-md);
   }
 
-  .titre-enigmes-wrapper {
-    align-items: flex-start;
-    text-align: left;
+  .chasse-enigmes-liste {
+    width: 100%;
+    min-width: 0;
   }
 
   @media (--bp-mobile) {
@@ -682,12 +734,52 @@ a.chasse-badge.chasse-badge--region:focus-visible {
 }
 
 .chasse-cta-section .cta-chasse-row {
-  flex: 1;
-  text-align: center;
+  flex: 0 1 auto;
+  text-align: left;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
+  gap: var(--space-xs);
+}
+
+.cta-chasse-action {
+  margin-top: 0;
+}
+
+.cta-chasse-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0.35rem 0.7rem;
+  border: 1px solid rgba(255, 244, 212, 0.28);
+  border-radius: 4px;
+  background: transparent;
+  color: rgba(255, 244, 212, 0.78);
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.2;
+  text-decoration: none;
+  transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.cta-chasse-link i {
+  font-size: 0.85em;
+  opacity: 0.85;
+}
+
+.cta-chasse-link:hover,
+.cta-chasse-link:focus-visible {
+  color: var(--color-text-primary, #fff4d4);
+  border-color: var(--color-secondary, #c47a2c);
+  background: rgba(255, 244, 212, 0.06);
+  text-decoration: none;
+}
+
+.cta-chasse-link:focus-visible {
+  outline: 2px solid var(--color-primary, #c47a2c);
+  outline-offset: 2px;
 }
 
 .chasse-caracteristiques .caracteristique-label {

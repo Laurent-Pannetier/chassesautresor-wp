@@ -62,16 +62,7 @@ a.bouton-edition-attention {
     transform: scale(1.1);
   }
 }
-.cta-chasse {
-  background: var(--color-text-primary, #fff4d4);
-  border-left: 4px solid var(--color-secondary);
-  padding: 1.2rem;
-  margin: var(--space-2xl) auto;
-  text-align: center;
-  border-radius: 6px;
-  font-size: 1rem;
-  color: var(--color-text-fond-clair);
-}
+/* Legacy cream panel removed: CTA actions stay inline without a colored container. */
 
 
 /* ========== 🔠 TYPOGRAPHIE SPÉCIFIQUE AU HEADER ========== */

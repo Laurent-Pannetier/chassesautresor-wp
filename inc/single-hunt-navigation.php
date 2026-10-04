@@ -3,7 +3,63 @@
 defined('ABSPATH') || exit;
 
 /**
- * Removes obsolete platform and organizer entries from public menus.
+ * Whether the current request should expose the unique single-hunt top-bar nav.
+ */
+function cta_is_single_hunt_topbar_nav_enabled(): bool
+{
+    return function_exists('cat_is_single_hunt_mode') && cat_is_single_hunt_mode();
+}
+
+/**
+ * Returns the chasse page URL used by the unique "Énigmes" top-bar link.
+ */
+function cta_get_single_hunt_enigmes_nav_url(): string
+{
+    $huntId = function_exists('cat_get_primary_hunt_id') ? cat_get_primary_hunt_id() : 0;
+    if ($huntId <= 0) {
+        return home_url('/');
+    }
+
+    $status = (string) get_post_status($huntId);
+    if ($status === 'publish') {
+        $permalink = get_permalink($huntId);
+
+        return $permalink ? (string) $permalink : home_url('/');
+    }
+
+    $preview = get_preview_post_link($huntId);
+
+    return $preview ? (string) $preview : home_url('/');
+}
+
+/**
+ * Whether the unique "Énigmes" top-bar item should appear as the current page.
+ */
+function cta_is_single_hunt_enigmes_nav_current(): bool
+{
+    $huntId = function_exists('cat_get_primary_hunt_id') ? cat_get_primary_hunt_id() : 0;
+    if ($huntId <= 0) {
+        return false;
+    }
+
+    if (is_singular('chasse') && (int) get_queried_object_id() === $huntId) {
+        return true;
+    }
+
+    if (is_singular('enigme') && function_exists('recuperer_id_chasse_associee')) {
+        return (int) recuperer_id_chasse_associee((int) get_queried_object_id()) === $huntId;
+    }
+
+    return false;
+}
+
+/**
+ * Empties Astra's primary/mobile menus in single-hunt mode.
+ *
+ * The unique "Énigmes" entry is rendered outside wp_nav_menu so it stays visible
+ * on small screens (not buried in the hamburger panel).
+ *
+ * Other menus still lose obsolete platform/organizer entries.
  *
  * @param array<int, WP_Post> $items Menu items.
  * @param stdClass            $args  Menu arguments.
@@ -12,8 +68,13 @@ defined('ABSPATH') || exit;
  */
 function cta_filter_single_hunt_menu_objects(array $items, $args): array
 {
-    if (!function_exists('cat_is_single_hunt_mode') || !cat_is_single_hunt_mode()) {
+    if (!cta_is_single_hunt_topbar_nav_enabled()) {
         return $items;
+    }
+
+    $location = (string) ($args->theme_location ?? '');
+    if (in_array($location, ['primary', 'mobile_menu'], true)) {
+        return [];
     }
 
     $blockedPaths = [
@@ -58,79 +119,74 @@ function cta_filter_single_hunt_menu_objects(array $items, $args): array
 add_filter('wp_nav_menu_objects', 'cta_filter_single_hunt_menu_objects', 20, 2);
 
 /**
- * Adds canonical player links to Astra's main menus in single-hunt mode.
+ * Adds a body class used to keep the unique top-bar nav visible on small screens.
  *
- * @param string   $items Rendered menu items.
- * @param stdClass $args  Menu arguments.
+ * @param array<int, string> $classes Body classes.
+ *
+ * @return array<int, string>
  */
-function cta_add_single_hunt_primary_links(string $items, $args): string
+function cta_add_single_hunt_body_class(array $classes): array
 {
-    if (!function_exists('cat_is_single_hunt_mode') || !cat_is_single_hunt_mode()) {
-        return $items;
+    if (cta_is_single_hunt_topbar_nav_enabled()) {
+        $classes[] = 'cat-single-hunt';
     }
 
-    $location = (string) ($args->theme_location ?? '');
-    if (!in_array($location, ['primary', 'mobile_menu'], true)) {
-        return $items;
+    return $classes;
+}
+add_filter('body_class', 'cta_add_single_hunt_body_class');
+
+/**
+ * Renders the unique "Énigmes" top-bar link in Astra's visible header row.
+ *
+ * The production header keeps logo / account / cart / language in the `above`
+ * row (same place as the language switcher). We therefore prefer `above/right`,
+ * with a fallback to `primary/right` when the above row is absent. Desktop and
+ * mobile builders each render once so the link stays outside the hamburger.
+ *
+ * @param string $row    Header builder row.
+ * @param string $column Header builder column.
+ */
+function cta_render_single_hunt_enigmes_topbar_link(string $row, string $column): void
+{
+    if (!cta_is_single_hunt_topbar_nav_enabled()) {
+        return;
     }
 
-    $huntId = function_exists('cat_get_primary_hunt_id') ? cat_get_primary_hunt_id() : 0;
-    $homeUrl = home_url('/');
-    $storyUrl = $homeUrl . '#single-hunt-story-title';
-    $riddlesUrl = $homeUrl . '#home-enigmes';
-    $userId = get_current_user_id();
-
-    if (
-        $huntId > 0
-        && get_post_status($huntId) === 'publish'
-        && function_exists('utilisateur_est_engage_dans_chasse')
-        && utilisateur_est_engage_dans_chasse($userId, $huntId)
-    ) {
-        $riddlesUrl = get_permalink($huntId) . '#chasse-enigmes-wrapper';
+    if ('right' !== $column || !in_array($row, ['above', 'primary'], true)) {
+        return;
     }
 
-    $canonicalItems = [
-        'single-hunt-story-link' => [__('La chasse', 'chassesautresor-com'), $storyUrl],
-        'single-hunt-riddles-link' => [__('Les énigmes', 'chassesautresor-com'), $riddlesUrl],
+    static $rendered = [
+        'desktop' => false,
+        'mobile'  => false,
     ];
 
-    foreach ($canonicalItems as $className => [$label, $url]) {
-        if (strpos($items, $className) !== false) {
-            continue;
-        }
-
-        $items .= sprintf(
-            '<li class="menu-item %1$s"><a class="menu-link" href="%2$s">%3$s</a></li>',
-            esc_attr($className),
-            esc_url($url),
-            esc_html($label)
-        );
+    $device = current_action() === 'astra_render_mobile_header_column' ? 'mobile' : 'desktop';
+    if (!empty($rendered[$device])) {
+        return;
     }
 
-    if (
-        $huntId > 0
-        && function_exists('utilisateur_est_organisateur_associe_a_chasse')
-        && (
-            current_user_can('manage_options')
-            || utilisateur_est_organisateur_associe_a_chasse($userId, $huntId)
-        )
-        && strpos($items, 'single-hunt-manage-link') === false
-    ) {
-        $huntUrl = get_post_status($huntId) === 'publish'
-            ? get_permalink($huntId)
-            : get_preview_post_link($huntId);
-        $huntUrl = $huntUrl ?: home_url('/');
-        $manageUrl = add_query_arg(['edition' => 'open', 'tab' => 'param'], $huntUrl);
-        $items .= sprintf(
-            '<li class="menu-item single-hunt-manage-link"><a class="menu-link" href="%1$s">%2$s</a></li>',
-            esc_url($manageUrl),
-            esc_html__('Gérer la chasse', 'chassesautresor-com')
-        );
+    $rendered[$device] = true;
+
+    $url = cta_get_single_hunt_enigmes_nav_url();
+    $isCurrent = cta_is_single_hunt_enigmes_nav_current();
+    $classes = 'cta-topbar-enigmes ast-builder-layout-element site-header-focus-item';
+
+    if ($isCurrent) {
+        $classes .= ' is-current';
     }
 
-    return $items;
+    printf(
+        '<nav class="%1$s" aria-label="%2$s"><a class="cta-topbar-enigmes__link" href="%3$s"%4$s>%5$s</a></nav>',
+        esc_attr($classes),
+        esc_attr__('Navigation principale', 'chassesautresor-com'),
+        esc_url($url),
+        $isCurrent ? ' aria-current="page"' : '',
+        esc_html__('Énigmes', 'chassesautresor-com')
+    );
 }
-add_filter('wp_nav_menu_items', 'cta_add_single_hunt_primary_links', 20, 2);
+add_action('astra_render_header_column', 'cta_render_single_hunt_enigmes_topbar_link', 5, 2);
+add_action('astra_render_mobile_header_column', 'cta_render_single_hunt_enigmes_topbar_link', 5, 2);
 
 /**
  * Builds the context-aware primary-hunt CTA used on the homepage.
@@ -160,7 +216,7 @@ function cta_get_primary_hunt_cta(int $huntId, ?int $userId = null): array
         return [
             'cta_html' => sprintf(
                 '<a href="%s" class="bouton-cta bouton-cta--color">%s</a>',
-                esc_url(home_url('/#home-enigmes')),
+                esc_url(home_url('/#single-hunt-story-title')),
                 esc_html__('Découvrir l’aperçu', 'chassesautresor-com')
             ),
             'cta_message' => '',
