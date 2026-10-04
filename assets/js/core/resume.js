@@ -128,9 +128,8 @@ window.mettreAJourResumeInfos = function () {
         estRempli = !isNaN(val) && val > 0;
       }
 
-      if (champ === 'enigme_reponse_bonne') {
-        const val = blocEdition?.querySelector('input')?.value?.trim();
-        estRempli = !!val;
+      if (champ === 'enigme_reponse_bonne' || champ === 'enigme_reponse_widget') {
+        estRempli = !!blocEdition && !blocEdition.classList.contains('champ-vide');
 
         if (blocEdition) {
           blocEdition.classList.toggle('champ-attention', !estRempli);
@@ -164,11 +163,12 @@ window.mettreAJourResumeInfos = function () {
       }
       mettreAJourLigneResume(ligne, champ, estRempli, 'enigme');
     });
-    // ✅ Marquage spécial si bonne réponse manquante
-    const blocBonneReponse = panneauEnigme.querySelector('[data-champ="enigme_reponse_bonne"]');
-    const inputBonneReponse = blocBonneReponse?.querySelector('input');
-    if (blocBonneReponse && inputBonneReponse) {
-      const estVide = !inputBonneReponse.value.trim();
+    // ✅ Marquage spécial si réponse automatique incomplète
+    const blocBonneReponse = panneauEnigme.querySelector(
+      '[data-champ="enigme_reponse_widget"], [data-champ="enigme_reponse_bonne"]'
+    );
+    if (blocBonneReponse) {
+      const estVide = blocBonneReponse.classList.contains('champ-vide');
       blocBonneReponse.classList.toggle('champ-attention', estVide);
     }
 
@@ -258,6 +258,7 @@ window.onChampSimpleMisAJour = function (champ, postId, valeur, cpt, extra) {
       'enigme_tentative_delai_secondes',
       'enigme_tentative.enigme_tentative_delai_secondes',
       'enigme_reponse_bonne',
+      'enigme_reponse_widget',
       'enigme_reponse_casse',
       'enigme_acces_condition',
       'enigme_acces_date',
@@ -271,7 +272,10 @@ window.onChampSimpleMisAJour = function (champ, postId, valeur, cpt, extra) {
       }
     }
 
-    if (champ === 'enigme_reponse_bonne' && typeof window.forcerRecalculStatutEnigme === 'function') {
+    if (
+      (champ === 'enigme_reponse_bonne' || champ === 'enigme_reponse_widget')
+      && typeof window.forcerRecalculStatutEnigme === 'function'
+    ) {
       window.forcerRecalculStatutEnigme(postId);
     }
 

@@ -61,7 +61,6 @@ if (is_singular('enigme')) {
             <?php
             get_template_part('template-parts/enigme/panneaux/enigme-edition-description', null, ['enigme_id' => $enigme_id]);
             get_template_part('template-parts/enigme/panneaux/enigme-edition-images', null, ['enigme_id' => $enigme_id]);
-            get_template_part('template-parts/enigme/panneaux/enigme-edition-variantes', null, ['enigme_id' => $enigme_id]);
             get_template_part('template-parts/enigme/panneaux/enigme-edition-solution', null, ['enigme_id' => $enigme_id]);
             ?>
         <?php endif; ?>

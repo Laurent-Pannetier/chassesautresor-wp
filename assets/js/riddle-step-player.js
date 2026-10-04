@@ -53,8 +53,13 @@ const playPianoNote = (note, delay = 0, key = null) => {
 };
 
 const initializeGpsWidgets = root => {
-  if (typeof window.L === 'undefined') return;
-  root.querySelectorAll('.riddle-step-gps-form:not([data-map-ready])').forEach(form => {
+  if (typeof window.L === 'undefined' || !root) return;
+  const forms = [];
+  if (root.matches?.('.riddle-step-gps-form:not([data-map-ready])')) {
+    forms.push(root);
+  }
+  root.querySelectorAll?.('.riddle-step-gps-form:not([data-map-ready])').forEach(form => forms.push(form));
+  forms.forEach(form => {
     const container = form.querySelector('.riddle-gps__map');
     const latitude = form.querySelector('.riddle-gps__latitude');
     const longitude = form.querySelector('.riddle-gps__longitude');
@@ -156,6 +161,7 @@ const unlockRiddleStepContent = (form, data) => {
   const finalForm = parsed.querySelector('.formulaire-reponse-auto, .formulaire-reponse-manuelle');
   if (!finalForm) return emptyCompletedStep ? player : currentArticle;
   player.insertAdjacentElement('afterend', finalForm);
+  initializeGpsWidgets(finalForm);
   const manualFeedback = parsed.querySelector('.formulaire-reponse-manuelle + .reponse-feedback');
   if (manualFeedback) finalForm.insertAdjacentElement('afterend', manualFeedback);
   document.dispatchEvent(new CustomEvent('riddle-step-content-updated'));

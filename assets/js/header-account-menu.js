@@ -47,6 +47,11 @@
   trigger.setAttribute('aria-haspopup', 'menu');
   trigger.setAttribute('aria-expanded', 'false');
 
+  // Ensure the icon (and optional label) always link to Mon compte.
+  if (config.accountUrl) {
+    trigger.setAttribute('href', config.accountUrl);
+  }
+
   let closeTimer = null;
   const isCoarsePointer = () =>
     window.matchMedia('(hover: none), (pointer: coarse)').matches;
@@ -86,8 +91,10 @@
     }
   });
 
+  // Desktop: clicking the icon/label navigates to Mon compte (menu stays hover-based).
+  // Touch: tap toggles the dropdown since there is no reliable hover.
   trigger.addEventListener('click', (event) => {
-    if (!isCoarsePointer() && !wrap.classList.contains('is-account-menu-open')) {
+    if (!isCoarsePointer()) {
       return;
     }
     event.preventDefault();

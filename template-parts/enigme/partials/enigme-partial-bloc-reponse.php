@@ -2,7 +2,7 @@
 defined('ABSPATH') || exit;
 
 $post_id = $args['post_id'] ?? null;
-$user_id = $args['user_id'] ?? get_current_user_id(); // ✅ sécurisation
+$user_id = $args['user_id'] ?? get_current_user_id();
 
 if (!$post_id || !$user_id) {
     return;
@@ -60,7 +60,9 @@ if ($stepIds !== []) {
 
 // Récupération du mode de validation
 $mode_validation = get_field('enigme_mode_validation', $post_id);
-if (!in_array($mode_validation, ['automatique', 'manuelle'])) return;
+if (!in_array($mode_validation, ['automatique', 'manuelle'])) {
+    return;
+}
 
 $cout = (int) get_field('enigme_tentative_cout_points', $post_id);
 $solde_avant = get_user_points($user_id);
@@ -123,10 +125,10 @@ $retry_state = ChassesAuTresor\Core\Support\CoreServiceFactory::riddleRetry($wpd
     (int) $user_id,
     (int) $post_id
 );
-  $boutique_url = esc_url(home_url('/boutique/'));
-  $disabled = '';
-  $label_btn = esc_html__('Valider', 'chassesautresor-com');
-  $points_manquants = 0;
+$boutique_url = esc_url(home_url('/boutique/'));
+$disabled = '';
+$label_btn = esc_html__('Valider', 'chassesautresor-com');
+$points_manquants = 0;
 
 if ($cout > $solde_avant) {
     $disabled = 'disabled';
@@ -160,16 +162,25 @@ if ($mode_validation !== 'aucune') {
         . '">' . $icon_html . '</button>';
 }
 
-$nonce = wp_create_nonce('reponse_auto_nonce');
+$configuration = (new ChassesAuTresor\Core\Progress\AnswerWidgetConfigurationService())
+    ->forRiddle((int) $post_id);
+$widget_view = (new ChassesAuTresor\Core\Progress\AnswerWidgetPlayerViewService())->build(
+    $configuration
+);
+$nonce = wp_create_nonce($widget_view['nonce_action']);
+$is_text_widget = ($widget_view['type'] ?? 'text') === 'text';
 ?>
 
 <form
-    class="bloc-reponse formulaire-reponse-auto"
+    class="<?= esc_attr($widget_view['form_class']); ?>"
+    data-widget-action="<?= esc_attr($widget_view['action']); ?>"
     data-cout="<?= esc_attr($cout); ?>"
     data-solde-avant="<?= esc_attr($solde_avant); ?>"
     data-solde-apres="<?= esc_attr($solde_apres); ?>"
     data-seuil="<?= esc_attr($seuil_cout_eleve); ?>"
     data-retry-state="<?= esc_attr(wp_json_encode($retry_state)); ?>"
+    data-submit-disabled="<?= $disabled !== '' ? '1' : '0'; ?>"
+    aria-busy="false"
 >
     <h3><?= $badge_html . esc_html__('Votre réponse', 'chassesautresor-com'); ?></h3>
 
@@ -183,11 +194,24 @@ $nonce = wp_create_nonce('reponse_auto_nonce');
           )
       ); ?>
     </p>
-  <?php else : ?>
+  <?php elseif ($is_text_widget) : ?>
     <input type="text" name="reponse" id="reponse_auto_<?= esc_attr($post_id); ?>" required>
+  <?php else : ?>
+    <?php
+    get_template_part(
+        'template-parts/enigme/partials/enigme-partial-answer-widget-controls',
+        null,
+        [
+            'widget_view' => $widget_view,
+            'field_suffix' => 'final-' . (int) $post_id,
+            'submit_label' => $label_btn,
+        ]
+    );
+    ?>
   <?php endif; ?>
   <input type="hidden" name="enigme_id" value="<?= esc_attr($post_id); ?>">
   <input type="hidden" name="nonce" value="<?= esc_attr($nonce); ?>">
+  <?php if ($points_manquants > 0 || $is_text_widget) : ?>
   <div class="reponse-cta-row">
     <?php if ($points_manquants > 0) : ?>
       <a href="<?= esc_url($boutique_url); ?>" class="bouton-cta points-manquants" title="<?= esc_attr__('Accéder à la boutique', 'chassesautresor-com'); ?>">
@@ -198,6 +222,7 @@ $nonce = wp_create_nonce('reponse_auto_nonce');
       <button type="submit" class="bouton-cta bouton-cta--color" <?= $disabled; ?>><?= $label_btn; ?></button>
     <?php endif; ?>
   </div>
+  <?php endif; ?>
   <?php if ($points_manquants <= 0 && $cout > 0) : ?>
     <p class="points-sousligne txt-small">
       <?= esc_html(

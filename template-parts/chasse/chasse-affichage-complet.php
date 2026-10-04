@@ -446,10 +446,17 @@ if ($edition_active && !$est_complet) {
         <?php
         $cta_data = $infos_chasse['cta_data'] ?? [];
         $cta_type = (string) ($cta_data['type'] ?? '');
-        $show_cta_section = !$compact_experience || $cta_type !== 'engage';
+        $cta_html = trim((string) ($cta_data['cta_html'] ?? ''));
+        $cta_message = trim((string) ($cta_data['cta_message'] ?? ''));
+        $has_cta = $cta_html !== '' || $cta_message !== '';
+        // Compact mode hides the characteristics list: only keep the section when a CTA remains.
+        $show_cta_section = $compact_experience
+            ? ($has_cta && $cta_type !== 'engage')
+            : true;
+        $cta_section_class = 'chasse-cta-section' . ($has_cta ? ' cta-chasse' : '');
         ?>
         <?php if ($show_cta_section) : ?>
-        <div class="chasse-cta-section cta-chasse">
+        <div class="<?= esc_attr($cta_section_class); ?>">
           <div class="chasse-caracteristiques">
             <?php if ($date_label && $date_value) : ?>
               <div class="caracteristique caracteristique-date">
@@ -560,15 +567,17 @@ if ($edition_active && !$est_complet) {
             <?php endif; ?>
           </div>
 
-          <?php
-          $cta_id   = $cta_type === 'validation' ? 'cta-validation-chasse' : '';
-          ?>
-          <div class="cta-chasse-row"<?php echo $cta_id ? ' id="' . esc_attr($cta_id) . '"' : ''; ?>>
-            <div class="cta-message" aria-live="polite"><?= $cta_data['cta_message']; ?></div>
-            <div class="cta-action">
-              <?= $cta_data['cta_html']; ?>
+          <?php if ($has_cta) : ?>
+            <?php
+            $cta_id = $cta_type === 'validation' ? 'cta-validation-chasse' : '';
+            ?>
+            <div class="cta-chasse-row"<?php echo $cta_id ? ' id="' . esc_attr($cta_id) . '"' : ''; ?>>
+              <div class="cta-message" aria-live="polite"><?= $cta_data['cta_message']; ?></div>
+              <div class="cta-action">
+                <?= $cta_data['cta_html']; ?>
+              </div>
             </div>
-          </div>
+          <?php endif; ?>
           </div>
         <?php endif; ?>
 

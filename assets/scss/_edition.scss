@@ -133,6 +133,35 @@
   gap: var(--space-md);
 }
 
+.riddle-final-answer-editor {
+  display: grid;
+  gap: var(--space-sm);
+  width: 100%;
+}
+
+.riddle-final-answer-editor__summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-xs);
+  margin: 0;
+}
+
+.riddle-final-answer-form {
+  display: grid;
+  gap: var(--space-md);
+  margin-top: var(--space-sm);
+}
+
+.riddle-final-answer-form[hidden] {
+  display: none;
+}
+
+.riddle-final-answer-form__feedback {
+  margin: 0;
+  color: var(--color-editor-error);
+}
+
 .riddle-step-form[hidden],
 .riddle-steps-editor__overview[hidden] {
   display: none;

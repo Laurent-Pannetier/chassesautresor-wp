@@ -24,9 +24,6 @@ $visuel = get_field('enigme_visuel_image', $enigme_id); // champ "gallery" → t
 $has_images = is_array($visuel) && count($visuel) > 0;
 $legende = (string) get_field('enigme_visuel_legende', $enigme_id);
 $texte_enigme = (string) get_field('enigme_visuel_texte', $enigme_id);
-$reponses = enigme_get_bonnes_reponses($enigme_id);
-$reponse = implode(', ', $reponses);
-$casse = get_field('enigme_reponse_casse', $enigme_id);
 $retry_delay = max(0, (int) get_field('enigme_tentative_delai_secondes', $enigme_id));
 $cout = get_field('enigme_tentative_cout_points', $enigme_id);
 $mode_validation = get_field('enigme_mode_validation', $enigme_id) ?? 'aucune';
@@ -34,6 +31,18 @@ $date_raw = get_field('enigme_acces_date', $enigme_id);
 $date_obj = convertir_en_datetime($date_raw);
 $date_deblocage = $date_obj ? $date_obj->format('Y-m-d\TH:i') : '';
 
+$finalAnswerPersistence = new ChassesAuTresor\Core\Progress\RiddleFinalAnswerWidgetPersistenceService();
+$finalAnswerValues = $finalAnswerPersistence->loadEditorValues((int) $enigme_id);
+$finalAnswerComplete = $mode_validation !== 'automatique' || $finalAnswerPersistence->isComplete((int) $enigme_id);
+$finalAnswerWidgets = (new ChassesAuTresor\Core\Progress\AnswerWidgetEditorViewService())
+    ->widgetsForTarget('enigme');
+$finalAnswerWidgetLabel = __('Réponse texte', 'chassesautresor-com');
+foreach ($finalAnswerWidgets as $finalAnswerWidget) {
+    if (($finalAnswerWidget['type'] ?? '') === ($finalAnswerValues['widget'] ?? 'text')) {
+        $finalAnswerWidgetLabel = (string) $finalAnswerWidget['label'];
+        break;
+    }
+}
 
 $chasse = get_field('enigme_chasse_associee', $enigme_id);
 $chasse_id = is_array($chasse) ? $chasse[0] : null;
@@ -42,21 +51,6 @@ $enigme_status = get_post_status($enigme_id);
 $chasse_validation = $chasse_id ? get_field('chasse_cache_statut_validation', $chasse_id) : '';
 $stats_locked = in_array($chasse_validation, ['creation', 'en_attente', 'correction'], true)
     || $enigme_status !== 'publish';
-
-$nb_variantes   = 0;
-$variantes_list = [];
-for ($i = 1; $i <= 4; $i++) {
-    $texte_variante   = trim((string) get_field("texte_{$i}", $enigme_id));
-    $message_variante = trim((string) get_field("message_{$i}", $enigme_id));
-    if ($texte_variante && $message_variante) {
-        $nb_variantes++;
-        $variantes_list[] = [
-            'texte'   => $texte_variante,
-            'message' => $message_variante,
-        ];
-    }
-}
-$has_variantes = ($nb_variantes > 0);
 
 
 ?>
@@ -362,56 +356,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['uid'], $_POST['action
                 'template-parts/common/edition-row',
                 null,
                 [
-                    'class'      => 'champ-enigme champ-bonne-reponse champ-groupe-reponse-automatique cache' . (empty($reponses) ? ' champ-vide' : ' champ-rempli') . ($peut_editer ? '' : ' champ-desactive'),
+                    'class'      => 'champ-enigme champ-reponse-finale-widget champ-groupe-reponse-automatique cache' . ($finalAnswerComplete ? ' champ-rempli' : ' champ-vide') . ($peut_editer ? '' : ' champ-desactive'),
                     'attributes' => [
-                        'data-champ'    => 'enigme_reponse_bonne',
-                        'data-cpt'      => 'enigme',
-                        'data-post-id'  => $enigme_id,
-                        'data-reponses' => wp_json_encode($reponses),
-                        'data-no-edit'  => '1',
-                        'data-no-icon'  => '1',
-                    ],
-                    'label' => function () {
-                        ?>
-                        <label for="champ-bonne-reponse">
-                            <?= esc_html__('Bonne(s) réponse(s)', 'chassesautresor-com'); ?> <span class="champ-obligatoire">*</span>
-                            <?php
-                            get_template_part(
-                                'template-parts/common/help-icon',
-                                null,
-                                [
-                                    'title'   => __('La ou les bonnes réponses', 'chassesautresor-com'),
-                                    'message' => __('Vous pouvez saisir de 1 à 5 bonnes réponses. Tout joueur qui en soumet une — selon votre réglage de respect de la casse — résout l’énigme.', 'chassesautresor-com'),
-                                    'variant' => 'info',
-                                    'classes' => 'bonne-reponse-aide',
-                                ]
-                            );
-                            ?>
-                        </label>
-                        <?php
-                    },
-                    'content' => function () use ($reponses, $casse, $peut_editer, $enigme_id) {
-                        ?>
-                        <div class="bonnes-reponses-wrapper<?= empty($reponses) ? ' champ-vide-obligatoire' : ''; ?>"></div>
-                        <div class="champ-enigme champ-casse <?= $casse ? 'champ-rempli' : 'champ-vide'; ?><?= $peut_editer ? '' : ' champ-desactive'; ?>" data-champ="enigme_reponse_casse" data-cpt="enigme" data-post-id="<?= esc_attr($enigme_id); ?>" data-no-edit="1">
-                            <label style="display: flex; align-items: center; gap: 4px;"><input type="checkbox" <?= $casse ? 'checked' : ''; ?> <?= $peut_editer ? '' : 'disabled'; ?>> <?= esc_html__('Respecter la casse', 'chassesautresor-com'); ?></label>
-                            <div class="champ-feedback"></div>
-                        </div>
-                        <div class="champ-feedback"></div>
-                        <?php
-                    },
-                ]
-            );
-            ?>
-
-            <?php
-            get_template_part(
-                'template-parts/common/edition-row',
-                null,
-                [
-                    'class'      => 'champ-enigme champ-variantes-resume champ-groupe-reponse-automatique cache' . ($has_variantes ? ' champ-rempli' : ' champ-vide') . ($peut_editer ? '' : ' champ-desactive'),
-                    'attributes' => [
-                        'data-champ'   => 'enigme_reponse_variantes',
+                        'data-champ'   => 'enigme_reponse_widget',
                         'data-cpt'     => 'enigme',
                         'data-post-id' => $enigme_id,
                         'data-no-edit' => '1',
@@ -420,52 +367,122 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['uid'], $_POST['action
                     'label' => function () {
                         ?>
                         <label>
-                            <?= esc_html__('Variantes', 'chassesautresor-com'); ?>
+                            <?= esc_html__('Réponse automatique', 'chassesautresor-com'); ?> <span class="champ-obligatoire">*</span>
                             <?php
                             get_template_part(
                                 'template-parts/common/help-icon',
                                 null,
                                 [
-                                    'aria_label' => __('Explication des variantes', 'chassesautresor-com'),
-                                    'classes'    => 'variantes-aide',
-                                    'variant'    => 'info',
-                                    'title'      => __('Système de variantes', 'chassesautresor-com'),
-                                    'message'    => __('Les variantes sont des réponses alternatives qui ne sont pas validées comme correctes, mais qui déclenchent un message personnalisé en retour (par exemple une aide, un indice, un lien ou tout autre contenu de votre choix).', 'chassesautresor-com'),
+                                    'title'   => __('Mode de réponse automatique', 'chassesautresor-com'),
+                                    'message' => __('Choisissez le même type de widget que pour les étapes intermédiaires. Le joueur devra résoudre ce défi pour valider l’énigme.', 'chassesautresor-com'),
+                                    'variant' => 'info',
+                                    'classes' => 'bonne-reponse-aide',
                                 ]
                             );
                             ?>
                         </label>
                         <?php
                     },
-                    'content' => function () use ($has_variantes, $variantes_list, $peut_editer, $enigme_id) {
+                    'content' => function () use (
+                        $finalAnswerValues,
+                        $finalAnswerWidgets,
+                        $finalAnswerWidgetLabel,
+                        $finalAnswerComplete,
+                        $peut_editer,
+                        $enigme_id
+                    ) {
                         ?>
-                        <?php if ($has_variantes) : ?>
-                            <table class="variantes-table">
-                                <thead>
-                                    <tr>
-                                        <th scope="col"><?= esc_html__('Variante', 'chassesautresor-com'); ?></th>
-                                        <th scope="col"><?= esc_html__('Message', 'chassesautresor-com'); ?></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php foreach ($variantes_list as $var) : ?>
-                                        <tr class="variante-resume">
-                                            <td class="variante-texte"><?= esc_html($var['texte']); ?></td>
-                                            <td class="variante-message"><?= esc_html($var['message']); ?></td>
-                                        </tr>
-                                    <?php endforeach; ?>
-                                </tbody>
-                            </table>
-                            <?php if ($peut_editer) : ?>
-                                <button type="button" class="champ-modifier ouvrir-panneau-variantes" aria-label="<?= esc_attr__('Éditer les variantes', 'chassesautresor-com'); ?>" data-cpt="enigme" data-post-id="<?= esc_attr($enigme_id); ?>">
-                                    <?= esc_html__('éditer', 'chassesautresor-com'); ?>
-                                </button>
+                        <div
+                          class="riddle-final-answer-editor"
+                          data-riddle-id="<?= esc_attr($enigme_id); ?>"
+                          data-editable="<?= $peut_editer ? '1' : '0'; ?>"
+                        >
+                          <p class="riddle-final-answer-editor__summary">
+                            <strong class="riddle-final-answer-editor__label"><?= esc_html($finalAnswerWidgetLabel); ?></strong>
+                            <?php if (!$finalAnswerComplete) : ?>
+                              <span class="champ-ajout-image"><?= esc_html__('configuration incomplète', 'chassesautresor-com'); ?></span>
                             <?php endif; ?>
-                        <?php elseif ($peut_editer) : ?>
-                            <a href="#" class="champ-ajouter ouvrir-panneau-variantes" aria-label="<?= esc_attr__('Ajouter des variantes', 'chassesautresor-com'); ?>" data-cpt="enigme" data-post-id="<?= esc_attr($enigme_id); ?>">
-                                <?= esc_html__('ajouter des variantes', 'chassesautresor-com'); ?>
-                            </a>
-                        <?php endif; ?>
+                          </p>
+                          <?php if ($peut_editer) : ?>
+                            <button type="button" class="champ-modifier riddle-final-answer-edit">
+                              <?= esc_html__('Configurer', 'chassesautresor-com'); ?>
+                            </button>
+                          <?php endif; ?>
+                          <form class="riddle-final-answer-form" hidden>
+                            <fieldset class="riddle-step-form__field">
+                              <legend><?= esc_html__('Mode de réponse', 'chassesautresor-com'); ?></legend>
+                              <label for="riddle-final-answer-widget"><?= esc_html__('Type de widget', 'chassesautresor-com'); ?></label>
+                              <select id="riddle-final-answer-widget" name="widget">
+                                <?php foreach ($finalAnswerWidgets as $widgetDefinition) : ?>
+                                  <option
+                                    value="<?= esc_attr($widgetDefinition['type']); ?>"
+                                    <?= ($finalAnswerValues['widget'] ?? 'text') === $widgetDefinition['type'] ? 'selected' : ''; ?>
+                                  >
+                                    <?= esc_html($widgetDefinition['label']); ?>
+                                  </option>
+                                <?php endforeach; ?>
+                              </select>
+                              <?php foreach ($finalAnswerWidgets as $widgetIndex => $widgetDefinition) : ?>
+                                <div
+                                  class="riddle-step-widget-config riddle-final-answer-widget-config"
+                                  data-widget="<?= esc_attr($widgetDefinition['type']); ?>"
+                                  <?= ($finalAnswerValues['widget'] ?? 'text') === $widgetDefinition['type'] ? '' : 'hidden'; ?>
+                                >
+                                  <?php foreach ($widgetDefinition['fields'] as $field) : ?>
+                                    <?php $fieldId = 'riddle-final-' . str_replace('_', '-', $field['name']); ?>
+                                    <?php
+                                    $fieldValue = $finalAnswerValues[$field['name']] ?? ($field['default'] ?? '');
+                                    if ($field['name'] === 'case_sensitive') {
+                                        $fieldChecked = !empty($finalAnswerValues['case_sensitive']);
+                                    }
+                                    ?>
+                                    <?php if ($field['control'] === 'checkbox') : ?>
+                                      <label>
+                                        <input
+                                          type="checkbox"
+                                          name="<?= esc_attr($field['name']); ?>"
+                                          value="1"
+                                          <?= !empty($fieldChecked) ? 'checked' : ''; ?>
+                                        >
+                                        <?= esc_html($field['label']); ?>
+                                      </label>
+                                    <?php else : ?>
+                                      <label for="<?= esc_attr($fieldId); ?>"><?= esc_html($field['label']); ?></label>
+                                      <?php if ($field['control'] === 'textarea') : ?>
+                                        <textarea
+                                          id="<?= esc_attr($fieldId); ?>"
+                                          name="<?= esc_attr($field['name']); ?>"
+                                          rows="<?= esc_attr($field['rows'] ?? 4); ?>"
+                                        ><?= esc_textarea((string) $fieldValue); ?></textarea>
+                                      <?php else : ?>
+                                        <input
+                                          id="<?= esc_attr($fieldId); ?>"
+                                          name="<?= esc_attr($field['name']); ?>"
+                                          type="text"
+                                          maxlength="<?= esc_attr($field['maxlength'] ?? 120); ?>"
+                                          value="<?= esc_attr((string) $fieldValue); ?>"
+                                        >
+                                      <?php endif; ?>
+                                    <?php endif; ?>
+                                    <?php if (!empty($field['help'])) : ?>
+                                      <p class="txt-small"><?= esc_html($field['help']); ?></p>
+                                    <?php endif; ?>
+                                  <?php endforeach; ?>
+                                </div>
+                              <?php endforeach; ?>
+                            </fieldset>
+                            <p class="riddle-final-answer-form__feedback" role="alert" aria-live="assertive"></p>
+                            <div class="riddle-step-form__actions">
+                              <button type="button" class="bouton-secondaire riddle-final-answer-cancel">
+                                <?= esc_html__('Annuler', 'chassesautresor-com'); ?>
+                              </button>
+                              <button type="submit" class="bouton-principal">
+                                <?= esc_html__('Enregistrer', 'chassesautresor-com'); ?>
+                              </button>
+                            </div>
+                          </form>
+                          <div class="champ-feedback"></div>
+                        </div>
                         <?php
                     },
                 ]

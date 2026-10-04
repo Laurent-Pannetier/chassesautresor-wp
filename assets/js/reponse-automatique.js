@@ -1,7 +1,26 @@
+function resetInteractiveFinalAnswerWidget(form) {
+  const answerInput = form.querySelector('input[name="reponse"]');
+  if (answerInput && answerInput.type === 'hidden') answerInput.value = '';
+  form.querySelector('.riddle-gps-reset')?.click();
+  if (form.classList.contains('riddle-step-piano-form')) form.querySelector('.riddle-widget-reset')?.click();
+  form.querySelector('.riddle-directions-reset')?.click();
+  form.querySelector('.riddle-colors-reset')?.click();
+  form.querySelectorAll('.riddle-numbers .riddle-widget-reset, .riddle-step-numbers-form .riddle-widget-reset')
+    .forEach(button => button.click());
+  form.querySelector('.riddle-step-safe_dial-form .riddle-widget-reset, .riddle-widget-reset')?.click();
+  form.querySelector('.riddle-directions__sequence')?.replaceChildren();
+  form.querySelector('.riddle-colors__sequence')?.replaceChildren();
+  form.querySelector('.riddle-numbers__sequence')?.replaceChildren();
+  form.querySelector('.riddle-safe__sequence')?.replaceChildren();
+}
+
 function initFormulaireAutomatique() {
   const form = document.querySelector('.formulaire-reponse-auto');
   if (!form || form.dataset.responseHandlerReady === '1') return;
   form.dataset.responseHandlerReady = '1';
+  if (form.dataset.submitDisabled === '1') {
+    form.querySelectorAll('button[type="submit"]').forEach(button => { button.disabled = true; });
+  }
   const feedback = form.querySelector('.reponse-feedback');
   const soldeFooter = document.querySelector('.participation-infos .solde');
   const soldeInfo = form.querySelector('.points-sousligne');
@@ -25,7 +44,7 @@ function initFormulaireAutomatique() {
       if (!ok) return;
     }
     const data = new URLSearchParams(new FormData(form));
-    data.append('action', 'soumettre_reponse_automatique');
+    data.append('action', form.dataset.widgetAction || 'soumettre_reponse_automatique');
 
     fetch('/wp-admin/admin-ajax.php', {
       method: 'POST',
@@ -156,6 +175,7 @@ function initFormulaireAutomatique() {
           } else {
             feedback.innerHTML = `<i class="fa-solid fa-circle-xmark" style="color:var(--color-gris-3);"></i> ${__('Mauvaise réponse', 'chassesautresor-com')}`;
             feedback.style.display = 'block';
+            resetInteractiveFinalAnswerWidget(form);
             hideTimer = setTimeout(() => { feedback.style.display = 'none'; }, 5000);
           }
 

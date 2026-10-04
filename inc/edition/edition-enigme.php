@@ -36,6 +36,7 @@ function enqueue_script_enigme_edit()
     'edition-animation-options',
     'organisateur-edit',
     'enigme-edit',
+    'enigme-final-answer-edit',
     'enigme-stats',
     'table-etiquette',
     'tentatives-toggle',
@@ -88,6 +89,16 @@ function enqueue_script_enigme_edit()
       'delete' => __('Supprimer', 'chassesautresor-com'),
       'confirmDelete' => __('Supprimer définitivement cette étape ?', 'chassesautresor-com'),
       'error' => __('Une erreur est survenue. Rechargez la page et réessayez.', 'chassesautresor-com'),
+    ],
+  ]);
+
+  wp_localize_script('enigme-final-answer-edit', 'RiddleFinalAnswerEdit', [
+    'ajaxUrl' => admin_url('admin-ajax.php'),
+    'riddleId' => $enigme_id,
+    'nonce' => wp_create_nonce('riddle_final_answer_widget'),
+    'texts' => [
+      'error' => __('Une erreur est survenue. Rechargez la page et réessayez.', 'chassesautresor-com'),
+      'incomplete' => __('configuration incomplète', 'chassesautresor-com'),
     ],
   ]);
 
