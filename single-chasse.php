@@ -211,14 +211,6 @@ if ($peut_voir_aside) {
 >
   <main id="main" class="site-main">
 
-    <?php
-    if (current_user_can('administrator') && $statut_validation === 'en_attente') {
-      get_template_part('template-parts/chasse/chasse-validation-actions', null, [
-        'chasse_id' => $chasse_id,
-      ]);
-    }
-    ?>
-
     <?php if (!empty($_GET['erreur'])) : ?>
         <?php $error_message = sanitize_text_field(wp_unslash($_GET['erreur'])); ?>
         <?php if ($error_message === 'points_insuffisants') : ?>

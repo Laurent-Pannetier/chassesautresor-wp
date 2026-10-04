@@ -362,28 +362,9 @@ function charger_script_reset_stats_card() {
 add_action('wp_enqueue_scripts', 'charger_script_reset_stats_card');
 
 /**
- * Renders the demo statistics reset shortcut for authenticated users.
+ * Floating demo reset pastille removed: reset lives on Mon compte Accueil.
  */
 function cta_render_demo_reset_stats_button(): void
 {
-    if (!is_user_logged_in() || !function_exists('cat_is_demo_mode') || !cat_is_demo_mode()) {
-        return;
-    }
-    ?>
-    <aside
-        class="demo-reset-stats"
-        aria-label="<?php esc_attr_e('Outils de démonstration', 'chassesautresor-com'); ?>"
-    >
-        <button
-            type="button"
-            class="demo-reset-stats__button"
-            data-reset-stats
-            title="<?php esc_attr_e('Effacer toutes les statistiques de démonstration', 'chassesautresor-com'); ?>"
-        >
-            <i class="fa-solid fa-arrow-rotate-left" aria-hidden="true"></i>
-            <span><?php esc_html_e('Reset stats', 'chassesautresor-com'); ?></span>
-        </button>
-    </aside>
-    <?php
+    // Intentionally empty — kept for backward-compatible hook removal sites.
 }
-add_action('wp_footer', 'cta_render_demo_reset_stats_button', 20);

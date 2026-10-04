@@ -101,3 +101,40 @@ do_action( 'woocommerce_before_edit_account_form' );
 <div class="myaccount-addresses">
     <?php wc_get_template( 'myaccount/my-address.php' ); ?>
 </div>
+
+<?php
+$orders_output = function_exists( 'afficher_commandes_utilisateur' )
+    ? afficher_commandes_utilisateur( (int) $user->ID, 5 )
+    : '';
+$orders_url = function_exists( 'wc_get_account_endpoint_url' )
+    ? wc_get_account_endpoint_url( 'orders' )
+    : home_url( '/mon-compte/commandes/' );
+?>
+<section class="dashboard-section myaccount-settings-orders">
+    <header class="dashboard-section-header">
+        <h2 class="dashboard-section-title"><?php esc_html_e( 'Commandes', 'chassesautresor-com' ); ?></h2>
+        <p class="dashboard-section-intro">
+            <?php esc_html_e( 'Historique de vos commandes, accessible depuis le profil.', 'chassesautresor-com' ); ?>
+        </p>
+    </header>
+    <div class="dashboard-section-body">
+        <?php if ( $orders_output ) : ?>
+            <div class="dashboard-card">
+                <div class="dashboard-card-content">
+                    <?php echo $orders_output; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+                </div>
+            </div>
+        <?php else : ?>
+            <div class="dashboard-card dashboard-placeholder" aria-disabled="true">
+                <div class="dashboard-card-content">
+                    <p><?php esc_html_e( 'Aucune commande pour le moment.', 'chassesautresor-com' ); ?></p>
+                </div>
+            </div>
+        <?php endif; ?>
+        <p class="myaccount-settings-orders-link">
+            <a class="bouton-secondaire" href="<?php echo esc_url( $orders_url ); ?>">
+                <?php esc_html_e( 'Voir toutes les commandes', 'chassesautresor-com' ); ?>
+            </a>
+        </p>
+    </div>
+</section>

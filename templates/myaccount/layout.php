@@ -14,11 +14,7 @@ $content_template      = $GLOBALS['myaccount_content_template'] ?? null;
 $current_user          = wp_get_current_user();
 $display_name          = $current_user->ID ? $current_user->display_name : get_bloginfo('name');
 $show_nav              = is_user_logged_in();
-$current_path          = '';
 $last_active_formatted = '';
-if (!empty($_SERVER['REQUEST_URI'])) {
-    $current_path = trim(parse_url(wp_unslash($_SERVER['REQUEST_URI']), PHP_URL_PATH), '/');
-}
 
 if ($current_user->ID) {
     $last_active_raw = get_user_meta($current_user->ID, 'wc_last_active', true);
@@ -75,129 +71,48 @@ get_header();
             </button>
         </div>
         <?php if ($show_nav) : ?>
-        <nav class="dashboard-nav">
+        <nav class="dashboard-nav" aria-label="<?php esc_attr_e('Navigation du compte', 'chassesautresor-com'); ?>">
             <?php
-            $nav_items = array(
-                array(
-                    'endpoint' => 'dashboard',
-                    'label'    => __('Accueil', 'chassesautresor-com'),
-                    'icon'     => 'fas fa-home',
-                    'url'      => wc_get_account_endpoint_url('dashboard'),
-                    'active'   => is_account_page() && !is_wc_endpoint_url(),
-                ),
-                array(
-                    'endpoint' => 'orders',
-                    'label'    => __('Commandes', 'chassesautresor-com'),
-                    'icon'     => 'fas fa-shopping-cart',
-                    'url'      => wc_get_account_endpoint_url('orders'),
-                    'active'   => is_wc_endpoint_url('orders'),
-                ),
-                array(
-                    'endpoint' => 'edit-account',
-                    'label'    => __('Profil', 'chassesautresor-com'),
-                    'icon'     => 'fas fa-user',
-                    'url'      => wc_get_account_endpoint_url('edit-account'),
-                    'active'   => is_wc_endpoint_url('edit-account'),
-                ),
-            );
+            $nav_items = myaccount_get_sidebar_nav_items($current_user);
 
             foreach ($nav_items as $item) {
                 $classes = 'dashboard-nav-link';
-                if ($item['active']) {
+                if (!empty($item['active'])) {
                     $classes .= ' active';
                 }
 
-                $data_attr = '';
-                if (isset($item['section'])) {
-                    $data_attr .= ' data-section="' . esc_attr($item['section']) . '"';
-                }
-                if (isset($item['title'])) {
-                    $data_attr .= ' data-title="' . esc_attr($item['title']) . '"';
-                }
-
-                echo '<a href="' . esc_url($item['url']) . '"' . $data_attr . ' class="' . esc_attr($classes) . '">';
-                echo '<i class="' . esc_attr($item['icon']) . '"></i>';
-                echo '<span>' . esc_html($item['label']) . '</span>';
-                echo '</a>';
-            }
-            ?>
-            <a
-                href="<?php echo esc_url(wc_logout_url()); ?>"
-                class="dashboard-nav-link logout"
-                aria-label="<?php esc_attr_e('Déconnexion', 'chassesautresor-com'); ?>"
-                title="<?php esc_attr_e('Déconnexion', 'chassesautresor-com'); ?>"
-            >
-                <i class="fas fa-sign-out-alt" aria-hidden="true"></i>
-            </a>
-        </nav>
-        <?php if (current_user_can('administrator')) : ?>
-        <nav class="dashboard-nav admin-nav">
-            <span class="dashboard-nav-heading"><?php esc_html_e('Administration', 'chassesautresor-com'); ?></span>
-            <?php
-            $admin_items = array(
-                array(
-                    'label'   => __('Organisateurs', 'chassesautresor-com'),
-                    'icon'    => 'fas fa-users',
-                    'url'     => home_url('/mon-compte/organisateurs/'),
-                    'section' => 'organisateurs',
-                    'active'  => $current_path === 'mon-compte/organisateurs',
-                ),
-                array(
-                    'label'   => __('Statistiques', 'chassesautresor-com'),
-                    'icon'    => 'fas fa-chart-line',
-                    'url'     => home_url('/mon-compte/statistiques/'),
-                    'section' => 'statistiques',
-                    'active'  => $current_path === 'mon-compte/statistiques',
-                ),
-                array(
-                    'label'   => __('Outils', 'chassesautresor-com'),
-                    'icon'    => 'fas fa-wrench',
-                    'url'     => home_url('/mon-compte/outils/'),
-                    'section' => 'outils',
-                    'active'  => $current_path === 'mon-compte/outils',
-                ),
-            );
-
-            foreach ($admin_items as $item) {
-                $classes = 'dashboard-nav-link';
-                if ($item['active']) {
-                    $classes .= ' active';
-                }
-
-                echo '<a href="' . esc_url($item['url']) . '" data-section="' .
-                    esc_attr($item['section']) . '" class="' . esc_attr($classes) . '">';
-                echo '<i class="' . esc_attr($item['icon']) . '"></i>';
+                echo '<a href="' . esc_url($item['url']) . '" class="' . esc_attr($classes) . '">';
+                echo '<i class="' . esc_attr($item['icon']) . '" aria-hidden="true"></i>';
                 echo '<span>' . esc_html($item['label']) . '</span>';
                 echo '</a>';
             }
             ?>
         </nav>
-        <?php endif; ?>
         <?php
-        $organizer_roles = array();
+        $organizer_roles = array('organisateur', 'organisateur_creation');
         if (defined('ROLE_ORGANISATEUR')) {
             $organizer_roles[] = ROLE_ORGANISATEUR;
-        } else {
-            $organizer_roles[] = 'organisateur';
         }
         if (defined('ROLE_ORGANISATEUR_CREATION')) {
             $organizer_roles[] = ROLE_ORGANISATEUR_CREATION;
-        } else {
-            $organizer_roles[] = 'organisateur_creation';
         }
 
         if (array_intersect($organizer_roles, (array) $current_user->roles)) {
-            $organizer_id = function_exists('get_organisateur_from_user')
-                ? (int) get_organisateur_from_user((int) $current_user->ID)
-                : 0;
+            $organizer_nav = myaccount_get_organizer_nav((int) $current_user->ID);
+            if ($organizer_nav) {
+                echo myaccount_render_organizer_nav($organizer_nav); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+            } else {
+                $organizer_id = function_exists('get_organisateur_from_user')
+                    ? (int) get_organisateur_from_user((int) $current_user->ID)
+                    : 0;
 
-            if ($organizer_id && function_exists('get_the_title')) {
-                $organisation_title = get_the_title($organizer_id);
-                $organisation_url   = function_exists('get_permalink')
-                    ? get_permalink($organizer_id)
-                    : '';
-                if ($organisation_title && $organisation_url) {
-
+                if ($organizer_id && function_exists('get_the_title')) {
+                    $show_organizer_link = !function_exists('cat_is_platform_mode')
+                        || cat_is_platform_mode();
+                    $organisation_title = get_the_title($organizer_id);
+                    $organisation_url   = function_exists('get_permalink')
+                        ? get_permalink($organizer_id)
+                        : '';
                     $organizer_hunt_ids = array();
                     if (function_exists('get_chasses_de_organisateur')) {
                         $hunts_query = get_chasses_de_organisateur($organizer_id);
@@ -222,7 +137,6 @@ get_header();
                         foreach ($organizer_hunt_ids as $hunt_id) {
                             $hunt_title = get_the_title($hunt_id);
                             $hunt_link  = get_permalink($hunt_id);
-
                             if ($hunt_title && $hunt_link) {
                                 $organizer_hunts[] = array(
                                     'title' => $hunt_title,
@@ -231,30 +145,45 @@ get_header();
                             }
                         }
                     }
-                    ?>
-                    <nav class="dashboard-nav organizer-organisation-nav">
-                        <ul class="organizer-nav-tree">
-                            <li class="organizer-nav-item organizer-nav-root">
-                                <a href="<?php echo esc_url($organisation_url); ?>" class="dashboard-nav-link organizer-nav-link">
-                                    <i class="fas fa-landmark"></i>
-                                    <span><?php echo esc_html($organisation_title); ?></span>
-                                </a>
-                                <?php if (!empty($organizer_hunts)) : ?>
-                                    <ul class="organizer-nav-children">
-                                        <?php foreach ($organizer_hunts as $organizer_hunt) : ?>
-                                            <li class="organizer-nav-item">
-                                                <a href="<?php echo esc_url($organizer_hunt['url']); ?>" class="dashboard-nav-link organizer-nav-link">
-                                                    <i class="fas fa-map"></i>
-                                                    <span><?php echo esc_html($organizer_hunt['title']); ?></span>
-                                                </a>
-                                            </li>
-                                        <?php endforeach; ?>
-                                    </ul>
+
+                    if (($show_organizer_link && $organisation_title && $organisation_url) || !empty($organizer_hunts)) :
+                        ?>
+                        <nav
+                            class="dashboard-nav organizer-organisation-nav<?php echo $show_organizer_link ? '' : ' organizer-nav--hunt-first'; ?>"
+                            aria-label="<?php esc_attr_e('Organisation', 'chassesautresor-com'); ?>"
+                        >
+                            <ul class="organizer-nav-tree">
+                                <?php if ($show_organizer_link && $organisation_title && $organisation_url) : ?>
+                                    <li class="organizer-nav-item organizer-nav-root">
+                                        <a href="<?php echo esc_url($organisation_url); ?>" class="dashboard-nav-link organizer-nav-link">
+                                            <i class="fas fa-landmark" aria-hidden="true"></i>
+                                            <span><?php echo esc_html($organisation_title); ?></span>
+                                        </a>
+                                        <?php if (!empty($organizer_hunts)) : ?>
+                                            <ul class="organizer-nav-children">
+                                                <?php foreach ($organizer_hunts as $organizer_hunt) : ?>
+                                                    <li class="organizer-nav-item">
+                                                        <a href="<?php echo esc_url($organizer_hunt['url']); ?>" class="dashboard-nav-link organizer-nav-link organizer-nav-hunt">
+                                                            <span class="nav-title"><?php echo esc_html($organizer_hunt['title']); ?></span>
+                                                        </a>
+                                                    </li>
+                                                <?php endforeach; ?>
+                                            </ul>
+                                        <?php endif; ?>
+                                    </li>
+                                <?php else : ?>
+                                    <?php foreach ($organizer_hunts as $organizer_hunt) : ?>
+                                        <li class="organizer-nav-item">
+                                            <a href="<?php echo esc_url($organizer_hunt['url']); ?>" class="dashboard-nav-link organizer-nav-link organizer-nav-hunt">
+                                                <span class="nav-title"><?php echo esc_html($organizer_hunt['title']); ?></span>
+                                            </a>
+                                        </li>
+                                    <?php endforeach; ?>
                                 <?php endif; ?>
-                            </li>
-                        </ul>
-                    </nav>
-                    <?php
+                            </ul>
+                        </nav>
+                        <?php
+                    endif;
                 }
             }
         }
@@ -264,12 +193,12 @@ get_header();
     <div class="myaccount-main">
         <header class="myaccount-header">
             <?php
-            $page_title   = '';
+            $page_title    = '';
             $page_greeting = '';
-            if (is_wc_endpoint_url('edit-account')) {
-                $page_title = __('Votre profil', 'chassesautresor-com');
-            } elseif (is_wc_endpoint_url('orders')) {
-                $page_title = __('Vos commandes', 'chassesautresor-com');
+            if (is_wc_endpoint_url('edit-account') || is_wc_endpoint_url('orders') || is_wc_endpoint_url('edit-address')) {
+                $page_title = __('Profil', 'chassesautresor-com');
+            } elseif (is_wc_endpoint_url('tentatives')) {
+                $page_title = __('Tentatives', 'chassesautresor-com');
             } elseif (is_account_page() && empty($_GET['section'])) {
                 $page_greeting = __('Bienvenue', 'chassesautresor-com');
                 $page_title    = $display_name;
@@ -310,4 +239,3 @@ get_header();
 
 <?php
 get_footer();
-

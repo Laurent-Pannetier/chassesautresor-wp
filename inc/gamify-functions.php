@@ -78,7 +78,13 @@ function update_user_points(
  */
 function afficher_points_utilisateur_callback() {
     // 🛑 Vérifie si l'utilisateur est connecté
-    if (!is_user_logged_in()) return '';
+    if (!is_user_logged_in()) {
+        return '';
+    }
+
+    if (function_exists('cat_is_points_ui_enabled') && !cat_is_points_ui_enabled()) {
+        return '';
+    }
 
     // 🏷️ Récupération des données utilisateur
     $user_id = get_current_user_id();
@@ -116,6 +122,10 @@ function afficher_points_utilisateur_callback() {
  * Ajoute le modal des points à la fin du <body> via wp_footer.
  */
 function ajouter_modal_points() {
+    if (function_exists('cat_is_points_ui_enabled') && !cat_is_points_ui_enabled()) {
+        return;
+    }
+
     get_template_part('template-parts/modals/modal-points');
 }
 add_action('wp_footer', 'ajouter_modal_points');
@@ -124,6 +134,10 @@ add_action('wp_footer', 'ajouter_modal_points');
  * Charger le script du modal des points en ajoutant un paramètre de version dynamique
  */
 function charger_script_modal_points() {
+    if (function_exists('cat_is_points_ui_enabled') && !cat_is_points_ui_enabled()) {
+        return;
+    }
+
     wp_enqueue_script(
         'modal-points',
         get_stylesheet_directory_uri() . '/assets/js/modal-points.js',
@@ -231,6 +245,10 @@ function count_user_points_history(int $user_id = null): int
  */
 function render_points_history_table(int $user_id): string
 {
+    if (function_exists('cat_is_points_ui_enabled') && !cat_is_points_ui_enabled()) {
+        return '';
+    }
+
     $per_page   = 20;
     $operations = get_user_points_history($user_id, 1, $per_page);
     $total      = count_user_points_history($user_id);
@@ -285,6 +303,10 @@ function render_points_history_table(int $user_id): string
  */
 function enqueue_points_history_script(): void
 {
+    if (function_exists('cat_is_points_ui_enabled') && !cat_is_points_ui_enabled()) {
+        return;
+    }
+
     $dir = get_stylesheet_directory();
     $uri = get_stylesheet_directory_uri();
 

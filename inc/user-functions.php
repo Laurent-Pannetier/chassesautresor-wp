@@ -99,6 +99,26 @@ function ca_get_engaged_hunts_content_html(
  */
 function ca_render_recommended_hunts_empty_state(): string
 {
+    if (function_exists('cat_is_single_hunt_mode') && cat_is_single_hunt_mode()) {
+        ob_start();
+        ?>
+        <div class="dashboard-card dashboard-placeholder" aria-disabled="true">
+            <div class="dashboard-card-content">
+                <p>
+                    <?php
+                    esc_html_e(
+                        'Votre progression apparaîtra ici dès que vous aurez commencé l’aventure.',
+                        'chassesautresor-com'
+                    );
+                    ?>
+                </p>
+            </div>
+        </div>
+        <?php
+
+        return ob_get_clean();
+    }
+
     $recommended_ids = (new ChassesAuTresor\Core\Progress\EngagedHuntsRecommendationService())->find(3);
 
     $catalog_url = apply_filters(
@@ -250,7 +270,9 @@ function ca_render_dashboard_engaged_hunts(): void
         true
     );
 
-    $section_title = esc_html__('Vos chasses en cours', 'chassesautresor-com');
+    $section_title = (function_exists('cat_is_single_hunt_mode') && cat_is_single_hunt_mode())
+        ? esc_html__('Progression de la chasse', 'chassesautresor-com')
+        : esc_html__('Vos chasses en cours', 'chassesautresor-com');
     $error_message = __('Une erreur est survenue lors du chargement des chasses. Veuillez réessayer.', 'chassesautresor-com');
     $content_html  = ca_get_engaged_hunts_content_html(
         $pagination['ids'],

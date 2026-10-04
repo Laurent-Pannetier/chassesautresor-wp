@@ -10,6 +10,7 @@ Ce répertoire rassemble des documents complémentaires au thème.
 - [Panneau d'édition : Paramètres d'énigme](panneau-enigme-parametres.md)
 - [Panneau d'édition : Paramètres de chasse](panneau-chasse-parametres.md)
 - [Connexion personnalisée](login.md)
+- [Feuille de route — profils par rôle](../../../../docs/roadmap-profils-roles.md)
 
 Toutes les nouvelles chaînes de texte doivent utiliser les fonctions d'internationalisation de WordPress avec le domaine `chassesautresor-com`.
 

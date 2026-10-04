@@ -377,6 +377,91 @@
     --status-bullet: var(--etat-enigme-menu-eligible);
 }
 
+.organizer-nav .dashboard-nav-sublink,
+.organizer-nav .dashboard-nav-subitem {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.organizer-nav .dashboard-nav-sublink .nav-title,
+.organizer-nav .dashboard-nav-subitem .nav-title {
+    position: relative;
+    padding-left: 16px;
+}
+
+.organizer-nav .dashboard-nav-sublink .nav-title::before,
+.organizer-nav .dashboard-nav-subitem .nav-title::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 8px;
+    height: 8px;
+    transform: translateY(-50%);
+    border-radius: 50%;
+    background-color: var(--status-bullet, transparent);
+    box-shadow: 0 0 0 1px var(--status-bullet, transparent);
+}
+
+.organizer-nav .organizer-nav-hunt,
+.organizer-organisation-nav .organizer-nav-hunt {
+    font-weight: 700;
+    font-size: 0.9375rem;
+    color: var(--color-text-primary);
+}
+
+.organizer-nav .organizer-nav-hunt:hover,
+.organizer-nav .organizer-nav-hunt:focus,
+.organizer-organisation-nav .organizer-nav-hunt:hover,
+.organizer-organisation-nav .organizer-nav-hunt:focus {
+    color: var(--color-primary);
+    background-color: rgba(255, 255, 255, 0.08);
+    text-decoration: underline;
+}
+
+.organizer-nav .organizer-nav-riddle {
+    margin-left: 0.75rem;
+    padding-left: 1.25rem;
+    font-weight: 500;
+    font-size: 0.8125rem;
+    color: var(--color-primary, #e1a95f);
+}
+
+.organizer-nav .organizer-nav-riddle:hover,
+.organizer-nav .organizer-nav-riddle:focus {
+    color: var(--color-primary, #e1a95f);
+    background-color: rgba(255, 255, 255, 0.06);
+    text-decoration: underline;
+}
+
+.organizer-nav .organizer-nav-hunt.status-important,
+.organizer-nav .organizer-nav-riddle.status-important {
+    --status-bullet: hsl(var(--destructive));
+}
+
+.organizer-nav .organizer-nav-hunt.status-pending,
+.organizer-nav .organizer-nav-riddle.status-pending {
+    --status-bullet: var(--etat-enigme-menu-en-attente);
+}
+
+.organizer-nav .organizer-nav-hunt.status-published,
+.organizer-nav .organizer-nav-riddle.status-published {
+    --status-bullet: var(--etat-enigme-menu-succes);
+}
+
+.organizer-nav .organizer-nav-hunt.status-eligible {
+    --status-bullet: var(--etat-enigme-menu-eligible);
+}
+
+.organizer-nav--hunt-first {
+    margin-top: 0.25rem;
+}
+
 .myaccount-main {
     flex: 1;
     display: flex;
@@ -744,9 +829,13 @@
 ========================================================== */
 .dashboard-grid {
     display: grid;
-    gap: 24px;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    margin-top: 20px;
+    gap: 1.25rem;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    margin-top: 1rem;
+}
+
+.myaccount-main .dashboard-grid {
+    gap: 1.35rem;
 }
 
 .myaccount-chasses-engagees {
@@ -931,7 +1020,7 @@
     padding: 16px;
     text-decoration: none;
     color: hsl(var(--foreground));
-    transition: background 0.2s ease;
+    transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
     position: relative;
     display: flex;
     flex-direction: column;
@@ -983,6 +1072,60 @@
 .dashboard-card-content {
     font-size: 0.875rem;
     color: hsl(var(--muted-foreground));
+}
+
+/* Tuiles Mon compte : surface sombre lisible (évite gris clair sur blanc) */
+.myaccount-main .dashboard-card {
+    background: rgba(9, 15, 36, 0.78);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 12px;
+    padding: 1.25rem 1.35rem;
+    color: rgba(255, 255, 255, 0.96);
+    gap: 0.9rem;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
+    backdrop-filter: blur(8px);
+}
+
+.myaccount-main .dashboard-card:hover {
+    background: rgba(14, 22, 48, 0.88);
+    border-color: rgba(225, 169, 95, 0.4);
+}
+
+.myaccount-main .dashboard-card-header {
+    gap: 0.65rem;
+}
+
+.myaccount-main .dashboard-card-header h3 {
+    margin: 0;
+    font-size: 1.0625rem;
+    font-weight: 700;
+    line-height: 1.3;
+    color: #fff;
+}
+
+.myaccount-main .dashboard-card-header > i {
+    color: var(--color-primary, #e1a95f);
+    font-size: 1.05rem;
+}
+
+.myaccount-main .dashboard-card-content {
+    font-size: 0.9375rem;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.myaccount-main .dashboard-card .stat-value {
+    color: #fff;
+}
+
+.myaccount-main .dashboard-placeholder {
+    background: rgba(255, 255, 255, 0.04);
+    border-style: dashed;
+    opacity: 0.85;
+}
+
+.myaccount-main .dashboard-placeholder .dashboard-card-content p {
+    color: rgba(255, 255, 255, 0.78);
 }
 /* listes */
 .dashboard-card ul li {
@@ -1241,7 +1384,451 @@ body.woocommerce h2 {
 
 /* Sections for account dashboard */
 .dashboard-section {
-    margin-top: 40px;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    margin: 0;
+}
+
+.dashboard-section + .dashboard-section {
+    margin-top: var(--space-xl);
+}
+
+.dashboard-section-header {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.dashboard-section-title {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    text-transform: none;
+}
+
+.dashboard-section-intro {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.72);
+    font-size: 0.9375rem;
+    line-height: 1.45;
+    max-width: 42rem;
+}
+
+.dashboard-section-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+.dashboard-placeholder {
+    opacity: 0.72;
+    pointer-events: none;
+    cursor: default;
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.dashboard-placeholder .dashboard-card-content p {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.75);
+    line-height: 1.45;
+}
+
+.dashboard-grid--inactive {
+    margin-top: var(--space-md);
+    opacity: 0.55;
+}
+
+.dashboard-grid--inactive .dashboard-placeholder {
+    opacity: 1;
+}
+
+.myaccount-settings-orders-link {
+    margin: var(--space-sm) 0 0;
+}
+
+.dashboard-grid--wide {
+    grid-template-columns: 1fr;
+}
+
+.dashboard-grid--wide > .dashboard-card {
+    width: 100%;
+}
+
+.myaccount-layout .switch-control {
+    position: relative;
+    display: inline-block;
+    width: 42px;
+    height: 24px;
+    flex-shrink: 0;
+}
+
+.myaccount-layout .switch-control input {
+    position: absolute;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    cursor: pointer;
+    z-index: 1;
+}
+
+.myaccount-layout .switch-slider {
+    position: absolute;
+    inset: 0;
+    background-color: rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.42);
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.myaccount-layout .switch-slider::before {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    left: 2px;
+    top: 1px;
+    background-color: #fff;
+    border-radius: 50%;
+    transition: transform 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+}
+
+.myaccount-layout .switch-control input:checked + .switch-slider {
+    background-color: var(--color-primary, #e1a95f);
+    border-color: var(--color-primary, #e1a95f);
+}
+
+.myaccount-layout .switch-control input:checked + .switch-slider::before {
+    transform: translateX(18px);
+}
+
+.myaccount-layout .switch-control input:focus-visible + .switch-slider {
+    outline: 2px solid var(--color-primary, #e1a95f);
+    outline-offset: 2px;
+}
+
+.myaccount-layout .switch-control input:disabled + .switch-slider {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.site-protection-card .stats-content,
+.site-protection-card .dashboard-card-content {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.myaccount-riddle-stats-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.myaccount-riddle-stats-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1rem 1.05rem;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.myaccount-riddle-stats-item__title {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 700;
+    line-height: 1.35;
+    color: #fff;
+}
+
+.myaccount-riddle-stats-metrics {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.65rem;
+    margin: 0;
+}
+
+.myaccount-riddle-stats-metric {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    padding: 0.65rem 0.75rem;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.22);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.myaccount-riddle-stats-metric dt {
+    margin: 0;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.68);
+}
+
+.myaccount-riddle-stats-metric dd {
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 800;
+    line-height: 1.2;
+    color: #fff;
+}
+
+.myaccount-riddle-stats-ranking {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding-top: 0.15rem;
+}
+
+.myaccount-riddle-stats-ranking__label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.68);
+}
+
+.myaccount-riddle-stats-ranking__value {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    line-height: 1.4;
+    color: rgba(255, 255, 255, 0.94);
+    word-break: break-word;
+}
+
+@media (min-width: 720px) {
+    .myaccount-riddle-stats-metrics {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .myaccount-riddle-stats-ranking {
+        flex-direction: row;
+        align-items: baseline;
+        gap: 0.65rem;
+    }
+}
+
+.hunt-lifecycle-card__header {
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.hunt-lifecycle-card__state-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.28rem 0.65rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    line-height: 1.2;
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    white-space: nowrap;
+}
+
+.hunt-lifecycle-card__state-badge i {
+    font-size: 0.8rem;
+}
+
+.hunt-lifecycle-card[data-state='editable'] .hunt-lifecycle-card__state-badge {
+    background: rgba(225, 169, 95, 0.28);
+    color: #ffe2b0;
+    border-color: rgba(225, 169, 95, 0.55);
+}
+
+.hunt-lifecycle-card[data-state='pending'] .hunt-lifecycle-card__state-badge {
+    background: rgba(255, 193, 7, 0.22);
+    color: #ffe082;
+    border-color: rgba(255, 193, 7, 0.5);
+}
+
+.hunt-lifecycle-card[data-state='active'] .hunt-lifecycle-card__state-badge {
+    background: rgba(46, 204, 113, 0.22);
+    color: #9af0c0;
+    border-color: rgba(46, 204, 113, 0.5);
+}
+
+.hunt-lifecycle-card[data-state='blocked'] .hunt-lifecycle-card__state-badge {
+    background: rgba(231, 76, 60, 0.22);
+    color: #ffb3aa;
+    border-color: rgba(231, 76, 60, 0.5);
+}
+
+.hunt-lifecycle-card__content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.hunt-lifecycle-card__control {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.85rem;
+    flex-wrap: wrap;
+}
+
+.myaccount-layout .switch-control--lifecycle {
+    width: 56px;
+    height: 32px;
+}
+
+.myaccount-layout .switch-control--lifecycle .switch-slider::before {
+    width: 26px;
+    height: 26px;
+    top: 2px;
+    left: 3px;
+}
+
+.myaccount-layout .switch-control--lifecycle input:checked + .switch-slider::before {
+    transform: translateX(24px);
+}
+
+.hunt-lifecycle-card__label-off,
+.hunt-lifecycle-card__label-on {
+    min-width: 3.75rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.68);
+    text-align: center;
+    transition: color 0.2s ease, opacity 0.2s ease;
+}
+
+.hunt-lifecycle-card__label-off.is-current,
+.hunt-lifecycle-card__label-on.is-current {
+    color: #fff;
+    font-weight: 800;
+}
+
+.hunt-lifecycle-card[data-state='active'] .hunt-lifecycle-card__label-on.is-current {
+    color: #9af0c0;
+}
+
+.hunt-lifecycle-card[data-state='pending'] .hunt-lifecycle-card__label-off.is-current {
+    color: #ffe082;
+}
+
+.hunt-lifecycle-card__status {
+    margin: 0;
+    font-weight: 700;
+    font-size: 1rem;
+    text-align: center;
+    color: #fff;
+}
+
+.hunt-lifecycle-card__help {
+    margin: 0;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.78);
+    text-align: center;
+}
+
+@media (max-width: 480px) {
+    .hunt-lifecycle-card__control {
+        gap: 0.65rem;
+    }
+
+    .hunt-lifecycle-card__label-off,
+    .hunt-lifecycle-card__label-on {
+        min-width: 3rem;
+        font-size: 0.875rem;
+    }
+}
+
+.hunt-moderation-queue-card__content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.hunt-moderation-queue-card__intro {
+    margin: 0;
+    font-size: 0.875rem;
+    line-height: 1.45;
+    color: rgba(255, 255, 255, 0.75);
+}
+
+.hunt-moderation-queue-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.hunt-moderation-queue-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.75rem 0 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.hunt-moderation-queue-item:first-child {
+    border-top: 0;
+    padding-top: 0;
+}
+
+.hunt-moderation-queue-item__title a,
+.hunt-moderation-queue-item__title span {
+    font-weight: 700;
+    color: var(--color-text-primary, #fff);
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+}
+
+.hunt-moderation-queue-item__title a:hover,
+.hunt-moderation-queue-item__title a:focus-visible {
+    color: var(--color-primary, #e1a95f);
+}
+
+.hunt-moderation-queue-item__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.hunt-quick-edit-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+}
+
+.hunt-quick-edit-list a {
+    color: var(--color-primary, #e1a95f);
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 0.18em;
+}
+
+.hunt-quick-edit-list a:hover,
+.hunt-quick-edit-list a:focus-visible {
+    color: #f0c27a;
+}
+
+.myaccount-main .btn-danger,
+.myaccount-main button.btn-danger {
+    min-height: 2.5rem;
+    padding: 0.55rem 1.1rem;
+    font-weight: 700;
+    border-radius: 8px;
 }
 
 /* Tentatives table alignment */

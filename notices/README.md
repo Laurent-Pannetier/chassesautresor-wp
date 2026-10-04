@@ -17,6 +17,7 @@ Toutes les notices doivent respecter l'internationalisation WordPress : les cha�
 - `global.md` : vue d'ensemble et règles générales.
 - `champs-acf-liste.md` : export détaillé des groupes de champs ACF.
 - `etat-enigme-menu.md` : états et couleurs du menu des énigmes.
+- `profils-roles.md` : pages de profil par rôle (renvoie vers `docs/roadmap-profils-roles.md`).
 
 #### chasses
 - `statuts-chasses-recalcul.md` : recalcul automatique du statut des chasses.
