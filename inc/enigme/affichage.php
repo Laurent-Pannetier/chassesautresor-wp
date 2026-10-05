@@ -306,6 +306,12 @@ require_once __DIR__ . '/indices.php';
         if ($compact_experience) {
             $page_class .= ' page-enigme--compact';
         }
+        $step_ids = class_exists(\ChassesAuTresor\Core\Content\RiddleStepQueryService::class)
+            ? (new \ChassesAuTresor\Core\Content\RiddleStepQueryService())->findOrderedIds((int) $enigme_id)
+            : [];
+        if ($step_ids !== []) {
+            $page_class .= ' page-enigme--has-steps';
+        }
 
         echo '<main class="' . esc_attr($page_class) . '">';
         if ($compact_experience && $chasse_id) {

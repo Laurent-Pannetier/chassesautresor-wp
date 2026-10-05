@@ -140,7 +140,7 @@ function charger_script_reponse_automatique() {
         wp_enqueue_script(
             'reponse-automatique',
             get_stylesheet_directory_uri() . $path,
-            ['riddle-retry-countdown'],
+            ['riddle-retry-countdown', 'enigme-image-viewer'],
             filemtime(get_stylesheet_directory() . $path),
             true
         );
@@ -175,7 +175,7 @@ function charger_script_etapes_enigme(): void
     wp_enqueue_script(
         'riddle-step-player',
         get_stylesheet_directory_uri() . $path,
-        ['riddle-retry-countdown', 'leaflet'],
+        ['riddle-retry-countdown', 'leaflet', 'enigme-image-viewer'],
         filemtime(get_stylesheet_directory() . $path),
         true
     );

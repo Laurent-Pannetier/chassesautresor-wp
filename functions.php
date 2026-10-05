@@ -486,6 +486,22 @@ add_action('wp_enqueue_scripts', function () {
             true
         );
     }
+
+    if (is_singular('enigme')) {
+        wp_enqueue_script(
+            'enigme-image-viewer',
+            $script_dir . 'enigme-image-viewer.js',
+            [],
+            filemtime($theme_path . '/assets/js/enigme-image-viewer.js'),
+            true
+        );
+        wp_localize_script('enigme-image-viewer', 'EnigmeImageViewer', [
+            'closeLabel' => __('Fermer', 'chassesautresor-com'),
+            'nativeSizeLabel' => __('Image en taille originale', 'chassesautresor-com'),
+            'wrongEyebrow' => __('Accès refusé', 'chassesautresor-com'),
+            'hintEyebrow' => __('Piste', 'chassesautresor-com'),
+        ]);
+    }
     $sidebar_dir = $theme_uri . '/assets/sidebar/';
     if (is_singular(['enigme', 'chasse'])) {
         wp_enqueue_script(

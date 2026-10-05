@@ -51,7 +51,10 @@ if ($stepIds !== []) {
     get_template_part(
         'template-parts/enigme/partials/enigme-partial-etapes-joueur',
         null,
-        ['riddle_id' => (int) $post_id, 'state' => $stepState]
+        [
+            'riddle_id' => (int) $post_id,
+            'state' => $stepState,
+        ]
     );
     if (!$stepState['final_answer_unlocked']) {
         return;

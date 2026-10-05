@@ -212,9 +212,15 @@ document.addEventListener('submit', async event => {
     if (!result.success) throw new Error(result.data?.message || RiddleStepPlayer.error);
     window.RiddleRetryCountdown?.apply(form, result.data.retry);
     if (result.data.resultat && result.data.resultat !== 'bon') {
-      feedback.textContent = result.data.resultat === 'variante' && result.data.message
+      const message = result.data.resultat === 'variante' && result.data.message
         ? result.data.message
         : RiddleStepPlayer.wrong;
+      feedback.textContent = '';
+      window.showRiddleEphemeralNotice?.(message, {
+        tone: result.data.resultat === 'variante' ? 'hint' : 'wrong',
+        duration: result.data.resultat === 'variante' ? 4500 : 3800,
+        anchor: feedback
+      });
       const answerInput = form.querySelector('input[name="reponse"]');
       if (answerInput) answerInput.value = '';
       form.querySelector('.riddle-gps-reset')?.click();
@@ -241,9 +247,15 @@ document.addEventListener('submit', async event => {
     });
   } catch (error) {
     feedback.setAttribute('role', 'alert');
-    feedback.textContent = error instanceof Error && error.message
+    const message = error instanceof Error && error.message
       ? error.message
       : RiddleStepPlayer.error;
+    feedback.textContent = '';
+    window.showRiddleEphemeralNotice?.(message, {
+      tone: 'wrong',
+      duration: 3800,
+      anchor: feedback
+    });
   } finally {
     if (form.isConnected) {
       form.setAttribute('aria-busy', 'false');

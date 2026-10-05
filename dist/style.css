@@ -7503,6 +7503,15 @@ li.active .enigme-menu__edit {
   gap: var(--space-2xl);
   text-align: center;
   margin-top: var(--space-md);
+  /* Viewer BD : page entière visible (A4), sans crop. */
+  --enigme-hero-max-height: min(75vh, 42rem);
+  --enigme-etape-max-height: min(44vh, 24rem);
+  --enigme-media-column: min(46rem, 100%);
+}
+
+.page-enigme--has-steps {
+  --enigme-hero-max-height: min(72vh, 40rem);
+  --enigme-etape-max-height: min(42vh, 22rem);
 }
 
 /* Expérience de jeu recentrée pour les sites Chasse unique et Démo. */
@@ -7556,20 +7565,40 @@ li.active .enigme-menu__edit {
 .page-enigme--compact .hero-visuel {
   width: 100%;
   max-width: none;
-  overflow: hidden;
+  overflow: visible;
   border-radius: 10px;
 }
-.page-enigme--compact .hero-visuel .galerie-enigme-wrapper,
+.page-enigme--compact .hero-visuel .galerie-enigme-wrapper {
+  display: grid;
+  gap: var(--space-sm);
+  width: 100%;
+  margin: 0;
+}
+.page-enigme--compact .hero-visuel .galerie-enigme__stage,
 .page-enigme--compact .hero-visuel .image-principale,
 .page-enigme--compact .hero-visuel picture {
   display: block;
   width: 100%;
+  height: auto;
   margin: 0;
 }
-.page-enigme--compact .hero-visuel img {
-  width: 100%;
-  max-height: none;
+.page-enigme--compact .hero-visuel .galerie-enigme__stage {
   height: auto;
+  max-height: none;
+  overflow: visible;
+}
+.page-enigme--compact .hero-visuel img {
+  width: auto;
+  max-width: 100%;
+  max-height: var(--enigme-hero-max-height);
+  height: auto;
+  -o-object-fit: contain;
+     object-fit: contain;
+}
+.page-enigme--compact.page-enigme--has-steps .hero-visuel {
+  width: 100%;
+  max-width: var(--enigme-media-column);
+  margin-inline: auto;
 }
 .page-enigme--compact .enigme-texte {
   max-width: 72ch;
@@ -7577,12 +7606,14 @@ li.active .enigme-menu__edit {
 }
 .page-enigme--compact .participation {
   width: 100%;
-  max-width: none;
+  max-width: var(--enigme-media-column);
   margin-inline: auto;
   padding: var(--space-lg);
   text-align: left;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  background: rgba(8, 14, 28, 0.58);
+  backdrop-filter: blur(10px);
 }
 .page-enigme--compact .participation-header--empty {
   display: none;
@@ -7622,10 +7653,43 @@ li.active .enigme-menu__edit {
 .page-enigme--compact .riddle-player-step {
   width: 100%;
 }
+.page-enigme--compact .riddle-player-step {
+  padding: var(--space-md) 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--color-text-primary);
+  box-shadow: none;
+}
+.page-enigme--compact .riddle-player-step + .riddle-player-step {
+  margin-top: var(--space-md);
+  padding-top: var(--space-lg);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+.page-enigme--compact .riddle-player-step label,
+.page-enigme--compact .riddle-player-step__content,
+.page-enigme--compact .riddle-player-step__content p,
+.page-enigme--compact .riddle-numbers__title,
+.page-enigme--compact .riddle-directions__title,
+.page-enigme--compact .riddle-colors__title,
+.page-enigme--compact .riddle-safe__title,
+.page-enigme--compact .riddle-gps__title,
+.page-enigme--compact .riddle-piano__title {
+  color: var(--color-text-primary);
+}
 .page-enigme--compact .riddle-player-step__image {
-  width: 100%;
-  max-width: none;
+  width: auto;
+  max-width: 100%;
+  max-height: var(--enigme-etape-max-height);
   height: auto;
+  -o-object-fit: contain;
+     object-fit: contain;
+}
+.page-enigme--compact .riddle-player-step.is-widget-only {
+  padding-block: var(--space-sm);
+}
+.page-enigme--compact .riddle-player-step.is-completed {
+  opacity: 0.88;
 }
 @media (min-width: 768px) {
   .page-enigme--compact {
@@ -7693,16 +7757,214 @@ li.active .enigme-menu__edit {
   }
 }
 .hero-visuel img {
-  /*width: 100%;*/
-  -o-object-fit: cover;
-     object-fit: cover;
-  /*max-height: 300px;*/
+  -o-object-fit: contain;
+     object-fit: contain;
 }
 
 /* Ensure small images keep their natural width */
 .enigme-image--limited {
   width: auto;
   max-width: 100%;
+}
+
+.galerie-enigme-wrapper {
+  display: grid;
+  gap: var(--space-sm);
+  width: 100%;
+}
+
+.galerie-enigme__stage {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: auto;
+  max-height: none;
+  overflow: visible;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.page-enigme--has-steps .hero-visuel {
+  max-width: var(--enigme-media-column, min(46rem, 100%));
+  margin-inline: auto;
+}
+
+.page-enigme--has-steps .galerie-enigme__stage {
+  height: auto;
+  max-height: none;
+}
+
+.galerie-enigme__slide {
+  margin: 0;
+  width: 100%;
+  height: auto;
+  text-align: center;
+}
+
+.galerie-enigme__slide[hidden] {
+  display: none !important;
+}
+
+.galerie-enigme__stage .enigme-media-zoom {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  margin-inline: auto;
+}
+
+.galerie-enigme__stage picture,
+.galerie-enigme__stage img {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  max-height: var(--enigme-hero-max-height, min(75vh, 42rem));
+  margin-inline: auto;
+  -o-object-fit: contain;
+     object-fit: contain;
+}
+
+.page-enigme--has-steps .galerie-enigme__stage .enigme-media-zoom,
+.page-enigme--has-steps .galerie-enigme__stage picture,
+.page-enigme--has-steps .galerie-enigme__stage img {
+  max-height: var(--enigme-hero-max-height);
+}
+
+.galerie-enigme__thumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  justify-content: center;
+}
+
+.galerie-enigme__thumb {
+  display: block;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 6px;
+  overflow: hidden;
+  background: transparent;
+  cursor: pointer;
+  line-height: 0;
+  opacity: 0.72;
+  transition: opacity 0.2s ease, border-color 0.2s ease;
+}
+
+.galerie-enigme__thumb img {
+  display: block;
+  width: 56px;
+  height: 56px;
+  -o-object-fit: cover;
+     object-fit: cover;
+}
+
+.galerie-enigme__thumb.is-active,
+.galerie-enigme__thumb:hover,
+.galerie-enigme__thumb:focus-visible {
+  opacity: 1;
+  border-color: var(--color-accent, #c45c26);
+}
+
+.enigme-media-zoom {
+  position: relative;
+  display: block;
+  width: -moz-fit-content;
+  width: fit-content;
+  max-width: 100%;
+  margin-inline: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: zoom-in;
+  overflow: hidden;
+  border-radius: 6px;
+}
+
+.enigme-media-zoom img,
+.enigme-media-zoom picture {
+  display: block;
+  transition: transform 0.25s ease;
+  transform-origin: center center;
+}
+
+.enigme-media-zoom__hint {
+  position: absolute;
+  right: var(--space-xs);
+  bottom: var(--space-xs);
+  padding: 0.2em 0.55em;
+  border-radius: 999px;
+  background: rgba(12, 12, 12, 0.72);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+  pointer-events: none;
+  opacity: 0.92;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .enigme-media-zoom:hover img,
+  .enigme-media-zoom:focus-visible img {
+    transform: scale(1.04);
+  }
+  .enigme-media-zoom:hover .enigme-media-zoom__hint,
+  .enigme-media-zoom:focus-visible .enigme-media-zoom__hint {
+    opacity: 1;
+  }
+}
+.enigme-lightbox-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  overflow: auto;
+  padding: var(--space-md);
+  background: rgba(12, 12, 12, 0.88);
+  overscroll-behavior: contain;
+}
+
+.enigme-lightbox {
+  position: relative;
+  width: -moz-max-content;
+  width: max-content;
+  max-width: none;
+  margin: 0 auto;
+}
+
+.enigme-lightbox__image {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: none;
+  max-height: none;
+  image-rendering: auto;
+}
+
+.enigme-lightbox__close {
+  position: fixed;
+  top: var(--space-md);
+  right: var(--space-md);
+  z-index: 10001;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #111;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.enigme-lightbox__close:hover,
+.enigme-lightbox__close:focus-visible {
+  background: #fff;
 }
 
 .participation {
@@ -8045,24 +8307,49 @@ body.no-scroll {
 
 .riddle-player-step {
   padding: var(--space-md);
-  border: 1px solid var(--color-editor-border);
-  border-radius: 8px;
-  background: var(--color-white);
-  color: var(--color-text-fond-clair);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  background: rgba(12, 18, 32, 0.72);
+  color: var(--color-text-primary);
+}
+
+.riddle-player-step.is-widget-only {
+  padding: var(--space-sm) var(--space-md);
+}
+
+.riddle-player-step.is-widget-only form {
+  margin: 0;
 }
 
 .riddle-player-step label,
 .riddle-player-step__content,
 .riddle-player-step__content p {
-  color: var(--color-text-fond-clair);
+  color: inherit;
 }
 
 .riddle-player-step__image {
   display: block;
   width: auto;
   max-width: 100%;
+  max-height: var(--enigme-etape-max-height, min(44vh, 24rem));
   height: auto;
+  margin: 0 auto;
+  -o-object-fit: contain;
+     object-fit: contain;
+}
+
+.riddle-player-step__zoom {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 100%;
   margin: 0 auto var(--space-md);
+}
+
+.riddle-player-step__zoom .riddle-player-step__image {
+  margin-bottom: 0;
 }
 
 .riddle-player-step__status {
@@ -8070,8 +8357,90 @@ body.no-scroll {
 }
 
 .riddle-step-click-form__feedback {
-  min-height: 1.5em;
-  color: var(--color-editor-error);
+  min-height: 0;
+  margin: 0;
+  color: transparent;
+}
+
+.riddle-ephemeral-notice {
+  position: relative;
+  z-index: 2;
+  width: min(100%, 22rem);
+  margin: var(--space-md) auto 0;
+  padding: 0.9rem 1.15rem;
+  border: 1px solid rgba(232, 140, 90, 0.42);
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(58, 22, 18, 0.96), rgba(18, 10, 14, 0.94));
+  color: #f7e2d4;
+  text-align: center;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1.35;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35), 0 10px 28px rgba(0, 0, 0, 0.35), inset 0 0 24px rgba(160, 48, 28, 0.18);
+  animation: riddle-notice-in 0.35s ease;
+}
+
+.riddle-ephemeral-notice__eyebrow {
+  display: block;
+  margin-bottom: 0.25rem;
+  color: #e8a078;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.riddle-ephemeral-notice__message {
+  display: block;
+}
+
+.riddle-ephemeral-notice--wrong {
+  border-color: rgba(232, 140, 90, 0.42);
+}
+
+.riddle-ephemeral-notice--hint {
+  border-color: rgba(212, 175, 55, 0.45);
+  background: linear-gradient(180deg, rgba(42, 34, 16, 0.96), rgba(18, 14, 10, 0.94));
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35), 0 10px 28px rgba(0, 0, 0, 0.35), inset 0 0 24px rgba(180, 140, 40, 0.14);
+}
+
+.riddle-ephemeral-notice--hint .riddle-ephemeral-notice__eyebrow {
+  color: #e2c46a;
+}
+
+.riddle-ephemeral-notice.is-leaving {
+  animation: riddle-notice-out 0.28s ease forwards;
+}
+
+@keyframes riddle-notice-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.4rem) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes riddle-notice-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-0.25rem) scale(0.98);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .riddle-ephemeral-notice,
+  .riddle-ephemeral-notice.is-leaving {
+    animation: none;
+  }
+}
+.reponse-feedback.riddle-ephemeral-notice {
+  display: block;
 }
 
 .riddle-step-text-form {
@@ -8083,26 +8452,73 @@ body.no-scroll {
   width: 100%;
 }
 
+.riddle-step-numbers-form,
+.riddle-step-directions-form,
+.riddle-step-colors-form,
+.riddle-step-safe_dial-form,
+.riddle-step-click-form {
+  max-width: 18rem;
+  margin-inline: auto;
+}
+
+.riddle-step-colors-form {
+  max-width: 16.5rem;
+}
+
+.riddle-step-gps-form,
+.riddle-step-piano-form {
+  max-width: 34rem;
+  margin-inline: auto;
+}
+
+.riddle-step-text-form.riddle-step-numbers-form,
+.riddle-step-text-form.riddle-step-directions-form,
+.riddle-step-text-form.riddle-step-colors-form,
+.riddle-step-text-form.riddle-step-safe_dial-form,
+.riddle-step-text-form.riddle-step-gps-form,
+.riddle-step-text-form.riddle-step-piano-form {
+  width: 100%;
+}
+
+.riddle-widget-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
+}
+
+.riddle-widget-reset {
+  min-width: 2.4rem;
+  min-height: 2.4rem;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--color-primary);
+  font-size: 1.35rem;
+  cursor: pointer;
+}
+
 .riddle-directions {
   --direction-key-bg: #1976d2;
   --direction-key-color: #fff;
   --direction-key-shadow: #0d47a1;
-  --direction-key-size: clamp(3.25rem, 18vw, 5.5rem);
-  --direction-arrow-stroke: 1.5px;
+  --direction-key-size: clamp(2.4rem, 10vw, 2.85rem);
+  --direction-arrow-stroke: 1.25px;
   display: grid;
   grid-template-columns: repeat(3, var(--direction-key-size));
-  gap: var(--space-sm);
+  gap: var(--space-xs);
   justify-content: center;
 }
 
 .riddle-direction {
   aspect-ratio: 1;
   border: 0;
-  border-radius: 0.8rem;
+  border-radius: 0.55rem;
   background: var(--direction-key-bg);
   color: var(--direction-key-color);
-  box-shadow: 0 0.3rem 0 var(--direction-key-shadow);
-  font-size: 2.5rem;
+  box-shadow: 0 0.22rem 0 var(--direction-key-shadow);
+  font-size: 1.35rem;
   font-weight: 900;
   line-height: 1;
   -webkit-text-stroke: var(--direction-arrow-stroke) currentColor;
@@ -8141,15 +8557,15 @@ body.no-scroll {
 }
 
 .riddle-directions-reset {
-  width: 3rem;
-  height: 3rem;
+  width: 2.4rem;
+  height: 2.4rem;
   padding: 0;
   border: 2px solid var(--color-primary);
   border-radius: 50%;
   background: rgba(var(--color-white-rgb, 255, 255, 255), 0.9);
   color: var(--color-primary);
   box-shadow: 0 2px 5px rgba(var(--color-black-rgb, 0, 0, 0), 0.2);
-  font-size: 1.75rem;
+  font-size: 1.25rem;
   line-height: 1;
   cursor: pointer;
 }
@@ -8166,17 +8582,18 @@ body.no-scroll {
 
 .riddle-colors {
   display: grid;
-  grid-template-columns: repeat(3, minmax(4.5rem, 5.75rem));
-  gap: var(--space-sm);
+  grid-template-columns: repeat(3, minmax(4rem, 4.75rem));
+  gap: var(--space-xs);
   justify-content: center;
 }
 
 .riddle-color {
-  min-height: 3.4rem;
+  min-height: 2.5rem;
   border: 0;
-  border-radius: 0.8rem;
+  border-radius: 0.55rem;
   color: var(--color-white);
-  box-shadow: 0 0.28rem 0 color-mix(in srgb, currentColor 25%, #333);
+  box-shadow: 0 0.22rem 0 color-mix(in srgb, currentColor 25%, #333);
+  font-size: 0.8rem;
   font-weight: 700;
   cursor: pointer;
 }
@@ -8252,9 +8669,9 @@ body.no-scroll {
 }
 
 .riddle-colors-reset {
-  min-width: 3rem;
-  min-height: 3rem;
-  font-size: 1.75rem;
+  min-width: 2.4rem;
+  min-height: 2.4rem;
+  font-size: 1.35rem;
   color: var(--color-primary);
   background: transparent;
   border: 0;
@@ -8265,21 +8682,22 @@ body.no-scroll {
   --number-key-bg: #1976d2;
   --number-key-color: #fff;
   --number-key-shadow: #0d47a1;
-  --number-key-size: clamp(3.75rem, 20vw, 5.75rem);
+  --number-key-size: clamp(2.4rem, 10vw, 2.85rem);
   display: grid;
   grid-template-columns: repeat(3, var(--number-key-size));
-  gap: var(--space-sm);
+  gap: var(--space-xs);
   justify-content: center;
 }
 
 .riddle-number {
   min-height: var(--number-key-size);
   border: 0;
-  border-radius: 0.8rem;
+  border-radius: 0.55rem;
   background: var(--number-key-bg);
   color: var(--number-key-color);
-  box-shadow: 0 0.3rem 0 var(--number-key-shadow);
-  font-size: 2.5rem;
+  box-shadow: 0 0.22rem 0 var(--number-key-shadow);
+  font-size: 1.25rem;
+  font-weight: 700;
   cursor: pointer;
 }
 
@@ -8498,26 +8916,10 @@ body.no-scroll {
   text-align: center;
 }
 
-.riddle-widget-actions {
-  display: flex;
-  align-items: center;
-  justify-content: space-around;
-}
-
-.riddle-widget-reset {
-  min-width: 3rem;
-  min-height: 3rem;
-  border: 0;
-  background: transparent;
-  color: var(--color-primary);
-  font-size: 1.75rem;
-  cursor: pointer;
-}
-
 .riddle-safe {
   --safe-angle: 0deg;
-  --safe-size: min(82vw, 22rem);
-  --safe-ring-width: clamp(0.65rem, 3vw, 0.95rem);
+  --safe-size: min(68vw, 13.5rem);
+  --safe-ring-width: clamp(0.5rem, 2.4vw, 0.75rem);
   position: relative;
   width: var(--safe-size);
   height: var(--safe-size);
@@ -8621,7 +9023,8 @@ body.no-scroll {
 
 .riddle-gps__map {
   width: 100%;
-  height: 18rem;
+  height: min(34vh, 13.5rem);
+  max-height: 13.5rem;
   border: 1px solid var(--color-gris-3);
   border-radius: 6px;
   overflow: hidden;
@@ -8631,7 +9034,7 @@ body.no-scroll {
 
 .riddle-gps__fields {
   display: grid;
-  gap: var(--space-md);
+  gap: var(--space-sm);
 }
 
 .riddle-gps__fields label {
@@ -8645,13 +9048,14 @@ body.no-scroll {
 }
 
 .riddle-gps-reset {
-  min-width: 2.75rem;
-  font-size: 1.5rem;
+  min-width: 2.4rem;
+  font-size: 1.25rem;
 }
 
 @media (min-width: 768px) {
   .riddle-gps__map {
-    height: 28rem;
+    height: min(38vh, 15.5rem);
+    max-height: 15.5rem;
   }
   .riddle-gps__fields {
     grid-template-columns: repeat(2, minmax(0, 1fr));
