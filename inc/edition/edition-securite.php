@@ -45,11 +45,15 @@ function filtrer_visuels_enigme_front($images, $post_id, $field)
             }
         }
 
-        $url = '/voir-image-enigme?id=' . $image_id . '&taille=' . $taille;
-        if ($version) {
-            $url .= '&v=' . $version;
+        $url = function_exists('cta_voir_image_enigme_url')
+            ? cta_voir_image_enigme_url((int) $image_id, $taille)
+            : site_url('/voir-image-enigme?id=' . $image_id . '&taille=' . $taille);
+        if ($version && !function_exists('cta_voir_image_enigme_url')) {
+            $url .= (str_contains($url, '?') ? '&' : '?') . 'v=' . $version;
+        } elseif ($version) {
+            $url = add_query_arg('v', $version, $url);
         }
-        $image['url'] = site_url($url);
+        $image['url'] = $url;
     }
 
     return $images;

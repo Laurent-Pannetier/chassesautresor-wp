@@ -166,10 +166,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['uid'], $_POST['action
                                     data-post-id="<?= esc_attr($enigme_id); ?>">
                                     <?php if ($has_images_utiles && is_array($images_ids)) : ?>
                                       <?php foreach ($images_ids as $img_id) : ?>
-                                        <?php $thumb_url = esc_url(add_query_arg([
-                                          'id'     => $img_id,
-                                          'taille' => 'thumbnail',
-                                        ], site_url('/voir-image-enigme'))); ?>
+                                        <?php $thumb_url = esc_url(
+                                          function_exists('cta_voir_image_enigme_url')
+                                            ? cta_voir_image_enigme_url((int) $img_id, 'thumbnail')
+                                            : add_query_arg([
+                                              'id'     => $img_id,
+                                              'taille' => 'thumbnail',
+                                            ], site_url('/voir-image-enigme'))
+                                        ); ?>
                                         <img src="<?= $thumb_url; ?>" alt="" class="vignette-enigme" />
                                       <?php endforeach; ?>
                                     <?php else : ?>
@@ -179,10 +183,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['uid'], $_POST['action
                                 <?php else : ?>
                                   <?php if ($has_images_utiles && is_array($images_ids)) : ?>
                                     <?php foreach ($images_ids as $img_id) : ?>
-                                      <?php $thumb_url = esc_url(add_query_arg([
-                                        'id'     => $img_id,
-                                        'taille' => 'thumbnail',
-                                      ], site_url('/voir-image-enigme'))); ?>
+                                      <?php $thumb_url = esc_url(
+                                        function_exists('cta_voir_image_enigme_url')
+                                          ? cta_voir_image_enigme_url((int) $img_id, 'thumbnail')
+                                          : add_query_arg([
+                                            'id'     => $img_id,
+                                            'taille' => 'thumbnail',
+                                          ], site_url('/voir-image-enigme'))
+                                      ); ?>
                                       <img src="<?= $thumb_url; ?>" alt="" class="vignette-enigme" />
                                     <?php endforeach; ?>
                                   <?php else : ?>

@@ -35,10 +35,12 @@ if ($riddleId <= 0 || $visibleIds === []) {
         <?php
         $imageSource = wp_get_attachment_image_src($imageId, 'large');
         $imageAlt = trim((string) get_post_meta($imageId, '_wp_attachment_image_alt', true));
-        $imageUrl = add_query_arg(
-            ['id' => $imageId, 'taille' => 'large'],
-            site_url('/voir-image-enigme')
-        );
+        $imageUrl = function_exists('cta_voir_image_enigme_url')
+            ? cta_voir_image_enigme_url($imageId, 'large')
+            : add_query_arg(
+                ['id' => $imageId, 'taille' => 'large'],
+                site_url('/voir-image-enigme')
+            );
         ?>
         <img
           class="riddle-player-step__image"

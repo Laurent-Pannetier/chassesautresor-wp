@@ -84,41 +84,60 @@ function build_picture_enigme(int $image_id, string $alt, array $sizes, array $i
         'full'      => 'full',
     ];
 
+    $can_webp = function_exists('wp_image_editor_supports')
+        && wp_image_editor_supports(['mime_type' => 'image/webp']);
+
     if ($image_id === ID_IMAGE_PLACEHOLDER_ENIGME) {
         $url_builder = static function (int $id, string $size): string {
             $url = wp_get_attachment_image_url($id, $size);
             return $url ? esc_url($url) : '';
         };
+        $webp_builder = static function (int $id, string $size) use ($can_webp): string {
+            if (!$can_webp) {
+                return '';
+            }
+            $data = wp_get_attachment_image_src($id, $size);
+            $url  = $data[0] ?? '';
+            if (!$url) {
+                return '';
+            }
+            $webp_url = preg_replace('/\.(jpe?g|png)$/i', '.webp', $url);
+            if ($webp_url === $url) {
+                return '';
+            }
+            $upload_dir = wp_get_upload_dir();
+            $webp_path  = str_replace($upload_dir['baseurl'], $upload_dir['basedir'], $webp_url);
+            return file_exists($webp_path) ? esc_url($webp_url) : '';
+        };
     } else {
-        $base_url    = site_url('/voir-image-enigme');
-        $url_builder = static function (int $id, string $size) use ($base_url): string {
+        $url_builder = static function (int $id, string $size): string {
+            if (function_exists('cta_voir_image_enigme_url')) {
+                return esc_url(cta_voir_image_enigme_url($id, $size));
+            }
             return esc_url(add_query_arg([
                 'id'     => $id,
                 'taille' => $size,
-            ], $base_url));
+            ], site_url('/voir-image-enigme')));
+        };
+        // WebP is served by the proxy when a sibling .webp exists: never expose uploads/ URLs.
+        $webp_builder = static function (int $id, string $size) use ($can_webp, $url_builder): string {
+            if (!$can_webp) {
+                return '';
+            }
+            $data = wp_get_attachment_image_src($id, $size);
+            $url  = $data[0] ?? '';
+            if (!$url) {
+                return '';
+            }
+            $upload_dir = wp_get_upload_dir();
+            $path = str_replace($upload_dir['baseurl'], $upload_dir['basedir'], $url);
+            $webp_path = preg_replace('/\.(jpe?g|png|gif)$/i', '.webp', $path);
+            if (!is_string($webp_path) || $webp_path === $path || !file_exists($webp_path)) {
+                return '';
+            }
+            return $url_builder($id, $size);
         };
     }
-
-    $can_webp = function_exists('wp_image_editor_supports')
-        && wp_image_editor_supports(['mime_type' => 'image/webp']);
-
-    $webp_builder = static function (int $id, string $size) use ($can_webp): string {
-        if (!$can_webp) {
-            return '';
-        }
-        $data = wp_get_attachment_image_src($id, $size);
-        $url  = $data[0] ?? '';
-        if (!$url) {
-            return '';
-        }
-        $webp_url = preg_replace('/\.(jpe?g|png)$/i', '.webp', $url);
-        if ($webp_url === $url) {
-            return '';
-        }
-        $upload_dir = wp_get_upload_dir();
-        $webp_path  = str_replace($upload_dir['baseurl'], $upload_dir['basedir'], $webp_url);
-        return file_exists($webp_path) ? esc_url($webp_url) : '';
-    };
 
     for ($i = count($used_sizes) - 1; $i > 0; $i--) {
         $size       = $used_sizes[$i];
@@ -264,10 +283,14 @@ function get_image_enigme(int $post_id, string $size = 'medium'): ?string
         $image_id = (int) $images[0]['ID'];
     }
 
-    return esc_url(add_query_arg([
-        'id'     => $image_id,
-        'taille' => $size,
-    ], site_url('/voir-image-enigme')));
+    return esc_url(
+        function_exists('cta_voir_image_enigme_url')
+            ? cta_voir_image_enigme_url($image_id, $size)
+            : add_query_arg([
+                'id'     => $image_id,
+                'taille' => $size,
+            ], site_url('/voir-image-enigme'))
+    );
 }
 
 
@@ -306,10 +329,14 @@ function get_url_vignette_enigme(int $enigme_id, string $taille = 'thumbnail'): 
     $image_id = $images[0] ?? null; // on récupère l’ID brut directement
     if (!$image_id) return null;
 
-    return esc_url(add_query_arg([
-        'id'     => $image_id,
-        'taille' => $taille,
-    ], site_url('/voir-image-enigme')));
+    return esc_url(
+        function_exists('cta_voir_image_enigme_url')
+            ? cta_voir_image_enigme_url((int) $image_id, $taille)
+            : add_query_arg([
+                'id'     => $image_id,
+                'taille' => $taille,
+            ], site_url('/voir-image-enigme'))
+    );
 }
 
 
