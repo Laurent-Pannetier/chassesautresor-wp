@@ -1195,32 +1195,35 @@ Les visuels d’énigmes sont protégés par un système de stockage dédié et 
 
 - Les images sont enregistrées dans `/wp-content/uploads/_enigmes/enigme-{ID}/` via un filtre `upload_dir`
 - Un fichier `.htaccess` est injecté automatiquement dans ce dossier à chaque ajout d’image
-- Ce `.htaccess` bloque l’accès direct aux images, sauf depuis l’admin WordPress ou via AJAX authentifié
+- Ce `.htaccess` bloque l’accès HTTP direct aux images, tout en autorisant l’envoi interne LiteSpeed
 - L’affichage public se fait uniquement via le proxy `/voir-image-enigme?id=...`
+- Sur LiteSpeed, le proxy délègue l’envoi binaire via `X-LiteSpeed-Location` (repli `readfile` sinon)
 - Le proxy vérifie les droits d’accès via `utilisateur_peut_voir_enigme()`
 - Le système supporte les tailles d’image (full, thumbnail…) via un paramètre `?taille=`
 
 ### 🔁 Règle `.htaccess` injectée
 
-Le fichier `.htaccess` contient :
+Le fichier `.htaccess` bloque les accès HTTP **directs** aux images, tout en permettant
+l’envoi interne LiteSpeed (`X-LiteSpeed-Location`) depuis `/voir-image-enigme` :
+
+```apache
 <IfModule mod_rewrite.c>
 RewriteEngine On
 
-# Autorise admin et AJAX
-RewriteCond %{REQUEST_URI} ^/wp-admin/ [OR]
-RewriteCond %{HTTP_REFERER} ^https?://[^/]+/wp-admin/ [NC]
-RewriteCond %{HTTP_COOKIE} wordpress_logged_in_ [NC]
-RewriteRule . - [L]
+# LiteSpeed: ORG_REQ_URI = URI client d'origine
+RewriteCond %{ORG_REQ_URI} /_enigmes/
+RewriteCond %{HTTP_REFERER} !^https?://[^/]+/wp-admin/ [NC]
+RewriteRule \.(jpe?g|png|gif|webp)$ - [F,L]
 
-# Sinon : bloque tout accès direct aux images
-<FilesMatch "\.(jpg|jpeg|png|gif|webp)$">
-  Require all denied
-</FilesMatch>
+# Apache / Local: ORG_REQ_URI absent
+RewriteCond %{ORG_REQ_URI} ^$
+RewriteCond %{HTTP_REFERER} !^https?://[^/]+/wp-admin/ [NC]
+RewriteRule \.(jpe?g|png|gif|webp)$ - [F,L]
 </IfModule>
+```
 
-
-
-Le fichier est injecté ou mis à jour par la fonction `injecter_htaccess_protection_images_enigme($post_id, $forcer = true)`.
+Le fichier est injecté ou mis à jour par `RiddleImageProtectionService`
+(ex-`injecter_htaccess_protection_images_enigme`).
 
 ---
 
