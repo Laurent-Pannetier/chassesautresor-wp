@@ -703,6 +703,7 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
         if (!function_exists('chasse_compter_participants')) {
             require_once get_stylesheet_directory() . '/inc/chasse/stats.php';
         }
+        $points_ui_enabled = !function_exists('cat_is_points_ui_enabled') || cat_is_points_ui_enabled();
         $validation = get_field('chasse_cache_statut_validation', $chasse_id);
         $stats_locked = in_array($validation, ['creation', 'en_attente', 'correction'], true);
         $periode = 'total';
@@ -723,7 +724,9 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
         } else {
             $nb_participants = chasse_compter_participants($chasse_id, $periode);
             $nb_tentatives = chasse_compter_tentatives($chasse_id, $periode);
-            $nb_points = chasse_compter_points_collectes($chasse_id, $periode);
+            $nb_points = $points_ui_enabled
+                ? chasse_compter_points_collectes($chasse_id, $periode)
+                : 0;
             $total_engagements = chasse_compter_engagements($chasse_id);
             $enigme_ids = recuperer_ids_enigmes_pour_chasse($chasse_id);
             $enigmes_stats = [];
@@ -739,7 +742,9 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
                     'titre'       => get_the_title($enigme_id),
                     'engagements' => $engagements,
                     'tentatives'  => enigme_compter_tentatives($enigme_id, 'automatique', $periode),
-                    'points'      => enigme_compter_points_depenses($enigme_id, 'automatique', $periode),
+                    'points'      => $points_ui_enabled
+                        ? enigme_compter_points_depenses($enigme_id, 'automatique', $periode)
+                        : 0,
                     'resolutions' => $resolutions,
                 ];
                 $mode_validation = get_field('enigme_mode_validation', $enigme_id);
@@ -809,13 +814,15 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
                 'stat'  => 'tentatives',
                 'class' => $card_class,
             ]);
-            get_template_part('template-parts/common/stat-card', null, [
-                'icon'  => 'fa-solid fa-coins',
-                'label' => esc_html__('Points collectés', 'chassesautresor-com'),
-                'value' => $nb_points,
-                'stat'  => 'points',
-                'class' => $card_class,
-            ]);
+            if ($points_ui_enabled) {
+                get_template_part('template-parts/common/stat-card', null, [
+                    'icon'  => 'fa-solid fa-coins',
+                    'label' => esc_html__('Points collectés', 'chassesautresor-com'),
+                    'value' => $nb_points,
+                    'stat'  => 'points',
+                    'class' => $card_class,
+                ]);
+            }
             get_template_part('template-parts/common/stat-card', null, [
                 'icon'  => 'fa-solid fa-percent',
                 'label' => esc_html__('Taux d\'engagement', 'chassesautresor-com'),
@@ -854,10 +861,11 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
               <?php endif;
           endif;
           get_template_part('template-parts/chasse/partials/chasse-partial-enigmes', null, [
-              'title'         => esc_html__('Énigmes', 'chassesautresor-com'),
-              'enigmes'       => $enigmes_stats,
-              'total'         => $total_engagements,
-              'cols_etiquette' => [2, 3, 4, 5, 6],
+              'title'          => esc_html__('Énigmes', 'chassesautresor-com'),
+              'enigmes'        => $enigmes_stats,
+              'total'          => $total_engagements,
+              'show_points'    => $points_ui_enabled,
+              'cols_etiquette' => $points_ui_enabled ? [2, 3, 4, 5] : [2, 3, 4],
           ]); ?>
           <div class="liste-participants" data-page="1" data-pages="<?= esc_attr($pages_participants); ?>" data-order="asc" data-orderby="inscription">
             <?php get_template_part('template-parts/chasse/partials/chasse-partial-participants', null, [

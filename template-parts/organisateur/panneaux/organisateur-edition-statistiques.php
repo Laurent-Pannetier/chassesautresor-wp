@@ -5,9 +5,10 @@
 
 defined('ABSPATH') || exit;
 
-$organisateur_id = $args['organisateur_id'] ?? 0;
-$joueurs         = organisateur_compter_joueurs_uniques($organisateur_id);
-$points          = organisateur_compter_points_collectes($organisateur_id);
+$organisateur_id   = $args['organisateur_id'] ?? 0;
+$points_ui_enabled = !function_exists('cat_is_points_ui_enabled') || cat_is_points_ui_enabled();
+$joueurs           = organisateur_compter_joueurs_uniques($organisateur_id);
+$points            = $points_ui_enabled ? organisateur_compter_points_collectes($organisateur_id) : 0;
 ?>
 <div class="edition-panel-body">
   <div class="dashboard-grid stats-cards">
@@ -18,12 +19,14 @@ $points          = organisateur_compter_points_collectes($organisateur_id);
         'value' => $joueurs,
         'stat'  => 'joueurs',
     ]);
-    get_template_part('template-parts/common/stat-card', null, [
-        'icon'  => 'fa-solid fa-coins',
-        'label' => 'Points collectés',
-        'value' => $points,
-        'stat'  => 'points',
-    ]);
+    if ($points_ui_enabled) {
+        get_template_part('template-parts/common/stat-card', null, [
+            'icon'  => 'fa-solid fa-coins',
+            'label' => 'Points collectés',
+            'value' => $points,
+            'stat'  => 'points',
+        ]);
+    }
     ?>
   </div>
   <?php
@@ -44,7 +47,9 @@ $points          = organisateur_compter_points_collectes($organisateur_id);
                   'titre'       => get_the_title($enigme_id),
                   'engagements' => $engagements,
                   'tentatives'  => $tentatives,
-                  'points'      => enigme_compter_points_depenses($enigme_id, 'automatique'),
+                  'points'      => $points_ui_enabled
+                      ? enigme_compter_points_depenses($enigme_id, 'automatique')
+                      : 0,
                   'resolutions' => $resolutions,
               ];
               $total_tentatives += $tentatives;
@@ -70,9 +75,10 @@ $points          = organisateur_compter_points_collectes($organisateur_id);
               'template-parts/chasse/partials/chasse-partial-enigmes',
               null,
               [
-                  'enigmes'       => $enigmes_stats,
-                  'total'         => $participants,
-                  'cols_etiquette' => [2, 3, 4, 5],
+                  'enigmes'        => $enigmes_stats,
+                  'total'          => $participants,
+                  'show_points'    => $points_ui_enabled,
+                  'cols_etiquette' => $points_ui_enabled ? [2, 3, 4, 5] : [2, 3, 4],
               ]
           );
       }

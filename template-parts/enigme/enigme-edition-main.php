@@ -722,13 +722,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['uid'], $_POST['action
       if (!function_exists('enigme_compter_joueurs_engages')) {
           require_once get_stylesheet_directory() . '/inc/enigme/stats.php';
       }
+        $points_ui_enabled = !function_exists('cat_is_points_ui_enabled') || cat_is_points_ui_enabled();
         $periode = 'total';
         if ($stats_locked) {
             $nb_participants = $nb_tentatives = $nb_points = $nb_solutions = 0;
         } else {
             $nb_participants = enigme_compter_joueurs_engages($enigme_id, $periode);
             $nb_tentatives   = enigme_compter_tentatives($enigme_id, $mode_validation, $periode);
-            $nb_points       = enigme_compter_points_depenses($enigme_id, $mode_validation, $periode);
+            $nb_points       = $points_ui_enabled
+                ? enigme_compter_points_depenses($enigme_id, $mode_validation, $periode)
+                : 0;
             $nb_solutions    = enigme_compter_bonnes_solutions($enigme_id, $mode_validation, $periode);
         }
       ?>
@@ -763,14 +766,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['uid'], $_POST['action
               'style' => $mode_validation === 'aucune' ? 'display:none;' : '',
               'class' => $card_class,
           ]);
-          get_template_part('template-parts/common/stat-card', null, [
-              'icon'  => 'fa-solid fa-coins',
-                'label' => esc_html__('Points collectés', 'chassesautresor-com'),
-              'value' => $nb_points,
-              'stat'  => 'points',
-              'style' => ($mode_validation === 'aucune' || (int) $cout <= 0) ? 'display:none;' : '',
-              'class' => $card_class,
-          ]);
+          if ($points_ui_enabled) {
+              get_template_part('template-parts/common/stat-card', null, [
+                  'icon'  => 'fa-solid fa-coins',
+                    'label' => esc_html__('Points collectés', 'chassesautresor-com'),
+                  'value' => $nb_points,
+                  'stat'  => 'points',
+                  'style' => ($mode_validation === 'aucune' || (int) $cout <= 0) ? 'display:none;' : '',
+                  'class' => $card_class,
+              ]);
+          }
           get_template_part('template-parts/common/stat-card', null, [
               'icon'  => 'fa-solid fa-check',
                 'label' => esc_html__('Bonnes réponses', 'chassesautresor-com'),
