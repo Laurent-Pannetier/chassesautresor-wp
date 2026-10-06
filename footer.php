@@ -23,7 +23,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 	astra_footer_before();
 
-	astra_footer();
+	if ( function_exists( 'cta_render_site_footer' ) ) {
+		cta_render_site_footer();
+	}
 
 	astra_footer_after();
 ?>
@@ -43,7 +45,6 @@ if ( ! defined( 'ABSPATH' ) ) {
             event_label: 'Page devenir organisateur',
             value: 1
           });
-          console.log('✅ Événement gtag envoyé : clic_creer_profil');
         }
       });
     }

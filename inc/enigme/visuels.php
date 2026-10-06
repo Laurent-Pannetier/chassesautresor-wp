@@ -513,7 +513,7 @@ function get_mapping_visuel_enigme(int $enigme_id): array
         'revoir' => [
             'image_reelle' => true,
             'fallback_svg' => null,
-            'filtre'       => 'blur-xs',
+            'filtre'       => null,
             'sens'         => __('Énigme déjà résolue', 'chassesautresor-com'),
         ],
         'continuer' => [

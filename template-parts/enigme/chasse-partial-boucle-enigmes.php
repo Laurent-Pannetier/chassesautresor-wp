@@ -96,9 +96,6 @@ $cards_grid_class = $poster_cards ? 'cards-grid cards-grid--poster' : 'cards-gri
       $classe_cta = 'cta-' . sanitize_html_class($type_cta);
       $mode_validation = get_field('enigme_mode_validation', $enigme_id);
       $linkable = $cta['action'] === 'link';
-      $aria_label = $linkable
-        ? sprintf(__('Ouvrir l\'énigme — %s', 'chassesautresor-com'), $cta['label'])
-        : '';
       $statut_utilisateur = $cta['statut_utilisateur'] ?? '';
       $badge_label = (string) ($cta['badge'] ?? '');
       $badge_class = 'carte-enigme-statut--' . sanitize_html_class($type_cta);
@@ -107,13 +104,20 @@ $cards_grid_class = $poster_cards ? 'cards-grid cards-grid--poster' : 'cards-gri
         ['resolue', 'terminee'],
         true
       );
-      $classes_bouton = in_array(
-        $statut_utilisateur,
-        ['non_commencee', 'echouee', 'abandonnee', 'soumis'],
-        true
-      )
-        ? 'bouton bouton-cta bouton-cta--color'
-        : 'bouton bouton-secondaire';
+      $aria_label = '';
+      if ($linkable) {
+        $aria_label = $afficher_validation
+          ? sprintf(
+              /* translators: %s: enigma title */
+              __('Énigme trouvée — %s', 'chassesautresor-com'),
+              $titre
+          )
+          : sprintf(
+              /* translators: %s: enigma title */
+              __('Ouvrir l\'énigme — %s', 'chassesautresor-com'),
+              $titre
+          );
+      }
 
       // 🔍 Vérification bordure admin/orga
       $statut_enigme = get_post_status($enigme_id);
@@ -132,8 +136,9 @@ $cards_grid_class = $poster_cards ? 'cards-grid cards-grid--poster' : 'cards-gri
       }
 
       $classes_carte = trim("carte carte-enigme $classe_completion $classe_cta");
-      if ($statut_utilisateur !== '') {
-        $classes_carte .= ' carte-enigme--statut-' . sanitize_html_class($statut_utilisateur);
+      $statut_visuel = $statut_utilisateur === 'echouee' ? 'en_cours' : $statut_utilisateur;
+      if ($statut_visuel !== '') {
+        $classes_carte .= ' carte-enigme--statut-' . sanitize_html_class($statut_visuel);
       }
       if (
         $est_joueur_engage
@@ -182,13 +187,6 @@ $cards_grid_class = $poster_cards ? 'cards-grid cards-grid--poster' : 'cards-gri
                         ?>
                       </div>
                     <?php endif; ?>
-                    <?php if ($linkable) : ?>
-                      <span class="carte-enigme-overlay" aria-hidden="true">
-                        <span class="carte-enigme-bouton <?= esc_attr($classes_bouton); ?>">
-                          <?= esc_html($cta['label']); ?>
-                        </span>
-                      </span>
-                    <?php endif; ?>
                   </div>
 
                 <?php if ($mapping_visuel['image_reelle']) : ?>
@@ -198,13 +196,6 @@ $cards_grid_class = $poster_cards ? 'cards-grid cards-grid--poster' : 'cards-gri
                 <?php elseif (($mapping_visuel['etat_systeme'] ?? '') === 'bloquee_date') : ?>
                   <h3><span class="carte-enigme-titre"><?= esc_html__('Parution programmée', 'chassesautresor-com'); ?></span></h3>
                 <?php endif; ?>
-
-                <span class="carte-enigme-action <?= esc_attr($classes_bouton); ?>">
-                  <?= esc_html($cta['label']); ?>
-                  <?php if ($linkable) : ?>
-                    <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
-                  <?php endif; ?>
-                </span>
 
               </div>
           <?php if ($linkable) : ?>

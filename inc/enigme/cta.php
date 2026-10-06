@@ -77,7 +77,7 @@ function enigme_get_liste_prerequis_possibles(int $enigme_id): array
  * - soumis      → réponse en attente de validation
  * - bloquee     → bloquée par la chasse, une date ou un prérequis
  * - invalide    → configuration incorrecte
- * - echouee     → tentative échouée, ré-engagement possible
+ * - echouee     → mauvaise tentative (affiché comme « en cours » côté joueur)
  * - abandonnee  → énigme abandonnée, ré-engagement possible
  * - erreur      → statut inconnu
  *
@@ -261,13 +261,20 @@ function get_cta_enigme(int $enigme_id, ?int $user_id = null): array
             ]);
 
         case 'echouee':
+            // Mauvaise tentative finale : côté joueur, on reste sur un état « en cours »
+            // (pas de badge « Échouée ») pour éviter un signal punitif.
+            $type_echouee   = ($mode_validation === 'aucune') ? 'voir' : 'continuer';
+            $label_echouee  = ($mode_validation === 'aucune')
+                ? __('Voir', 'chassesautresor-com')
+                : __('Continuer', 'chassesautresor-com');
+            $classe_echouee = ($mode_validation === 'aucune') ? 'cta-voir' : 'cta-en-cours';
             return array_merge($cta, [
-                'type'       => 'engager',
-                'label'      => __('Réessayer', 'chassesautresor-com'),
+                'type'       => $type_echouee,
+                'label'      => $label_echouee,
                 'action'     => 'link',
                 'url'        => get_permalink($enigme_id),
-                'classe_css' => 'cta-echouee',
-                'badge'      => __('Échouée', 'chassesautresor-com'),
+                'classe_css' => $classe_echouee,
+                'badge'      => __('En cours', 'chassesautresor-com'),
             ]);
 
         case 'abandonnee':

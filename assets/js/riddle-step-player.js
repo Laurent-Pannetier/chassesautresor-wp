@@ -176,6 +176,13 @@ const focusUnlockedContent = target => {
 
 document.addEventListener('DOMContentLoaded', async () => {
   initializeGpsWidgets(document);
+  document.querySelectorAll('.riddle-step-click-form, .riddle-step-text-form').forEach((form) => {
+    const feedback = form.querySelector('.riddle-step-click-form__feedback');
+    const storageKey = window.buildRiddleHintStorageKey?.(form);
+    if (feedback && storageKey) {
+      window.restoreRiddleSessionHint?.(storageKey, feedback);
+    }
+  });
   const target = window.sessionStorage.getItem('riddleStepScrollTarget');
   if (!target) return;
   window.history.scrollRestoration = 'manual';
@@ -189,11 +196,12 @@ document.addEventListener('submit', async event => {
   event.preventDefault();
   const button = form.querySelector('button[type="submit"]');
   const feedback = form.querySelector('.riddle-step-click-form__feedback');
+  const hintStorageKey = window.buildRiddleHintStorageKey?.(form) || '';
   const data = new FormData(form);
   data.append('action', form.dataset.widgetAction);
   form.setAttribute('aria-busy', 'true');
   feedback.setAttribute('role', 'status');
-  feedback.textContent = '';
+  feedback.querySelectorAll('.riddle-ephemeral-notice--wrong').forEach((node) => node.remove());
   button.disabled = true;
   let keepDisabled = false;
   try {
@@ -212,13 +220,13 @@ document.addEventListener('submit', async event => {
     if (!result.success) throw new Error(result.data?.message || RiddleStepPlayer.error);
     window.RiddleRetryCountdown?.apply(form, result.data.retry);
     if (result.data.resultat && result.data.resultat !== 'bon') {
-      const message = result.data.resultat === 'variante' && result.data.message
-        ? result.data.message
-        : RiddleStepPlayer.wrong;
-      feedback.textContent = '';
+      const isVariant = result.data.resultat === 'variante' && result.data.message;
+      const message = isVariant ? result.data.message : RiddleStepPlayer.wrong;
       window.showRiddleEphemeralNotice?.(message, {
-        tone: result.data.resultat === 'variante' ? 'hint' : 'wrong',
-        duration: result.data.resultat === 'variante' ? 4500 : 3800,
+        tone: isVariant ? 'hint' : 'wrong',
+        persistent: Boolean(isVariant),
+        storageKey: isVariant ? hintStorageKey : '',
+        duration: isVariant ? undefined : 3800,
         anchor: feedback
       });
       const answerInput = form.querySelector('input[name="reponse"]');
@@ -238,6 +246,9 @@ document.addEventListener('submit', async event => {
       }
       return;
     }
+    if (hintStorageKey) {
+      window.clearRiddleSessionHint?.(hintStorageKey);
+    }
     const target = unlockRiddleStepContent(form, result.data);
     if (!target) throw new Error(RiddleStepPlayer.error);
     focusUnlockedContent(target);
@@ -246,16 +257,19 @@ document.addEventListener('submit', async event => {
       block: 'start'
     });
   } catch (error) {
-    feedback.setAttribute('role', 'alert');
     const message = error instanceof Error && error.message
       ? error.message
       : RiddleStepPlayer.error;
-    feedback.textContent = '';
-    window.showRiddleEphemeralNotice?.(message, {
-      tone: 'wrong',
-      duration: 3800,
-      anchor: feedback
-    });
+    if (typeof window.showRiddleEphemeralNotice === 'function') {
+      window.showRiddleEphemeralNotice(message, {
+        tone: 'wrong',
+        duration: 3800,
+        anchor: feedback
+      });
+    } else {
+      feedback.setAttribute('role', 'alert');
+      feedback.textContent = message;
+    }
   } finally {
     if (form.isConnected) {
       form.setAttribute('aria-busy', 'false');

@@ -678,6 +678,7 @@ require_once $inc_path . 'search/form.php';
 require_once $inc_path . 'homepage-filters.php';
 require_once $inc_path . 'single-hunt-navigation.php';
 require_once $inc_path . 'single-hunt-seo.php';
+require_once $inc_path . 'footer-functions.php';
 
 require_once $inc_path . 'edition/edition-core.php';
 require_once $inc_path . 'edition/edition-organisateur.php';

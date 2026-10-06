@@ -19,8 +19,7 @@
 
 /* 🦶 Footer */
 
-  /* 📨 Formulaire newsletter inline */
-  /* 🦶 Lien "Inscription organisateur" */
+  /* Footer d’expérience (plateforme / chasse unique / démo) */
 
 
 
@@ -591,152 +590,69 @@ body #primary {
 
 
 /* ==================================================
-   🦶 FOOTER
+   🦶 FOOTER – BARRE LÉGALE COMPACTE
    ================================================== */
 
-/* ========== 📨 FORMULAIRE NEWSLETTER INLINE ========== */
-
-.mc4wp-form {
-  max-width: 100%;
-}
-.mc4wp-form label {
-  display: block;
-  font-weight: bold;
+.cat-site-footer {
+  --cat-footer-border: rgba(245, 245, 220, 0.12);
+  --cat-footer-muted: rgba(245, 245, 220, 0.72);
+  margin-top: var(--space-xl, 2rem);
   color: var(--color-text-primary);
-  margin-bottom: 8px;
-  font-size: 16px;
+  background: var(--color-background-dark, #060A1F);
+  border-top: 1px solid var(--cat-footer-border);
 }
-/* Champ + bouton toujours sur une seule ligne */
-.newsletter-group {
+
+.cat-site-footer__bar-inner {
   display: flex;
-  align-items: center;
-  width: 100%;
-  max-width: 420px;
-  margin-top: 6px;
-  flex-wrap: nowrap;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 0.85rem 0;
 }
-/* Champ email */
-.newsletter-group input[type="email"] {
-  flex: 1;
-  padding: 10px 12px;
-  border: 1px solid var(--color-gris-3);
-  border-right: none;
-  border-radius: 4px 0 0 4px;
-  background-color: var(--color-background);
-  color: var(--color-text-primary);
-  font-size: 16px;
-  height: 42px;
-  min-width: 0;
-  box-sizing: border-box;
+
+.cat-site-footer__copyright {
+  margin: 0;
+  color: var(--cat-footer-muted);
+  font-size: 0.85rem;
 }
-.newsletter-group input[type="email"]::placeholder {
-  color: var(--color-gris-3);
-}
-/* Bouton avec icône */
-.newsletter-group .newsletter-btn {
-  background-color: var(--color-background-button);
-  color: var(--color-text-primary);
-  border: 1px solid var(--color-background-button);
-  border-left: none;
-  padding: 0 18px;
-  border-radius: 0 4px 4px 0;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-  height: 42px;
+
+.cat-site-footer__legal {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-}
-.newsletter-group .newsletter-btn svg {
-  fill: var(--color-text-primary);
-  width: 20px;
-  height: 20px;
-}
-.newsletter-group .newsletter-btn:hover {
-  background-color: var(--color-background-button-hover);
-}
-/* Correction du bord entre champ et bouton */
-.newsletter-group input[type="email"] {
-  border-right: 0;
-  border-radius: 4px 0 0 4px;
+  flex-wrap: wrap;
+  gap: 0.35rem 1rem;
+  list-style: none;
   margin: 0;
-}
-.newsletter-group .newsletter-btn {
-  border-left: 0;
-  border-radius: 0 4px 4px 0;
-  margin: 0;
-}
-.newsletter-group .newsletter-btn:hover svg {
-  transform: translateX(2px);
-  transition: transform 0.3s ease;
-}
-.newsletter-group input[type="email"]:focus {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
-}
-footer .ast-footer-widget a {
-  margin: 4px 0;
+  padding: 0;
 }
 
-
-/* ========== 🦶  LIEN "INSCRIPTION ORGANISATEUR" ========== */
-
-.lien-organisateur {
-  color: var(--color-accent); /* Bronze doux */
-  border: 1px solid rgba(205, 127, 50, 0.4);
-  padding: 4px 10px;
-  border-radius: 4px;
-  display: inline-block;
-  /*font-weight: bold;*/
-  transition: all 0.3s ease;
-  margin-top: 6px;
+.cat-site-footer__legal a {
+  color: var(--cat-footer-muted);
+  font-size: 0.85rem;
+  text-decoration: none;
+  transition: color var(--transition-medium, 0.3s ease);
 }
-.lien-organisateur:hover {
-  background-color: var(--color-accent);
-  color: var(--color-background); /* pour contraste inversé */
+
+.cat-site-footer__legal a:hover,
+.cat-site-footer__legal a:focus-visible {
+  color: var(--color-secondary);
   text-decoration: none;
 }
 
-
-.site-footer-primary-section-1 {
-  order: 2;
-  margin: 30px 0;
+.cat-site-footer--demo {
+  border-top-color: rgba(225, 169, 95, 0.28);
 }
 
-.site-footer-primary-section-2 {
-  order: 3;
-}
-footer .site-footer-primary-section-3 {
-  order: 1;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  padding-bottom: 15px;
-  margin-bottom: 15px;
-  display: block;
-}
-.ast-builder-footer-grid-columns {
-  column-gap: 20px;
-  padding-inline: 10px;
+@media (--bp-tablet) {
+  .cat-site-footer__bar-inner {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.95rem 0;
+  }
 }
 
-@media (--bp-mobile) {
-  .site-footer-primary-section-1 {
-    order: 1;
-    margin: 0;
-  }
-  .site-footer-primary-section-2 {
-    order: 2;
-  }
-  footer .site-footer-primary-section-3 {
-    order: 3;
-    border-bottom: none;
-    padding-bottom: 0;
-    margin-bottom: 0;
-    display: flex;
-  }
-  .ast-builder-footer-grid-columns {
-    column-gap: 20px;
-    padding-inline: 0;
+@media (prefers-reduced-motion: reduce) {
+  .cat-site-footer__legal a {
+    transition: none;
   }
 }
 .bandeau-info-chasse {

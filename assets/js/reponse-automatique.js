@@ -22,6 +22,10 @@ function initFormulaireAutomatique() {
     form.querySelectorAll('button[type="submit"]').forEach(button => { button.disabled = true; });
   }
   const feedback = form.querySelector('.reponse-feedback');
+  const hintStorageKey = window.buildRiddleHintStorageKey?.(form) || '';
+  if (hintStorageKey && feedback) {
+    window.restoreRiddleSessionHint?.(hintStorageKey, feedback);
+  }
   const soldeFooter = document.querySelector('.participation-infos .solde');
   const soldeInfo = form.querySelector('.points-sousligne');
   const headerPoints = document.querySelector('.zone-points .points-value');
@@ -31,7 +35,6 @@ function initFormulaireAutomatique() {
   const seuil = parseInt(form.dataset.seuil || '300', 10);
   const __ = window.wp?.i18n?.__ || (s => s);
   const sprintf = window.wp?.i18n?.sprintf;
-  let hideTimer = null;
 
   form.addEventListener('submit', e => {
     e.preventDefault();
@@ -61,10 +64,6 @@ function initFormulaireAutomatique() {
               __('Erreur serveur', 'chassesautresor-com'),
               { tone: 'wrong', duration: 4200, anchor: feedback }
             );
-            hideTimer = setTimeout(() => {
-              feedback.replaceChildren();
-              feedback.style.display = 'none';
-            }, 4500);
           }
           throw e;
         }
@@ -77,11 +76,10 @@ function initFormulaireAutomatique() {
         if (res.success) {
           window.RiddleRetryCountdown?.apply(form, res.data?.retry);
         }
-        if (hideTimer) {
-          clearTimeout(hideTimer);
-          hideTimer = null;
+        feedback.querySelectorAll('.riddle-ephemeral-notice--wrong').forEach((node) => node.remove());
+        if (!feedback.querySelector('.riddle-ephemeral-notice--hint')) {
+          feedback.style.display = 'none';
         }
-        feedback.style.display = 'none';
 
         if (res.success) {
           form.reset();
@@ -107,12 +105,16 @@ function initFormulaireAutomatique() {
               feedback.className = 'reponse-feedback';
               window.showRiddleEphemeralNotice?.(res.data.message, {
                 tone: 'hint',
-                duration: 4500,
+                persistent: true,
+                storageKey: hintStorageKey,
                 anchor: feedback
               });
             }
           } else if (res.data.resultat === 'bon') {
             document.dispatchEvent(new CustomEvent('cta:riddle-resolved'));
+            if (hintStorageKey) {
+              window.clearRiddleSessionHint?.(hintStorageKey);
+            }
             feedback.className = 'reponse-feedback';
             feedback.innerHTML = `<i class="fa-solid fa-circle-check" style="color:var(--color-success);"></i> ${__('Bonne réponse', 'chassesautresor-com')}`;
             feedback.style.display = 'block';
@@ -189,10 +191,6 @@ function initFormulaireAutomatique() {
               { tone: 'wrong', duration: 3800, anchor: feedback }
             );
             resetInteractiveFinalAnswerWidget(form);
-            hideTimer = setTimeout(() => {
-              feedback.replaceChildren();
-              feedback.style.display = 'none';
-            }, 4200);
           }
 
         } else {
@@ -204,10 +202,6 @@ function initFormulaireAutomatique() {
             duration: 4200,
             anchor: feedback
           });
-          hideTimer = setTimeout(() => {
-            feedback.replaceChildren();
-            feedback.style.display = 'none';
-          }, 4500);
         }
       });
   });
