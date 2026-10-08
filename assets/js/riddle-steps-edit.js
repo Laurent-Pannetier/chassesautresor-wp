@@ -13,13 +13,68 @@ document.addEventListener('DOMContentLoaded', () => {
   const contentEditor = form?.querySelector('.riddle-step-form__content-editor');
   const imagePreview = editor.querySelector('.riddle-step-form__image-preview');
   const imageRemove = editor.querySelector('.riddle-step-image-remove');
+  const affichageSelect = form?.querySelector('[name="widget_affichage"]');
+  const hotspotCanvas = form?.querySelector('.riddle-step-hotspot-editor__canvas');
+  const hotspotStage = form?.querySelector('.riddle-step-hotspot-editor__stage');
+  const hotspotImage = form?.querySelector('.riddle-step-hotspot-editor__image');
+  const hotspotZoneEl = form?.querySelector('.riddle-step-hotspot-editor__zone');
+  const hotspotZoneInput = form?.querySelector('[name="hotspot_zone"]');
+  const hotspotClear = form?.querySelector('.riddle-step-hotspot-clear');
   const structureLocked = editor.dataset.structureLocked === '1';
+  const MIN_ZONE = 1.5;
   let dragged = null;
   let savedScroll = 0;
+  let drawState = null;
+
+  const formatZone = zone => {
+    if (!zone) return '';
+    const round = value => {
+      const text = Number(value).toFixed(2);
+      return text.replace(/\.?0+$/, '');
+    };
+    return `${round(zone.x)},${round(zone.y)},${round(zone.w)},${round(zone.h)}`;
+  };
+
+  const parseZone = raw => {
+    const parts = String(raw || '').trim().split(/[\s,;]+/).filter(Boolean);
+    if (parts.length !== 4 || parts.some(part => Number.isNaN(Number(part)))) return null;
+    const [x, y, w, h] = parts.map(Number);
+    if (w < MIN_ZONE || h < MIN_ZONE || x < 0 || y < 0 || x + w > 100.01 || y + h > 100.01) {
+      return null;
+    }
+    return { x, y, w, h };
+  };
+
+  const applyZone = zone => {
+    hotspotZoneInput.value = formatZone(zone);
+    if (!zone) {
+      hotspotZoneEl.hidden = true;
+      hotspotClear.hidden = true;
+      return;
+    }
+    hotspotZoneEl.style.left = `${zone.x}%`;
+    hotspotZoneEl.style.top = `${zone.y}%`;
+    hotspotZoneEl.style.width = `${zone.w}%`;
+    hotspotZoneEl.style.height = `${zone.h}%`;
+    hotspotZoneEl.hidden = false;
+    hotspotClear.hidden = false;
+  };
+
+  const syncHotspotEditor = () => {
+    const hasImage = Boolean(imageInput.value && hotspotImage.getAttribute('src'));
+    const isHotspot = affichageSelect?.value === 'hotspot';
+    hotspotCanvas.hidden = !isHotspot;
+    if (!isHotspot) return;
+    hotspotImage.hidden = !hasImage;
+    if (!hasImage) {
+      applyZone(null);
+    }
+  };
 
   const updateWidgetConfig = () => {
-    if (structureLocked) return;
-    const widget = form.querySelector('[name="widget"]').value;
+    const widgetSelect = form?.querySelector('[name="widget"]');
+    if (!widgetSelect) return;
+    const widget = widgetSelect.value;
     form.querySelectorAll('.riddle-step-widget-config').forEach(config => {
       config.hidden = config.dataset.widget !== widget;
     });
@@ -49,6 +104,15 @@ document.addEventListener('DOMContentLoaded', () => {
     imageInput.value = id;
     imagePreview.innerHTML = url ? `<img src="${url}" alt="">` : '';
     imageRemove.hidden = !url;
+    if (url) {
+      hotspotImage.src = url;
+      hotspotImage.hidden = false;
+    } else {
+      hotspotImage.removeAttribute('src');
+      hotspotImage.hidden = true;
+      applyZone(null);
+    }
+    syncHotspotEditor();
   };
 
   const openForm = async stepId => {
@@ -57,7 +121,10 @@ document.addEventListener('DOMContentLoaded', () => {
     contentEditor.innerHTML = '';
     formFeedback.textContent = '';
     setImage();
+    applyZone(null);
+    if (affichageSelect) affichageSelect.value = 'always';
     updateWidgetConfig();
+    syncHotspotEditor();
     form.querySelector('[name="etape_id"]').value = stepId || '';
     heading.textContent = stepId ? RiddleStepsEdit.texts.editTitle : RiddleStepsEdit.texts.newTitle;
     if (stepId) {
@@ -66,11 +133,13 @@ document.addEventListener('DOMContentLoaded', () => {
         form.querySelector('[name="titre"]').value = step.title;
         contentEditor.innerHTML = step.content;
         setImage(step.image_id || '', step.image_url || '');
-        if (!structureLocked) {
-          form.querySelector('[name="widget"]').value = step.widget || 'click';
-          form.querySelector('[name="button_label"]').value = step.button_label;
+        const widgetSelect = form.querySelector('[name="widget"]');
+        if (widgetSelect) {
+          widgetSelect.value = step.widget || 'click';
+          form.querySelector('[name="button_label"]').value = step.button_label || '';
           form.querySelector('[name="accepted_answers"]').value = step.accepted_answers || '';
-          form.querySelector('[name="case_sensitive"]').checked = Boolean(step.case_sensitive);
+          const caseSensitive = form.querySelector('[name="case_sensitive"]');
+          if (caseSensitive) caseSensitive.checked = Boolean(step.case_sensitive);
           form.querySelector('[name="variants"]').value = step.variants || '';
           form.querySelector('[name="direction_sequences"]').value = step.direction_sequences || '';
           form.querySelector('[name="color_sequences"]').value = step.color_sequences || '';
@@ -81,6 +150,11 @@ document.addEventListener('DOMContentLoaded', () => {
           form.querySelector('[name="gps_tolerance"]').value = step.gps_tolerance || '25';
           updateWidgetConfig();
         }
+        if (affichageSelect) {
+          affichageSelect.value = step.widget_affichage || 'always';
+        }
+        applyZone(parseZone(step.hotspot_zone || ''));
+        syncHotspotEditor();
       } catch (error) {
         feedback.textContent = error.message;
         return;
@@ -122,6 +196,53 @@ document.addEventListener('DOMContentLoaded', () => {
     card.querySelector('.riddle-step-card__content strong').textContent = step.title;
     renumber();
   };
+
+  const relativePoint = event => {
+    const target = hotspotImage?.getAttribute('src') ? hotspotImage : hotspotStage;
+    const rect = target.getBoundingClientRect();
+    if (!rect.width || !rect.height) {
+      return { x: 0, y: 0 };
+    }
+    const x = ((event.clientX - rect.left) / rect.width) * 100;
+    const y = ((event.clientY - rect.top) / rect.height) * 100;
+    return {
+      x: Math.min(100, Math.max(0, x)),
+      y: Math.min(100, Math.max(0, y))
+    };
+  };
+
+  hotspotStage?.addEventListener('pointerdown', event => {
+    if (affichageSelect?.value !== 'hotspot' || !imageInput.value || hotspotImage.hidden) return;
+    event.preventDefault();
+    const point = relativePoint(event);
+    drawState = { startX: point.x, startY: point.y };
+    hotspotStage.setPointerCapture?.(event.pointerId);
+    applyZone({ x: point.x, y: point.y, w: MIN_ZONE, h: MIN_ZONE });
+  });
+
+  hotspotStage?.addEventListener('pointermove', event => {
+    if (!drawState) return;
+    const point = relativePoint(event);
+    const x = Math.min(drawState.startX, point.x);
+    const y = Math.min(drawState.startY, point.y);
+    const w = Math.max(MIN_ZONE, Math.abs(point.x - drawState.startX));
+    const h = Math.max(MIN_ZONE, Math.abs(point.y - drawState.startY));
+    applyZone({
+      x,
+      y,
+      w: Math.min(w, 100 - x),
+      h: Math.min(h, 100 - y)
+    });
+  });
+
+  const endDraw = () => {
+    drawState = null;
+  };
+  hotspotStage?.addEventListener('pointerup', endDraw);
+  hotspotStage?.addEventListener('pointercancel', endDraw);
+
+  affichageSelect?.addEventListener('change', syncHotspotEditor);
+  hotspotClear?.addEventListener('click', () => applyZone(null));
 
   editor.querySelector('.riddle-step-add')?.addEventListener('click', () => openForm(0));
   form?.querySelector('[name="widget"]')?.addEventListener('change', updateWidgetConfig);

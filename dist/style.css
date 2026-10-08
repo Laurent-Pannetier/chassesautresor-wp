@@ -4436,6 +4436,58 @@ a.addtoany_share span {
   border-radius: 6px;
 }
 
+.riddle-step-hotspot-editor__canvas {
+  display: grid;
+  gap: var(--space-xs);
+}
+
+.riddle-step-hotspot-editor__canvas[hidden] {
+  display: none;
+}
+
+.riddle-step-hotspot-editor__stage {
+  position: relative;
+  display: inline-block;
+  width: -moz-fit-content;
+  width: fit-content;
+  max-width: 100%;
+  touch-action: none;
+  cursor: crosshair;
+  border: 1px solid var(--color-editor-border);
+  border-radius: 6px;
+  overflow: hidden;
+  line-height: 0;
+  -webkit-user-select: none;
+     -moz-user-select: none;
+          user-select: none;
+}
+
+.riddle-step-hotspot-editor__image {
+  display: block;
+  width: auto;
+  max-width: min(100%, 28rem);
+  max-height: 360px;
+  height: auto;
+  pointer-events: none;
+}
+
+.riddle-step-hotspot-editor__image[hidden] {
+  display: none;
+}
+
+.riddle-step-hotspot-editor__zone {
+  position: absolute;
+  box-sizing: border-box;
+  border: 2px solid var(--color-primary);
+  border-radius: 4px;
+  background: rgba(232, 140, 90, 0.28);
+  pointer-events: none;
+}
+
+.riddle-step-hotspot-editor__zone[hidden] {
+  display: none;
+}
+
 .riddle-step-form__feedback {
   min-height: 1.5em;
   margin: 0;
@@ -7724,6 +7776,13 @@ li.active .enigme-menu__edit {
   align-items: center;
   padding-block: var(--space-sm);
 }
+.page-enigme--compact .riddle-player-step.has-hotspot.is-widget-only,
+.page-enigme--compact .riddle-player-step.is-hotspot-host[hidden] {
+  display: none !important;
+}
+.page-enigme--compact .participation:has(.riddle-steps-player):not(:has(.riddle-player-step:not([hidden]))):not(:has(.zone-indices)):not(:has(.formulaire-reponse-auto)):not(:has(.formulaire-reponse-manuelle)):not(:has(.message-joueur-statut)) {
+  display: none;
+}
 .page-enigme--compact .riddle-player-step.is-completed {
   opacity: 0.88;
 }
@@ -7826,6 +7885,60 @@ li.active .enigme-menu__edit {
   overflow: visible;
   border-radius: 8px;
   background: rgba(0, 0, 0, 0.18);
+}
+
+.galerie-enigme__nav {
+  position: absolute;
+  top: 50%;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 999px;
+  background: rgba(8, 14, 28, 0.72);
+  color: var(--color-text-primary, #fff);
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  transform: translateY(-50%);
+  transition: opacity 0.2s ease, background-color 0.2s ease;
+}
+
+.galerie-enigme__nav--prev {
+  left: var(--space-xs);
+}
+
+.galerie-enigme__nav--next {
+  right: var(--space-xs);
+}
+
+.galerie-enigme__nav:hover,
+.galerie-enigme__nav:focus-visible {
+  background: rgba(8, 14, 28, 0.9);
+  outline: 2px solid var(--color-accent, #c45c26);
+  outline-offset: 2px;
+}
+
+.galerie-enigme__nav:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.galerie-enigme__pager {
+  display: flex;
+  justify-content: center;
+  margin: 0;
+  color: var(--color-text-secondary, rgba(255, 255, 255, 0.78));
+  font-size: 0.9rem;
+  letter-spacing: 0.02em;
+}
+
+.galerie-enigme__thumb--step {
+  box-shadow: inset 0 0 0 1px rgba(196, 92, 38, 0.45);
 }
 
 .page-enigme--has-steps .hero-visuel {
@@ -8378,6 +8491,25 @@ body.no-scroll {
   margin-inline: auto;
 }
 
+/* Hotspot host with no visible content: form lives in the lightbox overlay. */
+.riddle-player-step.has-hotspot.is-widget-only,
+.riddle-player-step.is-hotspot-host[hidden] {
+  display: none !important;
+}
+
+.riddle-steps-player:not(:has(.riddle-player-step:not([hidden]))) {
+  display: none;
+  margin: 0;
+}
+
+/*
+ * Collapse the participation chrome when it only hosts a hidden hotspot form.
+ * :has() re-evaluates after AJAX unlock appends a visible next step.
+ */
+.participation:has(.riddle-steps-player):not(:has(.riddle-player-step:not([hidden]))):not(:has(.zone-indices)):not(:has(.formulaire-reponse-auto)):not(:has(.formulaire-reponse-manuelle)):not(:has(.message-joueur-statut)) {
+  display: none;
+}
+
 .riddle-player-step label,
 .riddle-player-step__content,
 .riddle-player-step__content p {
@@ -8407,6 +8539,133 @@ body.no-scroll {
 
 .riddle-player-step__zoom .riddle-player-step__image {
   margin-bottom: 0;
+}
+
+/* Hotspot only inside lightbox (native size). Reading view keeps full-image zoom. */
+.enigme-lightbox__hotspot-stage {
+  position: relative;
+  display: inline-block;
+  line-height: 0;
+  max-width: none;
+}
+
+.enigme-lightbox__hotspot-stage .enigme-lightbox__image {
+  display: block;
+  pointer-events: none;
+}
+
+.riddle-gallery-hotspot {
+  position: absolute;
+  z-index: 2;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  cursor: pointer;
+  -webkit-appearance: none;
+     -moz-appearance: none;
+          appearance: none;
+}
+
+.riddle-gallery-hotspot:focus-visible {
+  outline: 2px solid rgba(232, 140, 90, 0.85);
+  outline-offset: 2px;
+}
+
+/* Author display:flex on widget forms overrides the HTML hidden attribute. */
+form.is-hotspot-widget[hidden],
+form.is-hotspot-widget:not(.is-immersive-open) {
+  display: none !important;
+}
+
+.riddle-widget-immersive-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10020;
+  background: rgba(8, 10, 16, 0.78);
+}
+
+body.riddle-widget-immersive-open {
+  overflow: hidden;
+}
+
+form.is-hotspot-widget.is-immersive-open {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 10021;
+  display: flex !important;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+  width: min(100vw - 2rem, 28rem);
+  max-width: min(100vw - 2rem, 28rem);
+  max-height: min(90vh, 40rem);
+  overflow-x: hidden;
+  overflow-y: auto;
+  margin: 0;
+  padding: var(--space-md);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(28, 34, 48, 0.99), rgba(14, 18, 28, 0.98));
+  color: var(--color-text-primary, #f4f1ea);
+  box-shadow: 0 22px 56px rgba(0, 0, 0, 0.55);
+  transform: translate(-50%, -50%);
+  animation: riddle-widget-rise 0.28s ease-out;
+}
+
+form.is-hotspot-widget.is-immersive-open:focus {
+  outline: none;
+}
+
+form.is-hotspot-widget.is-immersive-open:focus-visible {
+  outline: 2px solid rgba(232, 140, 90, 0.75);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  form.is-hotspot-widget.is-immersive-open {
+    animation: none;
+  }
+}
+@keyframes riddle-widget-rise {
+  from {
+    opacity: 0;
+    transform: translate(-50%, calc(-50% + 12px));
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+}
+.riddle-widget-immersive__chrome {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  width: 100%;
+}
+
+.riddle-widget-immersive__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: inherit;
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.riddle-widget-immersive__close:hover,
+.riddle-widget-immersive__close:focus-visible {
+  background: rgba(255, 255, 255, 0.16);
+  outline: none;
 }
 
 .riddle-player-step__status {
@@ -8689,6 +8948,8 @@ body.no-scroll {
 
 .riddle-directions__sequence {
   min-height: 1.5em;
+  max-width: 100%;
+  overflow-wrap: anywhere;
   font-weight: 700;
 }
 
@@ -8781,10 +9042,12 @@ body.no-scroll {
 .riddle-colors__title,
 .riddle-colors__sequence {
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
   gap: 0.35rem;
   min-height: 1.5rem;
   width: 100%;
+  max-width: 100%;
 }
 
 .riddle-color-dot {
@@ -9013,7 +9276,6 @@ body.no-scroll {
 }
 
 .riddle-numbers__title,
-.riddle-numbers__sequence,
 .riddle-safe__title,
 .riddle-safe__sequence {
   display: block;
@@ -9024,17 +9286,30 @@ body.no-scroll {
 
 .riddle-numbers__sequence {
   display: flex;
-  gap: 0.35rem;
+  flex-wrap: wrap;
+  align-items: center;
   justify-content: center;
+  gap: 0.3rem;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  min-height: 1.5em;
+  padding-inline: 0.15rem;
+  overflow-wrap: anywhere;
   font-weight: 700;
+  text-align: center;
 }
 
 .riddle-numbers__sequence span {
-  min-width: 2rem;
-  padding: 0.25rem 0.4rem;
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  min-width: 1.35rem;
+  padding: 0.2rem 0.3rem;
   border-radius: 0.25rem;
   background: #171717;
   color: #fff;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
   text-align: center;
 }
 

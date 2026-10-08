@@ -232,56 +232,223 @@ function enigme_image_display_url(int $image_id, string $size = 'full'): string
 }
 
 /**
+ * Étape courante éligible au point & click (widget révélé depuis la lightbox).
+ */
+function enigme_current_hotspot_step_id(int $enigme_id, int $user_id): int
+{
+    if (
+        $enigme_id <= 0
+        || $user_id <= 0
+        || !class_exists(\ChassesAuTresor\Core\Content\RiddleStepQueryService::class)
+        || !class_exists(\ChassesAuTresor\Core\Support\CoreServiceFactory::class)
+        || !isset($GLOBALS['wpdb'])
+    ) {
+        return 0;
+    }
+
+    $orderedStepIds = (new \ChassesAuTresor\Core\Content\RiddleStepQueryService())
+        ->findOrderedIds($enigme_id);
+    if ($orderedStepIds === []) {
+        return 0;
+    }
+
+    global $wpdb;
+    $state = \ChassesAuTresor\Core\Support\CoreServiceFactory::riddleStepProgress($wpdb)
+        ->getState($user_id, $enigme_id, $orderedStepIds);
+    $currentId = (int) ($state['current_step_id'] ?? 0);
+    if ($currentId <= 0) {
+        return 0;
+    }
+
+    $hotspot = enigme_step_hotspot_for_gallery($currentId);
+    return is_array($hotspot) ? $currentId : 0;
+}
+
+/**
+ * @return array{zone_raw: string, label: string, zone: array{x: float, y: float, w: float, h: float}}|null
+ */
+function enigme_step_hotspot_for_gallery(int $stepId): ?array
+{
+    if (
+        $stepId <= 0
+        || !class_exists(\ChassesAuTresor\Core\Content\RiddleStepHotspotService::class)
+    ) {
+        return null;
+    }
+
+    $hotspot = (new \ChassesAuTresor\Core\Content\RiddleStepHotspotService())->forStep($stepId);
+    if (empty($hotspot['active']) || empty($hotspot['zone']) || ($hotspot['zone_raw'] ?? '') === '') {
+        return null;
+    }
+
+    return [
+        'zone_raw' => (string) $hotspot['zone_raw'],
+        'label' => (string) ($hotspot['label'] ?? __('Zone interactive', 'chassesautresor-com')),
+        'zone' => $hotspot['zone'],
+    ];
+}
+
+/**
+ * Collecte les pages BD débloquées issues des étapes intermédiaires.
+ *
+ * Les images d’étapes visibles (ou toutes les étapes pour un organisateur)
+ * s’ajoutent aux pages de l’énigme dans la galerie principale.
+ *
+ * @param int $enigme_id ID de l’énigme.
+ * @param int $user_id   Joueur ou organisateur courant.
+ * @return array<int, array{image_id:int, step_id:int}>
+ */
+function enigme_collect_step_comic_pages(int $enigme_id, int $user_id): array
+{
+    if ($enigme_id <= 0 || $user_id <= 0) {
+        return [];
+    }
+
+    if (!class_exists(\ChassesAuTresor\Core\Content\RiddleStepQueryService::class)) {
+        return [];
+    }
+
+    $orderedStepIds = (new \ChassesAuTresor\Core\Content\RiddleStepQueryService())
+        ->findOrderedIds($enigme_id);
+    if ($orderedStepIds === []) {
+        return [];
+    }
+
+    $canModify = function_exists('utilisateur_peut_modifier_post')
+        && utilisateur_peut_modifier_post($enigme_id);
+    $visibleStepIds = $orderedStepIds;
+
+    if (!$canModify) {
+        if (
+            !class_exists(\ChassesAuTresor\Core\Support\CoreServiceFactory::class)
+            || !isset($GLOBALS['wpdb'])
+        ) {
+            return [];
+        }
+
+        global $wpdb;
+        $state = \ChassesAuTresor\Core\Support\CoreServiceFactory::riddleStepProgress($wpdb)
+            ->getState($user_id, $enigme_id, $orderedStepIds);
+        $visibleStepIds = array_map('intval', $state['visible_step_ids'] ?? []);
+    }
+
+    $pages = [];
+    $storage = class_exists(\ChassesAuTresor\Core\Media\RiddleStepImageStorageService::class)
+        ? new \ChassesAuTresor\Core\Media\RiddleStepImageStorageService()
+        : null;
+    foreach ($visibleStepIds as $stepId) {
+        $imageId = (int) get_field('etape_image', $stepId);
+        if ($imageId <= 0 || $imageId === ID_IMAGE_PLACEHOLDER_ENIGME) {
+            continue;
+        }
+        // Lazily move legacy public uploads into protected storage (same as save).
+        if ($storage !== null) {
+            $securedId = $storage->ensureProtected($imageId, $enigme_id, (int) $stepId);
+            if ($securedId > 0 && $securedId !== $imageId) {
+                update_field('etape_image', $securedId, $stepId);
+                $imageId = $securedId;
+            }
+        }
+        $pages[] = [
+            'image_id' => $imageId,
+            'step_id' => (int) $stepId,
+        ];
+    }
+
+    return $pages;
+}
+
+/**
  * Affiche une galerie d’images d’une énigme si l’utilisateur y a droit.
  *
- * Une seule image est visible par défaut. Les vignettes permettent de basculer
- * sans défilement. Un clic ouvre l’image en taille d’origine.
+ * Une seule page est visible à la fois (format BD / A4). Les vignettes et
+ * le feuilletage permettent de basculer. Les images d’étapes débloquées
+ * s’ajoutent comme pages supplémentaires après celles de l’énigme.
+ * Un clic ouvre l’image en taille d’origine.
  *
  * Les images sont servies via proxy (/voir-image-enigme) avec tailles adaptées.
  *
- * @param int $enigme_id ID du post de type énigme
+ * @param int      $enigme_id  ID du post de type énigme
+ * @param int|null $user_id    Utilisateur courant (pages d’étapes débloquées)
+ * @param array<int, array{image_id:int, step_id:int}>|null $stepPages
+ *                             Pages d’étapes déjà résolues (tests / injection).
  * @return void
  */
-function afficher_visuels_enigme(int $enigme_id): void
-{
+function afficher_visuels_enigme(
+    int $enigme_id,
+    ?int $user_id = null,
+    ?array $stepPages = null
+): void {
     if (!utilisateur_peut_voir_enigme($enigme_id)) {
         echo '<div class="visuels-proteges">🔒 Les visuels de cette énigme sont protégés.</div>';
         return;
     }
 
     $images = get_field('enigme_visuel_image', $enigme_id);
-    $valid_images = [];
+    $pages = [];
     if (is_array($images)) {
         foreach ($images as $img) {
             $id = (int) ($img['ID'] ?? 0);
             if ($id && $id !== ID_IMAGE_PLACEHOLDER_ENIGME) {
-                $valid_images[] = $id;
+                $pages[] = [
+                    'image_id' => $id,
+                    'step_id' => 0,
+                ];
             }
         }
     }
 
-    if (!$valid_images) {
-        $valid_images[] = ID_IMAGE_PLACEHOLDER_ENIGME;
+    $resolvedUserId = $user_id ?? (int) get_current_user_id();
+    if ($stepPages === null) {
+        $stepPages = enigme_collect_step_comic_pages($enigme_id, $resolvedUserId);
+    }
+    foreach ($stepPages as $stepPage) {
+        $pages[] = $stepPage;
+    }
+
+    if ($pages === []) {
+        $pages[] = [
+            'image_id' => ID_IMAGE_PLACEHOLDER_ENIGME,
+            'step_id' => 0,
+        ];
     }
 
     $caption = (string) get_field('enigme_visuel_legende', $enigme_id);
-    $has_multiple = count($valid_images) > 1;
+    $pageCount = count($pages);
+    $has_multiple = $pageCount > 1;
+    // Toujours ouvrir sur la première page (visuel d’énigme), pas sur la dernière étape.
+    $activeIndex = 0;
     $gallery_id = 'galerie-enigme-' . $enigme_id;
+    $currentHotspotStepId = enigme_current_hotspot_step_id($enigme_id, $resolvedUserId);
 
     echo '<div class="galerie-enigme-wrapper" data-enigme-gallery'
-        . ' id="' . esc_attr($gallery_id) . '">';
+        . ' id="' . esc_attr($gallery_id) . '"'
+        . ' data-gallery-page-count="' . esc_attr((string) $pageCount) . '">';
     echo '<div class="galerie-enigme__stage">';
 
-    foreach ($valid_images as $index => $image_id) {
+    if ($has_multiple) {
+        echo '<button type="button" class="galerie-enigme__nav galerie-enigme__nav--prev"'
+            . ' data-gallery-step="-1"'
+            . ' aria-label="' . esc_attr__('Page précédente', 'chassesautresor-com') . '">'
+            . '<span aria-hidden="true">&lsaquo;</span></button>';
+    }
+
+    foreach ($pages as $index => $page) {
+        $image_id = (int) $page['image_id'];
+        $step_id = (int) $page['step_id'];
         $alt = trim((string) get_post_meta($image_id, '_wp_attachment_image_alt', true));
         if (!$alt) {
-            $alt = $image_id === ID_IMAGE_PLACEHOLDER_ENIGME
-                ? __('Image par défaut de l’énigme', 'chassesautresor-com')
-                : ($caption ?: __('Visuel énigme', 'chassesautresor-com'));
+            if ($image_id === ID_IMAGE_PLACEHOLDER_ENIGME) {
+                $alt = __('Image par défaut de l’énigme', 'chassesautresor-com');
+            } elseif ($step_id > 0) {
+                $alt = __('Page débloquée', 'chassesautresor-com');
+            } else {
+                $alt = $caption ?: __('Visuel énigme', 'chassesautresor-com');
+            }
         }
 
         $full_url = enigme_image_display_url($image_id, 'full');
-        $is_active = $index === 0;
+        $is_active = $index === $activeIndex;
         $slide_id = $gallery_id . '-slide-' . $index;
 
         $classes = 'enigme-image--limited';
@@ -302,14 +469,29 @@ function afficher_visuels_enigme(int $enigme_id): void
         if ($is_active) {
             $figure_classes .= ' is-active';
         }
+        if ($step_id > 0) {
+            $figure_classes .= ' galerie-enigme__slide--step';
+        }
+
+        $hotspot = ($step_id > 0 && $step_id === $currentHotspotStepId)
+            ? enigme_step_hotspot_for_gallery($step_id)
+            : null;
 
         echo '<figure class="' . esc_attr($figure_classes) . '"'
             . ' id="' . esc_attr($slide_id) . '"'
             . ' data-gallery-index="' . esc_attr((string) $index) . '"'
+            . ' data-gallery-image-id="' . esc_attr((string) $image_id) . '"'
+            . ($step_id > 0 ? ' data-gallery-step-id="' . esc_attr((string) $step_id) . '"' : '')
             . ($is_active ? '' : ' hidden') . '>';
+        // Page BD : clic = zoom. Le hotspot n’existe que dans la lightbox 1:1.
         echo '<button type="button" class="enigme-media-zoom"'
             . ' data-enigme-lightbox-src="' . esc_url($full_url) . '"'
             . ' data-enigme-lightbox-alt="' . esc_attr($alt) . '"'
+            . (is_array($hotspot)
+                ? ' data-riddle-hotspot-zone="' . esc_attr($hotspot['zone_raw']) . '"'
+                    . ' data-riddle-hotspot-step="' . esc_attr((string) $step_id) . '"'
+                    . ' data-riddle-hotspot-label="' . esc_attr($hotspot['label']) . '"'
+                : '')
             . ' aria-label="' . esc_attr__('Agrandir l’image en taille originale', 'chassesautresor-com') . '">';
         echo build_picture_enigme($image_id, $alt, ['large', 'full'], $attrs);
         echo '<span class="enigme-media-zoom__hint" aria-hidden="true">'
@@ -318,30 +500,55 @@ function afficher_visuels_enigme(int $enigme_id): void
         echo '</figure>';
     }
 
+    if ($has_multiple) {
+        echo '<button type="button" class="galerie-enigme__nav galerie-enigme__nav--next"'
+            . ' data-gallery-step="1"'
+            . ' aria-label="' . esc_attr__('Page suivante', 'chassesautresor-com') . '">'
+            . '<span aria-hidden="true">&rsaquo;</span></button>';
+    }
+
     echo '</div>';
 
     if ($has_multiple) {
+        echo '<div class="galerie-enigme__pager" aria-live="polite">'
+            . '<span class="galerie-enigme__page-label">'
+            . esc_html(
+                sprintf(
+                    /* translators: 1: current page number, 2: total pages */
+                    __('Page %1$d / %2$d', 'chassesautresor-com'),
+                    $activeIndex + 1,
+                    $pageCount
+                )
+            )
+            . '</span></div>';
+
         echo '<div class="galerie-enigme__thumbs" role="tablist"'
-            . ' aria-label="' . esc_attr__('Vignettes de l’énigme', 'chassesautresor-com') . '">';
-        foreach ($valid_images as $index => $image_id) {
+            . ' aria-label="' . esc_attr__('Pages de l’énigme', 'chassesautresor-com') . '">';
+        foreach ($pages as $index => $page) {
+            $image_id = (int) $page['image_id'];
+            $step_id = (int) $page['step_id'];
             $alt = trim((string) get_post_meta($image_id, '_wp_attachment_image_alt', true));
             if (!$alt) {
-                $alt = $caption ?: __('Visuel énigme', 'chassesautresor-com');
+                $alt = $step_id > 0
+                    ? __('Page débloquée', 'chassesautresor-com')
+                    : ($caption ?: __('Visuel énigme', 'chassesautresor-com'));
             }
             $thumb_url = enigme_image_display_url($image_id, 'thumbnail');
-            $is_active = $index === 0;
+            $is_active = $index === $activeIndex;
             $slide_id = $gallery_id . '-slide-' . $index;
 
             echo '<button type="button" class="galerie-enigme__thumb'
-                . ($is_active ? ' is-active' : '') . '"'
+                . ($is_active ? ' is-active' : '')
+                . ($step_id > 0 ? ' galerie-enigme__thumb--step' : '') . '"'
                 . ' role="tab"'
                 . ' aria-selected="' . ($is_active ? 'true' : 'false') . '"'
                 . ' aria-controls="' . esc_attr($slide_id) . '"'
                 . ' data-gallery-goto="' . esc_attr((string) $index) . '"'
+                . ($step_id > 0 ? ' data-gallery-step-id="' . esc_attr((string) $step_id) . '"' : '')
                 . ' aria-label="' . esc_attr(
                     sprintf(
-                        /* translators: %d: image number starting at 1 */
-                        __('Afficher l’image %d', 'chassesautresor-com'),
+                        /* translators: %d: page number starting at 1 */
+                        __('Afficher la page %d', 'chassesautresor-com'),
                         $index + 1
                     )
                 ) . '">';

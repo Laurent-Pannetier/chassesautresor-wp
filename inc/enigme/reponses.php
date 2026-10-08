@@ -188,6 +188,7 @@ function charger_script_etapes_enigme(): void
         'safeValueLabel' => __('Valeur de la molette', 'chassesautresor-com'),
         'clockwiseLabel' => __('sens horaire', 'chassesautresor-com'),
         'counterclockwiseLabel' => __('sens antihoraire', 'chassesautresor-com'),
+        'closeWidgetLabel' => __('Fermer', 'chassesautresor-com'),
     ]);
 }
 add_action('wp_enqueue_scripts', 'charger_script_etapes_enigme');

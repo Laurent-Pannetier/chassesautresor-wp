@@ -55,10 +55,15 @@ const playPianoNote = (note, delay = 0, key = null) => {
 const initializeGpsWidgets = root => {
   if (typeof window.L === 'undefined' || !root) return;
   const forms = [];
-  if (root.matches?.('.riddle-step-gps-form:not([data-map-ready])')) {
+  const canInit = form => !(
+    form.classList.contains('is-hotspot-widget') && !form.classList.contains('is-immersive-open')
+  );
+  if (root.matches?.('.riddle-step-gps-form:not([data-map-ready])') && canInit(root)) {
     forms.push(root);
   }
-  root.querySelectorAll?.('.riddle-step-gps-form:not([data-map-ready])').forEach(form => forms.push(form));
+  root.querySelectorAll?.('.riddle-step-gps-form:not([data-map-ready])').forEach(form => {
+    if (canInit(form)) forms.push(form);
+  });
   forms.forEach(form => {
     const container = form.querySelector('.riddle-gps__map');
     const latitude = form.querySelector('.riddle-gps__latitude');
@@ -108,11 +113,31 @@ const initializeGpsWidgets = root => {
 };
 
 const hasMeaningfulStepContent = article => {
-  if (article.querySelector('.riddle-player-step__image')) return true;
+  // Les images d’étapes sont des pages de la galerie BD, pas du contenu
+  // affiché dans le bloc d’étape une fois celui-ci terminé.
   const content = article.querySelector('.riddle-player-step__content');
   if (!content) return false;
   if (content.querySelector('img, picture, video, audio, iframe, canvas, svg')) return true;
   return content.textContent.replace(/\u00a0/g, ' ').trim() !== '';
+};
+
+const syncStepPageToGallery = article => {
+  if (!article?.dataset?.stepPagePreview || !article?.dataset?.stepPageFull) {
+    return -1;
+  }
+  if (typeof window.EnigmeGallery?.appendPage !== 'function') {
+    return -1;
+  }
+  return window.EnigmeGallery.appendPage({
+    imageId: article.dataset.stepPageImageId || '',
+    stepId: article.dataset.playerStepId || '',
+    previewUrl: article.dataset.stepPagePreview,
+    fullUrl: article.dataset.stepPageFull,
+    thumbUrl: article.dataset.stepPageThumb || article.dataset.stepPagePreview,
+    alt: article.dataset.stepPageAlt || '',
+    hotspotZone: article.dataset.riddleHotspotZone || '',
+    hotspotLabel: article.dataset.riddleHotspotLabel || ''
+  });
 };
 
 const positionRiddleStepTarget = async target => {
@@ -136,30 +161,152 @@ const positionRiddleStepTarget = async target => {
   window.requestAnimationFrame(() => window.requestAnimationFrame(() => position('auto')));
 };
 
+let immersiveIgnoreUntil = 0;
+const hotspotHomes = new WeakMap();
+
+const closeImmersiveWidget = form => {
+  if (!form?.classList.contains('is-hotspot-widget')) return;
+  form.hidden = true;
+  form.setAttribute('hidden', '');
+  form.classList.remove('is-immersive-open');
+  document.body.classList.remove('riddle-widget-immersive-open');
+  document.querySelector('.riddle-widget-immersive-backdrop')?.remove();
+  const home = hotspotHomes.get(form);
+  if (home?.parent?.isConnected) {
+    home.parent.insertBefore(form, home.nextSibling);
+  }
+  hotspotHomes.delete(form);
+};
+
+const openImmersiveWidget = form => {
+  if (!form?.classList.contains('is-hotspot-widget')) return;
+  if (form.classList.contains('is-immersive-open')) return;
+
+  if (!hotspotHomes.has(form)) {
+    hotspotHomes.set(form, {
+      parent: form.parentElement,
+      nextSibling: form.nextSibling
+    });
+  }
+  document.body.appendChild(form);
+
+  let backdrop = document.querySelector('.riddle-widget-immersive-backdrop');
+  if (!backdrop) {
+    backdrop = document.createElement('div');
+    backdrop.className = 'riddle-widget-immersive-backdrop';
+    document.body.appendChild(backdrop);
+    // Ignore the opening click (and its bubble) so the modal does not instantly close.
+    immersiveIgnoreUntil = Date.now() + 400;
+    window.setTimeout(() => {
+      backdrop.addEventListener('click', event => {
+        if (Date.now() < immersiveIgnoreUntil) return;
+        if (event.target === backdrop) closeImmersiveWidget(form);
+      });
+    }, 0);
+  }
+
+  form.hidden = false;
+  form.removeAttribute('hidden');
+  form.classList.add('is-immersive-open');
+  document.body.classList.add('riddle-widget-immersive-open');
+  initializeGpsWidgets(form);
+  // Focus the shell, not the first keypad key (avoids a pre-selected "1" / NW).
+  if (!form.hasAttribute('tabindex')) form.setAttribute('tabindex', '-1');
+  form.focus({ preventScroll: true });
+};
+
+const parseHotspotZone = raw => {
+  const parts = String(raw || '').trim().split(/[\s,;]+/).filter(Boolean).map(Number);
+  if (parts.length !== 4 || parts.some(value => !Number.isFinite(value))) return null;
+  const [x, y, w, h] = parts;
+  if (w <= 0 || h <= 0) return null;
+  return { x, y, w, h };
+};
+
+const pointInHotspotZone = (event, stage) => {
+  const image = stage.querySelector('img');
+  const zone = parseHotspotZone(stage.dataset.riddleHotspotZone || '');
+  if (!image || !zone) return false;
+  const rect = image.getBoundingClientRect();
+  if (!rect.width || !rect.height) return false;
+  const x = ((event.clientX - rect.left) / rect.width) * 100;
+  const y = ((event.clientY - rect.top) / rect.height) * 100;
+  return x >= zone.x && x <= zone.x + zone.w && y >= zone.y && y <= zone.y + zone.h;
+};
+
+const findHotspotWidgetForm = (stepId = '') => {
+  if (stepId) {
+    const byStep = document.querySelector(
+      `.riddle-player-step[data-player-step-id="${stepId}"] form.is-hotspot-widget`
+    );
+    if (byStep) return byStep;
+    const portaled = [...document.querySelectorAll('form.is-hotspot-widget')].find(form => (
+      form.querySelector(`input[name="etape_id"][value="${stepId}"]`)
+    ));
+    if (portaled) return portaled;
+  }
+  return document.querySelector('.riddle-player-step.is-current form.is-hotspot-widget')
+    || document.querySelector('form.is-hotspot-widget.is-immersive-open');
+};
+
+const resolveStepArticleForForm = form => {
+  const nested = form.closest('.riddle-player-step');
+  if (nested) return nested;
+
+  const home = hotspotHomes.get(form);
+  if (home?.parent?.closest) {
+    const fromHome = home.parent.closest('.riddle-player-step');
+    if (fromHome) return fromHome;
+  }
+
+  const stepId = form.querySelector('input[name="etape_id"]')?.value || '';
+  if (!stepId) return null;
+  return document.querySelector(`.riddle-player-step[data-player-step-id="${stepId}"]`);
+};
+
+const closeLightboxIfOpen = () => {
+  document.querySelector('.enigme-lightbox-overlay')?.remove();
+  document.body.classList.remove('no-scroll');
+};
+
 const unlockRiddleStepContent = (form, data) => {
   if (!data.response_html) return null;
   const parsed = new DOMParser().parseFromString(data.response_html, 'text/html');
-  const currentArticle = form.closest('.riddle-player-step');
-  const player = currentArticle?.closest('.riddle-steps-player');
-  if (!currentArticle || !player) return null;
+  const currentArticle = resolveStepArticleForForm(form);
+  const player = currentArticle?.closest('.riddle-steps-player')
+    || document.querySelector('.riddle-steps-player');
 
-  form.remove();
-  currentArticle.classList.remove('is-current');
-  currentArticle.classList.add('is-completed');
-  const emptyCompletedStep = !hasMeaningfulStepContent(currentArticle);
-  if (emptyCompletedStep) currentArticle.remove();
+  closeImmersiveWidget(form);
+  closeLightboxIfOpen();
+  if (form.isConnected) form.remove();
+
+  if (currentArticle?.isConnected) {
+    currentArticle.classList.remove('is-current');
+    currentArticle.classList.add('is-completed');
+    if (!hasMeaningfulStepContent(currentArticle)) currentArticle.remove();
+  }
+
+  if (!player) return null;
 
   if (data.current_step_id) {
     const selector = `[data-player-step-id="${data.current_step_id}"]`;
+    const existingNext = player.querySelector(selector);
+    if (existingNext) return existingNext;
     const nextArticle = parsed.querySelector(selector);
-    if (!nextArticle || player.querySelector(selector)) return null;
+    if (!nextArticle) return null;
     player.append(nextArticle);
     initializeGpsWidgets(nextArticle);
+    syncStepPageToGallery(nextArticle);
     return nextArticle;
   }
 
+  const existingFinal = document.querySelector('.formulaire-reponse-auto, .formulaire-reponse-manuelle');
+  if (existingFinal) {
+    document.dispatchEvent(new CustomEvent('riddle-step-content-updated'));
+    return existingFinal;
+  }
   const finalForm = parsed.querySelector('.formulaire-reponse-auto, .formulaire-reponse-manuelle');
-  if (!finalForm) return emptyCompletedStep ? player : currentArticle;
+  if (!finalForm) return player;
   player.insertAdjacentElement('afterend', finalForm);
   initializeGpsWidgets(finalForm);
   const manualFeedback = parsed.querySelector('.formulaire-reponse-manuelle + .reponse-feedback');
@@ -190,10 +337,69 @@ document.addEventListener('DOMContentLoaded', async () => {
   await positionRiddleStepTarget(target);
 });
 
+document.addEventListener('click', event => {
+  if (Date.now() < immersiveIgnoreUntil && event.target.closest('.riddle-widget-immersive-backdrop')) {
+    event.preventDefault();
+    event.stopPropagation();
+    return;
+  }
+
+  const closeTrigger = event.target.closest('[data-riddle-close-widget]');
+  if (closeTrigger) {
+    event.preventDefault();
+    const form = closeTrigger.closest('form.is-hotspot-widget');
+    if (form) closeImmersiveWidget(form);
+    return;
+  }
+
+  if (event.target.closest('[data-enigme-lightbox-src]')) {
+    return;
+  }
+
+  const openTrigger = event.target.closest('[data-riddle-open-widget]');
+  const stage = event.target.closest('[data-riddle-hotspot-zone]');
+  if (!openTrigger && !stage) return;
+
+  const host = (openTrigger || stage)?.closest(
+    '[data-riddle-hotspot-step], [data-gallery-step-id]'
+  );
+  const stepId = host?.dataset?.riddleHotspotStep
+    || host?.dataset?.galleryStepId
+    || stage?.dataset?.riddleHotspotStep
+    || '';
+  const form = findHotspotWidgetForm(stepId);
+  if (!form) return;
+
+  if (openTrigger) {
+    event.preventDefault();
+    event.stopPropagation();
+    openImmersiveWidget(form);
+    return;
+  }
+
+  if (stage && pointInHotspotZone(event, stage)) {
+    event.preventDefault();
+    event.stopPropagation();
+    openImmersiveWidget(form);
+  }
+}, true);
+
+document.addEventListener('keydown', event => {
+  if (event.key !== 'Escape') return;
+  const openForm = document.querySelector('form.is-hotspot-widget.is-immersive-open');
+  if (openForm) {
+    event.preventDefault();
+    closeImmersiveWidget(openForm);
+  }
+});
+
 document.addEventListener('submit', async event => {
   const form = event.target.closest('.riddle-step-click-form, .riddle-step-text-form');
   if (!form || typeof RiddleStepPlayer === 'undefined') return;
   event.preventDefault();
+  // Guard against stacked listeners (tests) and double-submit.
+  if (form.dataset.riddleSubmitLock === '1') return;
+  form.dataset.riddleSubmitLock = '1';
   const button = form.querySelector('button[type="submit"]');
   const feedback = form.querySelector('.riddle-step-click-form__feedback');
   const hintStorageKey = window.buildRiddleHintStorageKey?.(form) || '';
@@ -250,10 +456,19 @@ document.addEventListener('submit', async event => {
       window.clearRiddleSessionHint?.(hintStorageKey);
     }
     const target = unlockRiddleStepContent(form, result.data);
-    if (!target) throw new Error(RiddleStepPlayer.error);
+    if (!target) {
+      // Server already advanced; reload rather than leave the overlay stuck
+      // with a false "wrong answer" and a later "step unavailable".
+      window.location.reload();
+      return;
+    }
     focusUnlockedContent(target);
-    target.scrollIntoView({
-      behavior: window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+    const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    const gallery = window.EnigmeGallery?.getGallery?.();
+    const revealedPage = target.dataset?.stepPagePreview ? gallery : null;
+    const scrollTarget = revealedPage || target;
+    scrollTarget.scrollIntoView({
+      behavior: reducedMotion ? 'auto' : 'smooth',
       block: 'start'
     });
   } catch (error) {
@@ -274,6 +489,7 @@ document.addEventListener('submit', async event => {
     if (form.isConnected) {
       form.setAttribute('aria-busy', 'false');
       button.disabled = keepDisabled;
+      delete form.dataset.riddleSubmitLock;
     }
   }
 });

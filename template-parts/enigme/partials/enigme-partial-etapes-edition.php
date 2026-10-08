@@ -139,57 +139,106 @@ if ($riddleId > 0) {
           ); ?>
         </p>
       </div>
-      <?php if (!$structureLocked) : ?>
-        <?php $widgetDefinitions = (new ChassesAuTresor\Core\Progress\AnswerWidgetEditorViewService())->widgets(); ?>
-        <fieldset class="riddle-step-form__field">
-          <legend><?= esc_html__('Réponse de l’étape', 'chassesautresor-com'); ?></legend>
-          <label for="riddle-step-widget"><?= esc_html__('Mode de réponse', 'chassesautresor-com'); ?></label>
-          <select id="riddle-step-widget" name="widget">
-            <?php foreach ($widgetDefinitions as $widgetDefinition) : ?>
-              <option value="<?= esc_attr($widgetDefinition['type']); ?>">
-                <?= esc_html($widgetDefinition['label']); ?>
-              </option>
-            <?php endforeach; ?>
-          </select>
-          <?php foreach ($widgetDefinitions as $widgetIndex => $widgetDefinition) : ?>
-            <div
-              class="riddle-step-widget-config"
-              data-widget="<?= esc_attr($widgetDefinition['type']); ?>"
-              <?= $widgetIndex === 0 ? '' : 'hidden'; ?>
-            >
-              <?php foreach ($widgetDefinition['fields'] as $field) : ?>
-                <?php $fieldId = 'riddle-step-' . str_replace('_', '-', $field['name']); ?>
-                <?php if ($field['control'] === 'checkbox') : ?>
-                  <label>
-                    <input type="checkbox" name="<?= esc_attr($field['name']); ?>" value="1">
-                    <?= esc_html($field['label']); ?>
-                  </label>
-                <?php else : ?>
-                  <label for="<?= esc_attr($fieldId); ?>"><?= esc_html($field['label']); ?></label>
-                  <?php if ($field['control'] === 'textarea') : ?>
-                    <textarea
-                      id="<?= esc_attr($fieldId); ?>"
-                      name="<?= esc_attr($field['name']); ?>"
-                      rows="<?= esc_attr($field['rows'] ?? 4); ?>"
-                    ></textarea>
-                  <?php else : ?>
-                    <input
-                      id="<?= esc_attr($fieldId); ?>"
-                      name="<?= esc_attr($field['name']); ?>"
-                      type="text"
-                      maxlength="<?= esc_attr($field['maxlength'] ?? 120); ?>"
-                      value="<?= esc_attr($field['default'] ?? ''); ?>"
-                    >
-                  <?php endif; ?>
-                <?php endif; ?>
-                <?php if (!empty($field['help'])) : ?>
-                  <p class="txt-small"><?= esc_html($field['help']); ?></p>
-                <?php endif; ?>
-              <?php endforeach; ?>
-            </div>
+      <?php
+      $widgetDefinitions = (new ChassesAuTresor\Core\Progress\AnswerWidgetEditorViewService())->widgets();
+      $widgetReadonly = $structureLocked ? 'disabled' : '';
+      ?>
+      <fieldset class="riddle-step-form__field" data-widget-readonly="<?= $structureLocked ? '1' : '0'; ?>">
+        <legend><?= esc_html__('Réponse de l’étape', 'chassesautresor-com'); ?></legend>
+        <?php if ($structureLocked) : ?>
+          <p class="txt-small">
+            <?= esc_html__(
+                'Le parcours a commencé : le type de widget et ses réponses sont en lecture seule. Vous pouvez encore modifier le texte, l’image et la présentation ci-dessous.',
+                'chassesautresor-com'
+            ); ?>
+          </p>
+        <?php endif; ?>
+        <label for="riddle-step-widget"><?= esc_html__('Mode de réponse', 'chassesautresor-com'); ?></label>
+        <select id="riddle-step-widget" name="widget" <?= esc_attr($widgetReadonly); ?>>
+          <?php foreach ($widgetDefinitions as $widgetDefinition) : ?>
+            <option value="<?= esc_attr($widgetDefinition['type']); ?>">
+              <?= esc_html($widgetDefinition['label']); ?>
+            </option>
           <?php endforeach; ?>
-        </fieldset>
-      <?php endif; ?>
+        </select>
+        <?php foreach ($widgetDefinitions as $widgetIndex => $widgetDefinition) : ?>
+          <div
+            class="riddle-step-widget-config"
+            data-widget="<?= esc_attr($widgetDefinition['type']); ?>"
+            <?= $widgetIndex === 0 ? '' : 'hidden'; ?>
+          >
+            <?php foreach ($widgetDefinition['fields'] as $field) : ?>
+              <?php $fieldId = 'riddle-step-' . str_replace('_', '-', $field['name']); ?>
+              <?php if ($field['control'] === 'checkbox') : ?>
+                <label>
+                  <input
+                    type="checkbox"
+                    name="<?= esc_attr($field['name']); ?>"
+                    value="1"
+                    <?= esc_attr($widgetReadonly); ?>
+                  >
+                  <?= esc_html($field['label']); ?>
+                </label>
+              <?php else : ?>
+                <label for="<?= esc_attr($fieldId); ?>"><?= esc_html($field['label']); ?></label>
+                <?php if ($field['control'] === 'textarea') : ?>
+                  <textarea
+                    id="<?= esc_attr($fieldId); ?>"
+                    name="<?= esc_attr($field['name']); ?>"
+                    rows="<?= esc_attr($field['rows'] ?? 4); ?>"
+                    <?= esc_attr($widgetReadonly); ?>
+                  ></textarea>
+                <?php else : ?>
+                  <input
+                    id="<?= esc_attr($fieldId); ?>"
+                    name="<?= esc_attr($field['name']); ?>"
+                    type="text"
+                    maxlength="<?= esc_attr($field['maxlength'] ?? 120); ?>"
+                    value="<?= esc_attr($field['default'] ?? ''); ?>"
+                    <?= esc_attr($widgetReadonly); ?>
+                  >
+                <?php endif; ?>
+              <?php endif; ?>
+              <?php if (!empty($field['help'])) : ?>
+                <p class="txt-small"><?= esc_html($field['help']); ?></p>
+              <?php endif; ?>
+            <?php endforeach; ?>
+          </div>
+        <?php endforeach; ?>
+      </fieldset>
+      <fieldset class="riddle-step-form__field riddle-step-hotspot-editor">
+        <legend><?= esc_html__('Présentation interactive', 'chassesautresor-com'); ?></legend>
+        <label for="riddle-step-widget-affichage">
+          <?= esc_html__('Affichage du widget choisi ci-dessus', 'chassesautresor-com'); ?>
+        </label>
+        <select id="riddle-step-widget-affichage" name="widget_affichage">
+          <option value="always"><?= esc_html__('Toujours visible sous l’image', 'chassesautresor-com'); ?></option>
+          <option value="hotspot"><?= esc_html__('Point & click : clic sur une zone de l’image', 'chassesautresor-com'); ?></option>
+        </select>
+        <p class="txt-small">
+          <?= esc_html__(
+              'Ce réglage ne change pas le type de widget. En point & click, la page BD garde le zoom ; le joueur découvre la zone invisible dans l’image en taille originale.',
+              'chassesautresor-com'
+          ); ?>
+        </p>
+        <input type="hidden" name="hotspot_label" value="">
+        <div class="riddle-step-hotspot-editor__canvas" hidden>
+          <p class="txt-small">
+            <?= esc_html__(
+                'Cliquez-glissez sur le détail interactif (molette, clavier, serrure…) pour tracer une zone précise.',
+                'chassesautresor-com'
+            ); ?>
+          </p>
+          <div class="riddle-step-hotspot-editor__stage">
+            <img class="riddle-step-hotspot-editor__image" alt="" draggable="false" hidden>
+            <div class="riddle-step-hotspot-editor__zone" hidden></div>
+          </div>
+          <input type="hidden" name="hotspot_zone" value="">
+          <button type="button" class="bouton-texte riddle-step-hotspot-clear" hidden>
+            <?= esc_html__('Effacer la zone', 'chassesautresor-com'); ?>
+          </button>
+        </div>
+      </fieldset>
       <p class="riddle-step-form__feedback" role="alert" aria-live="assertive"></p>
       <div class="riddle-step-form__actions">
         <button type="button" class="bouton-secondaire riddle-step-cancel">

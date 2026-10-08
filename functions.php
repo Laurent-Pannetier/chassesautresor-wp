@@ -500,6 +500,12 @@ add_action('wp_enqueue_scripts', function () {
             'nativeSizeLabel' => __('Image en taille originale', 'chassesautresor-com'),
             'wrongEyebrow' => __('Accès refusé', 'chassesautresor-com'),
             'hintEyebrow' => __('Piste', 'chassesautresor-com'),
+            'pageLabel' => __('Page %1$d / %2$d', 'chassesautresor-com'),
+            'prevPageLabel' => __('Page précédente', 'chassesautresor-com'),
+            'nextPageLabel' => __('Page suivante', 'chassesautresor-com'),
+            'pagesListLabel' => __('Pages de l’énigme', 'chassesautresor-com'),
+            'showPageLabel' => __('Afficher la page %d', 'chassesautresor-com'),
+            'zoomHint' => __('Agrandir', 'chassesautresor-com'),
         ]);
     }
     $sidebar_dir = $theme_uri . '/assets/sidebar/';
