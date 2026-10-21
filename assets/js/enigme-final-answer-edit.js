@@ -38,21 +38,38 @@ document.addEventListener('DOMContentLoaded', () => {
     return values;
   };
 
-  editButton?.addEventListener('click', () => {
-    feedback.textContent = '';
+  const shellMode = !!document.querySelector('.shell-edition');
+  let answerBaseline = null;
+
+  const applyAnswerValues = (values) => {
+    const widget = form.querySelector('[name="widget"]');
+    if (widget && values.widget) widget.value = values.widget;
     updateWidgetConfig();
-    showForm(true);
-  });
+    const config = form.querySelector(
+      `.riddle-final-answer-widget-config[data-widget="${widget?.value || ''}"]`
+    );
+    config?.querySelectorAll('input, textarea, select').forEach(field => {
+      if (!field.name) return;
+      if (field.type === 'checkbox') {
+        field.checked = values[field.name] === '1';
+        return;
+      }
+      field.value = Object.prototype.hasOwnProperty.call(values, field.name) ? values[field.name] : '';
+    });
+  };
 
-  form?.querySelector('.riddle-final-answer-cancel')?.addEventListener('click', () => {
-    feedback.textContent = '';
-    showForm(false);
-  });
+  const captureAnswerBaseline = () => {
+    answerBaseline = collectValues();
+    window.ctaShellEditionSave?.setExtra('reponse-finale', false);
+  };
 
-  form?.querySelector('[name="widget"]')?.addEventListener('change', updateWidgetConfig);
+  const markAnswerDraft = () => {
+    if (!shellMode || !window.ctaShellEditionSave || !answerBaseline) return;
+    const dirty = JSON.stringify(collectValues()) !== JSON.stringify(answerBaseline);
+    window.ctaShellEditionSave.setExtra('reponse-finale', dirty);
+  };
 
-  form?.addEventListener('submit', async event => {
-    event.preventDefault();
+  const persistAnswer = async () => {
     feedback.textContent = '';
     const values = collectValues();
     const data = new URLSearchParams({
@@ -61,39 +78,99 @@ document.addEventListener('DOMContentLoaded', () => {
       enigme_id: RiddleFinalAnswerEdit.riddleId,
       ...values,
     });
+    const response = await fetch(RiddleFinalAnswerEdit.ajaxUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: data,
+    });
+    const result = await response.json();
+    if (!result.success) {
+      throw new Error(result.data?.message || RiddleFinalAnswerEdit.texts.error);
+    }
+    if (label) label.textContent = result.data.summary || label.textContent;
+    const incomplete = summary?.querySelector('.riddle-final-answer-editor__notice');
+    if (result.data.complete) {
+      incomplete?.remove();
+      row?.classList.remove('champ-vide', 'champ-attention');
+      row?.classList.add('champ-rempli');
+    } else if (!incomplete && summary) {
+      const notice = document.createElement('span');
+      notice.className = 'riddle-final-answer-editor__notice';
+      notice.textContent = RiddleFinalAnswerEdit.texts.incomplete;
+      const editButtonInSummary = summary.querySelector('.riddle-final-answer-edit');
+      if (editButtonInSummary) {
+        summary.insertBefore(notice, editButtonInSummary);
+      } else {
+        summary.appendChild(notice);
+      }
+      row?.classList.add('champ-vide');
+      row?.classList.remove('champ-rempli');
+    }
+    if (typeof window.forcerRecalculStatutEnigme === 'function') {
+      window.forcerRecalculStatutEnigme(RiddleFinalAnswerEdit.riddleId);
+    }
+    if (typeof window.mettreAJourResumeInfos === 'function') {
+      window.mettreAJourResumeInfos();
+    }
+    return result;
+  };
+
+  editButton?.addEventListener('click', () => {
+    feedback.textContent = '';
+    updateWidgetConfig();
+    showForm(true);
+  });
+
+  form?.querySelector('.riddle-final-answer-cancel')?.addEventListener('click', () => {
+    if (shellMode && window.ctaShellEditionSave?.hasExtra('reponse-finale')) {
+      window.ctaShellEditionSave.restoreExtra('reponse-finale');
+    }
+    feedback.textContent = '';
+    showForm(false);
+  });
+
+  form?.querySelector('[name="widget"]')?.addEventListener('change', () => {
+    updateWidgetConfig();
+    markAnswerDraft();
+  });
+  if (shellMode && window.ctaShellEditionSave) {
+    form?.addEventListener('input', markAnswerDraft);
+    form?.addEventListener('change', markAnswerDraft);
+    form?.querySelector('button[type="submit"]')?.setAttribute('hidden', '');
+    captureAnswerBaseline();
+    window.ctaShellEditionSave?.registerExtra('reponse-finale', {
+      async save() {
+        try {
+          await persistAnswer();
+          captureAnswerBaseline();
+          showForm(false);
+          return true;
+        } catch (error) {
+          feedback.textContent = error instanceof Error && error.message
+            ? error.message
+            : RiddleFinalAnswerEdit.texts.error;
+          throw error;
+        }
+      },
+      restore() {
+        if (!answerBaseline) return;
+        applyAnswerValues(answerBaseline);
+        feedback.textContent = '';
+      },
+    });
+  }
+
+  form?.addEventListener('submit', async event => {
+    event.preventDefault();
+    if (shellMode && window.ctaShellEditionSave) {
+      window.ctaShellEditionSave.save();
+      return;
+    }
     const submit = form.querySelector('button[type="submit"]');
     submit.disabled = true;
     try {
-      const response = await fetch(RiddleFinalAnswerEdit.ajaxUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: data,
-      });
-      const result = await response.json();
-      if (!result.success) {
-        throw new Error(result.data?.message || RiddleFinalAnswerEdit.texts.error);
-      }
-      if (label) label.textContent = result.data.summary || label.textContent;
-      const incomplete = summary?.querySelector('.champ-ajout-image');
-      if (result.data.complete) {
-        incomplete?.remove();
-        row?.classList.remove('champ-vide', 'champ-attention');
-        row?.classList.add('champ-rempli');
-      } else if (!incomplete && summary) {
-        const notice = document.createElement('span');
-        notice.className = 'champ-ajout-image';
-        notice.textContent = RiddleFinalAnswerEdit.texts.incomplete;
-        summary.appendChild(notice);
-        row?.classList.add('champ-vide');
-        row?.classList.remove('champ-rempli');
-      }
+      await persistAnswer();
       showForm(false);
-      if (typeof window.forcerRecalculStatutEnigme === 'function') {
-        window.forcerRecalculStatutEnigme(RiddleFinalAnswerEdit.riddleId);
-      }
-      if (typeof window.mettreAJourResumeInfos === 'function') {
-        window.mettreAJourResumeInfos();
-      }
     } catch (error) {
       feedback.textContent = error instanceof Error && error.message
         ? error.message

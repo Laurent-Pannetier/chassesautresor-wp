@@ -43,14 +43,20 @@ function get_enigme_picture_breakpoints(): array
 /**
  * Génère le HTML d'un bloc <picture> pour un ID d'image donné.
  *
- * @param int   $image_id     ID de l'image.
- * @param string $alt         Texte alternatif.
- * @param array $sizes        Tailles WordPress à utiliser (la plus grande en dernier).
- * @param array $img_attrs    Attributs supplémentaires pour la balise <img> finale.
+ * @param int    $image_id  ID de l'image.
+ * @param string $alt       Texte alternatif.
+ * @param array  $sizes     Tailles WordPress à utiliser (la plus grande en dernier).
+ * @param array  $img_attrs Attributs supplémentaires pour la balise <img> finale.
+ * @param string $floor     Plus petite taille à inclure. Vide = vignette (comportement historique).
  * @return string
  */
-function build_picture_enigme(int $image_id, string $alt, array $sizes, array $img_attrs = []): string
-{
+function build_picture_enigme(
+    int $image_id,
+    string $alt,
+    array $sizes,
+    array $img_attrs = [],
+    string $floor = ''
+): string {
     $breakpoints = get_enigme_picture_breakpoints();
     $order = ['thumbnail', 'medium', 'large', 'full'];
 
@@ -64,11 +70,25 @@ function build_picture_enigme(int $image_id, string $alt, array $sizes, array $i
         $sizes = ['full'];
     }
 
+    $floor_index = 0;
+    if ($floor !== '' && in_array($floor, $order, true)) {
+        $floor_index = (int) array_search($floor, $order, true);
+    }
+
     $largest_index = max(array_map(
         static fn (string $size): int => (int) array_search($size, $order, true),
         $sizes
     ));
-    $sizes = array_values(array_intersect(array_slice($order, 0, $largest_index + 1), $valid_sizes));
+    if ($largest_index < $floor_index) {
+        $largest_index = $floor_index;
+    }
+    $sizes = array_values(array_intersect(
+        array_slice($order, $floor_index, $largest_index - $floor_index + 1),
+        $valid_sizes
+    ));
+    if (!$sizes) {
+        $sizes = ['full'];
+    }
 
     usort(
         $sizes,
@@ -111,16 +131,20 @@ function build_picture_enigme(int $image_id, string $alt, array $sizes, array $i
             return file_exists($webp_path) ? esc_url($webp_url) : '';
         };
     } else {
-        $url_builder = static function (int $id, string $size): string {
+        $url_builder = static function (int $id, string $size, string $format = ''): string {
             if (function_exists('cta_voir_image_enigme_url')) {
-                return esc_url(cta_voir_image_enigme_url($id, $size));
+                return esc_url(cta_voir_image_enigme_url($id, $size, null, $format));
             }
-            return esc_url(add_query_arg([
+            $args = [
                 'id'     => $id,
                 'taille' => $size,
-            ], site_url('/voir-image-enigme')));
+            ];
+            if ($format === 'webp') {
+                $args['fmt'] = 'webp';
+            }
+            return esc_url(add_query_arg($args, site_url('/voir-image-enigme')));
         };
-        // WebP is served by the proxy when a sibling .webp exists: never expose uploads/ URLs.
+        // WebP is a distinct signed URL. Clients that cannot decode it keep the original source.
         $webp_builder = static function (int $id, string $size) use ($can_webp, $url_builder): string {
             if (!$can_webp) {
                 return '';
@@ -136,7 +160,7 @@ function build_picture_enigme(int $image_id, string $alt, array $sizes, array $i
             if (!is_string($webp_path) || $webp_path === $path || !file_exists($webp_path)) {
                 return '';
             }
-            return $url_builder($id, $size);
+            return $url_builder($id, $size, 'webp');
         };
     }
 
@@ -181,7 +205,13 @@ function build_picture_enigme(int $image_id, string $alt, array $sizes, array $i
         $img_attrs['height'] = $dimensions[2];
     }
 
-    $img_attrs['loading'] = 'lazy';
+    $img_attrs['loading'] = ($img_attrs['loading'] ?? '') === 'eager' ? 'eager' : 'lazy';
+    if (!isset($img_attrs['decoding'])) {
+        $img_attrs['decoding'] = 'async';
+    }
+    if (!isset($img_attrs['referrerpolicy'])) {
+        $img_attrs['referrerpolicy'] = 'no-referrer';
+    }
     if (!isset($img_attrs['sizes'])) {
         $img_attrs['sizes'] = '(min-width:1025px) 400px, (min-width:769px) 300px, (min-width:481px) 200px, 100vw';
     }
@@ -229,63 +259,6 @@ function enigme_image_display_url(int $image_id, string $size = 'full'): string
         ],
         site_url('/voir-image-enigme')
     );
-}
-
-/**
- * Étape courante éligible au point & click (widget révélé depuis la lightbox).
- */
-function enigme_current_hotspot_step_id(int $enigme_id, int $user_id): int
-{
-    if (
-        $enigme_id <= 0
-        || $user_id <= 0
-        || !class_exists(\ChassesAuTresor\Core\Content\RiddleStepQueryService::class)
-        || !class_exists(\ChassesAuTresor\Core\Support\CoreServiceFactory::class)
-        || !isset($GLOBALS['wpdb'])
-    ) {
-        return 0;
-    }
-
-    $orderedStepIds = (new \ChassesAuTresor\Core\Content\RiddleStepQueryService())
-        ->findOrderedIds($enigme_id);
-    if ($orderedStepIds === []) {
-        return 0;
-    }
-
-    global $wpdb;
-    $state = \ChassesAuTresor\Core\Support\CoreServiceFactory::riddleStepProgress($wpdb)
-        ->getState($user_id, $enigme_id, $orderedStepIds);
-    $currentId = (int) ($state['current_step_id'] ?? 0);
-    if ($currentId <= 0) {
-        return 0;
-    }
-
-    $hotspot = enigme_step_hotspot_for_gallery($currentId);
-    return is_array($hotspot) ? $currentId : 0;
-}
-
-/**
- * @return array{zone_raw: string, label: string, zone: array{x: float, y: float, w: float, h: float}}|null
- */
-function enigme_step_hotspot_for_gallery(int $stepId): ?array
-{
-    if (
-        $stepId <= 0
-        || !class_exists(\ChassesAuTresor\Core\Content\RiddleStepHotspotService::class)
-    ) {
-        return null;
-    }
-
-    $hotspot = (new \ChassesAuTresor\Core\Content\RiddleStepHotspotService())->forStep($stepId);
-    if (empty($hotspot['active']) || empty($hotspot['zone']) || ($hotspot['zone_raw'] ?? '') === '') {
-        return null;
-    }
-
-    return [
-        'zone_raw' => (string) $hotspot['zone_raw'],
-        'label' => (string) ($hotspot['label'] ?? __('Zone interactive', 'chassesautresor-com')),
-        'zone' => $hotspot['zone'],
-    ];
 }
 
 /**
@@ -361,10 +334,11 @@ function enigme_collect_step_comic_pages(int $enigme_id, int $user_id): array
 /**
  * Affiche une galerie d’images d’une énigme si l’utilisateur y a droit.
  *
- * Une seule page est visible à la fois (format BD / A4). Les vignettes et
- * le feuilletage permettent de basculer. Les images d’étapes débloquées
- * s’ajoutent comme pages supplémentaires après celles de l’énigme.
- * Un clic ouvre l’image en taille d’origine.
+ * Une seule page 16:9 (1920 × 1080) est visible à la fois, plein cadre.
+ * Le feuilletage se fait au glissement, au clavier, ou avec les flèches
+ * au survol. Un tap affiche le bandeau (Répondre, indices, numéro de page).
+ * Un double tap ou un pincement ouvre l’image en taille d’origine.
+ * Les images d’étapes débloquées s’ajoutent comme pages suivantes.
  *
  * Les images sont servies via proxy (/voir-image-enigme) avec tailles adaptées.
  *
@@ -419,9 +393,8 @@ function afficher_visuels_enigme(
     // Toujours ouvrir sur la première page (visuel d’énigme), pas sur la dernière étape.
     $activeIndex = 0;
     $gallery_id = 'galerie-enigme-' . $enigme_id;
-    $currentHotspotStepId = enigme_current_hotspot_step_id($enigme_id, $resolvedUserId);
 
-    echo '<div class="galerie-enigme-wrapper" data-enigme-gallery'
+    echo '<div class="galerie-enigme-wrapper" data-enigme-gallery data-comic-reader'
         . ' id="' . esc_attr($gallery_id) . '"'
         . ' data-gallery-page-count="' . esc_attr((string) $pageCount) . '">';
     echo '<div class="galerie-enigme__stage">';
@@ -458,11 +431,15 @@ function afficher_visuels_enigme(
 
         $attrs = [
             'class' => $classes,
-            'sizes' => '(min-width:1025px) 920px, 100vw',
+            'sizes' => '100vw',
+            'decoding' => 'async',
+            'referrerpolicy' => 'no-referrer',
         ];
 
         if ($is_active) {
             $attrs['id'] = 'image-enigme-active';
+            $attrs['loading'] = 'eager';
+            $attrs['fetchpriority'] = 'high';
         }
 
         $figure_classes = 'image-principale galerie-enigme__slide';
@@ -473,27 +450,17 @@ function afficher_visuels_enigme(
             $figure_classes .= ' galerie-enigme__slide--step';
         }
 
-        $hotspot = ($step_id > 0 && $step_id === $currentHotspotStepId)
-            ? enigme_step_hotspot_for_gallery($step_id)
-            : null;
-
         echo '<figure class="' . esc_attr($figure_classes) . '"'
             . ' id="' . esc_attr($slide_id) . '"'
             . ' data-gallery-index="' . esc_attr((string) $index) . '"'
             . ' data-gallery-image-id="' . esc_attr((string) $image_id) . '"'
             . ($step_id > 0 ? ' data-gallery-step-id="' . esc_attr((string) $step_id) . '"' : '')
             . ($is_active ? '' : ' hidden') . '>';
-        // Page BD : clic = zoom. Le hotspot n’existe que dans la lightbox 1:1.
         echo '<button type="button" class="enigme-media-zoom"'
             . ' data-enigme-lightbox-src="' . esc_url($full_url) . '"'
             . ' data-enigme-lightbox-alt="' . esc_attr($alt) . '"'
-            . (is_array($hotspot)
-                ? ' data-riddle-hotspot-zone="' . esc_attr($hotspot['zone_raw']) . '"'
-                    . ' data-riddle-hotspot-step="' . esc_attr((string) $step_id) . '"'
-                    . ' data-riddle-hotspot-label="' . esc_attr($hotspot['label']) . '"'
-                : '')
             . ' aria-label="' . esc_attr__('Agrandir l’image en taille originale', 'chassesautresor-com') . '">';
-        echo build_picture_enigme($image_id, $alt, ['large', 'full'], $attrs);
+        echo build_picture_enigme($image_id, $alt, ['large', 'full'], $attrs, 'large');
         echo '<span class="enigme-media-zoom__hint" aria-hidden="true">'
             . esc_html__('Agrandir', 'chassesautresor-com') . '</span>';
         echo '</button>';
@@ -553,7 +520,8 @@ function afficher_visuels_enigme(
                     )
                 ) . '">';
             if ($thumb_url !== '') {
-                echo '<img src="' . esc_url($thumb_url) . '" alt="" loading="lazy" width="72" height="72">';
+                echo '<img src="' . esc_url($thumb_url) . '" alt="" loading="lazy" decoding="async"'
+                    . ' referrerpolicy="no-referrer" width="72" height="72">';
             }
             echo '</button>';
         }

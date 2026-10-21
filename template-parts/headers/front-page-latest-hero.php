@@ -19,6 +19,7 @@ $cta_html    = $args['cta_html'] ?? '';
 $cta_message = $args['cta_message'] ?? '';
 $single_hunt = !empty($args['single_hunt']);
 $demo_mode   = !empty($args['demo_mode']);
+$start_line  = isset($args['start_line']) ? (string) $args['start_line'] : '';
 ?>
 <section
   class="bandeau-hero bandeau-hero--latest-chasse<?php echo $single_hunt ? ' is-home-hero-visible' : ''; ?>"
@@ -45,6 +46,9 @@ $demo_mode   = !empty($args['demo_mode']);
         <h1 class="hero-title"><?php echo esc_html($titre); ?></h1>
       <?php else : ?>
         <h2 class="hero-title"><?php echo esc_html($titre); ?></h2>
+      <?php endif; ?>
+      <?php if ($single_hunt && $start_line !== '') : ?>
+        <p class="hero-start"><?php echo esc_html($start_line); ?></p>
       <?php endif; ?>
       <?php if ($description) : ?>
         <p class="hero-description"><?php echo esc_html($description); ?></p>

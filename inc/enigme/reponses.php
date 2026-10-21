@@ -15,6 +15,51 @@ defined('ABSPATH') || exit;
 
 
     /**
+     * Libellé du bouton qui ouvre le widget. Le coût, s’il existe, reste lisible
+     * sans déplier le widget.
+     */
+    function cat_reponse_launcher_label(int $cost = 0): string
+    {
+        if ($cost > 0) {
+            return sprintf(
+                /* translators: %d: point cost of one attempt. */
+                __('Répondre · %d pts', 'chassesautresor-com'),
+                $cost
+            );
+        }
+
+        return __('Répondre', 'chassesautresor-com');
+    }
+
+    /**
+     * Ouvre le conteneur du bouton « Répondre ». Le formulaire qui suit est masqué
+     * jusqu’au clic, puis affiché en volet.
+     */
+    function cat_reponse_launcher_open(string $key, string $label): string
+    {
+        return '<div class="reponse-launcher">'
+            . '<button type="button" class="bouton-cta reponse-launcher__open"'
+            . ' data-riddle-open-widget'
+            . ' data-riddle-reply-key="' . esc_attr($key) . '">'
+            . esc_html($label)
+            . '</button>';
+    }
+
+    function cat_reponse_widget_chrome(): string
+    {
+        return '<div class="riddle-widget-immersive__chrome">'
+            . '<button type="button" class="riddle-widget-immersive__close"'
+            . ' data-riddle-close-widget'
+            . ' aria-label="' . esc_attr__('Fermer', 'chassesautresor-com') . '">'
+            . '×</button></div>';
+    }
+
+    function cat_reponse_launcher_close(): string
+    {
+        return '</div>';
+    }
+
+    /**
      * Affiche le formulaire de réponse manuelle pour une énigme.
      *
      * @param int $enigme_id L'ID de l'énigme.
@@ -61,17 +106,25 @@ defined('ABSPATH') || exit;
             (int) $user_id,
             (int) $enigme_id
         );
+        $reply_key = 'manual-' . (int) $enigme_id;
         ob_start();
+        echo cat_reponse_launcher_open(
+            $reply_key,
+            cat_reponse_launcher_label((int) $data['cout'])
+        );
     ?>
     <form
         method="post"
-        class="bloc-reponse formulaire-reponse-manuelle"
+        class="bloc-reponse formulaire-reponse-manuelle is-reply-widget"
+        data-riddle-reply-key="<?php echo esc_attr($reply_key); ?>"
         data-cout="<?php echo esc_attr($data['cout']); ?>"
         data-solde-avant="<?php echo esc_attr($data['solde_avant']); ?>"
         data-solde-apres="<?php echo esc_attr($data['solde_apres']); ?>"
         data-seuil="<?php echo esc_attr($data['seuil']); ?>"
         data-retry-state="<?php echo esc_attr(wp_json_encode($retry_state)); ?>"
+        hidden
     >
+        <?php echo cat_reponse_widget_chrome(); ?>
         <h3><?php echo $badge_html . esc_html__('Votre réponse', 'chassesautresor-com'); ?></h3>
         <?php if ($data['points_manquants'] > 0) : ?>
             <p class="message-limite" data-points="manquants">
@@ -97,9 +150,10 @@ defined('ABSPATH') || exit;
                 <?php echo esc_html(sprintf(__('Solde : %1$d → %2$d pts', 'chassesautresor-com'), $data['solde_avant'], $data['solde_apres'])); ?>
             </p>
         <?php endif; ?>
+        <div class="reponse-feedback" style="display:none"></div>
     </form>
-    <div class="reponse-feedback" style="display:none"></div>
     <?php
+        echo cat_reponse_launcher_close();
         return ob_get_clean();
     }
 

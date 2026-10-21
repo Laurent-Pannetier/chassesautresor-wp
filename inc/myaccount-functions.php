@@ -37,6 +37,31 @@ function myaccount_user_is_player(?WP_User $user = null): bool
 }
 
 /**
+ * Organizers and administrators get the Outils entry. Players do not.
+ */
+function cta_shell_user_sees_outils(?WP_User $user = null): bool
+{
+    $user = $user instanceof WP_User ? $user : wp_get_current_user();
+
+    return $user instanceof WP_User
+        && (int) $user->ID > 0
+        && !myaccount_user_is_player($user);
+}
+
+/**
+ * Whether the current account user is an administrator.
+ */
+function cta_shell_user_is_administrator(?WP_User $user = null): bool
+{
+    $user = $user instanceof WP_User ? $user : wp_get_current_user();
+    if (!$user instanceof WP_User || (int) $user->ID <= 0) {
+        return false;
+    }
+
+    return in_array('administrator', (array) $user->roles, true);
+}
+
+/**
  * Register the Tentatives WooCommerce account endpoint.
  */
 function myaccount_register_account_endpoints(): void
@@ -88,6 +113,115 @@ function myaccount_unhook_dashboard_attempts(): void
 add_action('init', 'myaccount_unhook_dashboard_attempts', 20);
 
 /**
+ * Slug of a shell page requested by its public path.
+ */
+function cta_shell_request_slug(): string
+{
+    if (!isset($_SERVER['REQUEST_URI']) || !function_exists('wp_parse_url')) {
+        return '';
+    }
+
+    $request = (string) $_SERVER['REQUEST_URI'];
+    if (function_exists('wp_unslash')) {
+        $request = (string) wp_unslash($request);
+    }
+
+    $path = wp_parse_url($request, PHP_URL_PATH);
+    $path = is_string($path) ? strtolower(trim($path, '/')) : '';
+    if (function_exists('home_url')) {
+        $homePath = wp_parse_url(home_url('/'), PHP_URL_PATH);
+        $homePath = is_string($homePath) ? strtolower(trim($homePath, '/')) : '';
+        if ($homePath !== '' && ($path === $homePath || strpos($path, $homePath . '/') === 0)) {
+            $path = trim(substr($path, strlen($homePath)), '/');
+        }
+    }
+    $allowed = ['progression', 'reglement', 'trophees', 'outils', 'points', 'equipe', 'notifications'];
+
+    return in_array($path, $allowed, true) ? $path : '';
+}
+
+/**
+ * Permalink of a published page, when that page already exists.
+ */
+function cta_shell_published_page_url(string $slug): string
+{
+    if ($slug === '' || !function_exists('get_page_by_path') || !function_exists('get_permalink')) {
+        return '';
+    }
+
+    $page = get_page_by_path($slug);
+    if (!$page instanceof WP_Post) {
+        return '';
+    }
+    if (function_exists('get_post_status') && get_post_status($page) !== 'publish') {
+        return '';
+    }
+
+    $link = get_permalink($page);
+
+    return is_string($link) ? $link : '';
+}
+
+/**
+ * Public URL of a shell destination.
+ *
+ * Progression and Règlement reuse a published page when one exists.
+ * Otherwise they stay on an empty location, like the requested placeholders.
+ */
+function cta_shell_location_url(string $slug): string
+{
+    if (in_array($slug, ['progression', 'reglement'], true)) {
+        $existing = cta_shell_published_page_url($slug);
+        if ($existing !== '') {
+            return $existing;
+        }
+    }
+
+    if (function_exists('home_url')) {
+        return home_url('/' . $slug . '/');
+    }
+
+    return '/' . $slug . '/';
+}
+
+/**
+ * Whether the current request matches a shell destination.
+ */
+function cta_shell_location_is_current(string $slug): bool
+{
+    if (cta_shell_request_slug() === $slug) {
+        return true;
+    }
+
+    return function_exists('is_page') && is_page($slug);
+}
+
+/**
+ * @return array<string, mixed>
+ */
+function cta_shell_nav_item(
+    string $key,
+    string $label,
+    string $icon,
+    string $url,
+    bool $active,
+    string $group,
+    bool $section = false
+): array {
+    return [
+        'key'      => $key,
+        'endpoint' => $key,
+        'label'    => $label,
+        'icon'     => $icon,
+        'url'      => $url,
+        'active'   => $active,
+        'current'  => $active,
+        'section'  => $section,
+        'group'    => $group,
+    ];
+}
+
+/**
  * Build the primary sidebar navigation items for the current user.
  *
  * @param WP_User|null $user Current user.
@@ -96,43 +230,172 @@ add_action('init', 'myaccount_unhook_dashboard_attempts', 20);
 function myaccount_get_sidebar_nav_items(?WP_User $user = null): array
 {
     $user = $user instanceof WP_User ? $user : wp_get_current_user();
+    if (!$user instanceof WP_User) {
+        return [];
+    }
+    $singleHunt = function_exists('cat_is_single_hunt_mode') && cat_is_single_hunt_mode();
+    $slug = cta_shell_request_slug();
     $is_settings = function_exists('is_wc_endpoint_url')
-        && (is_wc_endpoint_url('edit-account') || is_wc_endpoint_url('orders') || is_wc_endpoint_url('edit-address'));
-    $is_tentatives = function_exists('is_wc_endpoint_url') && is_wc_endpoint_url('tentatives');
-    $is_home = function_exists('is_account_page')
+        && (
+            is_wc_endpoint_url('edit-account')
+            || is_wc_endpoint_url('orders')
+            || is_wc_endpoint_url('edit-address')
+        );
+    $isAccountRoot = function_exists('is_account_page')
         && is_account_page()
+        && function_exists('is_wc_endpoint_url')
         && !is_wc_endpoint_url()
         && empty($_GET['section']);
+    if ($singleHunt && $isAccountRoot && $slug === '') {
+        $is_settings = true;
+    }
+    $is_home = $slug === '' && (
+        $singleHunt
+            ? (function_exists('is_front_page') && is_front_page())
+            : $isAccountRoot
+    );
+    $homeUrl = $singleHunt && function_exists('home_url')
+        ? home_url('/')
+        : wc_get_account_endpoint_url('dashboard');
+    $profileUrl = $singleHunt
+        ? wc_get_account_endpoint_url('dashboard')
+        : wc_get_account_endpoint_url('edit-account');
 
     $items = [
-        [
-            'endpoint' => 'dashboard',
-            'label'    => __('Accueil', 'chassesautresor-com'),
-            'icon'     => 'fas fa-home',
-            'url'      => wc_get_account_endpoint_url('dashboard'),
-            'active'   => $is_home,
-        ],
+        cta_shell_nav_item(
+            'accueil',
+            __('Accueil', 'chassesautresor-com'),
+            'home',
+            $homeUrl,
+            $is_home,
+            'primary'
+        ),
+        cta_shell_nav_item(
+            'progression',
+            __('Progression', 'chassesautresor-com'),
+            'progression',
+            cta_shell_location_url('progression'),
+            cta_shell_location_is_current('progression'),
+            'primary'
+        ),
+        cta_shell_nav_item(
+            'trophees',
+            __('Trophées', 'chassesautresor-com'),
+            'trophy',
+            cta_shell_location_url('trophees'),
+            cta_shell_location_is_current('trophees'),
+            'primary'
+        ),
+        cta_shell_nav_item(
+            'points',
+            __('Points', 'chassesautresor-com'),
+            'points',
+            cta_shell_location_url('points'),
+            cta_shell_location_is_current('points'),
+            'primary'
+        ),
+        cta_shell_nav_item(
+            'equipe',
+            __('Équipe', 'chassesautresor-com'),
+            'team',
+            cta_shell_location_url('equipe'),
+            cta_shell_location_is_current('equipe'),
+            'primary'
+        ),
     ];
 
-    if (myaccount_user_is_player($user)) {
-        $items[] = [
-            'endpoint' => 'tentatives',
-            'label'    => __('Tentatives', 'chassesautresor-com'),
-            'icon'     => 'fas fa-list-check',
-            'url'      => wc_get_account_endpoint_url('tentatives'),
-            'active'   => $is_tentatives,
-        ];
+    if (cta_shell_user_sees_outils($user)) {
+        $outilsOpen = cta_shell_location_is_current('outils');
+        $editing = function_exists('cta_shell_edition_target') && cta_shell_edition_target() !== null;
+        $items[] = cta_shell_nav_item(
+            'outils',
+            __('Outils', 'chassesautresor-com'),
+            'tools',
+            cta_shell_location_url('outils'),
+            $outilsOpen && !$editing,
+            'primary',
+            $outilsOpen && $editing
+        );
     }
 
-    $items[] = [
-        'endpoint' => 'edit-account',
-        'label'    => __('Profil', 'chassesautresor-com'),
-        'icon'     => 'fas fa-user',
-        'url'      => wc_get_account_endpoint_url('edit-account'),
-        'active'   => $is_settings,
-    ];
+    $items[] = cta_shell_nav_item(
+        'profil',
+        __('Profil', 'chassesautresor-com'),
+        'profile',
+        $profileUrl,
+        $is_settings,
+        'personal'
+    );
+    $items[] = cta_shell_nav_item(
+        'reglement',
+        __('Règlement', 'chassesautresor-com'),
+        'rules',
+        cta_shell_location_url('reglement'),
+        cta_shell_location_is_current('reglement'),
+        'personal'
+    );
+    $items[] = cta_shell_nav_item(
+        'notifications',
+        __('Notifications', 'chassesautresor-com'),
+        'notifications',
+        cta_shell_location_url('notifications'),
+        cta_shell_location_is_current('notifications'),
+        'personal'
+    );
 
     return $items;
+}
+
+/**
+ * Plain single-line address, so billing and shipping can be compared.
+ */
+function myaccount_plain_address(string $address): string
+{
+    $text = preg_replace('/<br\s*\/?>/i', ' ', $address);
+    $text = function_exists('wp_strip_all_tags') ? wp_strip_all_tags((string) $text) : strip_tags((string) $text);
+    $text = html_entity_decode((string) $text, ENT_QUOTES, 'UTF-8');
+    $text = preg_replace('/\s+/u', ' ', (string) $text);
+
+    return trim((string) $text);
+}
+
+/**
+ * True when both formatted addresses describe the same place, including both empty.
+ */
+function myaccount_addresses_match(string $billing, string $shipping): bool
+{
+    return myaccount_plain_address($billing) === myaccount_plain_address($shipping);
+}
+
+/**
+ * Last WooCommerce activity date for the account caption, or an empty string.
+ */
+function myaccount_format_last_active(int $user_id): string
+{
+    if ($user_id <= 0 || !function_exists('get_user_meta')) {
+        return '';
+    }
+
+    $last_active_raw = get_user_meta($user_id, 'wc_last_active', true);
+    if (!$last_active_raw) {
+        return '';
+    }
+
+    $last_active_timestamp = is_numeric($last_active_raw)
+        ? absint($last_active_raw)
+        : strtotime((string) $last_active_raw);
+    if (empty($last_active_timestamp)) {
+        return '';
+    }
+
+    $locale = function_exists('determine_locale') ? determine_locale() : get_locale();
+    $date_format = strpos((string) $locale, 'fr_') === 0 ? 'd/m/Y' : 'n/j/Y';
+
+    if (function_exists('wp_date')) {
+        return (string) wp_date($date_format, $last_active_timestamp);
+    }
+
+    return (string) date_i18n($date_format, $last_active_timestamp);
 }
 
 /**
@@ -173,11 +436,44 @@ function myaccount_render_dashboard_placeholder(string $title, string $message):
 }
 
 /**
+ * The Edit / Activate switch lives on the account home, and on the front page
+ * once a single-hunt organizer or administrator cockpit is shown there.
+ */
+function myaccount_hunt_lifecycle_switch_is_needed(): bool
+{
+    if (!is_user_logged_in()) {
+        return false;
+    }
+
+    if (
+        function_exists('cta_shell_request_slug')
+        && cta_shell_request_slug() === 'outils'
+        && cta_shell_user_sees_outils()
+    ) {
+        return true;
+    }
+
+    if (function_exists('is_account_page') && is_account_page()) {
+        return true;
+    }
+
+    if (!function_exists('is_front_page') || !is_front_page()) {
+        return false;
+    }
+
+    if (!function_exists('cat_single_hunt_home_audience')) {
+        return false;
+    }
+
+    return in_array(cat_single_hunt_home_audience(), ['organisateur', 'admin'], true);
+}
+
+/**
  * Enqueue account-home lifecycle switch assets.
  */
 function myaccount_enqueue_hunt_lifecycle_switch(): void
 {
-    if (!is_account_page() || !is_user_logged_in()) {
+    if (!myaccount_hunt_lifecycle_switch_is_needed()) {
         return;
     }
 
@@ -241,12 +537,18 @@ function myaccount_enqueue_header_account_menu(): void
         'header-account-menu',
         'ctaHeaderAccountMenu',
         [
-            'accountUrl'  => wc_get_account_endpoint_url('dashboard'),
-            'settingsUrl' => wc_get_account_endpoint_url('edit-account'),
+            'accountUrl'  => (function_exists('cat_is_single_hunt_mode') && cat_is_single_hunt_mode())
+                ? home_url('/')
+                : wc_get_account_endpoint_url('dashboard'),
+            'settingsUrl' => (function_exists('cat_is_single_hunt_mode') && cat_is_single_hunt_mode())
+                ? wc_get_account_endpoint_url('dashboard')
+                : wc_get_account_endpoint_url('edit-account'),
             'logoutUrl'   => wc_logout_url(),
             'labels'      => [
                 'menu'     => __('Menu du compte', 'chassesautresor-com'),
-                'account'  => __('Mon compte', 'chassesautresor-com'),
+                'account'  => (function_exists('cat_is_single_hunt_mode') && cat_is_single_hunt_mode())
+                    ? __('Accueil', 'chassesautresor-com')
+                    : __('Mon compte', 'chassesautresor-com'),
                 'settings' => __('Profil', 'chassesautresor-com'),
                 'logout'   => __('Déconnexion', 'chassesautresor-com'),
             ],
@@ -306,9 +608,16 @@ function myaccount_get_organizer_nav(int $user_id): ?array
             continue;
         }
 
+        $huntUrl = get_permalink($chasse->ID);
+        if (function_exists('cat_is_single_hunt_mode') && cat_is_single_hunt_mode()) {
+            $huntUrl = function_exists('cat_single_hunt_enigmas_url')
+                ? cat_single_hunt_enigmas_url()
+                : home_url('/#enigmes');
+        }
+
         $chasse_item = [
             'title'        => get_the_title($chasse->ID),
-            'url'          => get_permalink($chasse->ID),
+            'url'          => $huntUrl,
             'classes'      => $presentation['classes'],
             'pending_icon' => $presentation['pending_icon'],
             'enigmes'      => [],

@@ -693,4 +693,48 @@ class MyAccountMessagesTest extends TestCase
 
         unset($_GET['section']);
     }
+
+    /**
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     */
+    public function test_hunt_state_notices_stay_hidden_outside_platform_mode(): void
+    {
+        function cat_is_platform_mode(): bool
+        {
+            return false;
+        }
+
+        update_user_meta(
+            1,
+            '_myaccount_flash_messages',
+            [[
+                'text' => 'Votre demande de validation pour la chasse « Antre de feu » a été acceptée.',
+                'type' => 'success',
+            ]]
+        );
+        update_user_meta(
+            1,
+            '_myaccount_messages',
+            [
+                'correction_chasse_12' => [
+                    'text' => 'Votre demande de validation pour la chasse « Antre de feu » '
+                        . 'nécessite des corrections.',
+                    'type' => 'warning',
+                ],
+                'foo' => ['text' => 'Persiste', 'type' => 'info'],
+            ]
+        );
+
+        $output = myaccount_get_important_messages();
+
+        $this->assertStringNotContainsString('a été acceptée', $output);
+        $this->assertStringNotContainsString('nécessite des corrections', $output);
+        $this->assertStringNotContainsString('Chasse à valider', $output);
+        $this->assertStringContainsString('Persiste', $output);
+        $this->assertArrayNotHasKey(
+            'correction_chasse_12',
+            get_user_meta(1, '_myaccount_messages', true)
+        );
+    }
 }

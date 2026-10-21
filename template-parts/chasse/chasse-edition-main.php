@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Template Part: Panneau d'édition frontale d'une chasse
+ * Template Part: Édition d'une chasse dans le dashboard
  * Requiert : $args['chasse_id']
  */
 
@@ -83,12 +83,11 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
 
     <div class="edition-panel-header">
         <div class="edition-panel-header-top">
-            <h2>
+            <h1>
                 <i class="fa-solid fa-gear"></i>
-                <?= esc_html__('Panneau d\'édition chasse', 'chassesautresor-com'); ?> :
+                <?= esc_html__('Édition chasse', 'chassesautresor-com'); ?> :
                 <span class="titre-objet" data-cpt="chasse"><?= esc_html($titre); ?></span>
-            </h2>
-            <button type="button" class="panneau-fermer" aria-label="Fermer les paramètres">✖</button>
+            </h1>
         </div>
         <div class="edition-tabs">
           <button class="edition-tab active" data-target="chasse-tab-param"><?= esc_html__('Paramètres', 'chassesautresor-com'); ?></button>
@@ -242,37 +241,78 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
                             <?php
                         },
                         'content' => function () use ($description, $peut_editer, $chasse_id) {
+                            $inlineDescription = $peut_editer
+                                && function_exists('cta_shell_edition_target')
+                                && cta_shell_edition_target() !== null
+                                && function_exists('acf_form');
                             ?>
                             <div class="champ-texte">
                                 <?php if (empty(trim($description))) : ?>
                                     <?php if ($peut_editer) : ?>
-                                        <a href="#" class="champ-ajouter ouvrir-panneau-description"
+                                        <button type="button" class="champ-ajouter ouvrir-panneau-description"
                                             data-cpt="chasse"
                                             data-champ="chasse_principale_description"
-                                            data-post-id="<?= esc_attr($chasse_id); ?>">
+                                            data-post-id="<?= esc_attr($chasse_id); ?>"
+                                            <?php if ($inlineDescription) : ?>
+                                                aria-expanded="false"
+                                            <?php endif; ?>>
                                             <?= esc_html__('ajouter', 'chassesautresor-com'); ?>
-                                        </a>
+                                        </button>
                                     <?php endif; ?>
                                 <?php else : ?>
                                     <span class="champ-texte-contenu">
                                         <?= esc_html(wp_trim_words(wp_strip_all_tags($description), 25)); ?>
-                                        <?php if ($peut_editer) : ?>
-                                            <button type="button"
-                                                class="champ-modifier ouvrir-panneau-description"
-                                                data-cpt="chasse"
-                                                data-champ="chasse_principale_description"
-                                                data-post-id="<?= esc_attr($chasse_id); ?>"
-                                                aria-label="<?= esc_attr__(
-                                                    'Modifier la description',
-                                                    'chassesautresor-com'
-                                                ); ?>"
-                                            >
-                                                <?= esc_html__('modifier', 'chassesautresor-com'); ?>
-                                            </button>
-                                        <?php endif; ?>
                                     </span>
+                                    <?php if ($peut_editer) : ?>
+                                        <button type="button"
+                                            class="champ-modifier ouvrir-panneau-description"
+                                            data-cpt="chasse"
+                                            data-champ="chasse_principale_description"
+                                            data-post-id="<?= esc_attr($chasse_id); ?>"
+                                            <?php if ($inlineDescription) : ?>
+                                                aria-expanded="false"
+                                            <?php endif; ?>
+                                            aria-label="<?= esc_attr__(
+                                                'Modifier la description',
+                                                'chassesautresor-com'
+                                            ); ?>"
+                                        >
+                                            <?= esc_html__('modifier', 'chassesautresor-com'); ?>
+                                        </button>
+                                    <?php endif; ?>
                                 <?php endif; ?>
                             </div>
+                            <?php if ($inlineDescription) : ?>
+                                <div class="champ-texte-editeur" hidden>
+                                    <?php
+                                    $prepareDescription = static function (array $field): array {
+                                        $class = trim(($field['wrapper']['class'] ?? '') . ' acf-hide-label');
+                                        $field['wrapper']['class'] = $class;
+                                        $field['delay'] = 1;
+
+                                        return $field;
+                                    };
+                                    add_filter(
+                                        'acf/prepare_field/name=chasse_principale_description',
+                                        $prepareDescription
+                                    );
+                                    acf_form([
+                                        'post_id' => $chasse_id,
+                                        'fields' => ['chasse_principale_description'],
+                                        'form' => false,
+                                        'honeypot' => false,
+                                        'uploader' => 'wp',
+                                        'html_before_fields' => '',
+                                        'html_after_fields' => '',
+                                        'updated_message' => false,
+                                    ]);
+                                    remove_filter(
+                                        'acf/prepare_field/name=chasse_principale_description',
+                                        $prepareDescription
+                                    );
+                                    ?>
+                                </div>
+                            <?php endif; ?>
                             <div class="champ-feedback"></div>
                             <?php
                         },
@@ -314,6 +354,14 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
                                 $desc_court .= '…';
                             }
                             ?>
+                            <?php
+                            $inlineRecompense = $peut_editer
+                                && function_exists('cta_shell_edition_target')
+                                && cta_shell_edition_target() !== null;
+                            $valeurSaisie = ($valeur !== '' && $valeur !== null)
+                                ? (string) (0 + $valeur)
+                                : '';
+                            ?>
                             <div class="champ-texte">
                                 <?php if ($recompense_remplie) : ?>
                                     <span class="champ-texte-contenu">
@@ -336,6 +384,9 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
                                         data-champ="chasse_infos_recompense_valeur"
                                         data-cpt="chasse"
                                         data-post-id="<?= esc_attr($chasse_id); ?>"
+                                        <?php if ($inlineRecompense) : ?>
+                                            aria-expanded="false"
+                                        <?php endif; ?>
                                         aria-label="<?= esc_attr__(
                                             $recompense_remplie ? 'Modifier la récompense' : 'Ajouter la récompense',
                                             'chassesautresor-com'
@@ -348,6 +399,30 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
                                     </button>
                                 <?php endif; ?>
                             </div>
+                            <?php if ($inlineRecompense) : ?>
+                                <div class="champ-recompense-editeur" hidden>
+                                    <label for="champ-recompense-titre">
+                                        <?= esc_html__('Titre de la récompense', 'chassesautresor-com'); ?>
+                                    </label>
+                                    <input id="champ-recompense-titre" type="text" maxlength="40"
+                                        value="<?= esc_attr($titre_recompense); ?>">
+                                    <label for="champ-recompense-texte">
+                                        <?= esc_html__('Description de la récompense', 'chassesautresor-com'); ?>
+                                    </label>
+                                    <textarea id="champ-recompense-texte" rows="4"><?php
+                                        echo esc_textarea(wp_strip_all_tags((string) $recompense));
+                                    ?></textarea>
+                                    <label for="champ-recompense-valeur">
+                                        <?= esc_html__('Valeur en euros (€)', 'chassesautresor-com'); ?>
+                                    </label>
+                                    <input id="champ-recompense-valeur" type="number" min="0" max="5000000"
+                                        step="0.01" inputmode="decimal" value="<?= esc_attr($valeurSaisie); ?>">
+                                    <button type="button" id="bouton-supprimer-recompense"
+                                        class="bouton-texte secondaire">
+                                        <?= esc_html__('Supprimer la récompense', 'chassesautresor-com'); ?>
+                                    </button>
+                                </div>
+                            <?php endif; ?>
                             <div class="champ-feedback"></div>
                             <?php
                         },
@@ -786,7 +861,12 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
       ?>
         <div class="edition-panel-body">
           <div class="stats-header" style="display:flex;align-items:center;justify-content:flex-end;gap:1rem;">
-            <a href="?edition=open&amp;tab=stats" class="stats-reset"><i class="fa-solid fa-rotate-right"></i> <?= esc_html__('Actualiser', 'chassesautresor-com'); ?></a>
+            <?php
+            $statsRefresh = function_exists('cta_shell_edition_url')
+                ? cta_shell_edition_url('chasse', (int) $chasse_id, 'stats')
+                : '?edition=open&tab=stats';
+            ?>
+            <a href="<?= esc_url($statsRefresh); ?>" class="stats-reset"><i class="fa-solid fa-rotate-right"></i> <?= esc_html__('Actualiser', 'chassesautresor-com'); ?></a>
             <div class="stats-filtres">
               <label for="chasse-periode"><?= esc_html__('Période :', 'chassesautresor-com'); ?></label>
               <select id="chasse-periode">
@@ -944,15 +1024,3 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
   </section>
 <?php endif; ?>
 
-<?php
-// 📎 Panneaux contextuels (description, liens, etc.)
-get_template_part('template-parts/chasse/panneaux/chasse-edition-description', null, [
-  'chasse_id' => $chasse_id
-]);
-get_template_part('template-parts/chasse/panneaux/chasse-edition-recompense', null, [
-  'chasse_id' => $chasse_id
-]);
-get_template_part('template-parts/chasse/panneaux/chasse-edition-liens', null, [
-  'chasse_id' => $chasse_id
-]);
-?>

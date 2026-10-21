@@ -53,6 +53,12 @@ if ( apply_filters( 'astra_header_profile_gmpg_link', true ) ) {
                 <?php echo esc_html( astra_default_strings( 'string-header-skip-link', false ) ); ?>
 </a>
 
+<?php
+if ( function_exists( 'cta_shell_open' ) ) {
+	cta_shell_open();
+}
+?>
+
 <div
 <?php
         echo wp_kses_post(
@@ -83,6 +89,13 @@ if ( apply_filters( 'astra_header_profile_gmpg_link', true ) ) {
         ? myaccount_is_organisation_page()
         : false;
     $should_hide_hero     = $is_account_area || $is_organisation_page;
+    if (
+        is_front_page()
+        && function_exists( 'cat_single_hunt_front_is_cockpit' )
+        && cat_single_hunt_front_is_cockpit()
+    ) {
+        $should_hide_hero = true;
+    }
     $is_single_hunt_site  = function_exists( 'cat_is_single_hunt_mode' ) && cat_is_single_hunt_mode();
     $is_demo_site         = function_exists( 'cat_is_demo_mode' ) && cat_is_demo_mode();
 
@@ -147,21 +160,24 @@ if ( apply_filters( 'astra_header_profile_gmpg_link', true ) ) {
 
             $image_fond = '';
             $image_data = get_field( 'chasse_principale_image', $latest_chasse_id );
+            $hero_size  = $is_single_hunt_site ? 'full' : 'chasse-fiche';
 
-            if ( is_array( $image_data ) ) {
-                if ( ! empty( $image_data['sizes']['chasse-fiche'] ) ) {
-                    $image_fond = (string) $image_data['sizes']['chasse-fiche'];
+            if ( $is_single_hunt_site && is_array( $image_data ) && ! empty( $image_data['url'] ) ) {
+                $image_fond = (string) $image_data['url'];
+            } elseif ( is_array( $image_data ) ) {
+                if ( ! empty( $image_data['sizes'][ $hero_size ] ) ) {
+                    $image_fond = (string) $image_data['sizes'][ $hero_size ];
                 } elseif ( ! empty( $image_data['ID'] ) ) {
-                    $image_fond = (string) wp_get_attachment_image_url( (int) $image_data['ID'], 'chasse-fiche' );
+                    $image_fond = (string) wp_get_attachment_image_url( (int) $image_data['ID'], $hero_size );
                 } elseif ( ! empty( $image_data['url'] ) ) {
                     $image_fond = (string) $image_data['url'];
                 }
             } elseif ( ! empty( $image_data ) ) {
-                $image_fond = (string) wp_get_attachment_image_url( (int) $image_data, 'chasse-fiche' );
+                $image_fond = (string) wp_get_attachment_image_url( (int) $image_data, $hero_size );
             }
 
             if ( ! $image_fond ) {
-                $image_fond = get_the_post_thumbnail_url( $latest_chasse_id, 'chasse-fiche' );
+                $image_fond = get_the_post_thumbnail_url( $latest_chasse_id, $hero_size );
             }
 
             if ( ! $image_fond ) {
@@ -195,6 +211,9 @@ if ( apply_filters( 'astra_header_profile_gmpg_link', true ) ) {
                     'cta_message' => $cta_data['cta_message'] ?? '',
                     'single_hunt' => $is_single_hunt_site,
                     'demo_mode'   => $is_demo_site,
+                    'start_line'  => $is_single_hunt_site && function_exists( 'cat_primary_hunt_start_line' )
+                        ? cat_primary_hunt_start_line( $latest_chasse_id )
+                        : '',
                 ]
             );
             $latest_hero_markup = ob_get_clean();

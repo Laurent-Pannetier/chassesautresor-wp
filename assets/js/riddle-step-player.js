@@ -56,7 +56,7 @@ const initializeGpsWidgets = root => {
   if (typeof window.L === 'undefined' || !root) return;
   const forms = [];
   const canInit = form => !(
-    form.classList.contains('is-hotspot-widget') && !form.classList.contains('is-immersive-open')
+    form.classList.contains('is-reply-widget') && !form.classList.contains('is-immersive-open')
   );
   if (root.matches?.('.riddle-step-gps-form:not([data-map-ready])') && canInit(root)) {
     forms.push(root);
@@ -134,9 +134,7 @@ const syncStepPageToGallery = article => {
     previewUrl: article.dataset.stepPagePreview,
     fullUrl: article.dataset.stepPageFull,
     thumbUrl: article.dataset.stepPageThumb || article.dataset.stepPagePreview,
-    alt: article.dataset.stepPageAlt || '',
-    hotspotZone: article.dataset.riddleHotspotZone || '',
-    hotspotLabel: article.dataset.riddleHotspotLabel || ''
+    alt: article.dataset.stepPageAlt || ''
   });
 };
 
@@ -162,28 +160,28 @@ const positionRiddleStepTarget = async target => {
 };
 
 let immersiveIgnoreUntil = 0;
-const hotspotHomes = new WeakMap();
+const replyHomes = new WeakMap();
 
 const closeImmersiveWidget = form => {
-  if (!form?.classList.contains('is-hotspot-widget')) return;
+  if (!form?.classList.contains('is-reply-widget')) return;
   form.hidden = true;
   form.setAttribute('hidden', '');
   form.classList.remove('is-immersive-open');
   document.body.classList.remove('riddle-widget-immersive-open');
   document.querySelector('.riddle-widget-immersive-backdrop')?.remove();
-  const home = hotspotHomes.get(form);
+  const home = replyHomes.get(form);
   if (home?.parent?.isConnected) {
     home.parent.insertBefore(form, home.nextSibling);
   }
-  hotspotHomes.delete(form);
+  replyHomes.delete(form);
 };
 
 const openImmersiveWidget = form => {
-  if (!form?.classList.contains('is-hotspot-widget')) return;
+  if (!form?.classList.contains('is-reply-widget')) return;
   if (form.classList.contains('is-immersive-open')) return;
 
-  if (!hotspotHomes.has(form)) {
-    hotspotHomes.set(form, {
+  if (!replyHomes.has(form)) {
+    replyHomes.set(form, {
       parent: form.parentElement,
       nextSibling: form.nextSibling
     });
@@ -215,45 +213,17 @@ const openImmersiveWidget = form => {
   form.focus({ preventScroll: true });
 };
 
-const parseHotspotZone = raw => {
-  const parts = String(raw || '').trim().split(/[\s,;]+/).filter(Boolean).map(Number);
-  if (parts.length !== 4 || parts.some(value => !Number.isFinite(value))) return null;
-  const [x, y, w, h] = parts;
-  if (w <= 0 || h <= 0) return null;
-  return { x, y, w, h };
-};
-
-const pointInHotspotZone = (event, stage) => {
-  const image = stage.querySelector('img');
-  const zone = parseHotspotZone(stage.dataset.riddleHotspotZone || '');
-  if (!image || !zone) return false;
-  const rect = image.getBoundingClientRect();
-  if (!rect.width || !rect.height) return false;
-  const x = ((event.clientX - rect.left) / rect.width) * 100;
-  const y = ((event.clientY - rect.top) / rect.height) * 100;
-  return x >= zone.x && x <= zone.x + zone.w && y >= zone.y && y <= zone.y + zone.h;
-};
-
-const findHotspotWidgetForm = (stepId = '') => {
-  if (stepId) {
-    const byStep = document.querySelector(
-      `.riddle-player-step[data-player-step-id="${stepId}"] form.is-hotspot-widget`
-    );
-    if (byStep) return byStep;
-    const portaled = [...document.querySelectorAll('form.is-hotspot-widget')].find(form => (
-      form.querySelector(`input[name="etape_id"][value="${stepId}"]`)
-    ));
-    if (portaled) return portaled;
-  }
-  return document.querySelector('.riddle-player-step.is-current form.is-hotspot-widget')
-    || document.querySelector('form.is-hotspot-widget.is-immersive-open');
+const findReplyWidgetForm = key => {
+  const replyKey = String(key || '');
+  if (!replyKey) return null;
+  return document.querySelector(`form.is-reply-widget[data-riddle-reply-key="${replyKey}"]`);
 };
 
 const resolveStepArticleForForm = form => {
   const nested = form.closest('.riddle-player-step');
   if (nested) return nested;
 
-  const home = hotspotHomes.get(form);
+  const home = replyHomes.get(form);
   if (home?.parent?.closest) {
     const fromHome = home.parent.closest('.riddle-player-step');
     if (fromHome) return fromHome;
@@ -307,10 +277,9 @@ const unlockRiddleStepContent = (form, data) => {
   }
   const finalForm = parsed.querySelector('.formulaire-reponse-auto, .formulaire-reponse-manuelle');
   if (!finalForm) return player;
-  player.insertAdjacentElement('afterend', finalForm);
-  initializeGpsWidgets(finalForm);
-  const manualFeedback = parsed.querySelector('.formulaire-reponse-manuelle + .reponse-feedback');
-  if (manualFeedback) finalForm.insertAdjacentElement('afterend', manualFeedback);
+  const payload = finalForm.closest('.reponse-launcher') || finalForm;
+  player.insertAdjacentElement('afterend', payload);
+  initializeGpsWidgets(payload);
   document.dispatchEvent(new CustomEvent('riddle-step-content-updated'));
   return finalForm;
 };
@@ -347,46 +316,25 @@ document.addEventListener('click', event => {
   const closeTrigger = event.target.closest('[data-riddle-close-widget]');
   if (closeTrigger) {
     event.preventDefault();
-    const form = closeTrigger.closest('form.is-hotspot-widget');
+    const form = closeTrigger.closest('form.is-reply-widget');
     if (form) closeImmersiveWidget(form);
     return;
   }
 
-  if (event.target.closest('[data-enigme-lightbox-src]')) {
-    return;
-  }
-
   const openTrigger = event.target.closest('[data-riddle-open-widget]');
-  const stage = event.target.closest('[data-riddle-hotspot-zone]');
-  if (!openTrigger && !stage) return;
+  if (!openTrigger) return;
 
-  const host = (openTrigger || stage)?.closest(
-    '[data-riddle-hotspot-step], [data-gallery-step-id]'
-  );
-  const stepId = host?.dataset?.riddleHotspotStep
-    || host?.dataset?.galleryStepId
-    || stage?.dataset?.riddleHotspotStep
-    || '';
-  const form = findHotspotWidgetForm(stepId);
+  const form = findReplyWidgetForm(openTrigger.dataset.riddleReplyKey);
   if (!form) return;
 
-  if (openTrigger) {
-    event.preventDefault();
-    event.stopPropagation();
-    openImmersiveWidget(form);
-    return;
-  }
-
-  if (stage && pointInHotspotZone(event, stage)) {
-    event.preventDefault();
-    event.stopPropagation();
-    openImmersiveWidget(form);
-  }
+  event.preventDefault();
+  event.stopPropagation();
+  openImmersiveWidget(form);
 }, true);
 
 document.addEventListener('keydown', event => {
   if (event.key !== 'Escape') return;
-  const openForm = document.querySelector('form.is-hotspot-widget.is-immersive-open');
+  const openForm = document.querySelector('form.is-reply-widget.is-immersive-open');
   if (openForm) {
     event.preventDefault();
     closeImmersiveWidget(openForm);

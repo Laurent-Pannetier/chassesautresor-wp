@@ -408,10 +408,12 @@
 }
 
 .help-modal {
-  background: var(--color-white, #fff);
-  color: var(--color-editor-heading, #000);
+  background: var(--shell-surface, #fff);
+  color: var(--shell-text, #152033);
   padding: var(--space-md);
-  border-radius: 8px;
+  border-radius: 0.85rem;
+  border: 1px solid var(--shell-border, rgba(21, 32, 51, 0.1));
+  box-shadow: var(--shell-shadow, 0 12px 28px rgba(0, 0, 0, 0.18));
   max-width: 400px;
   width: 90%;
   position: relative;
@@ -425,12 +427,19 @@
 }
 
 .help-modal-header i {
-  font-size: 1.5rem;
+  font-size: 1.15rem;
+  color: var(--shell-accent, #14b4cc);
 }
 
 .help-modal-title {
-  margin: 0 0 var(--space-sm);
-  font-size: 1.25rem;
+  margin: 0;
+  font-family: var(--font-main);
+  font-size: 1.05rem;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--shell-text, #152033);
 }
 
 .help-modal-close {
@@ -441,11 +450,17 @@
   border: none;
   cursor: pointer;
   font-size: 1.2rem;
-  color: inherit;
+  color: var(--shell-muted, #5d6b7e);
+}
+
+.help-modal-content {
+  margin-top: var(--space-sm);
+  color: var(--shell-text, #152033);
 }
 
 .help-modal-content p {
   margin: 0 0 var(--space-sm);
+  color: var(--shell-text, #152033);
 }
 
 .help-modal-content p.help-definition {

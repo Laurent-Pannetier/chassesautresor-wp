@@ -491,21 +491,32 @@ function ca_render_dashboard_tentatives(): void
 
 
 /**
- * 📌 Charge le fichier JavaScript uniquement sur les pages commençant par "/mon-compte/"
+ * Charge le script d’avatar sur les pages du compte.
  */
 function charger_script_avatar_upload() {
-    if (strpos($_SERVER['REQUEST_URI'], '/mon-compte/') === 0) {
-        wp_enqueue_script(
-            'avatar-upload',
-            get_stylesheet_directory_uri() . '/assets/js/avatar-upload.js',
-            [],
-            null,
-            true
-        );
-        wp_localize_script('avatar-upload', 'avatarUpload', [
-            'ajaxUrl' => admin_url('admin-ajax.php'),
-            'nonce' => wp_create_nonce('upload_user_avatar'),
-        ]);
+    $uri = (string) ($_SERVER['REQUEST_URI'] ?? '');
+    $on_account = preg_match('#^/mon-compte(?:/|$|\?)#', $uri) === 1
+        || (function_exists('is_account_page') && is_account_page());
+    if (!$on_account) {
+        return;
     }
+
+    $script_path = get_stylesheet_directory() . '/assets/js/avatar-upload.js';
+    wp_enqueue_script(
+        'avatar-upload',
+        get_stylesheet_directory_uri() . '/assets/js/avatar-upload.js',
+        [],
+        file_exists($script_path) ? (string) filemtime($script_path) : null,
+        true
+    );
+    wp_localize_script('avatar-upload', 'avatarUpload', [
+        'ajaxUrl' => admin_url('admin-ajax.php'),
+        'nonce' => wp_create_nonce('upload_user_avatar'),
+        'removeNonce' => wp_create_nonce('remove_user_avatar'),
+        'messages' => [
+            'network' => __('Impossible de mettre à jour la photo.', 'chassesautresor-com'),
+            'confirmRemove' => __('Retirer la photo de profil ?', 'chassesautresor-com'),
+        ],
+    ]);
 }
 add_action('wp_enqueue_scripts', 'charger_script_avatar_upload');

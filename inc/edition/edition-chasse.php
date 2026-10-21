@@ -18,11 +18,12 @@ defined('ABSPATH') || exit;
  */
 function enqueue_script_chasse_edit()
 {
-    if (!is_singular('chasse')) {
+    $shellId = function_exists('cta_shell_edition_post_id') ? cta_shell_edition_post_id('chasse') : 0;
+    if (!is_singular('chasse') && $shellId <= 0) {
         return;
     }
 
-    $chasse_id = get_the_ID();
+    $chasse_id = $shellId > 0 ? $shellId : (int) get_the_ID();
 
     if (!utilisateur_peut_modifier_post($chasse_id)) {
         return;

@@ -131,9 +131,6 @@ function initFormulaireAutomatique() {
 
             const navigation = document.querySelector('.enigme-navigation');
             const chasseId = navigation ? navigation.dataset.chasseId : null;
-            const bloc = document.querySelector('.menu-lateral__accordeons .accordeon-bloc');
-            const toggle = bloc ? bloc.querySelector('.accordeon-toggle') : null;
-            const contenu = bloc ? bloc.querySelector('.accordeon-contenu') : null;
             const requests = [];
 
             if (sectionGagnants && enigmeId) {
@@ -175,15 +172,7 @@ function initFormulaireAutomatique() {
               requests.push(req);
             }
 
-            Promise.allSettled(requests).then(() => {
-              if (window.enigmeAside?.show) {
-                window.enigmeAside.show();
-              }
-              if (toggle && contenu) {
-                toggle.setAttribute('aria-expanded', 'true');
-                contenu.classList.remove('accordeon-ferme');
-              }
-            });
+            Promise.allSettled(requests);
           } else {
             feedback.className = 'reponse-feedback';
             window.showRiddleEphemeralNotice?.(

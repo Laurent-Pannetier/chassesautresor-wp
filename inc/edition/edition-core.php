@@ -39,11 +39,24 @@ defined('ABSPATH') || exit;
 add_action('wp_enqueue_scripts', 'forcer_chargement_acf_scripts_chasse');
 function forcer_chargement_acf_scripts_chasse()
 {
-  if (!is_singular('chasse') || !function_exists('acf_enqueue_scripts')) {
+  $shellId = 0;
+  if (function_exists('cta_shell_edition_post_id')) {
+      $shellId = cta_shell_edition_post_id('chasse');
+      if ($shellId <= 0) {
+          $shellId = cta_shell_edition_post_id('enigme');
+      }
+  }
+  if ($shellId <= 0 && !is_singular('chasse')) {
+    return;
+  }
+  if (!function_exists('acf_enqueue_scripts')) {
     return;
   }
 
-  if (!current_user_can('edit_post', get_the_ID())) {
+  $postId = $shellId > 0 ? $shellId : (int) get_the_ID();
+  if (!current_user_can('edit_post', $postId) && !(
+      function_exists('utilisateur_peut_voir_panneau') && utilisateur_peut_voir_panneau($postId)
+  )) {
     return;
   }
 

@@ -132,29 +132,16 @@ function initEnigmeEdit() {
 
 
   panneauEdition?.querySelector('.panneau-fermer')?.addEventListener('click', () => {
+    const back = document.querySelector('.shell-edition')?.dataset.editionBack;
+    if (back) {
+      window.location.assign(back);
+      return;
+    }
     document.body.classList.remove('edition-active-enigme');
     document.body.classList.remove('panneau-ouvert');
     document.body.classList.remove('mode-edition');
     document.activeElement?.blur();
   });
-
-
-  // ==============================
-  // 🧭 Déclencheur automatique
-  // ==============================
-  const params = new URLSearchParams(window.location.search);
-  const doitOuvrir = params.get('edition') === 'open';
-  const tab = params.get('tab');
-  if (doitOuvrir && boutonsToggle.length > 0) {
-    boutonsToggle[0].click();
-    if (tab) {
-      const btn = panneauEdition?.querySelector(
-        `.edition-tab[data-target="enigme-tab-${tab}"]`
-      );
-      btn?.click();
-    }
-    DEBUG && console.log('🔧 Ouverture auto du panneau édition énigme via ?edition=open');
-  }
 
 
   // ==============================
@@ -324,24 +311,6 @@ function initEnigmeEdit() {
 
 
   // ==============================
-  // 📜 Panneau description (wysiwyg)
-  // ==============================
-  document.addEventListener('click', (e) => {
-    const btn = e.target.closest('.ouvrir-panneau-description');
-    if (!btn || btn.dataset.cpt !== 'enigme') return;
-
-    if (typeof window.openPanel === 'function') {
-      window.openPanel('panneau-description-enigme');
-    }
-  });
-  document.querySelector('#panneau-description-enigme .panneau-fermer')?.addEventListener('click', () => {
-    if (typeof window.closePanel === 'function') {
-      window.closePanel('panneau-description-enigme');
-    }
-  });
-
-
-  // ==============================
   // 🧪 Panneau variantes (réponses alternatives)
   // ==============================
   document.addEventListener('click', (e) => {
@@ -429,7 +398,12 @@ function initEnigmeEdit() {
 
   document.querySelectorAll('input[name="acf[enigme_mode_validation]"]').forEach(radio => {
     radio.addEventListener('change', () => {
-      if (enigmeId) {
+      const queued = window.ctaShellEditionSave?.shouldQueue(
+        'enigme',
+        'enigme_mode_validation',
+        radio.value
+      );
+      if (enigmeId && !queued) {
         forcerRecalculStatutEnigme(enigmeId);
       }
       mettreAJourCartesStats();
@@ -511,7 +485,9 @@ function initEnigmeEdit() {
         .then(r => r.json())
         .then(res => {
           if (res.success && res.data?.redirect) {
-            window.location.href = res.data.redirect;
+            window.ctaShellEditionSave?.allowLeave?.();
+            const back = document.querySelector('.shell-edition')?.dataset.editionBack;
+            window.location.href = back || res.data.redirect;
           } else {
             alert('Échec suppression : ' + (res.data || 'inconnue'));
           }
@@ -534,79 +510,6 @@ window.addEventListener('solution-created', () => {
   rafraichirCarteSolutions();
 });
 
-// ================================
-// 🖼️ Panneau images galerie (ACF gallery)
-// ================================
-document.addEventListener('click', (e) => {
-  const btn = e.target.closest('.ouvrir-panneau-images');
-  if (!btn || btn.dataset.cpt !== 'enigme') return;
-
-  const panneau = document.getElementById('panneau-images-enigme');
-  if (!panneau) return;
-
-  const postId = btn.dataset.postId;
-  if (!postId) return;
-
-  // ❌ Ne PAS ouvrir le panneau ici
-
-  fetch(ajaxurl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      action: 'desactiver_htaccess_enigme',
-      nonce: window.CHP_ENIGME_DEFAUT?.nonce || '',
-      post_id: postId
-    })
-  })
-    .then(res => res.json())
-    .then(data => {
-      if (!data.success) {
-        console.warn(`⚠️ Désactivation htaccess échouée ou inutile : ${data.data}`);
-        return;
-      }
-
-      DEBUG && console.log(`🔓 htaccess désactivé pour énigme ${postId}`);
-
-      // ✅ Ouverture du panneau uniquement maintenant
-      if (typeof window.openPanel === 'function') {
-        window.openPanel('panneau-images-enigme');
-      }
-    })
-    .catch(err => {
-      console.error('❌ Erreur réseau AJAX htaccess :', err);
-    });
-});
-
-
-
-// ==============================
-// 🔐 Restauration htaccess à la fermeture du panneau images
-// ==============================
-document.querySelector('#panneau-images-enigme .panneau-fermer')?.addEventListener('click', () => {
-  if (typeof window.closePanel === 'function') {
-    window.closePanel('panneau-images-enigme');
-  }
-
-  const postId = document.querySelector('.edition-panel-enigme')?.dataset.postId;
-  if (postId) {
-    fetch(ajaxurl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        action: 'reactiver_htaccess_immediat_enigme',
-        nonce: window.CHP_ENIGME_DEFAUT?.nonce || '',
-        post_id: postId
-      })
-    }).then(r => r.json())
-      .then(res => {
-        if (res.success) {
-          DEBUG && console.log(`🔒 htaccess restauré immédiatement pour énigme ${postId}`);
-        } else {
-          console.warn('⚠️ Erreur restauration htaccess immédiate :', res.data);
-        }
-      });
-  }
-});
 // ================================
 // ⏱️ Initialisation du délai entre deux mauvaises réponses
 // ================================
@@ -667,16 +570,18 @@ function initChampAccesCondition() {
   }
 
   function enregistrer(valeur) {
-    if (!postId) return;
+    if (!postId) return false;
+    const queued = window.ctaShellEditionSave?.shouldQueue(cpt, 'enigme_acces_condition', valeur);
     modifierChampSimple('enigme_acces_condition', valeur, postId, cpt);
+    return !!queued;
   }
 
   radios.forEach(radio => {
     radio.addEventListener('change', () => {
       const valeur = radio.value;
       appliquerEtat();
-      enregistrer(valeur);
-      if (typeof window.forcerRecalculStatutEnigme === 'function' && postId) {
+      const queued = enregistrer(valeur);
+      if (!queued && typeof window.forcerRecalculStatutEnigme === 'function' && postId) {
         window.forcerRecalculStatutEnigme(postId);
       }
     });
@@ -1328,7 +1233,19 @@ function initChampPreRequis() {
         const cochés = checkboxes.filter(el => el.checked).map(el => el.value);
 
         // ✅ 1. Mise à jour des prérequis cochés
-        modifierChampSimple(champ, cochés, postId, cpt).then(() => {
+        modifierChampSimple(champ, cochés, postId, cpt).then((result) => {
+          if (result === 'queued') {
+            if (cochés.length > 0 && radioPre && !radioPre.checked) {
+              radioPre.checked = true;
+            }
+            if (cochés.length === 0) {
+              if (radioImmediat) radioImmediat.checked = true;
+              modifierChampSimple('enigme_acces_condition', 'immediat', postId, cpt);
+            }
+            majClasse();
+            return;
+          }
+
           // ✅ 2. Si une ou plusieurs cases sont cochées, enregistrer condition 'pre_requis'
           if (cochés.length > 0) {
             if (radioPre && !radioPre.checked) radioPre.checked = true;
@@ -1383,6 +1300,10 @@ function initEnregistrementPreRequis() {
   if (!radioPreRequis || !champBloc || !postId) return;
 
   radioPreRequis.addEventListener('change', () => {
+    if (document.querySelector('.shell-edition')) {
+      return;
+    }
+
     const cochés = [...champBloc.querySelectorAll('input[type="checkbox"]:checked')].map(cb => cb.value);
 
     // 🔒 Ne rien faire si aucune case cochée
@@ -1442,6 +1363,45 @@ function mettreAJourCartesStats() {
     resolveursSection.style.display = mode === 'aucune' ? 'none' : '';
   }
 }
+
+function refreshOptionalCopySummary() {
+  const fold = document.querySelector('.edition-optional-fold');
+  const hint = fold?.querySelector('.edition-optional__hint');
+  if (!fold || !hint) return;
+
+  const subtitle = document.getElementById('champ-soustitre-enigme')?.value.trim() || '';
+  const text = document.querySelector('[data-champ="enigme_visuel_texte"] .champ-texte-contenu')?.textContent.trim() || '';
+  const excerpt = (subtitle || text).replace(/\s+/g, ' ');
+  const emptyLabel = hint.dataset.emptyLabel || 'optionnel';
+  const next = excerpt
+    ? (excerpt.length > 60 ? `${excerpt.slice(0, 59)}…` : excerpt)
+    : emptyLabel;
+  const filled = excerpt !== '';
+
+  if (hint.textContent !== next) {
+    hint.textContent = next;
+  }
+  if (filled !== fold.classList.contains('is-filled')) {
+    fold.classList.toggle('is-filled', filled);
+  }
+}
+
+function initOptionalCopySummary() {
+  const fold = document.querySelector('.edition-optional-fold');
+  if (!fold) return;
+
+  document.getElementById('champ-soustitre-enigme')?.addEventListener('input', refreshOptionalCopySummary);
+  new MutationObserver(refreshOptionalCopySummary).observe(fold, {
+    subtree: true,
+    childList: true,
+    characterData: true,
+    attributes: true,
+    attributeFilter: ['class'],
+  });
+  refreshOptionalCopySummary();
+}
+
+document.addEventListener('DOMContentLoaded', initOptionalCopySummary);
 
 function initPagerTentatives() {
   const wrapper = document.querySelector('#enigme-tab-soumission .liste-tentatives');

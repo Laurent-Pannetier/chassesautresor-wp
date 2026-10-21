@@ -10,6 +10,11 @@ DEBUG && console.log('✅ champ-init.js bien chargé');
 function modifierChampSimple(champ, valeur, postId, cpt = 'enigme') {
   DEBUG && console.log('📤 modifierChampSimple()', { champ, valeur, postId, cpt }); // ⬅️ test
 
+  if (window.ctaShellEditionSave?.shouldQueue(cpt, champ, valeur)) {
+    window.ctaShellEditionSave.queue(champ, valeur);
+    return Promise.resolve('queued');
+  }
+
   const action = (cpt === 'enigme') ? 'modifier_champ_enigme' :
     (cpt === 'organisateur') ? 'modifier_champ_organisateur' :
       (cpt === 'indice') ? 'modifier_champ_indice' :
@@ -138,6 +143,13 @@ function initChampTexte(bloc) {
         }
 
         modifierChampSimple(champ, valeurEnvoyee, postId, cpt).then(success => {
+          if (success === 'queued') {
+            bloc.classList.toggle('champ-vide', estVide);
+            if (status) status.innerHTML = '';
+            feedback.textContent = '';
+            feedback.className = 'champ-feedback';
+            return;
+          }
           if (success) {
             bloc.classList.toggle('champ-vide', estVide);
             if (status) {
@@ -221,6 +233,19 @@ function initChampTexte(bloc) {
     feedback.className = 'champ-feedback';
 
     modifierChampSimple(champ, valeur, postId, cpt).then(success => {
+      if (success === 'queued') {
+        const affichageTexte = affichage.querySelector('.champ-valeur, h1, h2, p, span:not(.champ-obligatoire)');
+        if (affichageTexte && champ !== 'email_contact') {
+          affichageTexte.textContent = valeur;
+        }
+        if (edition?.style) edition.style.display = 'none';
+        if (affichage?.style) affichage.style.display = '';
+        bloc.classList.toggle('champ-vide', !valeur);
+        if (status) status.innerHTML = '';
+        feedback.textContent = '';
+        feedback.className = 'champ-feedback';
+        return;
+      }
       if (success) {
         const affichageTexte = affichage.querySelector('.champ-valeur, h1, h2, p, span:not(.champ-obligatoire)');
 

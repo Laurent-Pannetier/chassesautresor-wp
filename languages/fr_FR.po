@@ -1620,6 +1620,7 @@ msgstr ""
 
 #: template-parts/chasse/chasse-edition-main.php:617
 #: template-parts/chasse/chasse-affichage-complet.php:364
+#: template-parts/enigme/enigme-edition-main.php
 msgid "Gratuit"
 msgstr "Gratuit"
 
@@ -2268,10 +2269,6 @@ msgid ""
 "Vous êtes libre de définir le coût d’une tentative pour votre énigme : "
 "gratuite ou payante en points. Lorsqu’un joueur dépense des points pour "
 "soumettre une réponse, ceux-ci sont immédiatement crédités sur votre compte."
-msgstr ""
-
-#: template-parts/enigme/enigme-edition-main.php:563
-msgid "Free"
 msgstr ""
 
 #: template-parts/enigme/enigme-edition-main.php:607
@@ -3299,3 +3296,31 @@ msgstr "Aucune chasse trouvée"
 #: inc/user-functions.php:1444
 msgid "Unable to load attempts. Please try again."
 msgstr "Impossible de charger les tentatives. Veuillez réessayer."
+
+#: inc/single-hunt-navigation.php
+msgid "Rejoindre la chasse"
+msgstr "Rejoindre la chasse"
+
+#: template-parts/home/single-hunt.php
+msgid "Vos énigmes."
+msgstr "Vos énigmes."
+
+#: template-parts/home/single-hunt.php
+msgid "Rejoignez la chasse pour accéder aux énigmes."
+msgstr "Rejoignez la chasse pour accéder aux énigmes."
+
+#: template-parts/home/single-hunt.php
+msgid "Vous n’avez pas assez de points pour rejoindre cette chasse."
+msgstr "Vous n’avez pas assez de points pour rejoindre cette chasse."
+
+#: template-parts/home/single-hunt.php
+msgid "L’engagement n’a pas pu être enregistré."
+msgstr "L’engagement n’a pas pu être enregistré."
+
+#: src/Site/PlayerEnigmasAccessHandler.php
+msgid "Connectez-vous pour accéder aux énigmes de %s."
+msgstr "Connectez-vous pour accéder aux énigmes de %s."
+
+#: src/Site/PlayerEnigmasAccessHandler.php
+msgid "Connectez-vous pour accéder aux énigmes."
+msgstr "Connectez-vous pour accéder aux énigmes."

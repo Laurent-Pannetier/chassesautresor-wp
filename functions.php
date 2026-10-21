@@ -135,7 +135,7 @@ function cta_redirect_account_page_for_guests() {
 add_action( 'init', 'cta_redirect_account_page_for_guests' );
 
 /**
- * Renders the language switcher in the header.
+ * Language selector removed from the shell. Locale handling stays in cta_handle_language().
  *
  * @param string $row    Header builder row.
  * @param string $column Header builder column.
@@ -143,73 +143,7 @@ add_action( 'init', 'cta_redirect_account_page_for_guests' );
  * @return void
  */
 function cta_render_lang_switcher( $row, $column ) {
-    if ( 'above' !== $row || 'right' !== $column ) {
-        return;
-    }
-
-    $active_locale = '';
-
-    if ( isset( $_GET['lang'] ) ) {
-        $lang         = sanitize_text_field( wp_unslash( $_GET['lang'] ) );
-        $active_locale = 'fr' === $lang ? 'fr_FR' : ( 'en' === $lang ? 'en_US' : '' );
-    }
-
-    if ( ! $active_locale ) {
-        $active_locale = cta_get_locale_from_cookie();
-    }
-
-    if ( ! $active_locale ) {
-        $active_locale = get_locale();
-    }
-
-    $available_langs = [
-        'fr_FR' => [
-            'code'  => 'fr',
-            'label' => __( 'Français', 'chassesautresor-com' ),
-            'flag'  => '🇫🇷',
-        ],
-        'en_US' => [
-            'code'  => 'en',
-            'label' => __( 'English', 'chassesautresor-com' ),
-            'flag'  => '🇬🇧',
-        ],
-    ];
-
-    $current_url = home_url( sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ?? '' ) ) );
-    $current_url = remove_query_arg( 'lang', $current_url );
-    ?>
-    <div class="lang-switcher ast-builder-layout-element site-header-focus-item">
-        <button
-            class="lang-switcher__toggle"
-            aria-haspopup="true"
-            aria-expanded="false"
-            aria-label="<?php esc_attr_e( 'Change language', 'chassesautresor-com' ); ?>"
-        >
-            <span class="lang-switcher__flag">
-                <?php echo esc_html( $available_langs[ $active_locale ]['flag'] ?? '🇫🇷' ); ?>
-            </span>
-            <span class="lang-switcher__icon">▼</span>
-        </button>
-        <ul class="lang-switcher__options">
-            <?php foreach ( $available_langs as $locale => $data ) : ?>
-                <?php $url = add_query_arg( 'lang', $data['code'], $current_url ); ?>
-                <li class="<?php echo $locale === $active_locale ? 'active' : ''; ?>">
-                    <?php if ( $locale === $active_locale ) : ?>
-                        <span>
-                            <span class="lang-switcher__flag"><?php echo esc_html( $data['flag'] ); ?></span>
-                            <span class="lang-switcher__label"><?php echo esc_html( $data['label'] ); ?></span>
-                        </span>
-                    <?php else : ?>
-                        <a href="<?php echo esc_url( $url ); ?>">
-                            <span class="lang-switcher__flag"><?php echo esc_html( $data['flag'] ); ?></span>
-                            <span class="lang-switcher__label"><?php echo esc_html( $data['label'] ); ?></span>
-                        </a>
-                    <?php endif; ?>
-                </li>
-            <?php endforeach; ?>
-        </ul>
-    </div>
-    <?php
+    unset( $row, $column );
 }
 add_action( 'astra_render_header_column', 'cta_render_lang_switcher', 999, 2 );
 
@@ -284,6 +218,12 @@ function cta_account_icon_by_state( $default ) {
     return isset( $icons['cta-account-guest'] ) ? 'cta-account-guest' : $default;
 }
 add_filter( 'astra_get_option_header-account-icon-type', 'cta_account_icon_by_state' );
+
+/**
+ * Removes Astra's scroll-to-top control on the whole site.
+ * It stacks on the edition save bar.
+ */
+add_filter( 'astra_get_option_scroll-to-top-enable', '__return_false' );
 
 /**
  * Removes the "Continue Shopping" button from Astra's flyout cart when empty.
@@ -456,25 +396,18 @@ add_action('wp_enqueue_scripts', function () {
         );
     }
 
-    if (is_singular('enigme')) {
-        if (function_exists('cat_is_single_hunt_mode') && cat_is_single_hunt_mode()) {
-            wp_enqueue_script(
-                'single-hunt-analytics',
-                $script_dir . 'single-hunt-analytics.js',
-                [],
-                filemtime($theme_path . '/assets/js/single-hunt-analytics.js'),
-                true
-            );
-        }
-
+    if (
+        is_singular('enigme')
+        && function_exists('cat_is_single_hunt_mode')
+        && cat_is_single_hunt_mode()
+    ) {
         wp_enqueue_script(
-            'accordeon',
-            $script_dir . 'accordeon.js',
-            ['wp-i18n'],
-            filemtime($theme_path . '/assets/js/accordeon.js'),
+            'single-hunt-analytics',
+            $script_dir . 'single-hunt-analytics.js',
+            [],
+            filemtime($theme_path . '/assets/js/single-hunt-analytics.js'),
             true
         );
-        wp_set_script_translations('accordeon', 'chassesautresor-com');
     }
 
     if (is_singular(['enigme', 'chasse'])) {
@@ -509,7 +442,7 @@ add_action('wp_enqueue_scripts', function () {
         ]);
     }
     $sidebar_dir = $theme_uri . '/assets/sidebar/';
-    if (is_singular(['enigme', 'chasse'])) {
+    if (is_singular('chasse')) {
         wp_enqueue_script(
             'sidebar',
             $sidebar_dir . 'sidebar.js',
@@ -521,6 +454,8 @@ add_action('wp_enqueue_scripts', function () {
             'ajaxUrl' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('hunt_navigation'),
         ]);
+    }
+    if (is_singular(['enigme', 'chasse'])) {
         wp_enqueue_script(
             'sidebar-menu-toggle',
             $sidebar_dir . 'menu-toggle.js',
@@ -683,8 +618,10 @@ require_once $inc_path . 'search/helpers.php';
 require_once $inc_path . 'search/form.php';
 require_once $inc_path . 'homepage-filters.php';
 require_once $inc_path . 'single-hunt-navigation.php';
+require_once $inc_path . 'single-hunt-home.php';
 require_once $inc_path . 'single-hunt-seo.php';
 require_once $inc_path . 'footer-functions.php';
+require_once $inc_path . 'app-shell.php';
 
 require_once $inc_path . 'edition/edition-core.php';
 require_once $inc_path . 'edition/edition-organisateur.php';
@@ -693,6 +630,7 @@ require_once $inc_path . 'edition/edition-enigme.php';
 require_once $inc_path . 'edition/edition-indice.php';
 require_once $inc_path . 'edition/edition-solution.php';
 require_once $inc_path . 'edition/edition-securite.php';
+require_once $inc_path . 'shell-edition.php';
 
 /**
  * Injecte automatiquement `acf_form_head()` pour les fiches chasse.
@@ -712,13 +650,18 @@ require_once $inc_path . 'edition/edition-securite.php';
 add_action('wp_head', 'forcer_acf_form_head_chasse', 0);
 function forcer_acf_form_head_chasse()
 {
-    if (!is_singular('chasse') || !function_exists('acf_form_head')) {
+    $shellTarget = function_exists('cta_shell_edition_target') ? cta_shell_edition_target() : null;
+    if ($shellTarget === null && !is_singular('chasse')) {
+        return;
+    }
+    if (!function_exists('acf_form_head')) {
         return;
     }
 
-    $post_id = get_queried_object_id();
-
-    if (!current_user_can('edit_post', $post_id)) {
+    $post_id = is_array($shellTarget) ? (int) $shellTarget['id'] : (int) get_queried_object_id();
+    $canEdit = current_user_can('edit_post', $post_id)
+        || (function_exists('utilisateur_peut_voir_panneau') && utilisateur_peut_voir_panneau($post_id));
+    if (!$canEdit) {
         return;
     }
 

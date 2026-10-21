@@ -34,57 +34,14 @@ if ($huntId <= 0 || get_post_type($huntId) !== 'chasse') {
 $userId = get_current_user_id();
 $huntInfo = preparer_infos_affichage_chasse($huntId, $userId);
 $fields = $huntInfo['champs'] ?? [];
-$status = (string) ($huntInfo['statut'] ?? 'revision');
 $description = (string) ($huntInfo['description'] ?? '');
-$riddleIds = array_map('intval', (array) ($huntInfo['enigmes_associees'] ?? []));
-$riddleCount = count($riddleIds);
-$cost = max(0, (int) ($fields['cout_points'] ?? 0));
-$startDate = (string) ($fields['date_debut'] ?? '');
-$endDate = (string) ($fields['date_fin'] ?? '');
-$unlimited = !empty($fields['illimitee']);
 $rewardTitle = trim((string) ($fields['titre_recompense'] ?? ''));
-$huntUrl = get_permalink($huntId);
-$detailsUrl = $isDemoMode ? home_url('/#single-hunt-story-title') : $huntUrl;
 $cta = function_exists('cta_get_primary_hunt_cta')
     ? cta_get_primary_hunt_cta($huntId, $userId)
     : ['cta_html' => '', 'cta_message' => '', 'type' => ''];
-
-$statusLabels = [
-    'a_venir' => __('À venir', 'chassesautresor-com'),
-    'en_cours' => __('En cours', 'chassesautresor-com'),
-    'payante' => __('En cours', 'chassesautresor-com'),
-    'termine' => __('Terminée', 'chassesautresor-com'),
-    'revision' => __('En préparation', 'chassesautresor-com'),
-];
-$statusLabel = $statusLabels[$status] ?? __('En préparation', 'chassesautresor-com');
-$startLabel = $startDate ? formater_date($startDate) : __('Bientôt annoncée', 'chassesautresor-com');
-$endLabel = $unlimited
-    ? __('Sans date de fin', 'chassesautresor-com')
-    : ($endDate ? formater_date($endDate) : __('À confirmer', 'chassesautresor-com'));
-$costLabel = $cost > 0
-    ? sprintf(_n('%d point', '%d points', $cost, 'chassesautresor-com'), $cost)
-    : __('Gratuite', 'chassesautresor-com');
-$riddleLabel = sprintf(
-    _n('%d énigme', '%d énigmes', $riddleCount, 'chassesautresor-com'),
-    $riddleCount
-);
-$isLoggedIn = is_user_logged_in();
-$isEngaged = $isLoggedIn && utilisateur_est_engage_dans_chasse($userId, $huntId);
-$progress = is_array($huntInfo['progression'] ?? null) ? $huntInfo['progression'] : [];
-$resolvedCount = max(0, (int) ($progress['resolues'] ?? 0));
-$engagedCount = max(0, (int) ($progress['engagees'] ?? 0));
-$resolvableCount = max(0, (int) ($progress['resolvables'] ?? 0));
-$progressTotal = $resolvableCount > 0 ? $resolvableCount : $riddleCount;
-$progressCompleted = $resolvableCount > 0 ? $resolvedCount : $engagedCount;
-$progressCompleted = min($progressCompleted, $progressTotal);
-$progressPercent = $progressTotal > 0
-    ? (int) round(($progressCompleted / $progressTotal) * 100)
-    : 0;
-$registrationUrl = add_query_arg(
-    'redirect_to',
-    $huntUrl,
-    wp_registration_url()
-);
+$engagementError = isset($_GET['erreur'])
+    ? sanitize_text_field(wp_unslash((string) $_GET['erreur']))
+    : '';
 $frontPage = get_queried_object();
 $editorialContent = $frontPage instanceof WP_Post
     ? trim((string) apply_filters('the_content', $frontPage->post_content))
@@ -104,112 +61,29 @@ $editorialContent = $frontPage instanceof WP_Post
             </div>
         </div>
     <?php endif; ?>
-    <section class="single-hunt-home__facts" aria-labelledby="single-hunt-facts-title">
-        <div class="conteneur">
-            <p class="single-hunt-home__eyebrow"><?php esc_html_e('L’aventure en bref', 'chassesautresor-com'); ?></p>
-            <h2 id="single-hunt-facts-title" class="screen-reader-text">
-                <?php esc_html_e('Informations essentielles sur la chasse', 'chassesautresor-com'); ?>
-            </h2>
-            <dl class="single-hunt-facts">
-                <div class="single-hunt-fact">
-                    <dt><?php esc_html_e('Statut', 'chassesautresor-com'); ?></dt>
-                    <dd><?php echo esc_html($statusLabel); ?></dd>
-                </div>
-                <div class="single-hunt-fact">
-                    <dt><?php esc_html_e('Début', 'chassesautresor-com'); ?></dt>
-                    <dd><?php echo esc_html($startLabel); ?></dd>
-                </div>
-                <div class="single-hunt-fact">
-                    <dt><?php esc_html_e('Fin', 'chassesautresor-com'); ?></dt>
-                    <dd><?php echo esc_html($endLabel); ?></dd>
-                </div>
-                <div class="single-hunt-fact">
-                    <dt><?php esc_html_e('Participation', 'chassesautresor-com'); ?></dt>
-                    <dd><?php echo esc_html($costLabel); ?></dd>
-                </div>
-                <div class="single-hunt-fact">
-                    <dt><?php esc_html_e('Parcours', 'chassesautresor-com'); ?></dt>
-                    <dd><?php echo esc_html($riddleLabel); ?></dd>
-                </div>
-            </dl>
-        </div>
-    </section>
-
-    <?php if (!$isLoggedIn || $isEngaged) : ?>
-        <section class="single-hunt-home__journey" aria-labelledby="single-hunt-journey-title">
-            <div class="conteneur single-hunt-journey">
-                <?php if (!$isLoggedIn) : ?>
-                    <div class="single-hunt-journey__content">
-                        <p class="single-hunt-home__eyebrow">
-                            <?php esc_html_e('Première visite', 'chassesautresor-com'); ?>
-                        </p>
-                        <h2 id="single-hunt-journey-title">
-                            <?php esc_html_e('Préparez votre carnet de chasse.', 'chassesautresor-com'); ?>
-                        </h2>
-                        <p>
-                            <?php
-                            esc_html_e(
-                                'Un compte vous permet de rejoindre la chasse, conserver votre progression '
-                                    . 'et retrouver les énigmes déjà explorées.',
-                                'chassesautresor-com'
-                            );
-                            ?>
-                        </p>
-                    </div>
-                    <div class="single-hunt-journey__actions">
-                        <?php if (get_option('users_can_register')) : ?>
-                            <a
-                                class="bouton-secondaire"
-                                href="<?php echo esc_url($registrationUrl); ?>"
-                                data-single-hunt-event="single_hunt_registration"
-                            >
-                                <?php esc_html_e('Créer mon compte', 'chassesautresor-com'); ?>
-                            </a>
-                        <?php endif; ?>
-                    </div>
-                <?php else : ?>
-                    <div class="single-hunt-journey__content">
-                        <p class="single-hunt-home__eyebrow">
-                            <?php esc_html_e('Votre progression', 'chassesautresor-com'); ?>
-                        </p>
-                        <h2 id="single-hunt-journey-title">
-                            <?php esc_html_e('Reprenez là où vous vous êtes arrêté.', 'chassesautresor-com'); ?>
-                        </h2>
-                        <p>
-                            <?php
-                            echo esc_html(
-                                sprintf(
-                                    /* translators: 1: completed riddles, 2: total riddles. */
-                                    _n(
-                                        '%1$d énigme accomplie sur %2$d.',
-                                        '%1$d énigmes accomplies sur %2$d.',
-                                        $progressCompleted,
-                                        'chassesautresor-com'
-                                    ),
-                                    $progressCompleted,
-                                    $progressTotal
-                                )
-                            );
-                            ?>
-                        </p>
-                        <div class="single-hunt-progress">
-                            <div class="single-hunt-progress__labels">
-                                <span><?php esc_html_e('Avancement', 'chassesautresor-com'); ?></span>
-                                <span><?php echo esc_html($progressPercent . '%'); ?></span>
-                            </div>
-                            <progress
-                                value="<?php echo esc_attr((string) $progressCompleted); ?>"
-                                max="<?php echo esc_attr((string) max(1, $progressTotal)); ?>"
-                            >
-                                <?php echo esc_html($progressPercent . '%'); ?>
-                            </progress>
-                        </div>
-                    </div>
-                <?php endif; ?>
+    <?php if ($engagementError === 'points_insuffisants') : ?>
+        <div class="single-hunt-home__access-error" role="alert">
+            <div class="conteneur">
+                <?php
+                esc_html_e(
+                    'Vous n’avez pas assez de points pour rejoindre cette chasse.',
+                    'chassesautresor-com'
+                );
+                ?>
             </div>
-        </section>
+        </div>
+    <?php elseif ($engagementError === 'engagement') : ?>
+        <div class="single-hunt-home__access-error" role="alert">
+            <div class="conteneur">
+                <?php
+                esc_html_e(
+                    'L’engagement n’a pas pu être enregistré.',
+                    'chassesautresor-com'
+                );
+                ?>
+            </div>
+        </div>
     <?php endif; ?>
-
     <section class="single-hunt-home__story" aria-labelledby="single-hunt-story-title">
         <div class="conteneur single-hunt-home__story-grid">
             <div>
@@ -233,17 +107,6 @@ $editorialContent = $frontPage instanceof WP_Post
                         );
                         ?>
                     </p>
-                <?php endif; ?>
-                <?php if (!$isDemoMode) : ?>
-                    <div class="single-hunt-home__actions">
-                        <a
-                            class="single-hunt-home__details-link"
-                            href="<?php echo esc_url($detailsUrl); ?>"
-                            data-single-hunt-event="single_hunt_details"
-                        >
-                            <?php esc_html_e('Voir tous les détails', 'chassesautresor-com'); ?>
-                        </a>
-                    </div>
                 <?php endif; ?>
                 <?php if (!empty($cta['cta_message'])) : ?>
                     <div class="single-hunt-home__cta-message">

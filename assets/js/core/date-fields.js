@@ -327,6 +327,14 @@ function initChampDate(input) {
 
     const afterSave = success => {
       saving = false;
+      if (success === 'queued') {
+        if (status) status.innerHTML = '';
+        input.dataset.previous = valeurBrute;
+        if (typeof window.onDateFieldUpdated === 'function') {
+          window.onDateFieldUpdated(input, valeurBrute);
+        }
+        return;
+      }
       if (success) {
         if (status) {
           status.innerHTML = '<i class="fa-solid fa-check" aria-hidden="true"></i>';

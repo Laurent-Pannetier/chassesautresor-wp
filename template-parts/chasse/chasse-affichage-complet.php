@@ -93,9 +93,12 @@ if ($illimitee) {
 // Edition
 $edition_active = utilisateur_peut_modifier_post($chasse_id);
 
-// Organisateur
+// Organisateur : nom et logo d'en-tête réservés au mode plateforme.
 $organisateur_id = get_organisateur_from_chasse($chasse_id);
 $organisateur_nom = $organisateur_id ? get_the_title($organisateur_id) : get_the_author();
+$afficher_organisateur_entete = $organisateur_id
+    && function_exists('cat_is_platform_mode')
+    && cat_is_platform_mode();
 
 
 if (current_user_can('administrator')) {
@@ -295,13 +298,22 @@ if ($edition_active && !$est_complet) {
           </a>
         <?php endif; ?>
         <?php if ($edition_active) : ?>
-          <button id="toggle-mode-edition-chasse" class="bouton-edition-toggle" aria-label="<?php esc_attr_e('Paramètres de chasse', 'chassesautresor-com'); ?>">
+          <?php
+            $chasse_edition_url = function_exists('cta_shell_edition_url')
+                ? cta_shell_edition_url('chasse', (int) $chasse_id, 'parametres')
+                : add_query_arg(['edition' => 'open', 'tab' => 'param'], (string) get_permalink($chasse_id));
+          ?>
+          <a
+            class="bouton-edition-toggle"
+            href="<?php echo esc_url($chasse_edition_url); ?>"
+            aria-label="<?php esc_attr_e('Paramètres de chasse', 'chassesautresor-com'); ?>"
+          >
             <i class="fa-solid fa-gear"></i>
-          </button>
+          </a>
         <?php endif; ?>
       </div>
 
-        <?php if ($organisateur_id) :
+        <?php if ($afficher_organisateur_entete) :
             $logo_id = get_field('logo_organisateur', $organisateur_id, false);
             $logo    = wp_get_attachment_image_src($logo_id, 'thumbnail');
             $logo_url = $logo ? $logo[0] : wp_get_attachment_image_src(3927, 'thumbnail')[0];
@@ -717,13 +729,3 @@ if ($edition_active && !$est_complet) {
     </template>
   </div>
 <?php endif; ?>
-
-<?php
-// Inclure le panneau si édition active
-if ($edition_active) {
-  get_template_part('template-parts/chasse/chasse-edition-main', null, [
-    'chasse_id'   => $chasse_id,
-    'infos_chasse' => $infos_chasse
-  ]);
-}
-?>

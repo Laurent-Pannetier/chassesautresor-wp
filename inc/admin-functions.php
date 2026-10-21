@@ -313,7 +313,10 @@ function charger_script_developpement_card() {
 add_action('wp_enqueue_scripts', 'charger_script_developpement_card');
 
 function charger_script_site_protection_card() {
-    if (preg_match('#^/mon-compte(?:/|$|\\?)#', $_SERVER['REQUEST_URI'] ?? '')) {
+    $on_outils = function_exists('cta_shell_request_slug')
+        && cta_shell_request_slug() === 'outils'
+        && current_user_can('administrator');
+    if ($on_outils || preg_match('#^/mon-compte(?:/|$|\\?)#', $_SERVER['REQUEST_URI'] ?? '')) {
         wp_enqueue_script(
             'site-protection-card',
             get_stylesheet_directory_uri() . '/assets/js/site-protection-card.js',
@@ -337,11 +340,12 @@ add_action('wp_enqueue_scripts', 'charger_script_site_protection_card');
 
 function charger_script_reset_stats_card() {
     $is_account_area = preg_match('#^/mon-compte(?:/|$|\\?)#', $_SERVER['REQUEST_URI'] ?? '');
+    $on_outils = function_exists('cta_shell_request_slug') && cta_shell_request_slug() === 'outils';
     $is_demo_user = is_user_logged_in()
         && function_exists('cat_is_demo_mode')
         && cat_is_demo_mode();
 
-    if ($is_account_area || $is_demo_user) {
+    if ($is_account_area || $on_outils || $is_demo_user) {
         wp_enqueue_script(
             'reset-stats-card',
             get_stylesheet_directory_uri() . '/assets/js/reset-stats-card.js',

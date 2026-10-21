@@ -172,10 +172,13 @@ $widget_view = (new ChassesAuTresor\Core\Progress\AnswerWidgetPlayerViewService(
 );
 $nonce = wp_create_nonce($widget_view['nonce_action']);
 $is_text_widget = ($widget_view['type'] ?? 'text') === 'text';
+$reply_key = 'final-' . (int) $post_id;
+echo cat_reponse_launcher_open($reply_key, cat_reponse_launcher_label($cout));
 ?>
 
 <form
-    class="<?= esc_attr($widget_view['form_class']); ?>"
+    class="<?= esc_attr($widget_view['form_class']); ?> is-reply-widget"
+    data-riddle-reply-key="<?= esc_attr($reply_key); ?>"
     data-widget-action="<?= esc_attr($widget_view['action']); ?>"
     data-cout="<?= esc_attr($cout); ?>"
     data-solde-avant="<?= esc_attr($solde_avant); ?>"
@@ -184,7 +187,9 @@ $is_text_widget = ($widget_view['type'] ?? 'text') === 'text';
     data-retry-state="<?= esc_attr(wp_json_encode($retry_state)); ?>"
     data-submit-disabled="<?= $disabled !== '' ? '1' : '0'; ?>"
     aria-busy="false"
+    hidden
 >
+    <?= cat_reponse_widget_chrome(); ?>
     <h3><?= $badge_html . esc_html__('Votre réponse', 'chassesautresor-com'); ?></h3>
 
     <div class="reponse-feedback" style="display:none"></div>
@@ -238,3 +243,4 @@ $is_text_widget = ($widget_view['type'] ?? 'text') === 'text';
     </p>
   <?php endif; ?>
 </form>
+<?php echo cat_reponse_launcher_close(); ?>

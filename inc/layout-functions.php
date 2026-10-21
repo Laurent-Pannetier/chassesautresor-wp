@@ -245,7 +245,8 @@ function charger_scripts_personnalises() {
       filemtime(get_stylesheet_directory() . '/assets/js/validation-admin.js'),
       true
     );
-    if (is_singular('chasse')) {
+    $reorder_on_home = function_exists('is_front_page') && is_front_page();
+    if (is_singular('chasse') || $reorder_on_home) {
       wp_enqueue_script(
         'enigme-cards-reorder',
         $theme_dir . 'enigme-cards-reorder.js',

@@ -280,10 +280,18 @@ $cards_grid_class = $poster_cards ? 'cards-grid cards-grid--poster' : 'cards-gri
                 }
               }
             }
-            $settings_url = add_query_arg([
-              'edition' => 'open',
-              'tab'     => $tab,
-            ], get_permalink($enigme_id));
+            $settings_url = function_exists('cta_shell_edition_url')
+              ? cta_shell_edition_url(
+                  'enigme',
+                  (int) $enigme_id,
+                  function_exists('cta_shell_normalize_edition_section')
+                      ? cta_shell_normalize_edition_section('enigme', (string) $tab)
+                      : 'parametres'
+              )
+              : add_query_arg([
+                  'edition' => 'open',
+                  'tab'     => $tab,
+              ], get_permalink($enigme_id));
             ?>
             <?php if ($classe_completion === 'carte-incomplete' || $can_edit || $afficher_validation) : ?>
               <div class="carte-icons">

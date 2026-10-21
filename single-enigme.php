@@ -1,18 +1,12 @@
 <?php
 /**
  * Template : single-enigme.php (version propre et encapsulée)
- * Affiche uniquement le header organisateur et le panneau d'édition
+ * Affiche la fiche énigme. L'édition se fait dans le dashboard.
  */
 
 defined('ABSPATH') || exit;
 // 🔹 Données de base
 $enigme_id      = get_the_ID();
-$edition_active = utilisateur_peut_modifier_post($enigme_id);
-
-if ($edition_active) {
-    acf_form_head();
-}
-
 $user_id = get_current_user_id();
 // 🔹 Statut logique de l’énigme
 $statut_data   = traiter_statut_enigme($enigme_id, $user_id);
@@ -48,21 +42,6 @@ if (is_singular('enigme')) {
                 <!-- 🧩 Affichage de l'énigme -->
                 <?php afficher_enigme_stylisee($enigme_id, $statut_data); ?>
             </section>
-        <?php endif; ?>
-
-        <!-- 🛠 Panneau principal d’édition -->
-        <?php get_template_part('template-parts/enigme/enigme-edition-main', null, [
-            'enigme_id' => $enigme_id,
-            'user_id'   => $user_id,
-        ]); ?>
-
-        <?php if ($edition_active) : ?>
-            <!-- ✏️ Panneaux complémentaires -->
-            <?php
-            get_template_part('template-parts/enigme/panneaux/enigme-edition-description', null, ['enigme_id' => $enigme_id]);
-            get_template_part('template-parts/enigme/panneaux/enigme-edition-images', null, ['enigme_id' => $enigme_id]);
-            get_template_part('template-parts/enigme/panneaux/enigme-edition-solution', null, ['enigme_id' => $enigme_id]);
-            ?>
         <?php endif; ?>
 
     </main>

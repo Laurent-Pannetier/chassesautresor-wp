@@ -206,39 +206,6 @@ if ($riddleId > 0) {
           </div>
         <?php endforeach; ?>
       </fieldset>
-      <fieldset class="riddle-step-form__field riddle-step-hotspot-editor">
-        <legend><?= esc_html__('Présentation interactive', 'chassesautresor-com'); ?></legend>
-        <label for="riddle-step-widget-affichage">
-          <?= esc_html__('Affichage du widget choisi ci-dessus', 'chassesautresor-com'); ?>
-        </label>
-        <select id="riddle-step-widget-affichage" name="widget_affichage">
-          <option value="always"><?= esc_html__('Toujours visible sous l’image', 'chassesautresor-com'); ?></option>
-          <option value="hotspot"><?= esc_html__('Point & click : clic sur une zone de l’image', 'chassesautresor-com'); ?></option>
-        </select>
-        <p class="txt-small">
-          <?= esc_html__(
-              'Ce réglage ne change pas le type de widget. En point & click, la page BD garde le zoom ; le joueur découvre la zone invisible dans l’image en taille originale.',
-              'chassesautresor-com'
-          ); ?>
-        </p>
-        <input type="hidden" name="hotspot_label" value="">
-        <div class="riddle-step-hotspot-editor__canvas" hidden>
-          <p class="txt-small">
-            <?= esc_html__(
-                'Cliquez-glissez sur le détail interactif (molette, clavier, serrure…) pour tracer une zone précise.',
-                'chassesautresor-com'
-            ); ?>
-          </p>
-          <div class="riddle-step-hotspot-editor__stage">
-            <img class="riddle-step-hotspot-editor__image" alt="" draggable="false" hidden>
-            <div class="riddle-step-hotspot-editor__zone" hidden></div>
-          </div>
-          <input type="hidden" name="hotspot_zone" value="">
-          <button type="button" class="bouton-texte riddle-step-hotspot-clear" hidden>
-            <?= esc_html__('Effacer la zone', 'chassesautresor-com'); ?>
-          </button>
-        </div>
-      </fieldset>
       <p class="riddle-step-form__feedback" role="alert" aria-live="assertive"></p>
       <div class="riddle-step-form__actions">
         <button type="button" class="bouton-secondaire riddle-step-cancel">

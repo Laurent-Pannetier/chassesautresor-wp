@@ -116,4 +116,95 @@ function initEnigmeCardsReorder() {
   });
 }
 
-document.addEventListener('DOMContentLoaded', initEnigmeCardsReorder);
+/**
+ * Reorder sommaire rows from the handle only, then keep the album numbers in sync.
+ */
+function initSommaireReorder() {
+  const list = document.querySelector('.sommaire-bd__liste[data-reorder="1"]');
+  if (!list) return;
+
+  list.querySelectorAll('a').forEach((link) => link.setAttribute('draggable', 'false'));
+
+  let dragged = null;
+
+  const cleanClasses = () => {
+    list.classList.remove('dragging');
+    list.querySelectorAll('.drag-over').forEach((el) => el.classList.remove('drag-over'));
+    dragged?.classList.remove('dragging');
+  };
+
+  const renumber = () => {
+    list.querySelectorAll('.sommaire-bd__numero').forEach((el, index) => {
+      el.textContent = String(index + 1);
+    });
+  };
+
+  const saveOrder = () => {
+    const order = Array.from(list.querySelectorAll('.sommaire-bd__item[data-enigme-id]')).map(
+      (el) => el.dataset.enigmeId
+    );
+    if (!order.length) return;
+    const fd = new FormData();
+    fd.append('action', 'reordonner_enigmes');
+    fd.append('chasse_id', list.dataset.chasseId || '');
+    fd.append('nonce', window.ChasseRiddleOrdering?.nonce || '');
+    order.forEach((id) => fd.append('ordre[]', id));
+    fetch(window.ajaxurl, {
+      method: 'POST',
+      credentials: 'same-origin',
+      body: fd,
+    })
+      .then((response) => response.json())
+      .then((res) => {
+        if (!res.success) {
+          alert(wp.i18n.__("Erreur lors de l'enregistrement de l'ordre", 'chassesautresor-com'));
+        }
+      })
+      .catch(() => {
+        alert(wp.i18n.__("Erreur lors de l'enregistrement de l'ordre", 'chassesautresor-com'));
+      });
+  };
+
+  list.addEventListener('dragstart', (event) => {
+    const handle = event.target.closest('.sommaire-bd__poignee');
+    if (!handle || !list.contains(handle)) {
+      event.preventDefault();
+      return;
+    }
+    dragged = handle.closest('.sommaire-bd__item');
+    if (!dragged) return;
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', dragged.dataset.enigmeId || '');
+    list.classList.add('dragging');
+    dragged.classList.add('dragging');
+  });
+
+  list.addEventListener('dragover', (event) => {
+    if (!dragged) return;
+    event.preventDefault();
+    const target = event.target.closest('.sommaire-bd__item');
+    if (!target || target === dragged) return;
+    list.querySelectorAll('.drag-over').forEach((el) => el.classList.remove('drag-over'));
+    target.classList.add('drag-over');
+    const rect = target.getBoundingClientRect();
+    const next = event.clientY > rect.top + rect.height / 2;
+    list.insertBefore(dragged, next ? target.nextSibling : target);
+  });
+
+  const finish = (event) => {
+    if (!dragged) return;
+    event.preventDefault();
+    cleanClasses();
+    renumber();
+    saveOrder();
+    dragged = null;
+  };
+
+  list.addEventListener('drop', finish);
+  list.addEventListener('dragend', finish);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  initEnigmeCardsReorder();
+  initSommaireReorder();
+});

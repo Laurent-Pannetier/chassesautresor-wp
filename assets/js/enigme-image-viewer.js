@@ -1,13 +1,16 @@
 /**
- * Viewer d’images d’énigme : feuilletage BD (vignettes + prev/next) et lightbox.
+ * Viewer d’images d’énigme : lecteur BD plein écran et lightbox.
  * Couvre le hero (`[data-enigme-gallery]`). Les pages d’étapes débloquées
  * s’ajoutent à cette galerie (y compris via AJAX).
  *
- * La lightbox charge l’URL full et l’affiche en taille native (1:1),
- * avec défilement si l’image dépasse le viewport — indispensable pour
- * repérer de petits détails.
+ * Une page 16:9 occupe le viewport (`object-fit: contain`). Le feuilletage
+ * se fait au glissement horizontal, au clavier, ou avec les flèches au
+ * survol. Un tap affiche le bandeau ; un double tap ou un pincement ouvre
+ * la lightbox en taille native (1:1).
  */
 (function () {
+  window.__enigmeViewerDispose?.();
+
   const CLOSE_LABEL =
     (window.EnigmeImageViewer && window.EnigmeImageViewer.closeLabel) || 'Fermer';
   const nativeSizeLabel =
@@ -40,7 +43,8 @@
     const total = slides.length;
     gallery.dataset.galleryPageCount = String(total);
 
-    const pager = gallery.querySelector('.galerie-enigme__page-label');
+    const pager = gallery.querySelector('.galerie-enigme__page-label')
+      || document.querySelector('.galerie-enigme__page-label');
     if (pager && total > 0) {
       pager.textContent = formatPageLabel(activeIndex + 1, total);
     }
@@ -105,6 +109,34 @@
     }
   };
 
+  const PAGE_TURN_MS = 340;
+
+  const prefersReducedMotion = () =>
+    window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches === true;
+
+  const clearPageTurn = (gallery) => {
+    if (gallery._pageTurnTimer) {
+      window.clearTimeout(gallery._pageTurnTimer);
+      gallery._pageTurnTimer = null;
+    }
+    gallery.querySelectorAll('.galerie-enigme__slide').forEach((slide) => {
+      slide.classList.remove('is-leaving', 'is-incoming', 'is-from-next', 'is-from-prev');
+      if (!slide.classList.contains('is-active')) {
+        slide.hidden = true;
+      }
+    });
+  };
+
+  const preloadNearbySlides = (gallery, index) => {
+    const slides = gallery.querySelectorAll('.galerie-enigme__slide');
+    [index - 1, index + 1].forEach((neighbor) => {
+      const img = slides[neighbor]?.querySelector('img');
+      if (img && img.loading === 'lazy') {
+        img.loading = 'eager';
+      }
+    });
+  };
+
   const selectGallerySlide = (gallery, index) => {
     const slides = [...gallery.querySelectorAll('.galerie-enigme__slide')];
     const thumbs = gallery.querySelectorAll('[data-gallery-goto]');
@@ -112,12 +144,27 @@
       return -1;
     }
 
+    const previousIndex = slides.findIndex((slide) => slide.classList.contains('is-active'));
     const target = Math.max(0, Math.min(index, slides.length - 1));
+    clearPageTurn(gallery);
+    const animate =
+      document.body.classList.contains('comic-reader') &&
+      !prefersReducedMotion() &&
+      previousIndex >= 0 &&
+      previousIndex !== target;
+    const forward = target > previousIndex;
 
     slides.forEach((slide, slideIndex) => {
       const isActive = slideIndex === target;
+      const isOutgoing = animate && slideIndex === previousIndex;
       slide.classList.toggle('is-active', isActive);
-      slide.hidden = !isActive;
+      slide.hidden = !(isActive || isOutgoing);
+      if (isOutgoing) {
+        slide.classList.add('is-leaving', forward ? 'is-from-next' : 'is-from-prev');
+      }
+      if (animate && isActive) {
+        slide.classList.add('is-incoming', forward ? 'is-from-next' : 'is-from-prev');
+      }
       slide.dataset.galleryIndex = String(slideIndex);
       const img = slide.querySelector('img');
       if (img) {
@@ -137,6 +184,26 @@
     });
 
     updateGalleryChrome(gallery, target);
+    preloadNearbySlides(gallery, target);
+    if (animate) {
+      const incoming = slides[target];
+      window.requestAnimationFrame(() => {
+        incoming?.classList.remove('is-incoming', 'is-from-next', 'is-from-prev');
+      });
+      gallery._pageTurnTimer = window.setTimeout(() => {
+        const outgoing = slides[previousIndex];
+        if (outgoing && !outgoing.classList.contains('is-active')) {
+          outgoing.classList.remove('is-leaving', 'is-from-next', 'is-from-prev');
+          outgoing.hidden = true;
+        }
+        gallery._pageTurnTimer = null;
+      }, PAGE_TURN_MS);
+    }
+    if (previousIndex !== target) {
+      gallery.dispatchEvent(
+        new CustomEvent('comic-page-change', { bubbles: true, detail: { index: target } })
+      );
+    }
     return target;
   };
 
@@ -183,18 +250,14 @@
     zoom.dataset.enigmeLightboxSrc = page.fullUrl;
     zoom.dataset.enigmeLightboxAlt = alt;
     zoom.setAttribute('aria-label', nativeSizeLabel);
-    const hotspotZone = String(page.hotspotZone || '').trim();
-    if (hotspotZone && stepId) {
-      zoom.dataset.riddleHotspotZone = hotspotZone;
-      zoom.dataset.riddleHotspotStep = stepId;
-      zoom.dataset.riddleHotspotLabel = page.hotspotLabel || '';
-    }
 
     const img = document.createElement('img');
     img.className = 'enigme-image--limited';
     img.src = page.previewUrl;
     img.alt = alt;
     img.loading = 'lazy';
+    img.decoding = 'async';
+    img.referrerPolicy = 'no-referrer';
     if (page.width) {
       img.width = Number(page.width);
     }
@@ -233,6 +296,8 @@
       thumbImg.src = page.thumbUrl;
       thumbImg.alt = '';
       thumbImg.loading = 'lazy';
+      thumbImg.decoding = 'async';
+      thumbImg.referrerPolicy = 'no-referrer';
       thumbImg.width = 72;
       thumbImg.height = 72;
       thumb.appendChild(thumbImg);
@@ -242,10 +307,575 @@
     return selectGallerySlide(gallery, index);
   };
 
+  const HUD_HIDE_MS = 3200;
+  const HUD_INTRO_MS = 2800;
+  const HUD_PAGE_MS = 1400;
+  const HUD_EDGE_MS = 800;
+  const EDGE_PX = 72;
+  const TAP_MS = 320;
+  const SWIPE_PX = 48;
+
+  const editionActive = () =>
+    document.body.classList.contains('edition-active-enigme') ||
+    document.body.classList.contains('edition-active');
+
+  const finePointerQuery = () =>
+    window.matchMedia?.('(hover: hover) and (pointer: fine)') || { matches: false };
+
+  const hintSignature = () =>
+    [...document.querySelectorAll('.zone-indices .indice-link, .zone-indices .indice-label')]
+      .map((el) => {
+        const id = el.dataset.indiceId || el.textContent.trim();
+        const state = el.classList.contains('indice-link--upcoming')
+          ? 'wait'
+          : el.dataset.unlocked || 'label';
+        return `${id}:${state}`;
+      })
+      .join('|');
+
+  const initComicReader = (gallery) => {
+    if (!(gallery instanceof Element) || gallery.dataset.comicReaderReady === '1') {
+      return;
+    }
+    gallery.dataset.comicReaderReady = '1';
+    if (!gallery.hasAttribute('data-comic-reader')) {
+      gallery.setAttribute('data-comic-reader', '');
+    }
+
+    window.__comicReaderTeardown?.();
+
+    const stage = gallery.querySelector('.galerie-enigme__stage');
+    if (!stage) {
+      return;
+    }
+
+    let readerActive = false;
+    let hideTimer = null;
+    let tapTimer = null;
+    let lastTapAt = 0;
+    let pointerOverHud = false;
+    let pointerOverTopbar = false;
+    let pointerNearHud = false;
+    let pinchBase = 0;
+    let gesture = null;
+    const pointers = new Map();
+    const parked = [];
+    let createdHud = null;
+    let hud = null;
+    let controls = null;
+    let lastHints = '';
+    const shellTopbar = document.querySelector('.app-topbar');
+
+    const storageKey = `comic-hud:${gallery.id || 'galerie'}`;
+
+    const remember = (suffix, value) => {
+      try {
+        window.sessionStorage.setItem(`${storageKey}:${suffix}`, value);
+      } catch (error) {
+        // Ignore quota / private-mode failures.
+      }
+    };
+
+    const recall = (suffix) => {
+      try {
+        return window.sessionStorage.getItem(`${storageKey}:${suffix}`) || '';
+      } catch (error) {
+        return '';
+      }
+    };
+
+    const clearHide = () => {
+      if (hideTimer) {
+        window.clearTimeout(hideTimer);
+        hideTimer = null;
+      }
+    };
+
+    const topEdgeOffset = () => {
+      if (!document.body.classList.contains('admin-bar')) {
+        return 0;
+      }
+      return window.matchMedia?.('(max-width: 782px)').matches ? 46 : 32;
+    };
+
+    const hudPinned = () =>
+      document.body.classList.contains('riddle-widget-immersive-open') ||
+      !!document.querySelector('.indice-display:not(:empty)') ||
+      pointerOverHud ||
+      pointerOverTopbar ||
+      (hud && hud.contains(document.activeElement)) ||
+      !!(shellTopbar && shellTopbar.contains(document.activeElement));
+
+    const showHud = () => {
+      if (!readerActive) {
+        return;
+      }
+      document.body.classList.add('is-hud-visible');
+    };
+
+    const hideHud = () => {
+      if (!readerActive || hudPinned()) {
+        return;
+      }
+      document.body.classList.remove('is-hud-visible');
+    };
+
+    const scheduleHide = (delay = HUD_HIDE_MS) => {
+      clearHide();
+      hideTimer = window.setTimeout(hideHud, delay);
+    };
+
+    const revealHud = (delay = HUD_HIDE_MS) => {
+      showHud();
+      if (!hudPinned()) {
+        scheduleHide(delay);
+      }
+    };
+
+    const toggleHud = () => {
+      if (document.body.classList.contains('is-hud-visible')) {
+        clearHide();
+        hideHud();
+        return;
+      }
+      revealHud();
+    };
+
+    const parkNode = (node, host) => {
+      if (!(node instanceof Element) || !host || node.dataset.comicParked === '1') {
+        return;
+      }
+      parked.push({ node, parent: node.parentNode, next: node.nextSibling });
+      node.dataset.comicParked = '1';
+      host.appendChild(node);
+    };
+
+    const restoreParked = () => {
+      [...parked].reverse().forEach(({ node, parent, next }) => {
+        delete node.dataset.comicParked;
+        if (parent?.isConnected) {
+          parent.insertBefore(node, next);
+        }
+      });
+      parked.length = 0;
+    };
+
+    let placing = false;
+    const placeControls = () => {
+      if (placing || !controls || !hud) {
+        return;
+      }
+      placing = true;
+      const dock = hud.querySelector('.participation-dock');
+      const rowHost = dock || hud;
+      if (!rowHost.contains(controls)) {
+        rowHost.appendChild(controls);
+      }
+      const pager = gallery.querySelector('.galerie-enigme__pager');
+      if (pager) {
+        if (pager.dataset.comicParked !== '1') {
+          parkNode(pager, controls);
+        } else if (pager.parentElement !== controls) {
+          controls.prepend(pager);
+        }
+      }
+      document.querySelectorAll('.reponse-launcher').forEach((node) => {
+        if (node.dataset.comicParked !== '1') {
+          parkNode(node, controls);
+        } else if (node.parentElement !== controls) {
+          controls.appendChild(node);
+        }
+      });
+      const hints = document.querySelector('.zone-indices');
+      if (hints) {
+        if (hints.dataset.comicParked !== '1') {
+          parkNode(hints, controls);
+        } else if (hints.parentElement !== controls) {
+          controls.appendChild(hints);
+        }
+      }
+      placing = false;
+    };
+
+    const buildHud = () => {
+      const participation = document.querySelector('.participation');
+      const hasChrome = !!(
+        participation &&
+        participation.querySelector(
+          '.reponse-launcher, .zone-indices, .message-joueur-statut, .riddle-player-step__content'
+        )
+      );
+      if (hasChrome) {
+        hud = participation;
+      } else {
+        hud = document.createElement('div');
+        hud.className = 'comic-reader-hud';
+        hud.dataset.comicHud = '1';
+        document.body.appendChild(hud);
+        createdHud = hud;
+      }
+      hud.classList.add('is-comic-hud');
+
+      const sheet = document.createElement('div');
+      sheet.className = 'comic-hud__sheet';
+      const text = document.querySelector('.page-enigme .contenu-principal');
+      const solution = document.querySelector('.page-enigme .solution');
+      if (text && text.textContent.trim()) {
+        parkNode(text, sheet);
+      }
+      if (solution && solution.textContent.trim()) {
+        parkNode(solution, sheet);
+      }
+      if (sheet.childElementCount) {
+        hud.prepend(sheet);
+      }
+
+      controls = document.createElement('div');
+      controls.className = 'comic-hud__controls';
+      placeControls();
+
+      hud.addEventListener('pointerenter', () => {
+        pointerOverHud = true;
+        clearHide();
+      });
+      hud.addEventListener('pointerleave', () => {
+        pointerOverHud = false;
+        scheduleHide();
+      });
+    };
+
+    const onTopbarEnter = () => {
+      pointerOverTopbar = true;
+      if (!readerActive) {
+        return;
+      }
+      showHud();
+      clearHide();
+    };
+
+    const onTopbarLeave = () => {
+      pointerOverTopbar = false;
+      if (readerActive) {
+        scheduleHide();
+      }
+    };
+
+    if (shellTopbar) {
+      shellTopbar.addEventListener('pointerenter', onTopbarEnter);
+      shellTopbar.addEventListener('pointerleave', onTopbarLeave);
+    }
+
+    const openActiveLightbox = () => {
+      const trigger = gallery.querySelector(
+        '.galerie-enigme__slide.is-active [data-enigme-lightbox-src]'
+      );
+      if (!trigger) {
+        return;
+      }
+      openLightbox(
+        trigger.getAttribute('data-enigme-lightbox-src'),
+        trigger.getAttribute('data-enigme-lightbox-alt') || '',
+        trigger
+      );
+    };
+
+    const pointerDistance = () => {
+      const points = [...pointers.values()];
+      if (points.length < 2) {
+        return 0;
+      }
+      return Math.hypot(points[0].x - points[1].x, points[0].y - points[1].y);
+    };
+
+    const fromControl = (event) =>
+      !!event.target.closest?.(
+        '.galerie-enigme__nav, .galerie-enigme__thumb, .is-comic-hud, a, input, textarea, select, label'
+      );
+
+    const onPointerDown = (event) => {
+      if (!readerActive || fromControl(event)) {
+        return;
+      }
+      if (event.pointerType === 'mouse' && event.button !== 0) {
+        return;
+      }
+      pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+      if (pointers.size >= 2) {
+        pinchBase = pointerDistance();
+        gesture = null;
+        if (tapTimer) {
+          window.clearTimeout(tapTimer);
+          tapTimer = null;
+        }
+        return;
+      }
+      gesture = { id: event.pointerId, x: event.clientX, y: event.clientY, moved: false };
+      try {
+        stage.setPointerCapture(event.pointerId);
+      } catch (error) {
+        // jsdom and some browsers reject capture before the pointer is active.
+      }
+    };
+
+    const onPointerMove = (event) => {
+      if (!pointers.has(event.pointerId)) {
+        return;
+      }
+      pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+      if (pointers.size >= 2) {
+        const distance = pointerDistance();
+        if (pinchBase > 0 && distance > pinchBase * 1.18) {
+          pinchBase = distance * 4;
+          openActiveLightbox();
+        }
+        return;
+      }
+      if (!gesture || gesture.id !== event.pointerId) {
+        return;
+      }
+      const dx = event.clientX - gesture.x;
+      const dy = event.clientY - gesture.y;
+      if (Math.abs(dx) > 12 || Math.abs(dy) > 12) {
+        gesture.moved = true;
+      }
+    };
+
+    const onPointerUp = (event) => {
+      const point = pointers.get(event.pointerId);
+      pointers.delete(event.pointerId);
+      if (!point || !readerActive) {
+        gesture = null;
+        return;
+      }
+      if (pointers.size > 0) {
+        gesture = null;
+        pinchBase = 0;
+        return;
+      }
+      const current = gesture;
+      gesture = null;
+      pinchBase = 0;
+      if (!current || current.id !== event.pointerId) {
+        return;
+      }
+      const dx = event.clientX - current.x;
+      const dy = event.clientY - current.y;
+      if (current.moved && Math.abs(dx) >= SWIPE_PX && Math.abs(dx) > Math.abs(dy) * 1.2) {
+        if (tapTimer) {
+          window.clearTimeout(tapTimer);
+          tapTimer = null;
+        }
+        lastTapAt = 0;
+        const currentIndex = [...gallery.querySelectorAll('.galerie-enigme__slide')].findIndex(
+          (slide) => slide.classList.contains('is-active')
+        );
+        selectGallerySlide(gallery, currentIndex + (dx < 0 ? 1 : -1));
+        revealHud(HUD_PAGE_MS);
+        return;
+      }
+      if (current.moved) {
+        return;
+      }
+      const now = Date.now();
+      if (now - lastTapAt < TAP_MS) {
+        lastTapAt = 0;
+        if (tapTimer) {
+          window.clearTimeout(tapTimer);
+          tapTimer = null;
+        }
+        openActiveLightbox();
+        return;
+      }
+      lastTapAt = now;
+      if (tapTimer) {
+        window.clearTimeout(tapTimer);
+      }
+      tapTimer = window.setTimeout(() => {
+        tapTimer = null;
+        toggleHud();
+      }, TAP_MS);
+    };
+
+    stage.addEventListener('pointerdown', onPointerDown);
+    stage.addEventListener('pointermove', onPointerMove);
+    stage.addEventListener('pointerup', onPointerUp);
+    stage.addEventListener('pointercancel', onPointerUp);
+
+    const onPageChange = () => revealHud(HUD_PAGE_MS);
+    gallery.addEventListener('comic-page-change', onPageChange);
+
+    const onMouseMove = (event) => {
+      if (!readerActive || !finePointerQuery().matches) {
+        return;
+      }
+      const offset = topEdgeOffset();
+      const nearTop = event.clientY >= offset && event.clientY <= offset + EDGE_PX;
+      const nearBottom = event.clientY >= window.innerHeight - EDGE_PX;
+      if (typeof event.target?.closest === 'function') {
+        pointerOverTopbar = !!event.target.closest('.app-topbar');
+      }
+      if (nearTop || nearBottom || pointerOverHud || pointerOverTopbar) {
+        pointerNearHud = true;
+        showHud();
+        clearHide();
+        return;
+      }
+      if (pointerNearHud) {
+        pointerNearHud = false;
+        scheduleHide(HUD_EDGE_MS);
+      }
+    };
+    document.addEventListener('mousemove', onMouseMove);
+
+    const onFocusIn = (event) => {
+      if (!readerActive) {
+        return;
+      }
+      if (event.target.closest?.('.is-comic-hud, .enigme-mobile-header, .app-topbar')) {
+        showHud();
+        clearHide();
+      }
+    };
+    const onFocusOut = () => {
+      if (readerActive) {
+        scheduleHide();
+      }
+    };
+    document.addEventListener('focusin', onFocusIn);
+    document.addEventListener('focusout', onFocusOut);
+
+    let hintObserver = null;
+    const watchHints = () => {
+      hintObserver?.disconnect();
+      const zone = document.querySelector('.zone-indices');
+      if (!zone) {
+        return;
+      }
+      lastHints = hintSignature();
+      hintObserver = new MutationObserver(() => {
+        const next = hintSignature();
+        if (next !== lastHints) {
+          lastHints = next;
+          remember('hints', next);
+          revealHud(HUD_INTRO_MS);
+          return;
+        }
+        if (hudPinned()) {
+          showHud();
+          clearHide();
+        }
+      });
+      hintObserver.observe(zone, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['class', 'data-unlocked'],
+      });
+    };
+
+    let structureObserver = null;
+    const watchStructure = () => {
+      structureObserver?.disconnect();
+      if (!hud) {
+        return;
+      }
+      structureObserver = new MutationObserver(() => placeControls());
+      structureObserver.observe(hud, { childList: true, subtree: true });
+    };
+
+    const playIntro = () => {
+      const seen = recall('intro') === '1';
+      const hints = hintSignature();
+      const previousHints = recall('hints');
+      if (!seen) {
+        revealHud(HUD_INTRO_MS);
+        remember('intro', '1');
+      } else if (hints && hints !== previousHints) {
+        revealHud(HUD_INTRO_MS);
+      }
+      remember('hints', hints);
+      lastHints = hints;
+    };
+
+    const activate = () => {
+      if (readerActive || !gallery.isConnected || editionActive()) {
+        return;
+      }
+      readerActive = true;
+      buildHud();
+      watchHints();
+      watchStructure();
+      document.body.classList.add('comic-reader');
+      gallery.classList.add('is-comic-active');
+      playIntro();
+    };
+
+    const deactivate = () => {
+      if (!readerActive) {
+        return;
+      }
+      readerActive = false;
+      pointerOverTopbar = false;
+      clearHide();
+      if (tapTimer) {
+        window.clearTimeout(tapTimer);
+        tapTimer = null;
+      }
+      hintObserver?.disconnect();
+      structureObserver?.disconnect();
+      restoreParked();
+      controls?.remove();
+      controls = null;
+      hud?.classList.remove('is-comic-hud');
+      hud?.querySelector(':scope > .comic-hud__sheet')?.remove();
+      createdHud?.remove();
+      createdHud = null;
+      hud = null;
+      gallery.classList.remove('is-comic-active');
+      document.body.classList.remove('comic-reader', 'is-hud-visible');
+    };
+
+    const syncEdition = () => {
+      if (editionActive()) {
+        deactivate();
+        return;
+      }
+      activate();
+    };
+
+    const bodyObserver = new MutationObserver(syncEdition);
+    bodyObserver.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+
+    window.__comicReaderTeardown = () => {
+      bodyObserver.disconnect();
+      hintObserver?.disconnect();
+      structureObserver?.disconnect();
+      stage.removeEventListener('pointerdown', onPointerDown);
+      stage.removeEventListener('pointermove', onPointerMove);
+      stage.removeEventListener('pointerup', onPointerUp);
+      stage.removeEventListener('pointercancel', onPointerUp);
+      gallery.removeEventListener('comic-page-change', onPageChange);
+      shellTopbar?.removeEventListener('pointerenter', onTopbarEnter);
+      shellTopbar?.removeEventListener('pointerleave', onTopbarLeave);
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('focusin', onFocusIn);
+      document.removeEventListener('focusout', onFocusOut);
+      clearHide();
+      if (tapTimer) {
+        window.clearTimeout(tapTimer);
+      }
+      deactivate();
+      delete gallery.dataset.comicReaderReady;
+    };
+
+    syncEdition();
+  };
+
   window.EnigmeGallery = {
     selectSlide: (gallery, index) => selectGallerySlide(gallery, index),
     appendPage: appendGalleryPage,
     getGallery: () => document.querySelector('[data-enigme-gallery]'),
+    initReader: initComicReader,
   };
 
   const closeLightbox = () => {
@@ -259,41 +889,6 @@
     if (triggerId) {
       document.getElementById(triggerId)?.focus();
     }
-  };
-
-  const mountLightboxHotspot = (dialog, image, trigger) => {
-    const zone = trigger?.getAttribute('data-riddle-hotspot-zone') || '';
-    const stepId = trigger?.getAttribute('data-riddle-hotspot-step') || '';
-    if (!zone || !stepId) {
-      return;
-    }
-
-    const parts = zone.split(/[\s,;]+/).map(Number);
-    if (parts.length !== 4 || parts.some((value) => !Number.isFinite(value))) {
-      return;
-    }
-
-    const stage = document.createElement('div');
-    stage.className = 'enigme-lightbox__hotspot-stage';
-    stage.dataset.riddleHotspotZone = zone;
-    stage.dataset.riddleHotspotStep = stepId;
-
-    image.replaceWith(stage);
-    stage.appendChild(image);
-
-    const hotspot = document.createElement('button');
-    hotspot.type = 'button';
-    hotspot.className = 'riddle-gallery-hotspot';
-    hotspot.dataset.riddleOpenWidget = '';
-    hotspot.setAttribute(
-      'aria-label',
-      trigger.getAttribute('data-riddle-hotspot-label') || 'Zone interactive'
-    );
-    hotspot.style.left = `${parts[0]}%`;
-    hotspot.style.top = `${parts[1]}%`;
-    hotspot.style.width = `${parts[2]}%`;
-    hotspot.style.height = `${parts[3]}%`;
-    stage.appendChild(hotspot);
   };
 
   const openLightbox = (src, alt, trigger) => {
@@ -331,10 +926,10 @@
     image.src = src;
     image.alt = alt || '';
     image.decoding = 'async';
+    image.referrerPolicy = 'no-referrer';
 
     dialog.appendChild(closeButton);
     dialog.appendChild(image);
-    mountLightboxHotspot(dialog, image, trigger);
     overlay.appendChild(dialog);
     document.body.appendChild(overlay);
     document.body.classList.add('no-scroll');
@@ -348,7 +943,7 @@
     });
   };
 
-  document.addEventListener('click', (event) => {
+  const onViewerClick = (event) => {
     const stepButton = event.target.closest('[data-gallery-step]');
     if (stepButton) {
       const gallery = stepButton.closest('[data-enigme-gallery]');
@@ -379,17 +974,23 @@
       return;
     }
 
+    if (zoomTrigger.closest('[data-enigme-gallery].is-comic-active')) {
+      event.preventDefault();
+      return;
+    }
+
     event.preventDefault();
     openLightbox(
       zoomTrigger.getAttribute('data-enigme-lightbox-src'),
       zoomTrigger.getAttribute('data-enigme-lightbox-alt') || '',
       zoomTrigger
     );
-  });
+  };
+  document.addEventListener('click', onViewerClick);
 
-  document.addEventListener('keydown', (event) => {
+  const onViewerKeydown = (event) => {
     if (event.key === 'Escape') {
-      if (document.querySelector('form.is-hotspot-widget.is-immersive-open')) {
+      if (document.querySelector('form.is-reply-widget.is-immersive-open')) {
         return;
       }
       closeLightbox();
@@ -399,7 +1000,7 @@
     if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') {
       return;
     }
-    if (document.querySelector('.enigme-lightbox-overlay')) {
+    if (document.querySelector('.enigme-lightbox-overlay, form.is-reply-widget.is-immersive-open')) {
       return;
     }
 
@@ -419,13 +1020,21 @@
     );
     const delta = event.key === 'ArrowLeft' ? -1 : 1;
     selectGallerySlide(gallery, current + delta);
-  });
+    if (gallery.classList.contains('is-comic-active')) {
+      gallery.dispatchEvent(new CustomEvent('comic-page-change', { bubbles: true }));
+    }
+  };
+  document.addEventListener('keydown', onViewerKeydown);
 
   document.querySelectorAll('[data-enigme-gallery]').forEach((gallery) => {
     const active = [...gallery.querySelectorAll('.galerie-enigme__slide')].findIndex(
       (slide) => slide.classList.contains('is-active')
     );
     updateGalleryChrome(gallery, active >= 0 ? active : 0);
+    preloadNearbySlides(gallery, active >= 0 ? active : 0);
+    if (gallery.hasAttribute('data-comic-reader')) {
+      initComicReader(gallery);
+    }
   });
 
   const noticeConfig = window.EnigmeImageViewer || {};
@@ -646,6 +1255,16 @@
         }, 280);
         noticeTimer = null;
       }, duration);
+    }
+  };
+
+  window.__enigmeViewerDispose = () => {
+    document.removeEventListener('click', onViewerClick);
+    document.removeEventListener('keydown', onViewerKeydown);
+    window.__comicReaderTeardown?.();
+    if (noticeTimer) {
+      window.clearTimeout(noticeTimer);
+      noticeTimer = null;
     }
   };
 })();

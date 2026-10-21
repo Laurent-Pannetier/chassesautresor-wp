@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Template Part: Panneau d'édition frontale d'une énigme
+ * Template Part: Édition d'une énigme dans le dashboard
  * Requiert : $args['enigme_id']
  */
 
@@ -75,14 +75,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['uid'], $_POST['action
 
       <div class="edition-panel-header">
         <div class="edition-panel-header-top">
-          <h2>
+          <h1>
             <i class="fa-solid fa-gear"></i>
-            <?= esc_html__('Panneau d\'édition énigme', 'chassesautresor-com'); ?> :
+            <?= esc_html__('Édition énigme', 'chassesautresor-com'); ?> :
             <span class="titre-objet" data-cpt="enigme"><?= esc_html($titre); ?></span>
-          </h2>
-
-        <button type="button" class="panneau-fermer" aria-label="<?= esc_attr__('Fermer les paramètres', 'chassesautresor-com'); ?>">✖</button>
-      </div>
+          </h1>
+        </div>
       <div class="edition-tabs">
         <button class="edition-tab active" data-target="enigme-tab-param"><?= esc_html__('Paramètres', 'chassesautresor-com'); ?></button>
         <button class="edition-tab" data-target="enigme-tab-stats"><?= esc_html__('Statistiques', 'chassesautresor-com'); ?></button>
@@ -156,6 +154,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['uid'], $_POST['action
                               <?php
                           },
                           'content' => function () use ($has_images_utiles, $images_ids, $peut_editer, $enigme_id) {
+                              $inlineImages = $peut_editer
+                                  && function_exists('cta_shell_edition_target')
+                                  && cta_shell_edition_target() !== null
+                                  && function_exists('acf_form');
                               ?>
                               <div class="champ-affichage">
                                 <?php if ($peut_editer) : ?>
@@ -163,7 +165,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['uid'], $_POST['action
                                     class="champ-modifier ouvrir-panneau-images"
                                     data-champ="enigme_visuel_image"
                                     data-cpt="enigme"
-                                    data-post-id="<?= esc_attr($enigme_id); ?>">
+                                    data-post-id="<?= esc_attr($enigme_id); ?>"
+                                    <?php if ($inlineImages) : ?>
+                                      aria-expanded="false"
+                                    <?php endif; ?>>
                                     <?php if ($has_images_utiles && is_array($images_ids)) : ?>
                                       <?php foreach ($images_ids as $img_id) : ?>
                                         <?php $thumb_url = esc_url(
@@ -198,6 +203,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['uid'], $_POST['action
                                   <?php endif; ?>
                                 <?php endif; ?>
                               </div>
+                              <p class="edition-format-hint"><?= esc_html__(
+                                  'Format BD : 1920 × 1080 px (16:9), une image par page.',
+                                  'chassesautresor-com'
+                              ); ?></p>
+                              <?php if ($inlineImages) : ?>
+                                <div class="champ-images-editeur" hidden>
+                                  <?php
+                                    $prepareImages = static function (array $field): array {
+                                        $class = trim(($field['wrapper']['class'] ?? '') . ' acf-hide-label');
+                                        $field['wrapper']['class'] = $class;
+
+                                        return $field;
+                                    };
+                                    add_filter('acf/prepare_field/name=enigme_visuel_image', $prepareImages);
+                                    acf_form([
+                                        'post_id' => $enigme_id,
+                                        'fields' => ['enigme_visuel_image'],
+                                        'form' => false,
+                                        'honeypot' => false,
+                                        'uploader' => 'wp',
+                                        'html_before_fields' => '',
+                                        'html_after_fields' => '',
+                                        'updated_message' => false,
+                                    ]);
+                                    remove_filter('acf/prepare_field/name=enigme_visuel_image', $prepareImages);
+                                    ?>
+                                </div>
+                              <?php endif; ?>
                               <div class="champ-feedback"></div>
                               <?php
                           },
@@ -206,11 +239,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['uid'], $_POST['action
                   ?>
 
                   <?php
+                  $texte_brut = trim(wp_strip_all_tags($texte_enigme));
+                  $legende_brut = trim($legende);
+                  $apercu_optionnel = $legende_brut !== '' ? $legende_brut : $texte_brut;
+                  if ($apercu_optionnel !== '') {
+                      $apercu_optionnel = wp_html_excerpt($apercu_optionnel, 60, '…');
+                  }
+                  ?>
+                  <li class="edition-optional-fold<?= $apercu_optionnel !== '' ? ' is-filled' : ''; ?>">
+                    <details class="edition-optional">
+                      <summary class="edition-optional__summary">
+                        <span class="edition-optional__marker" aria-hidden="true"></span>
+                        <span class="edition-optional__title">
+                          <?= esc_html__('Texte et sous-titre', 'chassesautresor-com'); ?>
+                        </span>
+                        <span
+                          class="edition-optional__hint"
+                          data-empty-label="<?= esc_attr__('optionnel', 'chassesautresor-com'); ?>"
+                        >
+                          <?= esc_html($apercu_optionnel !== '' ? $apercu_optionnel : __('optionnel', 'chassesautresor-com')); ?>
+                        </span>
+                      </summary>
+                      <ul class="resume-infos edition-optional__fields">
+                  <?php
+                  $texte_classes = 'champ-enigme champ-wysiwyg champ-optionnel'
+                      . (empty(trim($texte_enigme)) ? ' champ-vide' : ' champ-rempli')
+                      . ($peut_editer ? '' : ' champ-desactive');
                   get_template_part(
                       'template-parts/common/edition-row',
                       null,
                       [
-                          'class'      => 'champ-enigme champ-wysiwyg' . (empty(trim($texte_enigme)) ? ' champ-vide' : ' champ-rempli') . ($peut_editer ? '' : ' champ-desactive'),
+                          'class'      => $texte_classes,
                           'attributes' => [
                               'data-champ'   => 'enigme_visuel_texte',
                               'data-cpt'     => 'enigme',
@@ -222,16 +281,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['uid'], $_POST['action
                               <?php
                           },
                           'content' => function () use ($texte_enigme, $peut_editer, $enigme_id) {
+                              $inlineTexte = $peut_editer
+                                  && function_exists('cta_shell_edition_target')
+                                  && cta_shell_edition_target() !== null
+                                  && function_exists('acf_form');
                               ?>
                               <div class="champ-texte">
                                 <?php if (empty(trim($texte_enigme))) : ?>
                                   <?php if ($peut_editer) : ?>
-                                    <a href="#" class="champ-ajouter ouvrir-panneau-description"
-                                      data-champ="enigme_visuel_texte"
-                                      data-cpt="enigme"
-                                      data-post-id="<?= esc_attr($enigme_id); ?>">
-                                      <?= esc_html__('ajouter', 'chassesautresor-com'); ?>
-                                    </a>
+                                    <?php if ($inlineTexte) : ?>
+                                      <button type="button"
+                                        class="champ-ajouter ouvrir-panneau-description"
+                                        data-champ="enigme_visuel_texte"
+                                        data-cpt="enigme"
+                                        data-post-id="<?= esc_attr($enigme_id); ?>"
+                                        aria-expanded="false">
+                                        <?= esc_html__('ajouter', 'chassesautresor-com'); ?>
+                                      </button>
+                                    <?php else : ?>
+                                      <a href="#" class="champ-ajouter ouvrir-panneau-description"
+                                        data-champ="enigme_visuel_texte"
+                                        data-cpt="enigme"
+                                        data-post-id="<?= esc_attr($enigme_id); ?>">
+                                        <?= esc_html__('ajouter', 'chassesautresor-com'); ?>
+                                      </a>
+                                    <?php endif; ?>
                                   <?php endif; ?>
                                 <?php else : ?>
                                   <span class="champ-texte-contenu">
@@ -242,12 +316,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['uid'], $_POST['action
                                       data-champ="enigme_visuel_texte"
                                       data-cpt="enigme"
                                       data-post-id="<?= esc_attr($enigme_id); ?>"
+                                      <?php if ($inlineTexte) : ?>
+                                        aria-expanded="false"
+                                      <?php endif; ?>
                                       aria-label="<?= esc_attr__('Éditer le texte', 'chassesautresor-com'); ?>">
                                       <?= esc_html__('éditer', 'chassesautresor-com'); ?>
                                     </button>
                                   <?php endif; ?>
                                 <?php endif; ?>
                               </div>
+                              <?php if ($inlineTexte) : ?>
+                                <div class="champ-texte-editeur" hidden>
+                                  <?php
+                                    $prepareTexte = static function (array $field): array {
+                                        $class = trim(($field['wrapper']['class'] ?? '') . ' acf-hide-label');
+                                        $field['wrapper']['class'] = $class;
+                                        $field['delay'] = 1;
+
+                                        return $field;
+                                    };
+                                    add_filter('acf/prepare_field/name=enigme_visuel_texte', $prepareTexte);
+                                    acf_form([
+                                        'post_id' => $enigme_id,
+                                        'fields' => ['enigme_visuel_texte'],
+                                        'form' => false,
+                                        'honeypot' => false,
+                                        'uploader' => 'wp',
+                                        'html_before_fields' => '',
+                                        'html_after_fields' => '',
+                                        'updated_message' => false,
+                                    ]);
+                                    remove_filter('acf/prepare_field/name=enigme_visuel_texte', $prepareTexte);
+                                    ?>
+                                </div>
+                              <?php endif; ?>
                               <div class="champ-feedback"></div>
                               <?php
                           },
@@ -256,11 +358,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['uid'], $_POST['action
                   ?>
 
                   <?php
+                  $legende_classes = 'champ-enigme champ-texte champ-soustitre champ-optionnel'
+                      . (empty(trim($legende)) ? ' champ-vide' : ' champ-rempli')
+                      . ($peut_editer ? '' : ' champ-desactive');
                   get_template_part(
                       'template-parts/common/edition-row',
                       null,
                       [
-                          'class'      => 'champ-enigme champ-texte champ-soustitre' . (empty(trim($legende)) ? ' champ-vide' : ' champ-rempli') . ($peut_editer ? '' : ' champ-desactive'),
+                          'class'      => $legende_classes,
                           'attributes' => [
                               'data-champ'   => 'enigme_visuel_legende',
                               'data-cpt'     => 'enigme',
@@ -282,6 +387,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['uid'], $_POST['action
                       ]
                   );
                   ?>
+                      </ul>
+                    </details>
+                  </li>
                 </ul>
               </div>
 
@@ -405,17 +513,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['uid'], $_POST['action
                           data-riddle-id="<?= esc_attr($enigme_id); ?>"
                           data-editable="<?= $peut_editer ? '1' : '0'; ?>"
                         >
-                          <p class="riddle-final-answer-editor__summary">
+                          <div class="riddle-final-answer-editor__summary">
                             <strong class="riddle-final-answer-editor__label"><?= esc_html($finalAnswerWidgetLabel); ?></strong>
                             <?php if (!$finalAnswerComplete) : ?>
-                              <span class="champ-ajout-image"><?= esc_html__('configuration incomplète', 'chassesautresor-com'); ?></span>
+                              <span class="riddle-final-answer-editor__notice">
+                                <?= esc_html__('configuration incomplète', 'chassesautresor-com'); ?>
+                              </span>
                             <?php endif; ?>
-                          </p>
-                          <?php if ($peut_editer) : ?>
-                            <button type="button" class="champ-modifier riddle-final-answer-edit">
-                              <?= esc_html__('Configurer', 'chassesautresor-com'); ?>
-                            </button>
-                          <?php endif; ?>
+                            <?php if ($peut_editer) : ?>
+                              <button type="button" class="riddle-final-answer-edit">
+                                <?= esc_html__('Configurer', 'chassesautresor-com'); ?>
+                              </button>
+                            <?php endif; ?>
+                          </div>
                           <form class="riddle-final-answer-form" hidden>
                             <fieldset class="riddle-step-form__field">
                               <legend><?= esc_html__('Mode de réponse', 'chassesautresor-com'); ?></legend>
@@ -585,7 +695,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['uid'], $_POST['action
                     'content' => function () use ($cout, $peut_editer, $is_payant, $enigme_id) {
                         ?>
                         <div class="champ-mode-options">
-                            <span class="toggle-option"><?= esc_html__('Free', 'chassesautresor-com'); ?></span>
+                            <span class="toggle-option"><?= esc_html__('Gratuit', 'chassesautresor-com'); ?></span>
                             <label class="switch-control">
                                 <input type="checkbox" id="enigme-cout-toggle" <?= $is_payant ? 'checked' : ''; ?> <?= $peut_editer ? '' : 'disabled'; ?>>
                                 <span class="switch-slider"></span>
@@ -714,11 +824,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['uid'], $_POST['action
         );
         ?>
       </div> <!-- .edition-panel-body -->
-    <?php if (utilisateur_peut_supprimer_enigme($enigme_id)) : ?>
-      <div class="edition-panel-footer">
-        <button type="button" id="bouton-supprimer-enigme" class="bouton-texte secondaire"><?= esc_html__('❌ Suppression énigme', 'chassesautresor-com'); ?></button>
-      </div>
-    <?php endif; ?>
     </div> <!-- #enigme-tab-param -->
 
     <div id="enigme-tab-stats" class="edition-tab-content" style="display:none;">
@@ -745,7 +850,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['uid'], $_POST['action
       ?>
       <div class="edition-panel-body">
         <div class="stats-header" style="display:flex;align-items:center;justify-content:flex-end;gap:1rem;">
-            <a href="?edition=open&amp;tab=stats" class="stats-reset"><i class="fa-solid fa-rotate-right"></i> <?= esc_html__('Actualiser', 'chassesautresor-com'); ?></a>
+            <?php
+            $statsRefresh = function_exists('cta_shell_edition_url')
+                ? cta_shell_edition_url('enigme', (int) $enigme_id, 'stats')
+                : '?edition=open&tab=stats';
+            ?>
+            <a href="<?= esc_url($statsRefresh); ?>" class="stats-reset"><i class="fa-solid fa-rotate-right"></i> <?= esc_html__('Actualiser', 'chassesautresor-com'); ?></a>
           <div class="stats-filtres">
             <label for="enigme-periode"><?= esc_html__('Période :', 'chassesautresor-com'); ?></label>
             <select id="enigme-periode">
@@ -891,6 +1001,16 @@ get_template_part(
         'objet_id'   => $enigme_id,
     ]
 );
+if (utilisateur_peut_supprimer_enigme($enigme_id)) :
+    ?>
+  <div class="edition-panel-footer edition-delete">
+    <button type="button" id="bouton-supprimer-enigme" class="edition-delete__button">
+      <i class="fa-solid fa-trash" aria-hidden="true"></i>
+      <?= esc_html__('Supprimer l’énigme', 'chassesautresor-com'); ?>
+    </button>
+  </div>
+    <?php
+endif;
 ?>
   </section>
 <?php endif; ?>

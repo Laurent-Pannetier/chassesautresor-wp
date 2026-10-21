@@ -1,5 +1,8 @@
 (function() {
   function init() {
+    if (document.body.classList.contains('single-enigme')) {
+      return;
+    }
     const aside = document.querySelector('.menu-lateral');
     if (!aside) return;
     const bp = getComputedStyle(document.documentElement)
@@ -37,14 +40,19 @@
         timer = null;
       }
     }
+    const comicReaderOpen = () => document.body.classList.contains('comic-reader');
     function showAside() {
+      if (comicReaderOpen()) return;
       aside.classList.remove('is-hidden');
       opener.style.display = 'none';
       if (timer) clearTimeout(timer);
       timer = setTimeout(hideAside, HIDE_DELAY);
     }
     opener.addEventListener('click', showAside);
-    opener.addEventListener('mouseenter', showAside);
+    opener.addEventListener('mouseenter', () => {
+      if (comicReaderOpen()) return;
+      showAside();
+    });
     if (closer) {
       closer.addEventListener('click', hideAside);
     }

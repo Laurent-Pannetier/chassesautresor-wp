@@ -31,6 +31,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 ?>
 	</div><!-- #page -->
 <?php
+	if ( function_exists( 'cta_shell_close' ) ) {
+		cta_shell_close();
+	}
+
 	astra_body_bottom();
 	wp_footer();
 ?>

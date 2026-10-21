@@ -32,11 +32,12 @@
       icon.className = 'fas ' + nextIcon;
     }
 
+    const actionable = !view.disabled;
     if (labelOff) {
-      labelOff.classList.toggle('is-current', !view.checked);
+      labelOff.classList.toggle('is-action', actionable && !!view.checked);
     }
     if (labelOn) {
-      labelOn.classList.toggle('is-current', !!view.checked);
+      labelOn.classList.toggle('is-action', actionable && !view.checked);
     }
   };
 

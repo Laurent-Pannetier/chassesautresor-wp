@@ -103,11 +103,49 @@ if ($objet_type === 'chasse') {
                   class="bouton-cta champ-modifier ouvrir-panneau-liens"
                   data-champ="chasse_principale_liens"
                   data-cpt="chasse"
-                  data-post-id="<?= esc_attr($objet_id); ?>">
+                  data-post-id="<?= esc_attr($objet_id); ?>"
+                  <?php if (function_exists('cta_shell_edition_target') && cta_shell_edition_target() !== null) : ?>
+                    aria-expanded="false"
+                  <?php endif; ?>>
                   <?= empty($liens)
                     ? esc_html__('Ajouter', 'chassesautresor-com')
                     : esc_html__('Éditer', 'chassesautresor-com'); ?>
                 </button>
+                <?php if (function_exists('cta_shell_edition_target') && cta_shell_edition_target() !== null) : ?>
+                  <div class="champ-liens-editeur" hidden>
+                    <ul class="liste-liens-formulaires">
+                      <?php
+                        $types_disponibles = function_exists('get_types_liens_publics')
+                            ? get_types_liens_publics()
+                            : [];
+                        $liens_actifs = [];
+                        foreach ($liens as $entree) {
+                            if (!is_array($entree)) {
+                                continue;
+                            }
+                            $type_raw = $entree['chasse_principale_liens_type'] ?? ($entree['type_de_lien'] ?? '');
+                            $url = $entree['chasse_principale_liens_url'] ?? ($entree['url_lien'] ?? '');
+                            $type = is_array($type_raw) ? ($type_raw[0] ?? '') : $type_raw;
+                            if (is_string($type) && trim($type) !== '' && is_string($url) && trim($url) !== '') {
+                                $liens_actifs[$type] = $url;
+                            }
+                        }
+                        foreach ($types_disponibles as $type => $infos) :
+                            $url = $liens_actifs[$type] ?? '';
+                            ?>
+                        <li class="ligne-lien-formulaire" data-type="<?= esc_attr($type); ?>">
+                          <label for="champ-lien-<?= esc_attr($type); ?>">
+                            <i class="fa <?= esc_attr($infos['icone'] ?? ''); ?>"></i>
+                            <?= esc_html($infos['label'] ?? $type); ?>
+                          </label>
+                          <input type="url" id="champ-lien-<?= esc_attr($type); ?>"
+                            value="<?= esc_attr($url); ?>" placeholder="https://..."
+                            class="champ-url-lien" inputmode="url">
+                        </li>
+                        <?php endforeach; ?>
+                    </ul>
+                  </div>
+                <?php endif; ?>
               <?php endif; ?>
               <div class="champ-donnees"
                 data-valeurs='<?= json_encode($liens_js, JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT); ?>'></div>
@@ -549,25 +587,6 @@ if ($objet_type === 'chasse') {
                     <?= esc_html__('Télécharger', 'chassesautresor-com'); ?>
                   </a>
                 <?php endif; ?>
-              </div>
-            </div>
-          </div>
-        <?php endif; ?>
-
-        <?php if ($objet_type !== 'organisateur') : ?>
-          <div class="dashboard-card carte-orgy champ-protection-solutions">
-            <div class="qr-code-block">
-              <div class="qr-code-image">
-                <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
-              </div>
-              <div class="qr-code-content">
-                <h3><?= esc_html__('Sécurité des PDF de solution', 'chassesautresor-com'); ?></h3>
-                <h4><?= esc_html__('Vos PDF sont conservés dans un coffre-fort numérique', 'chassesautresor-com'); ?></h4>
-                <p>
-                  <?= esc_html__('Les fichiers PDF de solution sont conservés dans un dossier protégé. ', 'chassesautresor-com'); ?>
-                  <?= esc_html__("Ils ne seront partagés qu'à la date que vous aurez choisie : ", 'chassesautresor-com'); ?>
-                  <?= esc_html__('immédiatement après la fin de la chasse ou après un délai paramétrable.', 'chassesautresor-com'); ?>
-                </p>
               </div>
             </div>
           </div>

@@ -27,11 +27,6 @@
   const links = [
     { href: config.accountUrl, label: config.labels.account, className: 'cta-header-account-menu__link' },
     { href: config.settingsUrl, label: config.labels.settings, className: 'cta-header-account-menu__link' },
-    {
-      href: config.logoutUrl,
-      label: config.labels.logout,
-      className: 'cta-header-account-menu__link cta-header-account-menu__link--logout',
-    },
   ];
 
   links.forEach((item) => {

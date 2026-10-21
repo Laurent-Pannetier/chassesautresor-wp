@@ -119,9 +119,18 @@ if (!function_exists('render_sidebar')) {
             'context'      => $context,
         ]);
 
+        // Le volet gauche n’existe plus sur l’énigme : il couvrait le feuilletage.
+        // La navigation et les stats restent disponibles dans le menu mobile.
+        if ($context === 'enigme') {
+            return [
+                'navigation' => $navigation_html,
+                'stats'      => $stats_section_html,
+            ];
+        }
+
         $chasse_validation = $chasse_id ? get_field('chasse_cache_statut_validation', $chasse_id) : '';
         $aside_classes     = ['menu-lateral'];
-        if (in_array($context, ['chasse', 'enigme'], true)) {
+        if ($context === 'chasse') {
             $aside_classes[] = 'is-hidden';
         }
         $is_player         = !(
@@ -143,7 +152,13 @@ if (!function_exists('render_sidebar')) {
 
         echo '<div class="menu-lateral__header">';
         if ($chasse_id) {
-            $url_chasse = get_permalink($chasse_id);
+            $permalink_chasse = get_permalink($chasse_id);
+            $url_chasse = $permalink_chasse;
+            if (function_exists('cat_is_single_hunt_mode') && cat_is_single_hunt_mode()) {
+                $url_chasse = function_exists('cat_single_hunt_enigmas_url')
+                    ? cat_single_hunt_enigmas_url()
+                    : home_url('/#enigmes');
+            }
             $titre      = get_the_title($chasse_id);
             $can_edit   = function_exists('utilisateur_peut_voir_panneau')
                 ? utilisateur_peut_voir_panneau($chasse_id)
@@ -156,12 +171,12 @@ if (!function_exists('render_sidebar')) {
             echo '<h2 class="menu-lateral__title">' . $titre_html . '</h2>';
 
             if ($can_edit) {
-                $edit_url = function_exists('add_query_arg')
-                    ? add_query_arg(
+                $edit_url = function_exists('cta_shell_edition_url')
+                    ? cta_shell_edition_url('chasse', (int) $chasse_id, 'parametres')
+                    : add_query_arg(
                         ['edition' => 'open', 'tab' => 'param'],
-                        $url_chasse
-                    )
-                    : $url_chasse . '?edition=open&tab=param';
+                        $permalink_chasse
+                    );
                 echo '<a class="menu-lateral__edition-toggle enigme-menu__edit" href="'
                     . esc_url($edit_url)
                     . '" aria-label="'
@@ -177,18 +192,6 @@ if (!function_exists('render_sidebar')) {
         echo '</div>';
 
         echo '<div class="menu-lateral__content">' . $navigation_html . '</div>';
-        if ($context === 'enigme') {
-            echo '<div class="menu-lateral__accordeons">';
-            echo '<div class="accordeon-bloc">';
-            echo '<div class="accordeon-contenu accordeon-ferme">' . $stats_section_html . '</div>';
-            echo '<button class="accordeon-toggle" type="button" aria-expanded="false">'
-                . '<i class="fa-solid fa-chevron-down" aria-hidden="true"></i>'
-                . '<span class="screen-reader-text">'
-                . esc_html__('Afficher les statistiques', 'chassesautresor-com')
-                . '</span></button>';
-            echo '</div>';
-            echo '</div>';
-        }
         echo '</aside>';
 
         return [

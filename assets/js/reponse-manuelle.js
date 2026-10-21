@@ -2,7 +2,8 @@ function initFormulaireManuel() {
   const form = document.querySelector('.formulaire-reponse-manuelle');
   if (!form || form.dataset.responseHandlerReady === '1') return;
   form.dataset.responseHandlerReady = '1';
-  const feedback = form.nextElementSibling;
+  const launcher = form.closest('.reponse-launcher');
+  const feedback = form.querySelector('.reponse-feedback') || form.nextElementSibling;
   const input = form.querySelector('textarea[name="reponse_manuelle"]');
   const pointsMsg = form.querySelector('.message-limite');
   const headerPoints = document.querySelector('.zone-points .points-value');
@@ -70,10 +71,12 @@ function initFormulaireManuel() {
           msgSuccess.textContent = txtSuccess;
 
           if (feedback) feedback.remove();
-          const parent = form.parentNode;
-          parent.insertBefore(msgSuccess, form);
-          parent.insertBefore(msgProcessing, form);
+          const parent = launcher?.isConnected ? launcher : form.parentNode;
           form.remove();
+          document.body.classList.remove('riddle-widget-immersive-open');
+          document.querySelector('.riddle-widget-immersive-backdrop')?.remove();
+          launcher?.querySelector('.reponse-launcher__open')?.remove();
+          parent.append(msgSuccess, msgProcessing);
 
           const currentMenuItem = document.querySelector('.enigme-menu li.active');
           if (currentMenuItem) {

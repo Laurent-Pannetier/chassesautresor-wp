@@ -1605,6 +1605,7 @@ msgstr ""
 
 #: template-parts/chasse/chasse-edition-main.php:617
 #: template-parts/chasse/chasse-affichage-complet.php:364
+#: template-parts/enigme/enigme-edition-main.php
 msgid "Gratuit"
 msgstr "Free"
 
@@ -2242,10 +2243,6 @@ msgstr ""
 "You are free to set the cost of an attempt for your riddle: free or paid in "
 "points. When a player spends points to submit an answer, those points are "
 "immediately credited to your account."
-
-#: template-parts/enigme/enigme-edition-main.php:563
-msgid "Free"
-msgstr ""
 
 #: template-parts/enigme/enigme-edition-main.php:607
 msgid "Libre"
@@ -3337,3 +3334,31 @@ msgstr "No hunts found"
 #: inc/user-functions.php:1444
 msgid "Unable to load attempts. Please try again."
 msgstr "Unable to load attempts. Please try again."
+
+#: inc/single-hunt-navigation.php
+msgid "Rejoindre la chasse"
+msgstr "Join the hunt"
+
+#: template-parts/home/single-hunt.php
+msgid "Vos énigmes."
+msgstr "Your riddles."
+
+#: template-parts/home/single-hunt.php
+msgid "Rejoignez la chasse pour accéder aux énigmes."
+msgstr "Join the hunt to access the riddles."
+
+#: template-parts/home/single-hunt.php
+msgid "Vous n’avez pas assez de points pour rejoindre cette chasse."
+msgstr "You do not have enough points to join this hunt."
+
+#: template-parts/home/single-hunt.php
+msgid "L’engagement n’a pas pu être enregistré."
+msgstr "The enrollment could not be saved."
+
+#: src/Site/PlayerEnigmasAccessHandler.php
+msgid "Connectez-vous pour accéder aux énigmes de %s."
+msgstr "Log in to access the riddles of %s."
+
+#: src/Site/PlayerEnigmasAccessHandler.php
+msgid "Connectez-vous pour accéder aux énigmes."
+msgstr "Log in to access the riddles."

@@ -13,63 +13,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const contentEditor = form?.querySelector('.riddle-step-form__content-editor');
   const imagePreview = editor.querySelector('.riddle-step-form__image-preview');
   const imageRemove = editor.querySelector('.riddle-step-image-remove');
-  const affichageSelect = form?.querySelector('[name="widget_affichage"]');
-  const hotspotCanvas = form?.querySelector('.riddle-step-hotspot-editor__canvas');
-  const hotspotStage = form?.querySelector('.riddle-step-hotspot-editor__stage');
-  const hotspotImage = form?.querySelector('.riddle-step-hotspot-editor__image');
-  const hotspotZoneEl = form?.querySelector('.riddle-step-hotspot-editor__zone');
-  const hotspotZoneInput = form?.querySelector('[name="hotspot_zone"]');
-  const hotspotClear = form?.querySelector('.riddle-step-hotspot-clear');
   const structureLocked = editor.dataset.structureLocked === '1';
-  const MIN_ZONE = 1.5;
   let dragged = null;
   let savedScroll = 0;
-  let drawState = null;
-
-  const formatZone = zone => {
-    if (!zone) return '';
-    const round = value => {
-      const text = Number(value).toFixed(2);
-      return text.replace(/\.?0+$/, '');
-    };
-    return `${round(zone.x)},${round(zone.y)},${round(zone.w)},${round(zone.h)}`;
-  };
-
-  const parseZone = raw => {
-    const parts = String(raw || '').trim().split(/[\s,;]+/).filter(Boolean);
-    if (parts.length !== 4 || parts.some(part => Number.isNaN(Number(part)))) return null;
-    const [x, y, w, h] = parts.map(Number);
-    if (w < MIN_ZONE || h < MIN_ZONE || x < 0 || y < 0 || x + w > 100.01 || y + h > 100.01) {
-      return null;
-    }
-    return { x, y, w, h };
-  };
-
-  const applyZone = zone => {
-    hotspotZoneInput.value = formatZone(zone);
-    if (!zone) {
-      hotspotZoneEl.hidden = true;
-      hotspotClear.hidden = true;
-      return;
-    }
-    hotspotZoneEl.style.left = `${zone.x}%`;
-    hotspotZoneEl.style.top = `${zone.y}%`;
-    hotspotZoneEl.style.width = `${zone.w}%`;
-    hotspotZoneEl.style.height = `${zone.h}%`;
-    hotspotZoneEl.hidden = false;
-    hotspotClear.hidden = false;
-  };
-
-  const syncHotspotEditor = () => {
-    const hasImage = Boolean(imageInput.value && hotspotImage.getAttribute('src'));
-    const isHotspot = affichageSelect?.value === 'hotspot';
-    hotspotCanvas.hidden = !isHotspot;
-    if (!isHotspot) return;
-    hotspotImage.hidden = !hasImage;
-    if (!hasImage) {
-      applyZone(null);
-    }
-  };
 
   const updateWidgetConfig = () => {
     const widgetSelect = form?.querySelector('[name="widget"]');
@@ -100,31 +46,95 @@ document.addEventListener('DOMContentLoaded', () => {
     return result.data;
   };
 
-  const setImage = (id = '', url = '') => {
+  const shellMode = !!document.querySelector('.shell-edition');
+  let stepBaselineValues = null;
+  let stepImageUrl = '';
+
+  const stepPayload = () => {
+    contentInput.value = contentEditor.innerHTML;
+    return Object.fromEntries(new FormData(form).entries());
+  };
+
+  function markStepDraft() {
+    if (!shellMode || !window.ctaShellEditionSave || !stepBaselineValues || form.hidden) return;
+    const dirty = JSON.stringify(stepPayload()) !== JSON.stringify(stepBaselineValues);
+    window.ctaShellEditionSave.setExtra('etape', dirty);
+  }
+
+  const captureStepBaseline = () => {
+    if (!form) return;
+    contentInput.value = contentEditor.innerHTML;
+    stepBaselineValues = stepPayload();
+    stepImageUrl = imagePreview?.querySelector('img')?.getAttribute('src') || '';
+    window.ctaShellEditionSave?.setExtra('etape', false);
+  };
+
+  const setImage = (id = '', url = '', silent = false) => {
     imageInput.value = id;
     imagePreview.innerHTML = url ? `<img src="${url}" alt="">` : '';
     imageRemove.hidden = !url;
-    if (url) {
-      hotspotImage.src = url;
-      hotspotImage.hidden = false;
-    } else {
-      hotspotImage.removeAttribute('src');
-      hotspotImage.hidden = true;
-      applyZone(null);
-    }
-    syncHotspotEditor();
+    if (!silent) markStepDraft();
   };
+
+  const applyStepValues = (values) => {
+    form.querySelectorAll('input, textarea, select').forEach((field) => {
+      if (!field.name || field === contentInput || field.name === 'image_id') return;
+      if (field.type === 'checkbox') {
+        field.checked = values[field.name] === '1';
+        return;
+      }
+      if (Object.prototype.hasOwnProperty.call(values, field.name)) {
+        field.value = values[field.name];
+      }
+    });
+    contentEditor.innerHTML = values.contenu || '';
+    contentInput.value = contentEditor.innerHTML;
+    setImage(values.image_id || '', stepImageUrl, true);
+    updateWidgetConfig();
+  };
+
+  const abandonStepDraft = () => {
+    if (!shellMode || !window.ctaShellEditionSave?.hasExtra('etape')) return true;
+    if (!window.confirm(RiddleStepsEdit.texts.abandon)) return false;
+    window.ctaShellEditionSave.restoreExtra('etape');
+    return true;
+  };
+
+  if (shellMode && form && window.ctaShellEditionSave) {
+    form.querySelector('button[type="submit"]')?.setAttribute('hidden', '');
+    form.addEventListener('input', markStepDraft);
+    form.addEventListener('change', markStepDraft);
+    contentEditor?.addEventListener('input', markStepDraft);
+    window.ctaShellEditionSave.registerExtra('etape', {
+      async save() {
+        contentInput.value = contentEditor.innerHTML;
+        formFeedback.textContent = '';
+        try {
+          const values = Object.fromEntries(new FormData(form).entries());
+          const step = await request('enregistrer_etape_enigme', values);
+          updateCard(step);
+          closeForm();
+          return true;
+        } catch (error) {
+          formFeedback.textContent = error instanceof Error ? error.message : '';
+          throw error;
+        }
+      },
+      restore() {
+        if (!stepBaselineValues) return;
+        applyStepValues(stepBaselineValues);
+        if (formFeedback) formFeedback.textContent = '';
+      },
+    });
+  }
 
   const openForm = async stepId => {
     savedScroll = window.scrollY;
     form.reset();
     contentEditor.innerHTML = '';
     formFeedback.textContent = '';
-    setImage();
-    applyZone(null);
-    if (affichageSelect) affichageSelect.value = 'always';
+    setImage('', '', true);
     updateWidgetConfig();
-    syncHotspotEditor();
     form.querySelector('[name="etape_id"]').value = stepId || '';
     heading.textContent = stepId ? RiddleStepsEdit.texts.editTitle : RiddleStepsEdit.texts.newTitle;
     if (stepId) {
@@ -132,7 +142,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const step = await request('charger_etape_enigme', { etape_id: stepId });
         form.querySelector('[name="titre"]').value = step.title;
         contentEditor.innerHTML = step.content;
-        setImage(step.image_id || '', step.image_url || '');
+        setImage(step.image_id || '', step.image_url || '', true);
         const widgetSelect = form.querySelector('[name="widget"]');
         if (widgetSelect) {
           widgetSelect.value = step.widget || 'click';
@@ -150,11 +160,6 @@ document.addEventListener('DOMContentLoaded', () => {
           form.querySelector('[name="gps_tolerance"]').value = step.gps_tolerance || '25';
           updateWidgetConfig();
         }
-        if (affichageSelect) {
-          affichageSelect.value = step.widget_affichage || 'always';
-        }
-        applyZone(parseZone(step.hotspot_zone || ''));
-        syncHotspotEditor();
       } catch (error) {
         feedback.textContent = error.message;
         return;
@@ -162,6 +167,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     overview.hidden = true;
     form.hidden = false;
+    captureStepBaseline();
     form.querySelector('[name="titre"]').focus();
   };
 
@@ -197,61 +203,23 @@ document.addEventListener('DOMContentLoaded', () => {
     renumber();
   };
 
-  const relativePoint = event => {
-    const target = hotspotImage?.getAttribute('src') ? hotspotImage : hotspotStage;
-    const rect = target.getBoundingClientRect();
-    if (!rect.width || !rect.height) {
-      return { x: 0, y: 0 };
-    }
-    const x = ((event.clientX - rect.left) / rect.width) * 100;
-    const y = ((event.clientY - rect.top) / rect.height) * 100;
-    return {
-      x: Math.min(100, Math.max(0, x)),
-      y: Math.min(100, Math.max(0, y))
-    };
-  };
-
-  hotspotStage?.addEventListener('pointerdown', event => {
-    if (affichageSelect?.value !== 'hotspot' || !imageInput.value || hotspotImage.hidden) return;
-    event.preventDefault();
-    const point = relativePoint(event);
-    drawState = { startX: point.x, startY: point.y };
-    hotspotStage.setPointerCapture?.(event.pointerId);
-    applyZone({ x: point.x, y: point.y, w: MIN_ZONE, h: MIN_ZONE });
+  editor.querySelector('.riddle-step-add')?.addEventListener('click', () => {
+    if (!abandonStepDraft()) return;
+    openForm(0);
   });
-
-  hotspotStage?.addEventListener('pointermove', event => {
-    if (!drawState) return;
-    const point = relativePoint(event);
-    const x = Math.min(drawState.startX, point.x);
-    const y = Math.min(drawState.startY, point.y);
-    const w = Math.max(MIN_ZONE, Math.abs(point.x - drawState.startX));
-    const h = Math.max(MIN_ZONE, Math.abs(point.y - drawState.startY));
-    applyZone({
-      x,
-      y,
-      w: Math.min(w, 100 - x),
-      h: Math.min(h, 100 - y)
-    });
-  });
-
-  const endDraw = () => {
-    drawState = null;
-  };
-  hotspotStage?.addEventListener('pointerup', endDraw);
-  hotspotStage?.addEventListener('pointercancel', endDraw);
-
-  affichageSelect?.addEventListener('change', syncHotspotEditor);
-  hotspotClear?.addEventListener('click', () => applyZone(null));
-
-  editor.querySelector('.riddle-step-add')?.addEventListener('click', () => openForm(0));
   form?.querySelector('[name="widget"]')?.addEventListener('change', updateWidgetConfig);
-  editor.querySelectorAll('.riddle-step-cancel').forEach(button => button.addEventListener('click', closeForm));
+  editor.querySelectorAll('.riddle-step-cancel').forEach(button => button.addEventListener('click', () => {
+    if (shellMode && window.ctaShellEditionSave?.hasExtra('etape')) {
+      window.ctaShellEditionSave.restoreExtra('etape');
+    }
+    closeForm();
+  }));
 
   list?.addEventListener('click', async event => {
     const card = event.target.closest('.riddle-step-card');
     if (!card) return;
     if (event.target.closest('.riddle-step-edit')) {
+      if (!abandonStepDraft()) return;
       openForm(card.dataset.stepId);
       return;
     }
@@ -268,6 +236,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   form?.addEventListener('submit', async event => {
     event.preventDefault();
+    if (shellMode && window.ctaShellEditionSave) {
+      window.ctaShellEditionSave.save();
+      return;
+    }
     contentInput.value = contentEditor.innerHTML;
     const values = Object.fromEntries(new FormData(form).entries());
     formFeedback.textContent = '';
