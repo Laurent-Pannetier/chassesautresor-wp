@@ -306,7 +306,7 @@ function cta_shell_ordered_riddle_posts(int $huntId): array
 }
 
 /**
- * Riddle list under Outils, including the add action when it is allowed.
+ * Hunt and riddle list under Outils, including the add action when it is allowed.
  */
 function cta_shell_render_outils_submenu(): void
 {
@@ -319,19 +319,42 @@ function cta_shell_render_outils_submenu(): void
         : 0;
     $riddles = cta_shell_ordered_riddle_posts($huntId);
     $current = cta_shell_edition_target();
+    $currentHuntId = ($current['type'] ?? '') === 'chasse' ? (int) $current['id'] : 0;
     $currentId = ($current['type'] ?? '') === 'enigme' ? (int) $current['id'] : 0;
+    $canEditHunt = $huntId > 0
+        && function_exists('utilisateur_peut_voir_panneau')
+        && utilisateur_peut_voir_panneau($huntId);
     $hasIncomplete = false;
     $userId = function_exists('get_current_user_id') ? (int) get_current_user_id() : 0;
-    if ($riddles === []) {
-        $canAddNow = $huntId > 0
-            && function_exists('utilisateur_peut_ajouter_enigme')
-            && utilisateur_peut_ajouter_enigme($huntId, $userId);
-        if (!$canAddNow) {
-            return;
-        }
+    $canAddNow = $huntId > 0
+        && function_exists('utilisateur_peut_ajouter_enigme')
+        && utilisateur_peut_ajouter_enigme($huntId, $userId);
+    if (!$canEditHunt && $riddles === [] && !$canAddNow) {
+        return;
     }
 
     echo '<ul class="app-nav__sub" id="app-nav-outils-enigmes">';
+    if ($canEditHunt) {
+        $isCurrentHunt = $huntId === $currentHuntId;
+        $huntTitle = get_the_title($huntId);
+        if (!is_string($huntTitle) || $huntTitle === '') {
+            $huntTitle = __('Chasse', 'chassesautresor-com');
+        }
+
+        echo '<li class="app-nav__subitem app-nav__subitem--hunt';
+        echo $isCurrentHunt ? ' is-current">' : '">';
+        echo '<a class="app-nav__sublink app-nav__sublink--hunt';
+        echo $isCurrentHunt ? ' is-active"' : '"';
+        echo ' href="' . esc_url(cta_shell_edition_url('chasse', $huntId, 'parametres')) . '"';
+        if ($isCurrentHunt) {
+            echo ' aria-current="page"';
+        }
+        echo '><span class="app-nav__subheading">';
+        echo '<span class="app-nav__subtype">' . esc_html__('Chasse', 'chassesautresor-com') . '</span>';
+        echo '<span class="app-nav__sublabel">' . esc_html($huntTitle) . '</span>';
+        echo '</span></a></li>';
+    }
+
     foreach ($riddles as $riddle) {
         $riddleId = (int) $riddle->ID;
         $missing = function_exists('cat_riddle_missing_labels')
@@ -347,7 +370,8 @@ function cta_shell_render_outils_submenu(): void
             $title = __('Énigme', 'chassesautresor-com');
         }
 
-        echo '<li class="app-nav__subitem' . ($isCurrent ? ' is-current' : '') . '">';
+        echo '<li class="app-nav__subitem app-nav__subitem--riddle';
+        echo $isCurrent ? ' is-current">' : '">';
         echo '<a class="app-nav__sublink' . ($isCurrent ? ' is-active' : '') . '" href="';
         echo esc_url(cta_shell_edition_url('enigme', $riddleId, 'parametres')) . '"';
         if ($isCurrent) {
@@ -394,39 +418,6 @@ function cta_shell_render_outils_submenu(): void
         echo '</a></li>';
     }
     echo '</ul>';
-}
-
-/**
- * Card that opens the hunt editor from the Outils grid.
- */
-function cta_shell_render_hunt_edit_card(int $huntId): string
-{
-    if ($huntId <= 0 || !function_exists('utilisateur_peut_voir_panneau') || !utilisateur_peut_voir_panneau($huntId)) {
-        return '';
-    }
-
-    $title = function_exists('get_the_title') ? (string) get_the_title($huntId) : '';
-    if ($title === '') {
-        $title = __('Chasse', 'chassesautresor-com');
-    }
-    $url = cta_shell_edition_url('chasse', $huntId, 'parametres');
-
-    ob_start();
-    ?>
-    <div class="dashboard-card">
-        <div class="dashboard-card-header">
-            <i class="fas fa-pen-to-square" aria-hidden="true"></i>
-            <h3><?php echo esc_html($title); ?></h3>
-        </div>
-        <div class="dashboard-card-content">
-            <a class="dashboard-card-action" href="<?php echo esc_url($url); ?>">
-                <?php esc_html_e('Éditer la chasse', 'chassesautresor-com'); ?>
-            </a>
-        </div>
-    </div>
-    <?php
-
-    return (string) ob_get_clean();
 }
 
 /**

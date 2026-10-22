@@ -1,6 +1,8 @@
 /**
  * Maps the hunt image onto a sphere for the home banner.
- * Rebuild the footer bundle with:
+ * The sphere rolls sideways and rebounds on the left and right edges.
+ * Each rebound speeds it up, tilts its spin, then the roll slows toward
+ * the other edge. A contact shadow follows it. Rebuild the footer bundle with:
  * npx esbuild assets/js/src/hunt-banner-sphere.js --bundle --format=iife --minify
  *   --target=es2018 --legal-comments=inline --outfile=assets/js/hunt-banner-sphere.js
  */
@@ -15,37 +17,18 @@ import {
   SphereGeometry,
   SRGBColorSpace,
   TextureLoader,
+  Vector3,
   WebGLRenderer,
 } from 'three';
+import {
+  RADIUS,
+  createRollState,
+  shadowPlacement,
+  stepSphere,
+  travelLimit,
+} from './hunt-banner-sphere-motion';
 
 var reduceMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-var turnSpeed = 0.0034;
-
-function randomQuaternion() {
-  var u1 = Math.random();
-  var u2 = Math.random();
-  var u3 = Math.random();
-  var twoPi = Math.PI * 2;
-
-  return new Quaternion(
-    Math.sqrt(1 - u1) * Math.sin(twoPi * u2),
-    Math.sqrt(1 - u1) * Math.cos(twoPi * u2),
-    Math.sqrt(u1) * Math.sin(twoPi * u3),
-    Math.sqrt(u1) * Math.cos(twoPi * u3)
-  );
-}
-
-function pickTurn(from) {
-  var next = new Quaternion();
-  var attempt = 0;
-
-  do {
-    next.copy(randomQuaternion());
-    attempt += 1;
-  } while (from.angleTo(next) < 1.15 && attempt < 8);
-
-  return next;
-}
 
 function mount(root) {
   var url = root.getAttribute('data-image') || '';
@@ -91,13 +74,27 @@ function mount(root) {
     roughness: 0.76,
     metalness: 0.02,
   });
-  var mesh = new Mesh(new SphereGeometry(1, 64, 48), material);
+  var mesh = new Mesh(new SphereGeometry(RADIUS, 64, 48), material);
   scene.add(mesh);
-  var turnTarget = pickTurn(mesh.quaternion);
 
-  var running = true;
+  var roll = createRollState(0, Math.random);
+  var axis = new Vector3(0, 0, 1);
+  var spin = new Quaternion();
+  var viewHalfWidth = 1;
+  var impact = 0;
+  var running = false;
+  var onScreen = true;
   var frameId = 0;
-  var observer = null;
+  var lastTime = 0;
+  var resizeObserver = null;
+  var screenObserver = null;
+  var onResize = null;
+
+  function placeShadow() {
+    var placement = shadowPlacement(mesh.position.x, viewHalfWidth, impact);
+    root.style.setProperty('--hunt-sphere-x', placement.left.toFixed(2) + '%');
+    root.style.setProperty('--hunt-sphere-shadow', placement.width.toFixed(2) + '%');
+  }
 
   function resize() {
     var width = root.clientWidth || 1;
@@ -107,6 +104,19 @@ function mount(root) {
     var halfFov = (camera.fov * Math.PI) / 360;
     camera.position.z = 2.4 / (2 * Math.tan(halfFov));
     camera.updateProjectionMatrix();
+    viewHalfWidth = camera.position.z * Math.tan(halfFov) * camera.aspect;
+    roll.limit = travelLimit(viewHalfWidth, camera.position.z);
+    if (roll.x > roll.limit) {
+      roll.x = roll.limit;
+    } else if (roll.x < -roll.limit) {
+      roll.x = -roll.limit;
+    }
+    mesh.position.x = roll.x;
+    placeShadow();
+  }
+
+  function canRun() {
+    return onScreen && !document.hidden && !root.classList.contains('is-fallback');
   }
 
   function stop() {
@@ -117,27 +127,79 @@ function mount(root) {
     }
   }
 
-  function frame() {
+  function start() {
+    if (running || !canRun()) {
+      return;
+    }
+    running = true;
+    lastTime = 0;
+    frameId = window.requestAnimationFrame(frame);
+  }
+
+  function frame(now) {
     if (!running) {
       return;
     }
-    if (!reduceMotionQuery.matches) {
-      var remaining = mesh.quaternion.angleTo(turnTarget);
-      if (remaining <= turnSpeed) {
-        mesh.quaternion.copy(turnTarget);
-        turnTarget = pickTurn(mesh.quaternion);
-      } else {
-        mesh.quaternion.slerp(turnTarget, turnSpeed / remaining);
-      }
+    var time = typeof now === 'number' ? now : 0;
+    var dt = lastTime > 0 ? (time - lastTime) / 1000 : 0;
+    lastTime = time;
+    if (dt > 0.05) {
+      dt = 0.05;
     }
+
+    if (reduceMotionQuery.matches) {
+      if (mesh.position.x !== 0 || impact > 0) {
+        mesh.position.x = 0;
+        roll.x = 0;
+        impact = 0;
+        placeShadow();
+      }
+    } else if (dt > 0) {
+      var step = stepSphere(roll, dt, Math.random);
+      roll.x = step.x;
+      roll.velocityX = step.velocityX;
+      roll.exitSpeed = step.exitSpeed;
+      roll.arrivalSpeed = step.arrivalSpeed;
+      roll.tumbleX = step.tumbleX;
+      roll.tumbleY = step.tumbleY;
+      mesh.position.x = step.x;
+      var spinIndex;
+      for (spinIndex = 0; spinIndex < step.spins.length; spinIndex += 1) {
+        var part = step.spins[spinIndex];
+        if (part.angle !== 0) {
+          axis.set(part.x, part.y, part.z);
+          spin.setFromAxisAngle(axis, part.angle);
+          mesh.quaternion.premultiply(spin);
+        }
+      }
+      if (step.bounced) {
+        impact = 1;
+      }
+      if (impact > 0) {
+        impact -= dt * 2.4;
+        if (impact < 0) {
+          impact = 0;
+        }
+      }
+      placeShadow();
+    }
+
     renderer.render(scene, camera);
-    frameId = window.requestAnimationFrame(frame);
+    if (running) {
+      frameId = window.requestAnimationFrame(frame);
+    }
   }
 
   function fail() {
     stop();
-    if (observer) {
-      observer.disconnect();
+    if (resizeObserver) {
+      resizeObserver.disconnect();
+    }
+    if (screenObserver) {
+      screenObserver.disconnect();
+    }
+    if (onResize) {
+      window.removeEventListener('resize', onResize);
     }
     material.dispose();
     mesh.geometry.dispose();
@@ -151,28 +213,42 @@ function mount(root) {
   }
 
   resize();
-  frame();
 
   if (typeof ResizeObserver === 'function') {
-    observer = new ResizeObserver(resize);
-    observer.observe(root);
+    resizeObserver = new ResizeObserver(resize);
+    resizeObserver.observe(root);
   } else {
-    window.addEventListener('resize', resize);
+    onResize = resize;
+    window.addEventListener('resize', onResize);
+  }
+
+  if (typeof IntersectionObserver === 'function') {
+    screenObserver = new IntersectionObserver(function (entries) {
+      onScreen = false;
+      var index;
+      for (index = 0; index < entries.length; index += 1) {
+        if (entries[index].isIntersecting) {
+          onScreen = true;
+        }
+      }
+      if (onScreen) {
+        start();
+      } else {
+        stop();
+      }
+    });
+    screenObserver.observe(root);
   }
 
   document.addEventListener('visibilitychange', function () {
-    if (root.classList.contains('is-fallback')) {
-      return;
-    }
     if (document.hidden) {
       stop();
       return;
     }
-    if (!running) {
-      running = true;
-      frame();
-    }
+    start();
   });
+
+  start();
 
   var loader = new TextureLoader();
   loader.setCrossOrigin('anonymous');

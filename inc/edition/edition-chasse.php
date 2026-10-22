@@ -88,6 +88,10 @@ function enqueue_script_chasse_edit()
         [
             'auto'   => __('automatique', 'chassesautresor-com'),
             'manual' => __('manuelle', 'chassesautresor-com'),
+            'winnerNotice' => __(
+                '🏆 Chasse gagnée le %1$s par %2$s.',
+                'chassesautresor-com'
+            ),
         ]
     );
 

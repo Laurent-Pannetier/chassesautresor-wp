@@ -40,6 +40,15 @@ $render_link = static function (array $item): void {
     echo $icon; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     echo '</span>';
     echo '<span class="app-nav__label">' . esc_html((string) $item['label']) . '</span>';
+    $badge = (int) ($item['badge'] ?? 0);
+    if ($badge > 0) {
+        echo '<span class="app-nav__badge" aria-label="';
+        echo esc_attr(sprintf(
+            _n('%d notification non lue', '%d notifications non lues', $badge, 'chassesautresor-com'),
+            $badge
+        ));
+        echo '">' . esc_html($badge > 99 ? '99+' : (string) $badge) . '</span>';
+    }
     echo '</a>';
 };
 ?>

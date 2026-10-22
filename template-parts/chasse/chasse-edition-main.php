@@ -12,6 +12,10 @@ if (!$chasse_id || get_post_type($chasse_id) !== 'chasse') {
   return;
 }
 
+if (function_exists('cat_refresh_hunt_status_if_stale')) {
+    cat_refresh_hunt_status_if_stale((int) $chasse_id);
+}
+
 $peut_modifier = utilisateur_peut_voir_panneau($chasse_id);
 $peut_editer   = utilisateur_peut_editer_champs($chasse_id);
 $peut_editer_titre = champ_est_editable('post_title', $chasse_id);
@@ -440,14 +444,17 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
 
                 <!-- Mode de fin de chasse -->
                 <?php ob_start(); ?>
-                <?php if (in_array($statut_metier, ['payante', 'en_cours', 'revision'], true)) : ?>
+                <?php
+                $gagnant_annonce = trim((string) $gagnants) !== '' && $date_decouverte_formatee !== '';
+                ?>
+                <?php if (!$gagnant_annonce && in_array($statut_metier, ['payante', 'en_cours', 'revision'], true)) : ?>
                   <button
                     type="button"
                     class="terminer-chasse-btn bouton-cta"
                     data-post-id="<?= esc_attr($chasse_id); ?>"
                     data-cpt="chasse"
                     <?= ($statut_metier === 'revision') ? 'disabled' : ''; ?>
-                  ><?= esc_html__('Terminer la chasse', 'chassesautresor-com'); ?></button>
+                  ><?= esc_html__('Annoncer le gagnant', 'chassesautresor-com'); ?></button>
                   <div class="zone-validation-fin" style="display:none;">
                     <label for="chasse-gagnants"><?= esc_html__('Gagnants', 'chassesautresor-com'); ?></label>
                     <textarea id="chasse-gagnants" required></textarea>
@@ -457,7 +464,7 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
                       data-post-id="<?= esc_attr($chasse_id); ?>"
                       data-cpt="chasse"
                       disabled
-                    ><?= esc_html__('Valider la fin de chasse', 'chassesautresor-com'); ?></button>
+                    ><?= esc_html__('Valider l’annonce', 'chassesautresor-com'); ?></button>
                     <button
                       type="button"
                       class="annuler-fin-chasse-btn bouton-secondaire"
@@ -484,7 +491,14 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
                             <label for="chasse_mode_fin"><?= esc_html__('Mode de fin', 'chassesautresor-com'); ?></label>
                             <?php
                         },
-                        'content'  => function () use ($mode_fin, $peut_editer, $statut_metier, $date_decouverte_formatee, $gagnants, $bloc_fin_chasse) {
+                        'content'  => function () use (
+                            $mode_fin,
+                            $peut_editer,
+                            $statut_metier,
+                            $date_decouverte_formatee,
+                            $gagnants,
+                            $gagnant_annonce
+                        ) {
                             ?>
                             <div class="champ-mode-options">
                                 <span class="toggle-option">
@@ -522,16 +536,22 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
                                         [
                                             'aria_label' => __('Explication du mode manuel', 'chassesautresor-com'),
                                             'variant'    => 'aide',
-                                            'title'      => __('Fin de chasse manuelle', 'chassesautresor-com'),
-                                            'message'    => __('Vous pouvez arrêter la chasse à tout moment grâce au bouton disponible dans le panneau d’édition de la chasse, onglet Animation.', 'chassesautresor-com'),
+                                            'title'      => __('Annonce du gagnant', 'chassesautresor-com'),
+                                            'message'    => __(
+                                                'Vous annoncez le gagnant quand vous le décidez. La chasse reste ouverte, et les solutions s’affichent si vous les avez prévues à la fin de la chasse.',
+                                                'chassesautresor-com'
+                                            ),
                                         ]
                                     );
                                     ?>
                                 </span>
                                 <div class="fin-chasse-actions">
-                                    <?php if ($statut_metier === 'termine') : ?>
+                                    <?php if ($gagnant_annonce && function_exists('cat_format_hunt_winner_notice')) : ?>
                                         <p class="message-chasse-terminee">
-                                            <?= sprintf(__('Chasse gagnée le %s par %s', 'chassesautresor-com'), esc_html($date_decouverte_formatee), esc_html($gagnants)); ?>
+                                            <?= esc_html(cat_format_hunt_winner_notice(
+                                                $date_decouverte_formatee,
+                                                (string) $gagnants
+                                            )); ?>
                                         </p>
                                     <?php endif; ?>
                                 </div>

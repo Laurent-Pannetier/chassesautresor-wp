@@ -38,15 +38,6 @@ function cta_shell_icon(string $name): string
         'progression' => '<path fill="currentColor" d="M4 13h3.2v7H4v-7zm6.4-4h3.2v11h-3.2V9zM16.8 5H20v15h-3.2V5z"/>',
         'rules' => '<path fill="currentColor" d="M7 2.5h7.2L19 7.3V21.5H7V2.5zm7 1.6V8h3.9'
             . 'L14 4.1zM9.2 12h6.2v1.6H9.2V12zm0 3.4h6.2v1.6H9.2v-1.6z"/>',
-        'flame' => '<path fill="currentColor" d="'
-            . 'M6.59 21.77C3.09 20.38 1.20 17.47 1.82 14.50C2.18 12.74 2.80 11.66 4.97 9.04C7.29 6.21 7.9'
-            . '7 5.03 8.12 3.50C8.30 1.84 8.53 1.73 10.15 2.57C11.91 3.50 14.13 5.71 14.89 7.34L15.47 8.5'
-            . '9 L15.87 8.05C16.09 7.78 16.37 7.10 16.51 6.52C16.92 4.82 17.47 4.90 19.03 6.95C22.61 11.6'
-            . '0 22.80 16.90 19.48 19.84C18.39 20.82 15.81 22.14 15.03 22.14L14.52 22.14 L15.09 21.70C16.'
-            . '51 20.59 17.15 18.54 16.62 16.77C16.11 15.01 14.15 12.98 14.15 14.22C14.15 14.43 14.02 14.'
-            . '79 13.85 15.01C13.57 15.38 13.54 15.37 13.13 14.56C12.56 13.49 12.08 12.95 11.23 12.38C10.'
-            . '36 11.76 10.10 11.79 10.10 12.51C10.08 13.41 9.42 14.71 8.30 15.96C7.16 17.24 6.70 18.18 6'
-            . '.70 19.17C6.70 19.95 7.57 21.59 8.14 21.91C8.77 22.27 7.57 22.18 6.59 21.77Z"/>',
         'trophy' => '<path fill="currentColor" d="'
             . 'M6.37 20.40L6.37 18.46 L11.97 18.46L17.57 18.46 L17.57 20.40L17.57 22.34 L11.97 22.34L6.37'
             . ' 22.34 L6.37 20.40ZM8.52 16.76C8.63 16.52 9.13 16.01 9.60 15.60C10.33 14.97 10.46 14.74 10'
@@ -71,6 +62,10 @@ function cta_shell_icon(string $name): string
         'points' => '<path fill="currentColor" d="M12 2.5a9.5 9.5 0 1 0 9.5 9.5A9.5 9.5 0 0 0 12'
             . ' 2.5zm0 4.1 1.5 3.1 3.4.5-2.5 2.4.6 3.4L12 14.4 8.9 16l.6-3.4-2.4-2.4'
             . ' 3.4-.5L12 6.6z"/>',
+        'ranking' => '<circle cx="5.2" cy="6" r="1.45" fill="currentColor"/>'
+            . '<circle cx="5.2" cy="12" r="1.45" fill="currentColor"/>'
+            . '<circle cx="5.2" cy="18" r="1.45" fill="currentColor"/>'
+            . '<path fill="currentColor" d="M8.7 4.8h11v2.4h-11V4.8zm0 6H16v2.4H8.7v-2.4zm0 6h6.2v2.4H8.7V16.8z"/>',
         'team' => '<path fill="currentColor" d="M8 11.1a2.6 2.6 0 1 0-2.6-2.6A2.6 2.6 0 0 0 8 11.1zm8 0a2.6'
             . ' 2.6 0 1 0-2.6-2.6A2.6 2.6 0 0 0 16 11.1zM4.1 18.8c.25-2.15 2.05-3.5 3.9-3.5s3.65 1.35 3.9'
             . ' 3.5H4.1zm8.15 0c.2-1.15.75-2.1 1.55-2.8.85.35 1.85.55 2.85.55 1.85 0 3.65 1.35 3.9 3.5h-8.3z"/>',
@@ -123,6 +118,7 @@ function cta_shell_page_titles(): array
         'outils'         => __('Outils', 'chassesautresor-com'),
         'points'         => __('Points', 'chassesautresor-com'),
         'equipe'         => __('Équipe', 'chassesautresor-com'),
+        'classement'     => __('Classement', 'chassesautresor-com'),
         'notifications'  => __('Notifications', 'chassesautresor-com'),
     ];
 }
@@ -235,7 +231,7 @@ function cta_shell_hunt_image_url(int $huntId): string
 }
 
 /**
- * Loads the rotating hunt sphere used by the home banner.
+ * Loads the rolling hunt sphere used by the home banner.
  */
 function cta_shell_enqueue_hunt_sphere(): void
 {
@@ -263,7 +259,7 @@ function cta_shell_enqueue_hunt_sphere(): void
 }
 
 /**
- * Renders the hunt header. The image is mapped onto a rotating sphere.
+ * Renders the hunt header. The image is mapped onto a sphere that rolls sideways.
  * An empty frame is used when no image exists.
  */
 function cta_shell_render_hunt_banner(): void
@@ -292,6 +288,65 @@ function cta_shell_render_hunt_banner(): void
         echo '</p>';
     }
     echo '</section>';
+}
+
+/**
+ * Hunt ranking, then one ranking per riddle. An empty note is shown when no hunt applies.
+ */
+function cta_shell_render_player_ranking(): void
+{
+    $user_id = function_exists('get_current_user_id') ? (int) get_current_user_id() : 0;
+    $hunts = cta_shell_player_hunts($user_id, 'classement');
+    if ($hunts === [] && $user_id > 0 && function_exists('cat_get_managed_hunt_id_for_user')) {
+        $managed = (int) cat_get_managed_hunt_id_for_user($user_id);
+        if ($managed > 0) {
+            $base = function_exists('cta_shell_location_url') ? cta_shell_location_url('classement') : '';
+            $url = $base;
+            if ($base !== '' && function_exists('add_query_arg')) {
+                $url = (string) add_query_arg('chasse', (string) $managed, $base);
+            }
+            $title = function_exists('get_the_title') ? (string) get_the_title($managed) : '';
+            $hunts = [['id' => $managed, 'title' => $title, 'url' => $url]];
+        }
+    }
+    $requested = isset($_GET['chasse']) ? (int) $_GET['chasse'] : 0;
+    $hunt_id = 0;
+    foreach ($hunts as $hunt) {
+        if ((int) $hunt['id'] === $requested) {
+            $hunt_id = $requested;
+            break;
+        }
+    }
+    if ($hunt_id <= 0 && $hunts !== []) {
+        $hunt_id = (int) $hunts[0]['id'];
+    }
+
+    if (
+        $user_id <= 0
+        || $hunt_id <= 0
+        || !class_exists(\ChassesAuTresor\Core\Messages\PlayerProgressionRenderer::class)
+        || !class_exists(\ChassesAuTresor\Core\Progress\PlayerProgressionApplicationService::class)
+    ) {
+        echo '<p class="app-placeholder__note">';
+        echo esc_html__('Aucune chasse engagée pour le moment.', 'chassesautresor-com');
+        echo '</p>';
+        return;
+    }
+
+    global $wpdb;
+    $view = (new \ChassesAuTresor\Core\Progress\PlayerProgressionApplicationService(
+        new \ChassesAuTresor\Core\Progress\ProgressionOverviewRepository($wpdb),
+        new \ChassesAuTresor\Core\Progress\PlayerProgressionRepository($wpdb)
+    ))->rankingPage($user_id, $hunt_id);
+    echo (new \ChassesAuTresor\Core\Messages\PlayerProgressionRenderer())->renderRanking(
+        $view,
+        $hunts,
+        $hunt_id,
+        [
+            'url' => function_exists('admin_url') ? admin_url('admin-ajax.php') : '',
+            'nonce' => function_exists('wp_create_nonce') ? wp_create_nonce('cat_player_progression') : '',
+        ]
+    );
 }
 
 /**
@@ -327,12 +382,17 @@ function cta_shell_render_team_stats(): void
 
     global $wpdb;
     $overview = (new \ChassesAuTresor\Core\Progress\PlayerProgressionApplicationService(
-        new \ChassesAuTresor\Core\Progress\ProgressionOverviewRepository($wpdb)
+        new \ChassesAuTresor\Core\Progress\ProgressionOverviewRepository($wpdb),
+        new \ChassesAuTresor\Core\Progress\PlayerProgressionRepository($wpdb)
     ))->build($user_id, $hunt_id);
     echo (new \ChassesAuTresor\Core\Messages\PlayerProgressionRenderer())->render(
         $overview,
         $hunts,
-        $hunt_id
+        $hunt_id,
+        [
+            'url' => function_exists('admin_url') ? admin_url('admin-ajax.php') : '',
+            'nonce' => function_exists('wp_create_nonce') ? wp_create_nonce('cat_player_progression') : '',
+        ]
     );
 }
 
@@ -341,7 +401,7 @@ function cta_shell_render_team_stats(): void
  *
  * @return array<int, array{id:int,title:string,url:string}>
  */
-function cta_shell_player_hunts(int $user_id): array
+function cta_shell_player_hunts(int $user_id, string $slug = 'progression'): array
 {
     if ($user_id <= 0) {
         return [];
@@ -359,7 +419,7 @@ function cta_shell_player_hunts(int $user_id): array
         $ids = $primary > 0 ? [$primary] : [];
     }
 
-    $base = function_exists('cta_shell_location_url') ? cta_shell_location_url('progression') : '';
+    $base = function_exists('cta_shell_location_url') ? cta_shell_location_url($slug) : '';
     $hunts = [];
     foreach ($ids as $id) {
         $id = (int) $id;
@@ -418,6 +478,33 @@ function cta_shell_enqueue(): void
         (string) filemtime($path),
         true
     );
+
+    $shellSlug = function_exists('cta_shell_request_slug') ? cta_shell_request_slug() : '';
+    if (in_array($shellSlug, ['progression', 'classement'], true)) {
+        $progressionPath = get_stylesheet_directory() . '/assets/js/player-progression.js';
+        if (file_exists($progressionPath)) {
+            wp_enqueue_script(
+                'cta-player-progression',
+                get_stylesheet_directory_uri() . '/assets/js/player-progression.js',
+                [],
+                (string) filemtime($progressionPath),
+                true
+            );
+        }
+    }
+
+    if (function_exists('cta_shell_request_slug') && cta_shell_request_slug() === 'equipe') {
+        $teamPath = get_stylesheet_directory() . '/assets/js/team-performance.js';
+        if (file_exists($teamPath)) {
+            wp_enqueue_script(
+                'cta-team-performance',
+                get_stylesheet_directory_uri() . '/assets/js/team-performance.js',
+                [],
+                (string) filemtime($teamPath),
+                true
+            );
+        }
+    }
 }
 add_action('wp_enqueue_scripts', 'cta_shell_enqueue');
 

@@ -234,14 +234,23 @@ if ($objet_type === 'chasse') {
           ?>
 
           <?php if ($objet_type === 'chasse') : ?>
-            <div class="dashboard-card carte-orgy champ-chasse carte-arret-chasse" style="<?= ($statut_metier !== 'termine' && $mode_fin !== 'manuelle') ? 'display:none;' : ''; ?>">
+            <?php
+            $gagnant_annonce = trim((string) $gagnants) !== '' && trim((string) $date_decouverte) !== '';
+            $masquer_carte_gagnant = $statut_metier !== 'termine'
+                && $mode_fin !== 'manuelle'
+                && !$gagnant_annonce;
+            ?>
+            <div class="dashboard-card carte-orgy champ-chasse carte-arret-chasse" style="<?= $masquer_carte_gagnant ? 'display:none;' : ''; ?>">
               <span class="carte-check" aria-hidden="true"><i class="fa-solid fa-check"></i></span>
               <i class="fa-solid fa-hand icone-defaut" aria-hidden="true"></i>
-              <h3><?= esc_html__('Arrêt chasse', 'chassesautresor-com'); ?></h3>
+              <h3><?= esc_html__('Gagnant', 'chassesautresor-com'); ?></h3>
               <div class="stat-value fin-chasse-actions">
-                <?php if ($statut_metier === 'termine') : ?>
+                <?php if ($gagnant_annonce && function_exists('cat_format_hunt_winner_notice')) : ?>
                   <p class="message-chasse-terminee">
-                    <?= sprintf(__('Chasse gagnée le %s par %s', 'chassesautresor-com'), esc_html($date_decouverte), esc_html($gagnants)); ?>
+                    <?= esc_html(cat_format_hunt_winner_notice(
+                        (string) $date_decouverte,
+                        (string) $gagnants
+                    )); ?>
                   </p>
                 <?php elseif ($mode_fin === 'manuelle') : ?>
                   <?= $bloc_fin_chasse; ?>

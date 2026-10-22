@@ -37,8 +37,51 @@ $imageUrl = static function (int $id): string {
     return is_string($url) ? $url : '';
 };
 
+$view = cat_team_service()->describe(cat_team_actor());
+$team = is_array($view['team'] ?? null) ? $view['team'] : null;
+$userId = (int) get_current_user_id();
+$hunts = function_exists('cta_shell_player_hunts') ? cta_shell_player_hunts($userId) : [];
+$requestedHuntId = isset($_GET['chasse']) ? (int) $_GET['chasse'] : 0;
+$huntId = 0;
+foreach ($hunts as $hunt) {
+    if ((int) ($hunt['id'] ?? 0) === $requestedHuntId) {
+        $huntId = $requestedHuntId;
+        break;
+    }
+}
+if ($huntId <= 0 && $hunts !== []) {
+    $huntId = (int) ($hunts[0]['id'] ?? 0);
+}
+$teamId = is_array($team) ? (int) ($team['id'] ?? 0) : 0;
+if (
+    $huntId > 0
+    && class_exists(ChassesAuTresor\Core\Teams\TeamPerformanceApplicationService::class)
+) {
+    global $wpdb;
+    $performance = (new ChassesAuTresor\Core\Teams\TeamPerformanceApplicationService(
+        new ChassesAuTresor\Core\Teams\TeamPerformanceRepository($wpdb)
+    ))->build($teamId, $huntId, 1, $userId);
+    $teamHunts = [];
+    foreach ($hunts as $hunt) {
+        $id = (int) ($hunt['id'] ?? 0);
+        $teamHunts[] = [
+            'id' => $id,
+            'title' => (string) ($hunt['title'] ?? ''),
+            'url' => function_exists('add_query_arg')
+                ? (string) add_query_arg('chasse', (string) $id, $action)
+                : $action . '?chasse=' . $id,
+        ];
+    }
+    $performance['hunts'] = $teamHunts;
+    $performance['ajax'] = [
+        'url' => function_exists('admin_url') ? admin_url('admin-ajax.php') : '',
+        'nonce' => function_exists('wp_create_nonce') ? wp_create_nonce('cat_team_performance') : '',
+    ];
+    $view['performance'] = $performance;
+}
+
 echo (new ChassesAuTresor\Core\Teams\TeamPageRenderer())->render(
-    cat_team_service()->describe(cat_team_actor()),
+    $view,
     $notice,
     $action,
     $imageUrl,
@@ -62,6 +105,21 @@ echo (new ChassesAuTresor\Core\Teams\TeamPageRenderer())->render(
                 return;
             }
             done();
+        });
+    });
+    document.querySelectorAll('.equipe-image-picker__input').forEach(function (input) {
+        input.addEventListener('change', function () {
+            var picker = input.closest('.equipe-image-picker');
+            var file = input.files && input.files[0];
+            if (!picker) {
+                return;
+            }
+            picker.classList.toggle('has-file', !!file);
+            if (file) {
+                picker.setAttribute('title', file.name);
+                return;
+            }
+            picker.removeAttribute('title');
         });
     });
     document.querySelectorAll('form[data-equipe-confirm]').forEach(function (form) {

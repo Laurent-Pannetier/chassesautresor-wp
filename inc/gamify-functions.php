@@ -17,10 +17,6 @@ function cat_classify_hunt_riddles(array $riddleIds): array
 // 2. 💎 PROGRESSION DANS LA CHASSE
 //    - Suivi des énigmes résolues et vérification de fin de chasse.
 //
-// 3. 🏆 TROPHÉES
-//    - Attribution, affichage et gestion des trophées et badges.
-//
-
 // ==================================================
 // 💎 GESTION DES POINTS UTILISATEUR
 // ==================================================

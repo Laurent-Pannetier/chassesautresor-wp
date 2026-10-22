@@ -32,6 +32,9 @@ if ($huntId <= 0 || get_post_type($huntId) !== 'chasse') {
 }
 
 $userId = get_current_user_id();
+if (function_exists('cat_refresh_hunt_status_if_stale')) {
+    cat_refresh_hunt_status_if_stale((int) $huntId);
+}
 $huntInfo = preparer_infos_affichage_chasse($huntId, $userId);
 $fields = $huntInfo['champs'] ?? [];
 $description = (string) ($huntInfo['description'] ?? '');
@@ -49,6 +52,11 @@ $editorialContent = $frontPage instanceof WP_Post
 ?>
 
 <main id="home-page" class="single-hunt-home">
+    <?php
+    if (function_exists('cat_hunt_winner_notice_html')) {
+        echo cat_hunt_winner_notice_html((int) $huntId, 'single-hunt-home__winner-notice');
+    }
+    ?>
     <?php if ($isDemoMode) : ?>
         <div class="single-hunt-home__demo-notice" role="status">
             <div class="conteneur">

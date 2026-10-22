@@ -345,7 +345,7 @@ if ($edition_active && !$est_complet) {
         <?= esc_html($titre); ?>
       </h1>
 
-      <?php if ($statut === 'termine' && !empty($date_decouverte) && !empty($gagnants)) : ?>
+      <?php if (!empty($date_decouverte) && !empty($gagnants)) : ?>
         <?php
         $solutions_link = '';
         $user_id_solutions = function_exists('get_current_user_id') ? get_current_user_id() : 0;
@@ -366,7 +366,20 @@ if ($edition_active && !$est_complet) {
         }
         ?>
         <div class="chasse-gagnant-info">
-          <?= sprintf(__('Chasse gagnée le %1$s par %2$s', 'chassesautresor-com'), esc_html($date_decouverte_formatee), esc_html($gagnants)); ?><?= $solutions_link; ?>
+          <?php
+            $phrase_gagnant = function_exists('cat_format_hunt_winner_notice')
+                ? cat_format_hunt_winner_notice(
+                    (string) $date_decouverte_formatee,
+                    (string) $gagnants
+                )
+                : sprintf(
+                    __('🏆 Chasse gagnée le %1$s par %2$s.', 'chassesautresor-com'),
+                    $date_decouverte_formatee,
+                    $gagnants
+                );
+            echo esc_html($phrase_gagnant);
+            echo $solutions_link;
+            ?>
         </div>
       <?php endif; ?>
 

@@ -456,7 +456,7 @@ window.rafraichirCarteSolutions = rafraichirCarteSolutions;
       if (
         !confirm(
           wp.i18n.__(
-            'Voulez-vous vraiment arrêter la chasse ?',
+            'Annoncer ce gagnant ? La chasse reste ouverte.',
             'chassesautresor-com'
           )
         )
@@ -466,18 +466,31 @@ window.rafraichirCarteSolutions = rafraichirCarteSolutions;
       valider.disabled = true;
       const now = new Date();
       const dateValue = now.toISOString().slice(0, 19).replace('T', ' ');
-      const dateDisplay = `${String(now.getDate()).padStart(2, '0')}/${String(
-        now.getMonth() + 1
-      ).padStart(2, '0')}/${now.getFullYear()} à ${String(
-        now.getHours()
-      ).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-      const gagnantsEsc = gagnants.replace(/[&<>\"']/g, (c) => ({
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#039;',
-      })[c]);
+      const locale = document.documentElement.lang || 'fr-FR';
+      const datePart = new Intl.DateTimeFormat(locale, {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      }).format(now);
+      const timePart = new Intl.DateTimeFormat(locale, {
+        hour: '2-digit',
+        minute: '2-digit',
+      }).format(now);
+      const dateDisplay = `${datePart} à ${timePart}`;
+
+      const noticeTemplate =
+        (window.ChasseModeFinI18n && ChasseModeFinI18n.winnerNotice) ||
+        wp.i18n.__(
+          '🏆 Chasse gagnée le %1$s par %2$s.',
+          'chassesautresor-com'
+        );
+      const formatNotice = typeof wp.i18n.sprintf === 'function'
+        ? wp.i18n.sprintf.bind(wp.i18n)
+        : (template, ...values) => template.replace(
+          /%(\d+)\$s/g,
+          (_, index) => values[Number(index) - 1] ?? ''
+        );
+      const notice = formatNotice(noticeTemplate, dateDisplay, gagnants);
 
       modifierChampSimple(
         'champs_caches.chasse_cache_gagnants',
@@ -494,21 +507,16 @@ window.rafraichirCarteSolutions = rafraichirCarteSolutions;
             'chasse'
           )
         )
-        .then((ok) =>
-          ok &&
-          modifierChampSimple(
-            'champs_caches.chasse_cache_statut',
-            'termine',
-            postId,
-            'chasse'
-          )
-        )
         .then((ok) => {
           if (ok) {
             document
               .querySelectorAll('.fin-chasse-actions')
               .forEach((container) => {
-                container.innerHTML = `<p class="message-chasse-terminee">Chasse gagnée le ${dateDisplay} par ${gagnantsEsc}</p>`;
+                container.replaceChildren();
+                const message = document.createElement('p');
+                message.className = 'message-chasse-terminee';
+                message.textContent = notice;
+                container.appendChild(message);
               });
           } else {
             valider.disabled = false;

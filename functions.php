@@ -298,7 +298,37 @@ add_action('wp_enqueue_scripts', function () {
         filemtime($theme_path . '/dist/style.css')
     );
 
+    wp_enqueue_style(
+        'chassesautresor-cinzel',
+        'https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&display=swap',
+        [],
+        null
+    );
+
     $script_dir = $theme_uri . '/assets/js/';
+
+    if (is_user_logged_in() && function_exists('cat_notification_unread_count')) {
+        wp_enqueue_script(
+            'cat-notifications',
+            $script_dir . 'notifications.js',
+            [],
+            filemtime($theme_path . '/assets/js/notifications.js'),
+            true
+        );
+        wp_localize_script(
+            'cat-notifications',
+            'catNotifications',
+            [
+                'ajaxUrl' => admin_url('admin-ajax.php'),
+                'nonce' => wp_create_nonce('cat_notifications'),
+                'labels' => [
+                    'trophy' => __('Nouveau trophée', 'chassesautresor-com'),
+                    'notification' => __('Nouvelle notification', 'chassesautresor-com'),
+                    'close' => __('Continuer', 'chassesautresor-com'),
+                ],
+            ]
+        );
+    }
 
     wp_enqueue_script(
         'lang-switcher',

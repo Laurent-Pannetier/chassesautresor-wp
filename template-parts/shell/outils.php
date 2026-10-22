@@ -40,10 +40,6 @@ if ($is_admin && class_exists(ChassesAuTresor\Core\Messages\AccountToolsRenderer
                 // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
                 echo cat_render_hunt_lifecycle_switch($hunt_id);
             }
-            if (function_exists('cta_shell_render_hunt_edit_card')) {
-                // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-                echo cta_shell_render_hunt_edit_card($hunt_id);
-            }
             if (function_exists('cta_shell_render_organizer_edit_card')) {
                 // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
                 echo cta_shell_render_organizer_edit_card();
@@ -95,7 +91,13 @@ if ($is_admin && class_exists(ChassesAuTresor\Core\Messages\AccountToolsRenderer
                         </p>
                         <p>
                             <?php esc_html_e(
-                                'Chaque énigme, étape et indice reçoit des joueurs.',
+                                'Chaque énigme, étape et indice reçoit des joueurs, des soumissions et des dates variées.',
+                                'chassesautresor-com'
+                            ); ?>
+                        </p>
+                        <p>
+                            <?php esc_html_e(
+                                'Huit équipes de quatre joueurs sont créées ; les autres joueurs restent en solo.',
                                 'chassesautresor-com'
                             ); ?>
                         </p>

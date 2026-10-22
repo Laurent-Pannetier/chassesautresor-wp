@@ -152,15 +152,16 @@ class ResetStatsClearsMessagesTest extends TestCase
             $GLOBALS['updated_fields']
         );
 
-        $this->assertContains(
-            ['chasse_cache_gagnants', 10],
-            $GLOBALS['deleted_fields']
-        );
-
-        $this->assertContains(
-            ['chasse_cache_date_decouverte', 10],
-            $GLOBALS['deleted_fields']
-        );
+        foreach ([10, 20] as $huntId) {
+            $this->assertContains(
+                ['chasse_cache_gagnants', $huntId],
+                $GLOBALS['deleted_fields']
+            );
+            $this->assertContains(
+                ['chasse_cache_date_decouverte', $huntId],
+                $GLOBALS['deleted_fields']
+            );
+        }
     }
 
     public function test_reset_stats_clears_usermeta(): void

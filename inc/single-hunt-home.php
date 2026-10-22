@@ -76,6 +76,33 @@ function cat_single_hunt_front_is_cockpit(): bool
 }
 
 /**
+ * The cockpit embeds image URLs signed for one viewer. Sharing that HTML
+ * makes every sommaire vignette fail for the next visitor.
+ */
+function cat_single_hunt_cockpit_must_not_be_shared(bool $isCockpit): bool
+{
+    return $isCockpit;
+}
+
+/**
+ * Keep the single-hunt cockpit out of shared caches.
+ */
+function cat_prevent_shared_cache_of_single_hunt_cockpit(): void
+{
+    if (!cat_single_hunt_cockpit_must_not_be_shared(cat_single_hunt_front_is_cockpit())) {
+        return;
+    }
+
+    if (!defined('DONOTCACHEPAGE')) {
+        define('DONOTCACHEPAGE', true);
+    }
+
+    nocache_headers();
+    do_action('litespeed_control_set_nocache', 'single hunt cockpit');
+}
+add_action('wp', 'cat_prevent_shared_cache_of_single_hunt_cockpit', 0);
+
+/**
  * Single line shown over the hunt visual. Uses only the start date.
  */
 function cat_primary_hunt_start_line(int $huntId): string
@@ -107,6 +134,53 @@ function cat_primary_hunt_start_line(int $huntId): string
         __('Départ le %s', 'chassesautresor-com'),
         $formatted
     );
+}
+
+/**
+ * Recalculate a hunt before it is shown, so a manual winner announcement
+ * does not leave a stale "terminée" status on screen.
+ */
+function cat_refresh_hunt_status_if_stale(int $huntId): void
+{
+    if ($huntId <= 0 || !class_exists(\ChassesAuTresor\Core\Progress\HuntStatusUpdater::class)) {
+        return;
+    }
+
+    (new \ChassesAuTresor\Core\Progress\HuntStatusUpdater())->refreshIfStale($huntId);
+}
+
+/**
+ * Sentence shown once a winner has been named.
+ */
+function cat_format_hunt_winner_notice(string $formattedDate, string $winners): string
+{
+    return sprintf(
+        /* translators: 1: date and time, 2: winner names. */
+        __('🏆 Chasse gagnée le %1$s par %2$s.', 'chassesautresor-com'),
+        $formattedDate,
+        $winners
+    );
+}
+
+/**
+ * Status line for a hunt that already has a winner. Empty when none was announced.
+ */
+function cat_hunt_winner_notice_html(int $huntId, string $className = 'hunt-winner-notice'): string
+{
+    if ($huntId <= 0 || !function_exists('get_field')) {
+        return '';
+    }
+
+    $winners = trim((string) get_field('chasse_cache_gagnants', $huntId));
+    $date = get_field('chasse_cache_date_decouverte', $huntId);
+    if ($winners === '' || $date === null || $date === '' || $date === false) {
+        return '';
+    }
+
+    $formatted = function_exists('formater_date_heure') ? formater_date_heure($date) : (string) $date;
+    $text = cat_format_hunt_winner_notice($formatted, $winners);
+
+    return '<p class="' . esc_attr($className) . '" role="status">' . esc_html($text) . '</p>';
 }
 
 /**
@@ -210,6 +284,9 @@ function cat_render_single_hunt_home_enigmas(): void
     }
 
     $userId = (int) get_current_user_id();
+    if (function_exists('cat_refresh_hunt_status_if_stale')) {
+        cat_refresh_hunt_status_if_stale($huntId);
+    }
     $infos = function_exists('preparer_infos_affichage_chasse')
         ? preparer_infos_affichage_chasse($huntId, $userId)
         : [];
@@ -235,6 +312,9 @@ function cat_render_single_hunt_home_enigmas(): void
     echo '<h2 id="home-enigmas-title" class="screen-reader-text">';
     echo esc_html__('Les énigmes', 'chassesautresor-com');
     echo '</h2>';
+    if (function_exists('cat_hunt_winner_notice_html')) {
+        echo cat_hunt_winner_notice_html($huntId);
+    }
     echo '<div id="liste-enigmes" class="chasse-enigmes-liste">';
     get_template_part(
         'template-parts/enigme/chasse-partial-sommaire-enigmes',
