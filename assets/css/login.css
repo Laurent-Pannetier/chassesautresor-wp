@@ -1,12 +1,12 @@
 /* Styles personnalisés pour l'interface de connexion */
 :root {
-    --color-background: #0B132B;
-    --color-background-dark: #060A1F;
-    --color-primary: #FFD700;
-    --color-secondary: #E1A95F;
-    --color-text-primary: #F5F5DC;
-    --color-background-button: #880000;
-    --color-background-button-hover: #a00000;
+    --color-background: #0c1016;
+    --color-background-dark: #171d27;
+    --color-primary: #2ec8e6;
+    --color-secondary: #93a0b3;
+    --color-text-primary: #e7eef6;
+    --color-background-button: #2ec8e6;
+    --color-background-button-hover: #7eebf8;
     --font-main: 'Poppins', sans-serif;
 }
 
@@ -92,7 +92,7 @@ body.login a:focus {
 body.login #wp-submit {
     background-color: var(--color-background-button);
     border: 1px solid transparent;
-    color: var(--color-text-primary);
+    color: #042229;
     width: 100%;
     padding: 0.5rem;
 }

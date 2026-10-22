@@ -14,8 +14,6 @@ if (preg_match('#/contact($|[/?])#', $_SERVER['REQUEST_URI'])) {
     return;
 }
 
-acf_form_head(); // <-- doit être ici, AVANT get_header() !
-
 global $post;
 $organisateur_id = $post->ID;
 $user_id = get_current_user_id();

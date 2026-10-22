@@ -1047,55 +1047,231 @@ html[data-theme="day"] .home-enigmas-preserve {
   gap: 0.45rem;
 }
 
-.progression-funnel,
-.progression-steps ul {
+.progression-story {
   margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+.progression-mix,
+.progression-series,
+.progression-dropoff {
+  margin: 0;
+}
+
+.progression-mix__bar {
+  display: flex;
+  height: 0.7rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--shell-track);
+}
+
+.progression-mix__segment {
+  display: block;
+  min-width: 2px;
+  height: 100%;
+}
+
+.progression-mix__segment--solved {
+  background: var(--shell-icon-rules);
+}
+
+.progression-mix__segment--review {
+  background: var(--shell-icon-progression);
+}
+
+.progression-mix__segment--in_steps {
+  background: var(--shell-accent);
+}
+
+.progression-mix__segment--not_started {
+  background: var(--shell-muted);
+}
+
+.progression-mix__legend,
+.progression-series__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.9rem;
+  margin: 0.45rem 0 0;
   padding: 0;
+  color: var(--shell-muted);
+  font-size: 0.75rem;
   list-style: none;
 }
 
-.progression-funnel {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.5rem;
+.progression-mix__legend strong {
+  color: var(--shell-text);
 }
 
-.progression-funnel li,
-.progression-steps li {
+.progression-mix__swatch,
+.progression-series__swatch {
+  display: inline-block;
+  width: 0.55rem;
+  height: 0.55rem;
+  margin-right: 0.2rem;
+  border-radius: 0.15rem;
+  vertical-align: -0.05rem;
+}
+
+.progression-series__swatch--total {
+  background: var(--shell-accent);
+}
+
+.progression-series__swatch--success {
+  background: var(--shell-icon-rules);
+}
+
+.progression-figures {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.4rem;
+  margin: 0;
+}
+
+.progression-figures div {
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
-  min-width: 0;
-  padding: 0.55rem 0.7rem;
-  border-radius: 0.75rem;
-  background: var(--shell-surface-2);
+  gap: 0.1rem;
 }
 
-.progression-funnel span,
-.progression-steps summary,
+.progression-figures dt,
 .progression-ranking span {
+  margin: 0;
   color: var(--shell-muted);
   font-size: 0.75rem;
   font-weight: 700;
 }
 
-.progression-funnel strong,
-.progression-steps__title {
-  color: var(--shell-text);
+.progression-figures dd {
+  margin: 0;
   font-size: 1.05rem;
   font-weight: 700;
 }
 
-.progression-steps summary {
-  cursor: pointer;
+.progression-dropoff h4,
+.progression-series figcaption {
+  margin: 0 0 0.45rem;
+  color: var(--shell-text);
   font-size: 0.9rem;
+  font-style: normal;
+  font-weight: 700;
+  text-align: left;
+  opacity: 1;
 }
 
-.progression-steps ul {
+.progression-steps-chart {
   display: flex;
   flex-direction: column;
   gap: 0.45rem;
-  margin-top: 0.55rem;
+  margin: 0 0 0.45rem;
+  padding: 0;
+  list-style: none;
+}
+
+.progression-steps-chart__row {
+  display: grid;
+  grid-template-columns: minmax(0, 7.5rem) minmax(0, 1fr) auto;
+  gap: 0.45rem;
+  align-items: center;
+}
+
+.progression-steps-chart__label {
+  overflow: hidden;
+  color: var(--shell-text);
+  font-size: 0.8rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.progression-steps-chart__track {
+  height: 0.55rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--shell-track);
+}
+
+.progression-steps-chart__fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--shell-accent);
+}
+
+.progression-steps-chart__value {
+  color: var(--shell-text);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.progression-dropoff__scroll {
+  overflow-x: auto;
+}
+
+.progression-dropoff__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.progression-dropoff__table th,
+.progression-dropoff__table td {
+  padding: 0.45rem 0.35rem;
+  border-bottom: 1px solid var(--shell-border);
+  font-weight: 400;
+  text-align: left;
+}
+
+.progression-dropoff__table thead th {
+  color: var(--shell-muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.progression-dropoff__table thead th:not(:first-child),
+.progression-dropoff__table td {
+  text-align: right;
+}
+
+.progression-dropoff__table tbody th {
+  font-weight: 600;
+}
+
+.progression-dropoff__break th {
+  color: var(--shell-icon-progression);
+}
+
+.progression-series svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.progression-series__grid {
+  stroke: var(--shell-border);
+  stroke-width: 1;
+}
+
+.progression-series__line {
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+}
+
+.progression-series__line--total {
+  color: var(--shell-accent);
+}
+
+.progression-series__line--success {
+  color: var(--shell-icon-rules);
+}
+
+.progression-series text {
+  fill: var(--shell-muted);
+  font-size: 11px;
 }
 
 .progression-ranking {
@@ -1308,16 +1484,8 @@ html[data-theme="day"] .home-enigmas-preserve {
     grid-template-columns: 1fr 1fr;
   }
 
-  .progression-funnel,
-  .progression-riddle__metrics--organizer {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-
-  .progression-steps li {
-    flex-direction: row;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 0.75rem;
+  .progression-steps-chart__row {
+    grid-template-columns: minmax(0, 11rem) minmax(0, 1fr) auto;
   }
 
   .hunt-banner__sphere {

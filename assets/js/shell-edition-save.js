@@ -142,6 +142,12 @@
         return;
       }
 
+      const bank = bloc.querySelector('.champ-coordonnees-editeur');
+      if (bank) {
+        baselines.set(champ, bankValue(bank));
+        return;
+      }
+
       const cost = bloc.querySelector('.champ-cout');
       if (cost) {
         baselines.set(champ, cost.value);
@@ -198,7 +204,8 @@
 
   function shouldQueue(cpt, champ, valeur) {
     if (!shell()) return false;
-    if (cpt !== 'enigme' && cpt !== 'chasse') return false;
+    if (cpt !== 'enigme' && cpt !== 'chasse' && cpt !== 'organisateur') return false;
+    if (champ === 'logo_organisateur') return false;
     if (closureFields.includes(champ)) return false;
     if (champ === 'champs_caches.chasse_cache_statut' && valeur === 'termine') return false;
     return true;
@@ -243,9 +250,15 @@
   }
 
   function nonce() {
-    return cpt() === 'chasse'
-      ? (window.CHP_CHASSE_DEFAUT?.nonce || '')
-      : (window.CHP_ENIGME_DEFAUT?.nonce || '');
+    if (cpt() === 'chasse') return window.CHP_CHASSE_DEFAUT?.nonce || '';
+    if (cpt() === 'organisateur') return window.organisateurData?.nonce || '';
+    return window.CHP_ENIGME_DEFAUT?.nonce || '';
+  }
+
+  function saveAction() {
+    if (cpt() === 'chasse') return 'enregistrer_champs_chasse';
+    if (cpt() === 'organisateur') return 'enregistrer_champs_organisateur';
+    return 'enregistrer_champs_enigme';
   }
 
   function appendValue(params, name, value) {
@@ -284,20 +297,30 @@
       fields.delete(key);
       if (value === undefined) return;
       baselines.set(key, normalize(value));
-      if (key === 'enigme_visuel_texte' || key === 'chasse_principale_description') {
+      if (
+        key === 'enigme_visuel_texte'
+        || key === 'chasse_principale_description'
+        || key === 'description_longue'
+      ) {
         updateTexteExcerpt(key, value);
       }
       if (key.indexOf('chasse_infos_recompense_') === 0) {
         updateRewardSummary();
       }
-      if (key === 'chasse_principale_liens' && typeof updateTargetBlocks === 'function') {
+      if (key === 'coordonnees_bancaires') {
+        updateBankLabel(value);
+      }
+      if (
+        (key === 'chasse_principale_liens' || key === 'liens_publics')
+        && typeof updateTargetBlocks === 'function'
+      ) {
         let parsed = [];
         try {
           parsed = JSON.parse(value);
         } catch (error) {
           parsed = [];
         }
-        const card = document.querySelector('.shell-edition [data-champ="chasse_principale_liens"]');
+        const card = document.querySelector(`.shell-edition [data-champ="${key}"]`);
         if (card) updateTargetBlocks(card, key, postId(), parsed);
       }
       if (typeof window.onChampSimpleMisAJour === 'function') {
@@ -359,10 +382,102 @@
     return JSON.stringify(normaliserLiens(serializeLiensForm(box), { trier: true }));
   }
 
+  function linksField(box) {
+    return box.closest('[data-champ]')?.dataset.champ || 'chasse_principale_liens';
+  }
+
   function syncLinks() {
     document.querySelectorAll('.shell-edition .champ-liens-editeur').forEach((box) => {
-      queue('chasse_principale_liens', linksValue(box));
+      queue(linksField(box), linksValue(box));
     });
+  }
+
+  function bankParts(box) {
+    const iban = (box.querySelector('#champ-iban')?.value || '').replace(/\s/g, '').toUpperCase();
+    const bic = (box.querySelector('#champ-bic')?.value || '').trim().toUpperCase();
+    return { iban, bic };
+  }
+
+  function bankError(parts) {
+    const ibanOk = parts.iban === '' || /^[A-Z]{2}\d{2}[A-Z0-9]{11,30}$/.test(parts.iban);
+    const bicOk = parts.bic === '' || /^[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/.test(parts.bic);
+    if (!ibanOk) return __('Format IBAN invalide.');
+    if (!bicOk) return __('Format BIC invalide.');
+    return '';
+  }
+
+  function bankValue(box) {
+    const parts = bankParts(box);
+    return JSON.stringify({ iban: parts.iban, bic: parts.bic });
+  }
+
+  function syncBank() {
+    let ok = true;
+    document.querySelectorAll('.shell-edition .champ-coordonnees-editeur').forEach((box) => {
+      const message = bankError(bankParts(box));
+      if (message) {
+        fields.delete('coordonnees_bancaires');
+        errorMessage = message;
+        ok = false;
+        return;
+      }
+      queue('coordonnees_bancaires', bankValue(box));
+    });
+    return ok;
+  }
+
+  function syncOrganizerText() {
+    let ok = true;
+    document.querySelectorAll('.shell-edition [data-cpt="organisateur"][data-champ]').forEach((bloc) => {
+      if (!ok) return;
+      const champ = bloc.dataset.champ || '';
+      if (
+        champ === ''
+        || champ === 'logo_organisateur'
+        || champ === 'liens_publics'
+        || champ === 'coordonnees_bancaires'
+        || champ === 'description_longue'
+      ) {
+        return;
+      }
+      if (bloc.querySelector('.champ-texte-editeur, .champ-liens-editeur, .champ-coordonnees-editeur')) {
+        return;
+      }
+      const input = bloc.querySelector('input.champ-input, textarea.champ-input');
+      if (!input || input.disabled) return;
+      const valeur = input.value.trim();
+      if (champ === 'email_contact') {
+        const valid = valeur === '' || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(valeur);
+        if (!valid) {
+          errorMessage = __('Adresse email invalide.');
+          ok = false;
+          return;
+        }
+      }
+      if (champ === 'post_title' && valeur === '') {
+        errorMessage = __('Le titre est obligatoire.');
+        ok = false;
+        return;
+      }
+      queue(champ, valeur);
+    });
+    return ok;
+  }
+
+  function updateBankLabel(raw) {
+    const trigger = document.getElementById('ouvrir-coordonnees');
+    if (!trigger) return;
+    let data = {};
+    try {
+      data = JSON.parse(raw);
+    } catch (error) {
+      data = {};
+    }
+    const filled = !!(data.iban && data.bic);
+    const label = filled ? trigger.dataset.labelEdit : trigger.dataset.labelAdd;
+    const aria = filled ? trigger.dataset.ariaEdit : trigger.dataset.ariaAdd;
+    if (label) trigger.textContent = label;
+    if (aria) trigger.setAttribute('aria-label', aria);
   }
 
   function galleryIds(box) {
@@ -485,7 +600,7 @@
     if (add) {
       add.classList.remove('champ-ajouter');
       add.classList.add('champ-modifier');
-      const verb = bloc.dataset.cpt === 'chasse' ? __('modifier') : __('éditer');
+      const verb = bloc.dataset.cpt === 'enigme' ? __('éditer') : __('modifier');
       add.textContent = verb;
       add.setAttribute('aria-label', verb);
     }
@@ -512,16 +627,13 @@
     if (fields.size === 0 && dates === null) return Promise.resolve(true);
     const currentCpt = cpt();
     const currentId = postId();
-    if ((currentCpt !== 'enigme' && currentCpt !== 'chasse') || !currentId) {
+    if (!['enigme', 'chasse', 'organisateur'].includes(currentCpt) || !currentId) {
       errorMessage = __('Erreur lors de l’enregistrement.');
       return Promise.resolve(false);
     }
 
     const params = new URLSearchParams();
-    params.set(
-      'action',
-      currentCpt === 'chasse' ? 'enregistrer_champs_chasse' : 'enregistrer_champs_enigme'
-    );
+    params.set('action', saveAction());
     params.set('post_id', currentId);
     params.set('nonce', nonce());
     fields.forEach((value, champ) => {
@@ -593,6 +705,11 @@
     syncGallery();
     syncReward();
     syncLinks();
+    if (!syncOrganizerText() || !syncBank()) {
+      state = 'error';
+      render();
+      return Promise.resolve(false);
+    }
     if (saving || !isDirty()) return Promise.resolve(false);
 
     saving = true;
@@ -621,6 +738,19 @@
         }, 2500);
         return true;
       });
+  }
+
+  function writeBank(box, raw) {
+    let data = {};
+    try {
+      data = JSON.parse(raw);
+    } catch (error) {
+      data = {};
+    }
+    const iban = box.querySelector('#champ-iban');
+    const bic = box.querySelector('#champ-bic');
+    if (iban) iban.value = data.iban || '';
+    if (bic) bic.value = data.bic || '';
   }
 
   function writeLinks(box, raw) {
@@ -737,6 +867,12 @@
       const links = bloc.querySelector('.champ-liens-editeur');
       if (links && baselines.has(champ)) {
         writeLinks(links, baselines.get(champ));
+        return;
+      }
+
+      const bank = bloc.querySelector('.champ-coordonnees-editeur');
+      if (bank && baselines.has(champ)) {
+        writeBank(bank, baselines.get(champ));
         return;
       }
 
@@ -931,7 +1067,7 @@
     const editionPanel = panel();
     if (!editionPanel || editionPanel.dataset.saveReady === '1') return;
     const kind = editionPanel.dataset.cpt;
-    if (kind !== 'enigme' && kind !== 'chasse') return;
+    if (kind !== 'enigme' && kind !== 'chasse' && kind !== 'organisateur') return;
 
     const bar = document.createElement('div');
     bar.className = 'shell-edition-save';
@@ -1047,7 +1183,22 @@
     document.querySelectorAll('.shell-edition .champ-liens-editeur').forEach((box) => {
       if (box.dataset.watched === '1') return;
       box.dataset.watched = '1';
-      box.addEventListener('input', () => queue('chasse_principale_liens', linksValue(box)));
+      box.addEventListener('input', () => queue(linksField(box), linksValue(box)));
+    });
+    document.querySelectorAll('.shell-edition .champ-coordonnees-editeur').forEach((box) => {
+      if (box.dataset.watched === '1') return;
+      box.dataset.watched = '1';
+      box.addEventListener('input', () => {
+        const message = bankError(bankParts(box));
+        if (message) {
+          fields.delete('coordonnees_bancaires');
+          errorMessage = message;
+          state = 'error';
+          render();
+          return;
+        }
+        queue('coordonnees_bancaires', bankValue(box));
+      });
     });
   }
 
@@ -1064,6 +1215,31 @@
       event.preventDefault();
       event.stopPropagation();
       toggleBox(links, '.champ-liens-editeur');
+      return;
+    }
+    const bankModal = event.target.closest('#ouvrir-coordonnees-modal');
+    if (bankModal && document.querySelector('.shell-edition .champ-coordonnees-editeur')) {
+      event.preventDefault();
+      event.stopPropagation();
+      const modal = document.getElementById('conversion-modal');
+      if (modal) modal.style.display = 'none';
+      document.querySelectorAll('.modal-overlay').forEach((overlay) => {
+        overlay.style.display = 'none';
+      });
+      const box = document.querySelector('.shell-edition .champ-coordonnees-editeur');
+      const trigger = document.getElementById('ouvrir-coordonnees');
+      if (box) {
+        box.hidden = false;
+        trigger?.setAttribute('aria-expanded', 'true');
+        box.querySelector('#champ-iban')?.focus();
+      }
+      return;
+    }
+    const bank = event.target.closest('.shell-edition #ouvrir-coordonnees');
+    if (bank?.closest('.dashboard-card')?.querySelector('.champ-coordonnees-editeur')) {
+      event.preventDefault();
+      event.stopPropagation();
+      toggleBox(bank, '.champ-coordonnees-editeur');
     }
   }, true);
 

@@ -235,7 +235,7 @@ require_once __DIR__ . '/indices.php';
         if (function_exists('utilisateur_peut_modifier_enigme') && utilisateur_peut_modifier_enigme($enigme_id)) {
             $edition_url = function_exists('cta_shell_edition_url')
                 ? cta_shell_edition_url('enigme', (int) $enigme_id, 'parametres')
-                : add_query_arg(['edition' => 'open', 'tab' => 'param'], (string) get_permalink($enigme_id));
+                : home_url('/outils/?enigme=' . (int) $enigme_id . '&section=parametres');
             echo '<a class="enigme-mobile-edit" href="' . esc_url($edition_url) . '" aria-label="'
                 . esc_attr__('Paramètres', 'chassesautresor-com') . '">';
             echo '<span class="screen-reader-text">' . esc_html__('Paramètres', 'chassesautresor-com') . '</span>';
@@ -254,7 +254,7 @@ require_once __DIR__ . '/indices.php';
         if (function_exists('utilisateur_peut_modifier_enigme') && utilisateur_peut_modifier_enigme($enigme_id)) {
             $edition_url = function_exists('cta_shell_edition_url')
                 ? cta_shell_edition_url('enigme', (int) $enigme_id, 'parametres')
-                : add_query_arg(['edition' => 'open', 'tab' => 'param'], (string) get_permalink($enigme_id));
+                : home_url('/outils/?enigme=' . (int) $enigme_id . '&section=parametres');
             echo '<a class="bouton-edition-toggle enigme-edit-toggle--desktop" href="'
                 . esc_url($edition_url) . '" aria-label="'
                 . esc_attr__('Paramètres', 'chassesautresor-com') . '">';

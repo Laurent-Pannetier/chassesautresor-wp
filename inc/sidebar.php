@@ -174,8 +174,8 @@ if (!function_exists('render_sidebar')) {
                 $edit_url = function_exists('cta_shell_edition_url')
                     ? cta_shell_edition_url('chasse', (int) $chasse_id, 'parametres')
                     : add_query_arg(
-                        ['edition' => 'open', 'tab' => 'param'],
-                        $permalink_chasse
+                        ['chasse' => (int) $chasse_id, 'section' => 'parametres'],
+                        home_url('/outils/')
                     );
                 echo '<a class="menu-lateral__edition-toggle enigme-menu__edit" href="'
                     . esc_url($edit_url)

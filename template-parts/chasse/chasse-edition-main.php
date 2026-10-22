@@ -78,7 +78,7 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
 ?>
 
 <?php if ($peut_modifier) : ?>
-  <section class="edition-panel edition-panel-chasse edition-panel-modal" data-cpt="chasse" data-post-id="<?= esc_attr($chasse_id); ?>">
+  <section class="edition-panel edition-panel-chasse" data-cpt="chasse" data-post-id="<?= esc_attr($chasse_id); ?>">
     <div id="erreur-global" style="display:none; background:red; color:white; padding:5px; text-align:center; font-size:0.9em;"></div>
 
     <div class="edition-panel-header">
@@ -864,7 +864,7 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
             <?php
             $statsRefresh = function_exists('cta_shell_edition_url')
                 ? cta_shell_edition_url('chasse', (int) $chasse_id, 'stats')
-                : '?edition=open&tab=stats';
+                : home_url('/outils/?chasse=' . (int) $chasse_id . '&section=stats');
             ?>
             <a href="<?= esc_url($statsRefresh); ?>" class="stats-reset"><i class="fa-solid fa-rotate-right"></i> <?= esc_html__('Actualiser', 'chassesautresor-com'); ?></a>
             <div class="stats-filtres">

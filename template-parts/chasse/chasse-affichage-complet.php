@@ -301,7 +301,7 @@ if ($edition_active && !$est_complet) {
           <?php
             $chasse_edition_url = function_exists('cta_shell_edition_url')
                 ? cta_shell_edition_url('chasse', (int) $chasse_id, 'parametres')
-                : add_query_arg(['edition' => 'open', 'tab' => 'param'], (string) get_permalink($chasse_id));
+                : home_url('/outils/?chasse=' . (int) $chasse_id . '&section=parametres');
           ?>
           <a
             class="bouton-edition-toggle"

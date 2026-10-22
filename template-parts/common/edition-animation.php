@@ -167,11 +167,52 @@ if ($objet_type === 'chasse') {
                   class="bouton-cta champ-modifier ouvrir-panneau-liens"
                   data-champ="liens_publics"
                   data-cpt="organisateur"
-                  data-post-id="<?= esc_attr($objet_id); ?>">
+                  data-post-id="<?= esc_attr($objet_id); ?>"
+                  <?php if (function_exists('cta_shell_edition_target') && cta_shell_edition_target() !== null) : ?>
+                    aria-expanded="false"
+                  <?php endif; ?>>
                   <?= empty($liens)
                     ? esc_html__('Ajouter', 'chassesautresor-com')
                     : esc_html__('Éditer', 'chassesautresor-com'); ?>
                 </button>
+                <?php if (function_exists('cta_shell_edition_target') && cta_shell_edition_target() !== null) : ?>
+                  <div class="champ-liens-editeur" hidden>
+                    <ul class="liste-liens-formulaires">
+                      <?php
+                        $types_disponibles = function_exists('get_types_liens_publics')
+                            ? get_types_liens_publics()
+                            : [];
+                        $liens_actifs = [];
+                        foreach ($liens as $entree) {
+                            if (!is_array($entree)) {
+                                continue;
+                            }
+                            $type_raw = $entree['type_de_lien'] ?? '';
+                            $url_lien = $entree['url_lien'] ?? '';
+                            $type_lien = is_array($type_raw) ? ($type_raw[0] ?? '') : $type_raw;
+                            if (
+                                is_string($type_lien) && trim($type_lien) !== ''
+                                && is_string($url_lien) && trim($url_lien) !== ''
+                            ) {
+                                $liens_actifs[$type_lien] = $url_lien;
+                            }
+                        }
+                        foreach ($types_disponibles as $type_lien => $infos) :
+                            $url_lien = $liens_actifs[$type_lien] ?? '';
+                            ?>
+                        <li class="ligne-lien-formulaire" data-type="<?= esc_attr($type_lien); ?>">
+                          <label for="champ-lien-<?= esc_attr($type_lien); ?>">
+                            <i class="fa <?= esc_attr($infos['icone'] ?? ''); ?>"></i>
+                            <?= esc_html($infos['label'] ?? $type_lien); ?>
+                          </label>
+                          <input type="url" id="champ-lien-<?= esc_attr($type_lien); ?>"
+                            value="<?= esc_attr($url_lien); ?>" placeholder="https://..."
+                            class="champ-url-lien" inputmode="url">
+                        </li>
+                        <?php endforeach; ?>
+                    </ul>
+                  </div>
+                <?php endif; ?>
               <?php endif; ?>
               <div class="champ-donnees"
                 data-valeurs='<?= json_encode($liens_js, JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT); ?>'></div>

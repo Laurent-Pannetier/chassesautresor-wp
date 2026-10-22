@@ -289,9 +289,9 @@ $cards_grid_class = $poster_cards ? 'cards-grid cards-grid--poster' : 'cards-gri
                       : 'parametres'
               )
               : add_query_arg([
-                  'edition' => 'open',
-                  'tab'     => $tab,
-              ], get_permalink($enigme_id));
+                  'enigme'  => (int) $enigme_id,
+                  'section' => $tab === 'soumission' ? 'tentatives' : ($tab === 'stats' ? 'stats' : 'parametres'),
+              ], home_url('/outils/'));
             ?>
             <?php if ($classe_completion === 'carte-incomplete' || $can_edit || $afficher_validation) : ?>
               <div class="carte-icons">

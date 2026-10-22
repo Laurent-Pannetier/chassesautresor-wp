@@ -365,6 +365,48 @@ function charger_script_reset_stats_card() {
 }
 add_action('wp_enqueue_scripts', 'charger_script_reset_stats_card');
 
+function charger_script_stats_fixtures_card(): void
+{
+    $on_outils = function_exists('cta_shell_request_slug') && cta_shell_request_slug() === 'outils';
+    $on_account = preg_match('#^/mon-compte(?:/|$|\\?)#', $_SERVER['REQUEST_URI'] ?? '');
+    if ((!$on_outils && !$on_account) || !function_exists('cat_user_can_seed_statistics')) {
+        return;
+    }
+    if (!cat_user_can_seed_statistics()) {
+        return;
+    }
+
+    $count = class_exists(ChassesAuTresor\Core\Admin\StatisticsFixtureService::class)
+        ? ChassesAuTresor\Core\Admin\StatisticsFixtureService::PLAYER_COUNT
+        : 48;
+    wp_enqueue_script(
+        'stats-fixtures-card',
+        get_stylesheet_directory_uri() . '/assets/js/stats-fixtures-card.js',
+        [],
+        filemtime(get_stylesheet_directory() . '/assets/js/stats-fixtures-card.js'),
+        true
+    );
+    wp_localize_script('stats-fixtures-card', 'statsFixturesCard', [
+        'ajax_url' => admin_url('admin-ajax.php'),
+        'nonce' => wp_create_nonce('cta_stats_fixtures'),
+        'confirmSeed' => sprintf(
+            /* translators: %d: number of fixture players created at once. */
+            __(
+                'Créer %d joueurs de test sur cette chasse ? Ceux déjà présents seront remplacés.',
+                'chassesautresor-com'
+            ),
+            $count
+        ),
+        'confirmPurge' => __(
+            'Retirer tous les joueurs de test et leurs statistiques ?',
+            'chassesautresor-com'
+        ),
+        'error' => __('La mise à jour des joueurs de test a échoué.', 'chassesautresor-com'),
+        'ajaxError' => __('Impossible de contacter le serveur.', 'chassesautresor-com'),
+    ]);
+}
+add_action('wp_enqueue_scripts', 'charger_script_stats_fixtures_card');
+
 /**
  * Floating demo reset pastille removed: reset lives on Mon compte Accueil.
  */

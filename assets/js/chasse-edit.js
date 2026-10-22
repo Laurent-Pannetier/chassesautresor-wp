@@ -277,60 +277,6 @@ window.rafraichirCarteSolutions = rafraichirCarteSolutions;
   });
 
   // ==============================
-  // 🛠️ Contrôles panneau principal
-  // ==============================
-  document.getElementById('toggle-mode-edition-chasse')?.addEventListener('click', () => {
-    document.body.classList.toggle('edition-active-chasse');
-    document.body.classList.toggle('panneau-ouvert');
-    document.body.classList.toggle('mode-edition');
-  });
-  document.querySelector('.edition-panel-chasse .panneau-fermer')?.addEventListener('click', () => {
-    const back = document.querySelector('.shell-edition')?.dataset.editionBack;
-    if (back) {
-      window.location.assign(back);
-      return;
-    }
-    document.body.classList.remove('edition-active-chasse');
-    document.body.classList.remove('panneau-ouvert');
-    document.body.classList.remove('mode-edition');
-    document.activeElement?.blur();
-  });
-
-  // ==============================
-  // 🧭 Déclencheur automatique
-  // ==============================
-  const params = new URLSearchParams(window.location.search);
-  const doitOuvrir = params.get('edition') === 'open';
-  const tab = params.get('tab');
-  const panel = params.get('panel');
-  const skipAuto = document.body.classList.contains('scroll-to-enigmes');
-  const forceDescription =
-    doitOuvrir && tab === 'param' && window.location.hash === '#chasse-description';
-
-  if (doitOuvrir && panel !== 'organisateur' && (!skipAuto || forceDescription)) {
-    document.body.classList.add('edition-active-chasse', 'panneau-ouvert', 'mode-edition');
-    if (tab) {
-      const btn = document.querySelector(`.edition-tab[data-target="chasse-tab-${tab}"]`);
-      btn?.click();
-    }
-    DEBUG && console.log('🔧 Ouverture auto du panneau édition chasse via ?edition=open');
-  } else if (skipAuto && !forceDescription && (doitOuvrir || tab)) {
-    params.delete('edition');
-    params.delete('tab');
-    const nouvelleUrl = `${window.location.pathname}${
-      params.toString() ? `?${params.toString()}` : ''
-    }${window.location.hash}`;
-    window.history.replaceState({}, '', nouvelleUrl);
-  }
-
-  if (skipAuto && !forceDescription) {
-    const cible = document.getElementById('carte-ajout-enigme');
-    if (cible) {
-      cible.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  }
-
-  // ==============================
   // 🎯 Badge dynamique récompense
   // ==============================
   if (typeof window.mettreAJourResumeInfos === 'function') {
@@ -352,31 +298,10 @@ window.rafraichirCarteSolutions = rafraichirCarteSolutions;
   // ================================
   // 🏆 Gestion de l'enregistrement de la récompense (titre, texte, valeur)
   // ================================
-  const boutonRecompense = document.getElementById('bouton-enregistrer-recompense');
   const inputTitreRecompense = document.getElementById('champ-recompense-titre');
   const inputTexteRecompense = document.getElementById('champ-recompense-texte');
   const inputValeurRecompense = document.getElementById('champ-recompense-valeur');
-  const panneauRecompense = document.getElementById('panneau-recompense-chasse');
   const boutonSupprimerRecompense = document.getElementById('bouton-supprimer-recompense');
-
-  function formaterValeurRecompense() {
-    if (!inputValeurRecompense) return;
-    let brut = inputValeurRecompense.value.replace(/\s+/g, '').replace(',', '.');
-    if (brut === '') return;
-    const nombre = parseFloat(brut);
-    if (!isNaN(nombre)) {
-      const dec = brut.includes('.') ? Math.min(2, brut.split('.')[1].length) : 0;
-      inputValeurRecompense.value = nombre.toLocaleString('fr-FR', {
-        minimumFractionDigits: dec,
-        maximumFractionDigits: 2
-      });
-    }
-  }
-
-  if (inputValeurRecompense && !document.querySelector('.shell-edition')) {
-    inputValeurRecompense.addEventListener('input', formaterValeurRecompense);
-    formaterValeurRecompense();
-  }
 
   function majAffichageRecompense(titre, texte, valeur) {
     const ligne = document.querySelector('.champ-chasse[data-champ="chasse_infos_recompense_valeur"]');
@@ -446,153 +371,26 @@ window.rafraichirCarteSolutions = rafraichirCarteSolutions;
 
   if (boutonSupprimerRecompense) {
     boutonSupprimerRecompense.addEventListener('click', () => {
-      const panneauEdition = document.querySelector('.edition-panel-chasse');
-      if (!panneauEdition) return;
-      const postId = panneauEdition.dataset.postId;
-      if (!postId) return;
+      if (!document.querySelector('.edition-panel-chasse')) return;
 
       if (!confirm(wp.i18n.__(
         'Voulez-vous vraiment supprimer la récompense ?',
         'chassesautresor-com'
       ))) return;
 
-      const champsASupprimer = [
+      if (inputTitreRecompense) inputTitreRecompense.value = '';
+      if (inputTexteRecompense) inputTexteRecompense.value = '';
+      if (inputValeurRecompense) inputValeurRecompense.value = '';
+      [
         'chasse_infos_recompense_titre',
         'chasse_infos_recompense_texte',
-        'chasse_infos_recompense_valeur'
-      ];
-
-      Promise.all(
-        champsASupprimer.map((champ) => {
-          return fetch(ajaxurl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: new URLSearchParams({
-              action: 'modifier_champ_chasse',
-              champ,
-              valeur: '',
-              post_id: postId,
-              nonce: window.CHP_CHASSE_DEFAUT?.nonce || ''
-            })
-          });
-        })
-      ).then(() => {
-        if (inputTitreRecompense) inputTitreRecompense.value = '';
-        if (inputTexteRecompense) inputTexteRecompense.value = '';
-        if (inputValeurRecompense) inputValeurRecompense.value = '';
-        if (window.ctaShellEditionSave?.rebase) {
-          window.ctaShellEditionSave.rebase();
-        }
-        majAffichageRecompense('', '', 0);
-        if (typeof window.closePanel === 'function') {
-          window.closePanel('panneau-recompense-chasse');
-        }
+        'chasse_infos_recompense_valeur',
+      ].forEach((champ) => {
+        window.ctaShellEditionSave?.queue(champ, '');
       });
+      majAffichageRecompense('', '', 0);
     });
 
-  }
-
-  if (boutonRecompense && inputTitreRecompense && inputTexteRecompense && inputValeurRecompense) {
-    boutonRecompense.addEventListener('click', () => {
-      const titre = inputTitreRecompense.value.trim();
-      const texte = inputTexteRecompense.value.trim();
-      const valeur = parseFloat(
-        inputValeurRecompense.value.replace(/\s+/g, '').replace(',', '.')
-      );
-      const panneauEdition = document.querySelector('.edition-panel-chasse');
-      if (!panneauEdition) return;
-      const postId = panneauEdition.dataset.postId;
-      if (!postId) return;
-
-      // 🚨 Vérification des 3 champs
-      if (!titre.length) {
-        alert('Veuillez saisir un titre de récompense.');
-        return;
-      }
-
-      if (!texte.length) {
-        alert('Veuillez saisir une description de récompense.');
-        return;
-      }
-
-      if (isNaN(valeur) || valeur <= 0 || valeur > 5000000) {
-        alert('Veuillez saisir une valeur en euros comprise entre 0 et 5\u00a0000\u00a0000.');
-        return;
-      }
-
-      // 🔵 Envoi titre de récompense d'abord
-      fetch('/wp-admin/admin-ajax.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({
-          action: 'modifier_champ_chasse',
-          champ: 'chasse_infos_recompense_titre',
-          valeur: titre,
-          post_id: postId,
-          nonce: window.CHP_CHASSE_DEFAUT?.nonce || ''
-        })
-      })
-        .then(r => r.json())
-        .then(res => {
-          if (res.success) {
-            DEBUG && console.log('✅ Titre récompense enregistré.');
-
-            // 🔵 Ensuite, envoi texte récompense
-            return fetch('/wp-admin/admin-ajax.php', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-              body: new URLSearchParams({
-                action: 'modifier_champ_chasse',
-                champ: 'chasse_infos_recompense_texte',
-                valeur: texte,
-                post_id: postId,
-                nonce: window.CHP_CHASSE_DEFAUT?.nonce || ''
-              })
-            });
-          } else {
-            throw new Error('Erreur enregistrement titre récompense');
-          }
-        })
-        .then(r => r.json())
-        .then(res => {
-          if (res.success) {
-            DEBUG && console.log('✅ Texte récompense enregistré.');
-
-            // 🔵 Ensuite, envoi valeur récompense
-            return fetch('/wp-admin/admin-ajax.php', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-              body: new URLSearchParams({
-                action: 'modifier_champ_chasse',
-                champ: 'chasse_infos_recompense_valeur',
-                valeur: valeur,
-                post_id: postId,
-                nonce: window.CHP_CHASSE_DEFAUT?.nonce || ''
-              })
-            });
-          } else {
-            throw new Error('Erreur enregistrement texte récompense');
-          }
-        })
-        .then(r => r.json())
-        .then(res => {
-          if (res.success) {
-            majAffichageRecompense(titre, texte, valeur);
-            if (document.activeElement && panneauRecompense.contains(document.activeElement)) {
-              document.activeElement.blur();
-              document.body.focus();
-            }
-            if (typeof window.closePanel === 'function') {
-              window.closePanel('panneau-recompense-chasse');
-            }
-          } else {
-            console.error('❌ Erreur valeur récompense', res.data);
-          }
-        })
-        .catch(err => {
-          console.error('❌ Erreur sur sauvegarde récompense', err);
-        });
-    });
   }
 
   // ==============================

@@ -1,5 +1,7 @@
 <?php
-// Panneau organisateur (affiché en Orgy)
+/**
+ * Édition de l'organisateur sur la page Outils.
+ */
 defined('ABSPATH') || exit;
 
 $organisateur_id = get_organisateur_id_from_context($args ?? []);
@@ -9,12 +11,6 @@ $peut_editer     = utilisateur_peut_editer_champs($organisateur_id);
 
 // User
 $current_user = wp_get_current_user();
-$roles = (array) $current_user->roles;
-$profil_expanded = array_intersect($roles, [ROLE_ORGANISATEUR_CREATION, 'abonne']);
-$profil_expanded = !empty($profil_expanded);
-$infos_expanded = !$profil_expanded;
-$cache_complet  = get_field('organisateur_cache_complet', $organisateur_id);
-$edition_active = in_array(ROLE_ORGANISATEUR_CREATION, $roles) && !$cache_complet;
 $user_points    = function_exists('get_user_points') ? get_user_points((int) $current_user->ID) : 0;
 
 // Post
@@ -63,16 +59,19 @@ $is_complete = (
 ?>
 
 <?php if ($peut_modifier) : ?>
-  <section class="panneau-organisateur edition-panel edition-panel-organisateur edition-panel-modal<?php echo $edition_active ? ' edition-active' : ''; ?>" aria-hidden="<?php echo $edition_active ? 'false' : 'true'; ?>">
+  <section
+    class="panneau-organisateur edition-panel edition-panel-organisateur"
+    data-cpt="organisateur"
+    data-post-id="<?= esc_attr($organisateur_id); ?>"
+  >
 
     <div class="edition-panel-header">
       <div class="edition-panel-header-top">
-        <h2>
+        <h1>
           <i class="fa-solid fa-gear"></i>
-          <?= esc_html__('Panneau d\'édition organisateur', 'chassesautresor-com'); ?> :
+          <?= esc_html__('Édition organisateur', 'chassesautresor-com'); ?> :
           <span class="titre-objet" data-cpt="organisateur"><?= esc_html($titre); ?></span>
-        </h2>
-        <button type="button" class="panneau-fermer" aria-label="Fermer les paramètres organisateur">✖</button>
+        </h1>
       </div>
       <div class="edition-tabs">
         <button class="edition-tab active" data-target="organisateur-tab-param"><?= esc_html__('Paramètres', 'chassesautresor-com'); ?></button>
@@ -209,33 +208,83 @@ $is_complete = (
                             <?php
                         },
                         'content' => function () use ($description, $peut_editer, $organisateur_id) {
+                            $inlineDescription = $peut_editer
+                                && function_exists('cta_shell_edition_target')
+                                && cta_shell_edition_target() !== null
+                                && function_exists('acf_form');
                             ?>
                             <div class="champ-texte">
-                                <?php if (empty(trim($description))) : ?>
+                                <?php if (empty(trim((string) $description))) : ?>
                                     <?php if ($peut_editer) : ?>
-                                        <a href="#" class="champ-ajouter ouvrir-panneau-description"
+                                        <button type="button" class="champ-ajouter ouvrir-panneau-description"
                                             data-champ="description_longue"
                                             data-cpt="organisateur"
-                                            data-post-id="<?= esc_attr($organisateur_id); ?>">
+                                            data-post-id="<?= esc_attr($organisateur_id); ?>"
+                                            <?php if ($inlineDescription) : ?>
+                                                aria-expanded="false"
+                                            <?php endif; ?>>
                                             <?= esc_html__('ajouter', 'chassesautresor-com'); ?>
-                                        </a>
+                                        </button>
                                     <?php endif; ?>
                                 <?php else : ?>
                                     <span class="champ-texte-contenu">
                                         <?= esc_html(wp_trim_words(wp_strip_all_tags($description), 25)); ?>
-                                        <?php if ($peut_editer) : ?>
-                                            <button type="button"
-                                                class="champ-modifier ouvrir-panneau-description"
-                                                data-champ="description_longue"
-                                                data-cpt="organisateur"
-                                                data-post-id="<?= esc_attr($organisateur_id); ?>"
-                                                aria-label="<?= esc_attr__('Modifier la présentation', 'chassesautresor-com'); ?>">
-                                                <?= esc_html__('modifier', 'chassesautresor-com'); ?>
-                                            </button>
-                                        <?php endif; ?>
                                     </span>
+                                    <?php if ($peut_editer) : ?>
+                                        <button type="button"
+                                            class="champ-modifier ouvrir-panneau-description"
+                                            data-champ="description_longue"
+                                            data-cpt="organisateur"
+                                            data-post-id="<?= esc_attr($organisateur_id); ?>"
+                                            <?php if ($inlineDescription) : ?>
+                                                aria-expanded="false"
+                                            <?php endif; ?>
+                                            aria-label="<?= esc_attr__(
+                                                'Modifier la présentation',
+                                                'chassesautresor-com'
+                                            ); ?>">
+                                            <?= esc_html__('modifier', 'chassesautresor-com'); ?>
+                                        </button>
+                                    <?php endif; ?>
                                 <?php endif; ?>
                             </div>
+                            <?php if ($inlineDescription) : ?>
+                                <div class="champ-texte-editeur" hidden>
+                                    <?php
+                                    $prepareDescription = static function ($field) {
+                                        if (!is_array($field)) {
+                                            return $field;
+                                        }
+                                        $wrapperClass = $field['wrapper']['class'] ?? '';
+                                        if (!is_string($wrapperClass)) {
+                                            $wrapperClass = '';
+                                        }
+                                        $field['wrapper']['class'] = trim($wrapperClass . ' acf-hide-label');
+                                        $field['delay'] = 1;
+
+                                        return $field;
+                                    };
+                                    add_filter(
+                                        'acf/prepare_field/name=description_longue',
+                                        $prepareDescription
+                                    );
+                                    acf_form([
+                                        'post_id' => $organisateur_id,
+                                        'fields' => ['description_longue'],
+                                        'form' => false,
+                                        'honeypot' => false,
+                                        'uploader' => 'wp',
+                                        'html_before_fields' => '',
+                                        'html_after_fields' => '',
+                                        'updated_message' => false,
+                                    ]);
+                                    remove_filter(
+                                        'acf/prepare_field/name=description_longue',
+                                        $prepareDescription
+                                    );
+                                    ?>
+                                </div>
+                            <?php endif; ?>
                             <div class="champ-feedback"></div>
                             <?php
                         },
@@ -359,7 +408,10 @@ $is_complete = (
                 <?php esc_html_e('Convertir', 'chassesautresor-com'); ?>
               </button>
             </div>
-            <div class="dashboard-card" data-stat="bank-details">
+            <div class="dashboard-card champ-organisateur" data-stat="bank-details"
+              data-champ="coordonnees_bancaires"
+              data-cpt="organisateur"
+              data-post-id="<?= esc_attr($organisateur_id); ?>">
               <i class="fa-solid fa-building-columns" aria-hidden="true"></i>
               <h3>
                 <?= esc_html__('Coordonnées bancaires', 'chassesautresor-com'); ?>
@@ -386,10 +438,11 @@ $is_complete = (
                     ? __('Ajouter des coordonnées bancaires', 'chassesautresor-com')
                     : __('Modifier les coordonnées bancaires', 'chassesautresor-com');
                 ?>
-                <a
+                <button
+                  type="button"
                   id="ouvrir-coordonnees"
                   class="stat-value champ-modifier"
-                  href="#"
+                  aria-expanded="false"
                   aria-label="<?php echo esc_attr($bank_aria); ?>"
                   data-champ="coordonnees_bancaires"
                   data-cpt="organisateur"
@@ -398,7 +451,31 @@ $is_complete = (
                   data-label-edit="<?php esc_attr_e('Éditer', 'chassesautresor-com'); ?>"
                   data-aria-add="<?php esc_attr_e('Ajouter des coordonnées bancaires', 'chassesautresor-com'); ?>"
                   data-aria-edit="<?php esc_attr_e('Modifier les coordonnées bancaires', 'chassesautresor-com'); ?>"
-                ><?php echo esc_html($bank_label); ?></a>
+                ><?php echo esc_html($bank_label); ?></button>
+                <div class="champ-coordonnees-editeur" hidden>
+                  <label for="champ-iban"><?php esc_html_e('IBAN', 'chassesautresor-com'); ?></label>
+                  <input
+                    type="text"
+                    id="champ-iban"
+                    name="iban"
+                    class="champ-input"
+                    placeholder="FR..."
+                    value="<?= esc_attr((string) $iban); ?>"
+                    autocomplete="off"
+                  />
+                  <div id="feedback-iban" class="champ-feedback"></div>
+                  <label for="champ-bic"><?php esc_html_e('BIC', 'chassesautresor-com'); ?></label>
+                  <input
+                    type="text"
+                    id="champ-bic"
+                    name="bic"
+                    class="champ-input"
+                    placeholder="XXXXXX..."
+                    value="<?= esc_attr((string) $bic); ?>"
+                    autocomplete="off"
+                  />
+                  <div id="feedback-bic" class="champ-feedback"></div>
+                </div>
               <?php endif; ?>
             </div>
           </div>
@@ -437,17 +514,5 @@ $is_complete = (
   </section>
 <?php endif; ?>
 <?php if ($peut_editer) : ?>
-  <?php get_template_part('template-parts/organisateur/panneaux/organisateur-edition-description', null, [
-    'organisateur_id' => $organisateur_id
-  ]); ?>
-
-  <?php get_template_part('template-parts/organisateur/panneaux/organisateur-edition-liens', null, [
-    'organisateur_id' => $organisateur_id
-  ]); ?>
-
-  <?php get_template_part('template-parts/organisateur/panneaux/organisateur-edition-coordonnees', null, [
-    'organisateur_id' => $organisateur_id
-  ]); ?>
-
   <?php get_template_part('template-parts/modals/modal-conversion'); ?>
 <?php endif; ?>

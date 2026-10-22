@@ -69,7 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['uid'], $_POST['action
 }
 ?>
 <?php if ($peut_modifier) : ?>
-  <section class="edition-panel edition-panel-enigme edition-panel-modal" data-cpt="enigme" data-post-id="<?= esc_attr($enigme_id); ?>">
+  <section class="edition-panel edition-panel-enigme" data-cpt="enigme" data-post-id="<?= esc_attr($enigme_id); ?>">
     <div id="erreur-global"
       style="display:none; background:red; color:white; padding:5px; text-align:center; font-size:0.9em;"></div>
 
@@ -853,7 +853,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['uid'], $_POST['action
             <?php
             $statsRefresh = function_exists('cta_shell_edition_url')
                 ? cta_shell_edition_url('enigme', (int) $enigme_id, 'stats')
-                : '?edition=open&tab=stats';
+                : home_url('/outils/?enigme=' . (int) $enigme_id . '&section=stats');
             ?>
             <a href="<?= esc_url($statsRefresh); ?>" class="stats-reset"><i class="fa-solid fa-rotate-right"></i> <?= esc_html__('Actualiser', 'chassesautresor-com'); ?></a>
           <div class="stats-filtres">

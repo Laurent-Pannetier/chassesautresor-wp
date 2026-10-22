@@ -27,12 +27,9 @@ defined('ABSPATH') || exit;
 // 🔹 enqueue_core_edit_scripts() → Enfile les JS mutualisés
 
 /**
- * Force le chargement des scripts ACF sur les fiches chasse (is_singular('chasse')).
+ * Charge les scripts ACF sur la page d’édition Outils (chasse, énigme ou organisateur).
  *
- * Cela garantit que tous les composants nécessaires à l'affichage et à l'édition des champs
- * ACF (notamment les WYSIWYG) sont disponibles même dans des panneaux latéraux ou zones AJAX.
- *
- * À utiliser uniquement si acf_form() est utilisé en front hors de la boucle principale.
+ * Les formulaires ACF (description, galerie) ne sont plus rendus sur la fiche publique.
  *
  * @hook wp_enqueue_scripts
  */
@@ -45,15 +42,18 @@ function forcer_chargement_acf_scripts_chasse()
       if ($shellId <= 0) {
           $shellId = cta_shell_edition_post_id('enigme');
       }
+      if ($shellId <= 0) {
+          $shellId = cta_shell_edition_post_id('organisateur');
+      }
   }
-  if ($shellId <= 0 && !is_singular('chasse')) {
+  if ($shellId <= 0) {
     return;
   }
   if (!function_exists('acf_enqueue_scripts')) {
     return;
   }
 
-  $postId = $shellId > 0 ? $shellId : (int) get_the_ID();
+  $postId = $shellId;
   if (!current_user_can('edit_post', $postId) && !(
       function_exists('utilisateur_peut_voir_panneau') && utilisateur_peut_voir_panneau($postId)
   )) {
@@ -406,13 +406,8 @@ add_action('admin_head', 'ajouter_barre_progression_top');
 /**
  * Injecte automatiquement la classe CSS "edition-active" dans le <body> si l'utilisateur peut éditer le contenu.
  *
- * Cette classe active l'interface d'édition frontale (boutons, panneaux...).
- * Elle s'applique uniquement :
- * - au CPT "organisateur" en mode "pending"
- * - si l'utilisateur connecté est l'auteur
- * - et possède le rôle "organisateur_creation"
- *
- * Cette logique est centralisée ici pour éviter les appels manuels dans les templates.
+ * Le mode d'édition des fiches vit sur la page Outils.
+ * Ici, la classe ne sert plus que le tableau de bord /mon-compte.
  *
  * @hook body_class
  * @param array $classes Liste actuelle des classes du <body>
@@ -428,65 +423,6 @@ function injection_classe_edition_active( array $classes ): array
     $uri = $_SERVER['REQUEST_URI'] ?? '';
     if ( preg_match( '#^/mon-compte(?:/|$|\?)#', $uri ) ) {
         $classes[] = 'mode-edition';
-    }
-
-    global $post;
-    if ( ! $post || ! isset( $post->post_type ) ) {
-        return $classes;
-    }
-
-    $user_id = get_current_user_id();
-    $roles   = wp_get_current_user()->roles;
-
-    // === ORGANISATEUR ===
-    if (
-        $post->post_type === 'organisateur' &&
-        (int) get_post_field( 'post_author', $post->ID ) === $user_id &&
-        in_array( ROLE_ORGANISATEUR_CREATION, $roles, true ) &&
-        ! get_field( 'organisateur_cache_complet', $post->ID )
-    ) {
-        if (
-            get_post_status( $post ) === 'pending' &&
-            ! get_field( 'organisateur_cache_complet', $post->ID )
-        ) {
-            $classes[] = 'edition-active';
-            $classes[] = 'mode-edition';
-        }
-    }
-
-    // === CHASSE ===
-    if (
-        $post->post_type === 'chasse' &&
-        ( in_array( ROLE_ORGANISATEUR_CREATION, $roles, true ) || in_array( ROLE_ORGANISATEUR, $roles, true ) )
-    ) {
-        $organisateur_id = get_organisateur_from_chasse( $post->ID );
-        $associes        = get_field( 'utilisateurs_associes', $organisateur_id, false );
-        $associes        = is_array( $associes ) ? array_map( 'strval', $associes ) : [];
-
-        if ( in_array( (string) $user_id, $associes, true ) ) {
-            $validation = get_field( 'chasse_cache_statut_validation', $post->ID );
-            $statut     = get_field( 'chasse_cache_statut', $post->ID );
-
-            if (
-                $statut === 'revision' &&
-                in_array( $validation, [ 'creation', 'correction' ], true ) &&
-                ! get_field( 'chasse_cache_complet', $post->ID )
-            ) {
-                $mode_fin        = get_field( 'chasse_mode_fin', $post->ID ) ?: 'automatique';
-                $titre_ok        = trim( get_the_title( $post->ID ) ) !== '';
-                $image_ok        = (bool) get_field( 'chasse_principale_image', $post->ID );
-                $desc_raw        = get_field( 'chasse_principale_description', $post->ID );
-                $desc_ok         = ! empty( trim( (string) $desc_raw ) );
-                $has_validatable = chasse_has_validatable_enigme( $post->ID );
-
-                if ( $mode_fin === 'automatique' && $titre_ok && $image_ok && $desc_ok && ! $has_validatable ) {
-                    $classes[] = 'scroll-to-enigmes';
-                } else {
-                    $classes[] = 'edition-active-chasse';
-                    $classes[] = 'mode-edition';
-                }
-            }
-        }
     }
 
     return $classes;

@@ -6,6 +6,7 @@
     stats: ['enigme-tab-stats', 'chasse-tab-stats', 'organisateur-tab-stats'],
     animation: ['enigme-tab-animation', 'chasse-tab-animation', 'organisateur-tab-animation'],
     tentatives: ['enigme-tab-soumission'],
+    revenus: ['organisateur-tab-revenus'],
   };
 
   function sectionForTarget(target) {

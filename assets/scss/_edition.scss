@@ -706,22 +706,17 @@ section.enigme-wrapper {
 
 
 /* ========== 🖼️ IMAGE MODIFIABLE ========== */
-body:not(.edition-active-chasse) .chasse-fiche-container .champ-img .champ-modifier .icone-modif,
 body:not(.edition-active) .header-organisateur .champ-img .champ-modifier .icone-modif {
   display: none;
 }
 
-body:not(.edition-active-chasse) .chasse-fiche-container .champ-img .champ-modifier,
 body:not(.edition-active) .header-organisateur .champ-img .champ-modifier {
   opacity: 1;
   filter: none;
   pointer-events: none;
-  /* empêche les clics accidentels */
 }
 
-body.edition-active-chasse .chasse-fiche-container .champ-img .champ-modifier,
-body.edition-active .header-organisateur .champ-img .champ-modifier,
-body.edition-active-enigme .single-enigme-main .champ-img .champ-modifier {
+body.edition-active .header-organisateur .champ-img .champ-modifier {
   transform: translateY(0);
 }
 
@@ -1088,16 +1083,6 @@ body[class*="edition-active"] .champ-modifier:not(.bouton-cta) {
   line-height: 1.35;
 }
 
-/* Harmonisation de l'alignement pour le champ sous-titre dans le panneau Énigme */
-.single-enigme-main [data-champ="enigme_visuel_legende"] {
-  display: inline-flex;
-  align-items: center;
-}
-
-.single-enigme-main [data-champ="enigme_visuel_legende"] .champ-affichage {
-  padding-left: 5px;
-}
-
 body.edition-active-enigme .champ-modifier .icone-modif {
   display: unset;
 }
@@ -1297,34 +1282,6 @@ body[class*="edition-active"] .champ-desactive .champ-modifier,
   transform: translateY(-10px);
   border: 0;
   pointer-events: none;
-}
-
-body.edition-active .panneau-organisateur,
-body.edition-active-indice .edition-panel-indice {
-  height: 90vh;
-  max-height: 90vh;
-  opacity: 1;
-  transform: translateY(0);
-  background-color: var(--color-editor-background);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
-  padding: var(--space-md);
-  pointer-events: auto;
-  border-bottom: 1px solid var(--color-editor-border);
-  overflow-y: auto;
-  color: var(--color-editor-text);
-}
-
-body.edition-active .panneau-organisateur.edition-panel-modal,
-body.edition-active-indice .edition-panel-indice.edition-panel-modal {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 95%;
-  height: 90vh;
-  max-height: 90vh;
-  border-radius: 8px;
-  z-index: 10000;
 }
 
 body.shell-edition.mode-edition {
@@ -1576,7 +1533,8 @@ body.shell-edition .champ-cout-points:has(#enigme-cout-toggle:checked) .toggle-o
 }
 
 body.shell-edition .edition-panel-enigme,
-body.shell-edition .edition-panel-chasse {
+body.shell-edition .edition-panel-chasse,
+body.shell-edition .edition-panel-organisateur {
   position: relative;
   width: 100%;
   height: auto;
@@ -1758,20 +1716,27 @@ body.shell-edition .champ-images-editeur .acf-hide-label > .acf-label {
 }
 
 body.shell-edition .champ-recompense-editeur,
-body.shell-edition .champ-liens-editeur {
+body.shell-edition .champ-liens-editeur,
+body.shell-edition .champ-coordonnees-editeur {
   width: 100%;
   margin-top: 0.75rem;
 }
 
-body.shell-edition .champ-recompense-editeur {
+body.shell-edition .champ-recompense-editeur,
+body.shell-edition .champ-coordonnees-editeur {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
+body.shell-edition .champ-coordonnees-editeur[hidden] {
+  display: none;
+}
+
 body.shell-edition .champ-recompense-editeur input,
 body.shell-edition .champ-recompense-editeur textarea,
-body.shell-edition .champ-liens-editeur input {
+body.shell-edition .champ-liens-editeur input,
+body.shell-edition .champ-coordonnees-editeur input {
   width: 100%;
 }
 
@@ -2188,48 +2153,6 @@ body.panneau-ouvert::before {
   color:var(--color-text-fond-clair)
 }
 
-#bouton-ajouter-variante {
-  background-color: var(--color-editor-button);
-  color: var(--color-white);
-}
-
-#bouton-ajouter-variante:hover {
-  background-color: var(--color-editor-button-hover);
-}
-
-.champ-variantes-resume {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-}
-
-.champ-variantes-resume .variantes-table {
-  margin: 0;
-  width: auto;
-  display: inline-table;
-  border-collapse: collapse;
-  font-size: 0.85em;
-}
-
-.champ-variantes-resume .variantes-table th,
-.champ-variantes-resume .variantes-table td {
-  padding: 0 4px 0 0;
-  font-weight: normal;
-  border: none;
-}
-
-.champ-variantes-resume .variantes-table th {
-  color: var(--color-editor-text-muted);
-}
-
-.champ-variantes-resume .variantes-table .variante-texte {
-  color: var(--color-editor-text);
-}
-
-.champ-variantes-resume .variantes-table .variante-message {
-  color: var(--color-editor-text-muted);
-}
-
 /* Alignement commun des headers dans les panneaux */
 .panneau-lateral__header {
   display: flex;
@@ -2286,10 +2209,6 @@ body.panneau-ouvert::before {
 }
 
 /* 🧭 Affichage propre des labels */
-#panneau-recompense-chasse label {
-  margin-bottom: -13px;
-}
-
 .panneau-lateral__contenu label {
   font-size: unset;
   color: var(--color-editor-text-muted);

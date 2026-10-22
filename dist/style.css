@@ -62,6 +62,7 @@
   max-width: calc(var(--carte-enigme-poster-max-width) * 2 + var(--space-xl));
   margin-inline: auto;
   justify-content: center;
+  /* Pastille statut déjà présente : éviter le double check à droite. */
 }
 @media (min-width: 768px) {
   .page-chasse-wrapper--compact .cards-grid,
@@ -217,10 +218,6 @@
   border-radius: 50%;
   font-size: 1rem;
   box-shadow: 0 3px 12px rgba(var(--color-black-rgb), 0.38);
-}
-.page-chasse-wrapper--compact .cards-grid,
-.cards-grid--poster {
-  /* Pastille statut déjà présente : éviter le double check à droite. */
 }
 .page-chasse-wrapper--compact .cards-grid .carte-enigme--statut-resolue .carte-icons .validation-icon,
 .page-chasse-wrapper--compact .cards-grid .carte-enigme--statut-terminee .carte-icons .validation-icon,
@@ -4913,22 +4910,17 @@ section.enigme-wrapper {
 }
 
 /* ========== 🖼️ IMAGE MODIFIABLE ========== */
-body:not(.edition-active-chasse) .chasse-fiche-container .champ-img .champ-modifier .icone-modif,
 body:not(.edition-active) .header-organisateur .champ-img .champ-modifier .icone-modif {
   display: none;
 }
 
-body:not(.edition-active-chasse) .chasse-fiche-container .champ-img .champ-modifier,
 body:not(.edition-active) .header-organisateur .champ-img .champ-modifier {
   opacity: 1;
   filter: none;
   pointer-events: none;
-  /* empêche les clics accidentels */
 }
 
-body.edition-active-chasse .chasse-fiche-container .champ-img .champ-modifier,
-body.edition-active .header-organisateur .champ-img .champ-modifier,
-body.edition-active-enigme .single-enigme-main .champ-img .champ-modifier {
+body.edition-active .header-organisateur .champ-img .champ-modifier {
   transform: translateY(0);
 }
 
@@ -5287,16 +5279,6 @@ body[class*=edition-active] .champ-modifier:not(.bouton-cta) {
   line-height: 1.35;
 }
 
-/* Harmonisation de l'alignement pour le champ sous-titre dans le panneau Énigme */
-.single-enigme-main [data-champ=enigme_visuel_legende] {
-  display: inline-flex;
-  align-items: center;
-}
-
-.single-enigme-main [data-champ=enigme_visuel_legende] .champ-affichage {
-  padding-left: 5px;
-}
-
 body.edition-active-enigme .champ-modifier .icone-modif {
   display: unset;
 }
@@ -5472,34 +5454,6 @@ body[class*=edition-active] .champ-desactive .champ-modifier,
   transform: translateY(-10px);
   border: 0;
   pointer-events: none;
-}
-
-body.edition-active .panneau-organisateur,
-body.edition-active-indice .edition-panel-indice {
-  height: 90vh;
-  max-height: 90vh;
-  opacity: 1;
-  transform: translateY(0);
-  background-color: var(--color-editor-background);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
-  padding: var(--space-md);
-  pointer-events: auto;
-  border-bottom: 1px solid var(--color-editor-border);
-  overflow-y: auto;
-  color: var(--color-editor-text);
-}
-
-body.edition-active .panneau-organisateur.edition-panel-modal,
-body.edition-active-indice .edition-panel-indice.edition-panel-modal {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 95%;
-  height: 90vh;
-  max-height: 90vh;
-  border-radius: 8px;
-  z-index: 10000;
 }
 
 body.shell-edition.mode-edition {
@@ -5761,7 +5715,8 @@ body.shell-edition .champ-cout-points:has(#enigme-cout-toggle:checked) .toggle-o
 }
 
 body.shell-edition .edition-panel-enigme,
-body.shell-edition .edition-panel-chasse {
+body.shell-edition .edition-panel-chasse,
+body.shell-edition .edition-panel-organisateur {
   position: relative;
   width: 100%;
   height: auto;
@@ -5948,20 +5903,27 @@ body.shell-edition .champ-images-editeur .acf-hide-label > .acf-label {
 }
 
 body.shell-edition .champ-recompense-editeur,
-body.shell-edition .champ-liens-editeur {
+body.shell-edition .champ-liens-editeur,
+body.shell-edition .champ-coordonnees-editeur {
   width: 100%;
   margin-top: 0.75rem;
 }
 
-body.shell-edition .champ-recompense-editeur {
+body.shell-edition .champ-recompense-editeur,
+body.shell-edition .champ-coordonnees-editeur {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
+body.shell-edition .champ-coordonnees-editeur[hidden] {
+  display: none;
+}
+
 body.shell-edition .champ-recompense-editeur input,
 body.shell-edition .champ-recompense-editeur textarea,
-body.shell-edition .champ-liens-editeur input {
+body.shell-edition .champ-liens-editeur input,
+body.shell-edition .champ-coordonnees-editeur input {
   width: 100%;
 }
 
@@ -6357,48 +6319,6 @@ body.panneau-ouvert::before {
   color: var(--color-text-fond-clair);
 }
 
-#bouton-ajouter-variante {
-  background-color: var(--color-editor-button);
-  color: var(--color-white);
-}
-
-#bouton-ajouter-variante:hover {
-  background-color: var(--color-editor-button-hover);
-}
-
-.champ-variantes-resume {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-}
-
-.champ-variantes-resume .variantes-table {
-  margin: 0;
-  width: auto;
-  display: inline-table;
-  border-collapse: collapse;
-  font-size: 0.85em;
-}
-
-.champ-variantes-resume .variantes-table th,
-.champ-variantes-resume .variantes-table td {
-  padding: 0 4px 0 0;
-  font-weight: normal;
-  border: none;
-}
-
-.champ-variantes-resume .variantes-table th {
-  color: var(--color-editor-text-muted);
-}
-
-.champ-variantes-resume .variantes-table .variante-texte {
-  color: var(--color-editor-text);
-}
-
-.champ-variantes-resume .variantes-table .variante-message {
-  color: var(--color-editor-text-muted);
-}
-
 /* Alignement commun des headers dans les panneaux */
 .panneau-lateral__header {
   display: flex;
@@ -6455,10 +6375,6 @@ body.panneau-ouvert::before {
 }
 
 /* 🧭 Affichage propre des labels */
-#panneau-recompense-chasse label {
-  margin-bottom: -13px;
-}
-
 .panneau-lateral__contenu label {
   font-size: unset;
   color: var(--color-editor-text-muted);
@@ -16596,7 +16512,7 @@ a.bouton-edition-attention {
 /* Legacy aliases */
 :root {
   /* Typographie et breakpoints */
-  --font-main: 'Poppins', sans-serif; /* Police principale */
+  --font-main: "Poppins", sans-serif; /* Police principale */
   --bp-xs: 374px;
   --bp-small: 480px;
   --bp-mobile: 600px;
@@ -17868,55 +17784,231 @@ html[data-theme=day] .home-enigmas-preserve {
   gap: 0.45rem;
 }
 
-.progression-funnel,
-.progression-steps ul {
+.progression-story {
   margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+.progression-mix,
+.progression-series,
+.progression-dropoff {
+  margin: 0;
+}
+
+.progression-mix__bar {
+  display: flex;
+  height: 0.7rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--shell-track);
+}
+
+.progression-mix__segment {
+  display: block;
+  min-width: 2px;
+  height: 100%;
+}
+
+.progression-mix__segment--solved {
+  background: var(--shell-icon-rules);
+}
+
+.progression-mix__segment--review {
+  background: var(--shell-icon-progression);
+}
+
+.progression-mix__segment--in_steps {
+  background: var(--shell-accent);
+}
+
+.progression-mix__segment--not_started {
+  background: var(--shell-muted);
+}
+
+.progression-mix__legend,
+.progression-series__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.9rem;
+  margin: 0.45rem 0 0;
   padding: 0;
+  color: var(--shell-muted);
+  font-size: 0.75rem;
   list-style: none;
 }
 
-.progression-funnel {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.5rem;
+.progression-mix__legend strong {
+  color: var(--shell-text);
 }
 
-.progression-funnel li,
-.progression-steps li {
+.progression-mix__swatch,
+.progression-series__swatch {
+  display: inline-block;
+  width: 0.55rem;
+  height: 0.55rem;
+  margin-right: 0.2rem;
+  border-radius: 0.15rem;
+  vertical-align: -0.05rem;
+}
+
+.progression-series__swatch--total {
+  background: var(--shell-accent);
+}
+
+.progression-series__swatch--success {
+  background: var(--shell-icon-rules);
+}
+
+.progression-figures {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.4rem;
+  margin: 0;
+}
+
+.progression-figures div {
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
-  min-width: 0;
-  padding: 0.55rem 0.7rem;
-  border-radius: 0.75rem;
-  background: var(--shell-surface-2);
+  gap: 0.1rem;
 }
 
-.progression-funnel span,
-.progression-steps summary,
+.progression-figures dt,
 .progression-ranking span {
+  margin: 0;
   color: var(--shell-muted);
   font-size: 0.75rem;
   font-weight: 700;
 }
 
-.progression-funnel strong,
-.progression-steps__title {
-  color: var(--shell-text);
+.progression-figures dd {
+  margin: 0;
   font-size: 1.05rem;
   font-weight: 700;
 }
 
-.progression-steps summary {
-  cursor: pointer;
+.progression-dropoff h4,
+.progression-series figcaption {
+  margin: 0 0 0.45rem;
+  color: var(--shell-text);
   font-size: 0.9rem;
+  font-style: normal;
+  font-weight: 700;
+  text-align: left;
+  opacity: 1;
 }
 
-.progression-steps ul {
+.progression-steps-chart {
   display: flex;
   flex-direction: column;
   gap: 0.45rem;
-  margin-top: 0.55rem;
+  margin: 0 0 0.45rem;
+  padding: 0;
+  list-style: none;
+}
+
+.progression-steps-chart__row {
+  display: grid;
+  grid-template-columns: minmax(0, 7.5rem) minmax(0, 1fr) auto;
+  gap: 0.45rem;
+  align-items: center;
+}
+
+.progression-steps-chart__label {
+  overflow: hidden;
+  color: var(--shell-text);
+  font-size: 0.8rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.progression-steps-chart__track {
+  height: 0.55rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--shell-track);
+}
+
+.progression-steps-chart__fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--shell-accent);
+}
+
+.progression-steps-chart__value {
+  color: var(--shell-text);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.progression-dropoff__scroll {
+  overflow-x: auto;
+}
+
+.progression-dropoff__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.progression-dropoff__table th,
+.progression-dropoff__table td {
+  padding: 0.45rem 0.35rem;
+  border-bottom: 1px solid var(--shell-border);
+  font-weight: 400;
+  text-align: left;
+}
+
+.progression-dropoff__table thead th {
+  color: var(--shell-muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.progression-dropoff__table thead th:not(:first-child),
+.progression-dropoff__table td {
+  text-align: right;
+}
+
+.progression-dropoff__table tbody th {
+  font-weight: 600;
+}
+
+.progression-dropoff__break th {
+  color: var(--shell-icon-progression);
+}
+
+.progression-series svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.progression-series__grid {
+  stroke: var(--shell-border);
+  stroke-width: 1;
+}
+
+.progression-series__line {
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+}
+
+.progression-series__line--total {
+  color: var(--shell-accent);
+}
+
+.progression-series__line--success {
+  color: var(--shell-icon-rules);
+}
+
+.progression-series text {
+  fill: var(--shell-muted);
+  font-size: 11px;
 }
 
 .progression-ranking {
@@ -18102,15 +18194,8 @@ html[data-theme=day] .home-enigmas-preserve {
   .team-stats__grid {
     grid-template-columns: 1fr 1fr;
   }
-  .progression-funnel,
-  .progression-riddle__metrics--organizer {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-  .progression-steps li {
-    flex-direction: row;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 0.75rem;
+  .progression-steps-chart__row {
+    grid-template-columns: minmax(0, 11rem) minmax(0, 1fr) auto;
   }
   .hunt-banner__sphere {
     height: 18rem;
@@ -18514,5 +18599,362 @@ body.admin-bar.shell-edition .app-sidebar {
   }
   .equipe-hero {
     flex-direction: row;
+  }
+}
+/* Écran de connexion. Le cadre photo est 16/9 : l'image de chasse n'est pas étirée en portrait. */
+.auth-gate {
+  --auth-bg: #0c1016;
+  --auth-surface: #171d27;
+  --auth-surface-2: #1e2633;
+  --auth-text: #e7eef6;
+  --auth-muted: #93a0b3;
+  --auth-border: rgba(255, 255, 255, 0.08);
+  --auth-accent: #2ec8e6;
+  --auth-accent-text: #042229;
+  --auth-discord: #5865f2;
+  --auth-danger: #ff8b7b;
+}
+
+body.auth-gate {
+  margin: 0;
+  background: var(--auth-bg);
+  color: var(--auth-text);
+  font-family: var(--font-main, "Poppins", sans-serif);
+}
+
+.auth-gate__stage {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: 0.75rem;
+}
+
+.auth-card,
+.auth-card * {
+  box-sizing: border-box;
+}
+
+.auth-card {
+  width: min(100%, 64rem);
+  overflow: hidden;
+  border: 1px solid var(--auth-border);
+  border-radius: 1.15rem;
+  background: var(--auth-surface);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+}
+
+.auth-card__story {
+  padding: 0.85rem 0.85rem 0;
+}
+
+.auth-card__figure {
+  position: relative;
+  aspect-ratio: 16/9;
+  overflow: hidden;
+  margin: 0;
+  border-radius: 0.9rem;
+  background: radial-gradient(8rem 5rem at 100% 0%, rgba(46, 200, 230, 0.2), transparent 70%), var(--auth-bg);
+}
+
+.auth-card__image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  -o-object-fit: cover;
+     object-fit: cover;
+  -o-object-position: center;
+     object-position: center;
+}
+
+.auth-card__scrim {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.62), transparent);
+}
+
+.auth-card__logo {
+  display: inline-flex;
+  align-items: center;
+  max-width: 9rem;
+  color: #fff;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.auth-card__logo-img,
+.auth-card__logo img {
+  display: block;
+  width: auto;
+  max-width: 8.5rem;
+  height: 1.4rem;
+  -o-object-fit: contain;
+     object-fit: contain;
+  -o-object-position: left center;
+     object-position: left center;
+}
+
+.auth-card__back {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.7rem;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 999px;
+  background: rgba(12, 16, 22, 0.45);
+  color: #fff;
+  font-size: 0.82rem;
+  text-decoration: none;
+}
+
+.auth-card__caption {
+  padding: 0.9rem 0.35rem 0.2rem;
+}
+
+.auth-card__caption h1 {
+  margin: 0;
+  color: var(--auth-text);
+  font-size: 1.35rem;
+  line-height: 1.25;
+}
+
+.auth-card__caption p {
+  margin: 0.4rem 0 0;
+  color: var(--auth-muted);
+}
+
+.auth-card__panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: 1.15rem 1rem 1.25rem;
+}
+
+.auth-card__panel h2 {
+  margin: 0;
+  color: var(--auth-text);
+  font-size: 1.6rem;
+  line-height: 1.15;
+}
+
+.auth-card__lead,
+.auth-card__switch {
+  margin: 0;
+  color: var(--auth-muted);
+}
+
+.auth-card__switch a,
+.auth-card__lead a {
+  color: var(--auth-accent);
+  text-decoration: none;
+}
+
+.auth-card__or {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 0.7rem;
+  align-items: center;
+  margin: 0;
+  color: var(--auth-muted);
+  font-size: 0.85rem;
+}
+
+.auth-card__or::before,
+.auth-card__or::after {
+  height: 1px;
+  content: "";
+  background: var(--auth-border);
+}
+
+.auth-providers {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.auth-providers form {
+  margin: 0;
+}
+
+.auth-provider,
+.auth-email-toggle,
+.auth-submit,
+.auth-field input,
+.auth-field__reveal {
+  font: inherit;
+}
+
+.auth-provider,
+.auth-email-toggle,
+.auth-submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  width: 100%;
+  min-height: 2.85rem;
+  padding: 0.65rem 1rem;
+  border-radius: 0.75rem;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.auth-provider--discord {
+  border: 0;
+  background: var(--auth-discord);
+  color: #fff;
+  font-weight: 700;
+}
+
+.auth-provider--google {
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: #fff;
+  color: #1f1f1f;
+  font-weight: 600;
+}
+
+.auth-provider__icon {
+  flex: 0 0 auto;
+}
+
+.auth-email-toggle {
+  border: 1px solid var(--auth-border);
+  background: transparent;
+  color: var(--auth-text);
+}
+
+.auth-form {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+}
+
+.auth-field {
+  display: grid;
+  gap: 0.35rem;
+  color: var(--auth-text);
+  font-size: 0.92rem;
+}
+
+.auth-field input {
+  width: 100%;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--auth-border);
+  border-radius: 0.75rem;
+  background: var(--auth-surface-2);
+  color: var(--auth-text);
+}
+
+.auth-field input:focus,
+.auth-provider:focus-visible,
+.auth-email-toggle:focus-visible,
+.auth-submit:focus-visible,
+.auth-field__reveal:focus-visible,
+.auth-card__back:focus-visible,
+.auth-card__logo:focus-visible,
+.auth-card__switch a:focus-visible {
+  outline: 2px solid var(--auth-accent);
+  outline-offset: 2px;
+}
+
+.auth-field__control {
+  position: relative;
+}
+
+.auth-field__control input {
+  padding-right: 5.5rem;
+}
+
+.auth-field__reveal {
+  position: absolute;
+  top: 50%;
+  right: 0.45rem;
+  padding: 0.25rem 0.45rem;
+  border: 0;
+  background: transparent;
+  color: var(--auth-muted);
+  cursor: pointer;
+  transform: translateY(-50%);
+}
+
+.auth-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  color: var(--auth-muted);
+  font-size: 0.92rem;
+}
+
+.auth-check input {
+  margin-top: 0.2rem;
+}
+
+.auth-check a {
+  color: var(--auth-accent);
+}
+
+.auth-submit {
+  border: 0;
+  background: var(--auth-accent);
+  color: var(--auth-accent-text);
+  font-weight: 700;
+}
+
+.auth-notice {
+  margin: 0;
+  padding: 0.75rem 0.85rem;
+  border-radius: 0.75rem;
+  background: var(--auth-surface-2);
+}
+
+.auth-notice--error {
+  border-left: 3px solid var(--auth-danger);
+}
+
+.auth-notice--info {
+  border-left: 3px solid var(--auth-accent);
+}
+
+.auth-email[hidden] {
+  display: none;
+}
+
+@media (min-width: 960px) {
+  .auth-gate__stage {
+    padding: 1.5rem;
+  }
+  .auth-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(18rem, 0.85fr);
+    align-items: stretch;
+  }
+  .auth-card__story {
+    display: flex;
+    flex-direction: column;
+    padding: 1rem 0 1rem 1rem;
+  }
+  .auth-card__caption {
+    padding-right: 0.4rem;
+    padding-bottom: 0.6rem;
+  }
+  .auth-card__panel {
+    justify-content: center;
+    max-height: calc(100dvh - 3rem);
+    overflow: auto;
+    padding: 1.5rem 1.35rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .auth-gate *,
+  .auth-gate *::before,
+  .auth-gate *::after {
+    transition: none;
   }
 }

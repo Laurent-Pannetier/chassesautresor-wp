@@ -26,22 +26,56 @@ define('ID_IMAGE_PLACEHOLDER_ENIGME', 3925);
 
 
 /**
- * Retourne le mapping des tailles d'image vers les requêtes media.
+ * Largeur déclarée dans srcset. La largeur réelle du fichier prime.
  *
- * @return array<string, string>
+ * @param int    $image_id ID du média.
+ * @param string $size     Taille WordPress.
+ * @return int
  */
-function get_enigme_picture_breakpoints(): array
+function enigme_picture_size_width(int $image_id, string $size): int
 {
-    return [
-        'full'      => '(min-width: 1025px)',
-        'large'     => '(min-width: 769px)',
-        'medium'    => '(min-width: 481px)',
-        'thumbnail' => '',
-    ];
+    if ($image_id > 0 && function_exists('wp_get_attachment_image_src')) {
+        $data = wp_get_attachment_image_src($image_id, $size);
+        $width = is_array($data) ? (int) ($data[1] ?? 0) : 0;
+        if ($width > 0) {
+            return $width;
+        }
+    }
+
+    return match ($size) {
+        'thumbnail' => 150,
+        'medium' => 300,
+        'medium_large' => 768,
+        'large' => 1024,
+        'full' => 1920,
+        default => 300,
+    };
+}
+
+/**
+ * Assemble un srcset en descripteurs de largeur (w), lus avec l'attribut sizes.
+ *
+ * @param array<int, array{url:string,webp:string,width:int}> $candidates
+ * @param bool                                                $webp
+ * @return string
+ */
+function enigme_picture_srcset(array $candidates, bool $webp): string
+{
+    $parts = [];
+    foreach ($candidates as $candidate) {
+        $url = $webp ? $candidate['webp'] : $candidate['url'];
+        if ($url === '') {
+            continue;
+        }
+        $parts[] = $url . ' ' . $candidate['width'] . 'w';
+    }
+
+    return implode(', ', $parts);
 }
 
 /**
  * Génère le HTML d'un bloc <picture> pour un ID d'image donné.
+ * Le srcset utilise la largeur réelle de chaque taille : l'attribut sizes choisit le fichier.
  *
  * @param int    $image_id  ID de l'image.
  * @param string $alt       Texte alternatif.
@@ -57,7 +91,6 @@ function build_picture_enigme(
     array $img_attrs = [],
     string $floor = ''
 ): string {
-    $breakpoints = get_enigme_picture_breakpoints();
     $order = ['thumbnail', 'medium', 'large', 'full'];
 
     $valid_sizes = function_exists('get_intermediate_image_sizes')
@@ -94,16 +127,6 @@ function build_picture_enigme(
         $sizes,
         static fn (string $a, string $b): int => array_search($a, $order, true) <=> array_search($b, $order, true)
     );
-
-    $used_sizes = $sizes;
-
-    $html = "<picture>\n";
-    $size_2x_map = [
-        'thumbnail' => 'medium',
-        'medium'    => 'large',
-        'large'     => 'full',
-        'full'      => 'full',
-    ];
 
     $can_webp = function_exists('wp_image_editor_supports')
         && wp_image_editor_supports(['mime_type' => 'image/webp']);
@@ -164,44 +187,49 @@ function build_picture_enigme(
         };
     }
 
-    for ($i = count($used_sizes) - 1; $i > 0; $i--) {
-        $size       = $used_sizes[$i];
-        $media      = $breakpoints[$size];
-        $media_attr = $media ? ' media="' . $media . '"' : '';
-
-        $src_1x       = $url_builder($image_id, $size);
-        $src_2x       = $url_builder($image_id, $size_2x_map[$size] ?? $size);
-        $srcset_parts = [$src_1x . ' 1x'];
-        if ($src_2x !== '' && $src_2x !== $src_1x) {
-            $srcset_parts[] = $src_2x . ' 2x';
+    $candidates = [];
+    $seen_widths = [];
+    foreach ($sizes as $size) {
+        $url = $url_builder($image_id, $size);
+        if ($url === '') {
+            continue;
         }
-        $srcset = implode(', ', $srcset_parts);
-
-        $webp_1x = $webp_builder($image_id, $size);
-        $webp_2x = $webp_builder($image_id, $size_2x_map[$size] ?? $size);
-        if ($webp_1x !== '') {
-            $webp_parts = [$webp_1x . ' 1x'];
-            if ($webp_2x !== '' && $webp_2x !== $webp_1x) {
-                $webp_parts[] = $webp_2x . ' 2x';
-            }
-            $webp_srcset = implode(', ', $webp_parts);
-            $html       .= '  <source type="image/webp" srcset="' . $webp_srcset
-                . '" data-size="' . $size . '"' . $media_attr . ">\n";
+        $width = enigme_picture_size_width($image_id, $size);
+        if (isset($seen_widths[$width])) {
+            continue;
         }
-
-        $html .= '  <source srcset="' . $srcset . '" data-size="' . $size . '"'
-            . $media_attr . ">\n";
+        $seen_widths[$width] = true;
+        $candidates[] = [
+            'url' => $url,
+            'webp' => $webp_builder($image_id, $size),
+            'width' => $width,
+            'size' => $size,
+        ];
     }
 
-    $fallback_size   = $used_sizes[0];
-    $src_fallback_1x = $url_builder($image_id, $fallback_size);
-    $src_fallback_2x = $url_builder($image_id, $size_2x_map[$fallback_size] ?? $fallback_size);
+    if ($candidates === []) {
+        return '';
+    }
+
+    $fallback = $candidates[0];
+    $html = "<picture>\n";
+    $webp_ready = true;
+    foreach ($candidates as $candidate) {
+        if ($candidate['webp'] === '') {
+            $webp_ready = false;
+            break;
+        }
+    }
+    if ($webp_ready) {
+        $html .= '  <source type="image/webp" srcset="'
+            . enigme_picture_srcset($candidates, true) . "\">\n";
+    }
 
     $dimensions = function_exists('wp_get_attachment_image_src')
-        ? wp_get_attachment_image_src($image_id, $fallback_size)
+        ? wp_get_attachment_image_src($image_id, $fallback['size'])
         : null;
     if (is_array($dimensions)) {
-        $img_attrs['width']  = $dimensions[1];
+        $img_attrs['width'] = $dimensions[1];
         $img_attrs['height'] = $dimensions[2];
     }
 
@@ -221,13 +249,8 @@ function build_picture_enigme(
         $attr_str .= ' ' . $key . '="' . esc_attr($value) . '"';
     }
 
-    $img_srcset_parts = [$src_fallback_1x . ' 1x'];
-    if ($src_fallback_2x !== '' && $src_fallback_2x !== $src_fallback_1x) {
-        $img_srcset_parts[] = $src_fallback_2x . ' 2x';
-    }
-    $img_srcset = implode(', ', $img_srcset_parts);
-
-    $html .= '  <img src="' . $src_fallback_1x . '" srcset="' . $img_srcset . '" alt="'
+    $html .= '  <img src="' . $fallback['url'] . '" srcset="'
+        . enigme_picture_srcset($candidates, false) . '" alt="'
         . esc_attr($alt) . '"' . $attr_str . ">\n";
     $html .= "</picture>\n";
 

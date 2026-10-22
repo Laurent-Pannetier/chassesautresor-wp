@@ -1,16 +1,21 @@
-# Connexion personnalisée
+# Connexion
 
-Ce thème personnalise la page de connexion WordPress afin d'assurer une expérience cohérente avec le site.
+L'écran public est `/connexion/`. Il reprend les couleurs du dashboard (thème nuit) et montre l'image de la chasse dans un cadre 16/9.
 
-## Redirection WooCommerce
+Discord est le premier bouton, Google le second, l'e-mail le repli. Les deux boutons sont visibles sur la connexion et sur la création de compte. Le clic ouvre Discord ou Google seulement après l'enregistrement de l'identifiant et du secret dans Réglages → Connexion sociale. Tant que ces valeurs manquent, l'écran le dit.
 
-Les utilisateurs non connectés qui accèdent à une page "Mon compte" de WooCommerce sont redirigés vers `wp-login.php`. L'URL demandée est conservée pour que l'utilisateur y soit renvoyé après authentification.
+Le parcours OAuth, la création de compte et la liaison vivent dans le plugin `chassesautresor-core`. Le thème ne dessine que la page.
 
-## Feuille de style dédiée
+## Comptes déjà existants
 
-La feuille de style `assets/css/login.css` est chargée sur `wp-login.php` afin d'ajuster l'apparence du formulaire de connexion.
+Si l'e-mail vérifié du service correspond à un compte du site, la personne saisit le mot de passe de ce compte pour le relier. Un second compte n'est pas créé.
 
-## Lien « Créer un compte »
+Un compte créé par Discord ou Google n'a pas de mot de passe choisi. « Mot de passe oublié » le dit, puis propose un e-mail pour en définir un.
 
-Un lien "Créer un compte" est ajouté sous le formulaire de connexion pour faciliter l'inscription des nouveaux utilisateurs.
+## Adresses WordPress
 
+`wp_login_url()` et `wp_registration_url()` pointent vers cet écran. `wp-login.php` reste utilisé pour la déconnexion, la saisie d'un nouveau mot de passe, et la confirmation d'e-mail administrateur.
+
+L'URI de redirection à déclarer chez Discord et Google est affichée sur l'écran de réglages. Elle doit être copiée telle quelle.
+
+Les identifiants se créent sur le [portail Discord](https://discord.com/developers/applications) (OAuth2, Client ID et Client Secret) et dans la [console Google](https://console.cloud.google.com/apis/credentials) (client OAuth de type application Web). Une même application peut lister l'URI locale et celle du site en ligne.

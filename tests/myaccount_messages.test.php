@@ -370,7 +370,7 @@ class MyAccountMessagesTest extends TestCase
 
         $this->assertStringContainsString('<a', $output);
         $this->assertStringContainsString(
-            'https://example.com/organisateur?edition=open&onglet=revenus',
+            'https://example.com/outils/?organisateur=99&section=revenus',
             $output
         );
         $this->assertStringContainsString('demande de conversion', $output);

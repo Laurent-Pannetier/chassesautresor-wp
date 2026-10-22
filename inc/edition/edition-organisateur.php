@@ -28,31 +28,15 @@ function organisateur_get_liens_actifs(int $organisateur_id): array
 
 
 /**
- * Charge les scripts JS pour l’édition frontale d’un organisateur (header + panneau).
- *
- * Chargé uniquement si l’utilisateur peut modifier l’organisateur lié.
+ * Charge les scripts JS de l’éditeur organisateur sur la page Outils.
  *
  * @hook wp_enqueue_scripts
  */
 function enqueue_script_organisateur_edit()
 {
-  $cpts = ['organisateur', 'chasse'];
-
-  if (!is_singular($cpts)) return;
-
-  $post_id = get_the_ID();
-  $type = get_post_type($post_id);
-  $organisateur_id = null;
-
-  if ($type === 'organisateur') {
-    $organisateur_id = $post_id;
-  } elseif ($type === 'chasse') {
-    $organisateur_id = get_organisateur_from_chasse($post_id);
-
-    if (!$organisateur_id && get_post_status($post_id) === 'pending') {
-      $organisateur_id = get_organisateur_from_user(get_current_user_id());
-    }
-  }
+  $organisateur_id = function_exists('cta_shell_edition_post_id')
+      ? (int) cta_shell_edition_post_id('organisateur')
+      : 0;
 
   if ($organisateur_id && utilisateur_peut_modifier_post($organisateur_id)) {
     // 📦 Modules JS partagés + script organisateur

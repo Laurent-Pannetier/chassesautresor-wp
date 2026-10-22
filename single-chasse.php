@@ -152,7 +152,7 @@ if (!$compact_experience) {
 
     if (!is_user_logged_in()) {
         $redirect_url     = get_permalink($chasse_id);
-        $registration_url = add_query_arg('redirect_to', rawurlencode($redirect_url), wp_registration_url());
+        $registration_url = add_query_arg('redirect_to', $redirect_url, wp_registration_url());
         $login_url        = wp_login_url($redirect_url);
         $enigmes_intro    = sprintf(
             wp_kses(

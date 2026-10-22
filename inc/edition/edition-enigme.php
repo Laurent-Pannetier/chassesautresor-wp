@@ -13,31 +13,21 @@ defined('ABSPATH') || exit;
 
 
 /**
- * Charge les scripts JS nécessaires à l’édition frontale d’une énigme :
- * – Modules partagés (core)
- * – Header organisateur
- * – Panneau latéral d’édition de l’énigme
- *
- * Le script est chargé uniquement sur les pages single du CPT "enigme",
- * si l’utilisateur a les droits de modification sur ce post.
+ * Charge les scripts JS de l’édition d’une énigme sur la page Outils.
  *
  * @hook wp_enqueue_scripts
  * @return void
  */
 function enqueue_script_enigme_edit()
 {
-  $shellId = function_exists('cta_shell_edition_post_id') ? cta_shell_edition_post_id('enigme') : 0;
-  if (!is_singular('enigme') && $shellId <= 0) {
+  $enigme_id = function_exists('cta_shell_edition_post_id') ? cta_shell_edition_post_id('enigme') : 0;
+  if ($enigme_id <= 0) {
       return;
   }
-
-  $enigme_id = $shellId > 0 ? $shellId : (int) get_the_ID();
   if (!utilisateur_peut_modifier_post($enigme_id)) return;
 
-  // 📦 Modules JS partagés + scripts spécifiques
   enqueue_core_edit_scripts([
     'edition-animation-options',
-    'organisateur-edit',
     'enigme-edit',
     'enigme-final-answer-edit',
     'enigme-stats',

@@ -12,18 +12,16 @@ defined('ABSPATH') || exit;
 
 
 /**
- * Charge les scripts JS frontaux pour l’édition d’une chasse (panneau édition).
+ * Charge les scripts JS de l’édition d’une chasse sur la page Outils.
  *
  * @hook wp_enqueue_scripts
  */
 function enqueue_script_chasse_edit()
 {
-    $shellId = function_exists('cta_shell_edition_post_id') ? cta_shell_edition_post_id('chasse') : 0;
-    if (!is_singular('chasse') && $shellId <= 0) {
+    $chasse_id = function_exists('cta_shell_edition_post_id') ? cta_shell_edition_post_id('chasse') : 0;
+    if ($chasse_id <= 0) {
         return;
     }
-
-    $chasse_id = $shellId > 0 ? $shellId : (int) get_the_ID();
 
     if (!utilisateur_peut_modifier_post($chasse_id)) {
         return;

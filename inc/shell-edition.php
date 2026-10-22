@@ -19,6 +19,9 @@ function cta_shell_edition_sections(string $type): array
     if ($type === 'chasse') {
         return ['parametres', 'stats', 'animation'];
     }
+    if ($type === 'organisateur') {
+        return ['parametres', 'stats', 'animation', 'revenus'];
+    }
 
     return ['parametres', 'stats', 'animation', 'tentatives'];
 }
@@ -32,12 +35,14 @@ function cta_shell_normalize_edition_section(string $type, string $section): str
     $legacy = [
         'param' => 'parametres',
         'soumission' => 'tentatives',
+        'points' => 'revenus',
     ];
     if (isset($legacy[$section])) {
         $section = $legacy[$section];
     }
 
-    $allowed = cta_shell_edition_sections($type === 'chasse' ? 'chasse' : 'enigme');
+    $sectionType = in_array($type, ['chasse', 'organisateur'], true) ? $type : 'enigme';
+    $allowed = cta_shell_edition_sections($sectionType);
 
     return in_array($section, $allowed, true) ? $section : 'parametres';
 }
@@ -47,7 +52,9 @@ function cta_shell_normalize_edition_section(string $type, string $section): str
  */
 function cta_shell_edition_url(string $type, int $id, string $section = 'parametres'): string
 {
-    $type = $type === 'chasse' ? 'chasse' : 'enigme';
+    if (!in_array($type, ['chasse', 'enigme', 'organisateur'], true)) {
+        $type = 'enigme';
+    }
     $section = cta_shell_normalize_edition_section($type, $section);
     $base = function_exists('cta_shell_location_url')
         ? cta_shell_location_url('outils')
@@ -86,11 +93,15 @@ function cta_shell_edition_target(): ?array
 
     $riddleId = isset($_GET['enigme']) ? absint(wp_unslash($_GET['enigme'])) : 0;
     $huntId = isset($_GET['chasse']) ? absint(wp_unslash($_GET['chasse'])) : 0;
+    $organizerId = isset($_GET['organisateur']) ? absint(wp_unslash($_GET['organisateur'])) : 0;
     if ($riddleId > 0) {
         return cta_shell_accept_edition_target('enigme', $riddleId);
     }
     if ($huntId > 0) {
         return cta_shell_accept_edition_target('chasse', $huntId);
+    }
+    if ($organizerId > 0) {
+        return cta_shell_accept_edition_target('organisateur', $organizerId);
     }
 
     return null;
@@ -109,6 +120,9 @@ function cta_shell_accept_edition_target(string $type, int $id): ?array
     }
 
     $requested = isset($_GET['section']) ? sanitize_key(wp_unslash($_GET['section'])) : 'parametres';
+    if ($requested === 'parametres' && isset($_GET['onglet'])) {
+        $requested = sanitize_key(wp_unslash($_GET['onglet']));
+    }
     $section = cta_shell_normalize_edition_section($type, $requested);
     if ($type === 'enigme' && $section === 'tentatives' && function_exists('get_field')) {
         $mode = (string) get_field('enigme_mode_validation', $id);
@@ -150,7 +164,13 @@ function cta_shell_edition_body_class(array $classes): array
 
     $classes[] = 'shell-edition';
     $classes[] = 'mode-edition';
-    $classes[] = $target['type'] === 'chasse' ? 'edition-active-chasse' : 'edition-active-enigme';
+    if ($target['type'] === 'chasse') {
+        $classes[] = 'edition-active-chasse';
+    } elseif ($target['type'] === 'enigme') {
+        $classes[] = 'edition-active-enigme';
+    } else {
+        $classes[] = 'edition-active';
+    }
 
     return $classes;
 }
@@ -161,7 +181,7 @@ add_filter('body_class', 'cta_shell_edition_body_class');
  */
 function cta_shell_redirect_legacy_edition(): void
 {
-    if (!function_exists('is_singular') || !is_singular(['enigme', 'chasse'])) {
+    if (!function_exists('is_singular') || !is_singular(['enigme', 'chasse', 'organisateur'])) {
         return;
     }
 
@@ -172,11 +192,17 @@ function cta_shell_redirect_legacy_edition(): void
 
     $id = function_exists('get_queried_object_id') ? (int) get_queried_object_id() : 0;
     $type = $id > 0 && function_exists('get_post_type') ? (string) get_post_type($id) : '';
-    if (!in_array($type, ['enigme', 'chasse'], true)) {
+    if (!in_array($type, ['enigme', 'chasse', 'organisateur'], true)) {
         return;
     }
 
-    $tab = isset($_GET['tab']) ? sanitize_key(wp_unslash($_GET['tab'])) : 'param';
+    $tab = isset($_GET['tab']) ? sanitize_key(wp_unslash($_GET['tab'])) : '';
+    if ($tab === '' && isset($_GET['onglet'])) {
+        $tab = sanitize_key(wp_unslash($_GET['onglet']));
+    }
+    if ($tab === '') {
+        $tab = 'param';
+    }
     wp_safe_redirect(cta_shell_edition_url($type, $id, cta_shell_normalize_edition_section($type, $tab)));
     exit;
 }
@@ -205,11 +231,17 @@ function cta_shell_render_edition(array $target): void
             null,
             ['chasse_id' => (int) $target['id']]
         );
-    } else {
+    } elseif ($target['type'] === 'enigme') {
         get_template_part(
             'template-parts/enigme/enigme-edition-main',
             null,
             ['enigme_id' => (int) $target['id']]
+        );
+    } else {
+        get_template_part(
+            'template-parts/organisateur/organisateur-edition-main',
+            null,
+            ['organisateur_id' => (int) $target['id']]
         );
     }
     echo '</div>';
@@ -389,6 +421,63 @@ function cta_shell_render_hunt_edit_card(int $huntId): string
         <div class="dashboard-card-content">
             <a class="dashboard-card-action" href="<?php echo esc_url($url); ?>">
                 <?php esc_html_e('Éditer la chasse', 'chassesautresor-com'); ?>
+            </a>
+        </div>
+    </div>
+    <?php
+
+    return (string) ob_get_clean();
+}
+
+/**
+ * Organizer the current user may edit from Outils: their own post, or the managed hunt's organizer.
+ */
+function cta_shell_editable_organizer_id(): int
+{
+    $userId = function_exists('get_current_user_id') ? (int) get_current_user_id() : 0;
+    $id = 0;
+    if ($userId > 0 && function_exists('get_organisateur_from_user')) {
+        $id = (int) get_organisateur_from_user($userId);
+    }
+    if ($id <= 0 && function_exists('cat_get_managed_hunt_id_for_user')) {
+        $huntId = (int) cat_get_managed_hunt_id_for_user($userId);
+        if ($huntId > 0 && function_exists('get_organisateur_from_chasse')) {
+            $id = (int) get_organisateur_from_chasse($huntId);
+        }
+    }
+    if ($id <= 0 || !function_exists('utilisateur_peut_voir_panneau') || !utilisateur_peut_voir_panneau($id)) {
+        return 0;
+    }
+
+    return $id;
+}
+
+/**
+ * Card that opens the organizer editor from the Outils grid.
+ */
+function cta_shell_render_organizer_edit_card(): string
+{
+    $organizerId = cta_shell_editable_organizer_id();
+    if ($organizerId <= 0) {
+        return '';
+    }
+
+    $title = function_exists('get_the_title') ? (string) get_the_title($organizerId) : '';
+    if ($title === '') {
+        $title = __('Organisateur', 'chassesautresor-com');
+    }
+    $url = cta_shell_edition_url('organisateur', $organizerId, 'parametres');
+
+    ob_start();
+    ?>
+    <div class="dashboard-card">
+        <div class="dashboard-card-header">
+            <i class="fas fa-id-card" aria-hidden="true"></i>
+            <h3><?php echo esc_html($title); ?></h3>
+        </div>
+        <div class="dashboard-card-content">
+            <a class="dashboard-card-action" href="<?php echo esc_url($url); ?>">
+                <?php esc_html_e('Éditer l’organisateur', 'chassesautresor-com'); ?>
             </a>
         </div>
     </div>

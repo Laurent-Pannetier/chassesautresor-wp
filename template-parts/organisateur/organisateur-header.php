@@ -107,11 +107,6 @@ $classes_header .= ' container container--boxed';
                 <?= get_svg_icon('share-icon'); ?>
               </a>
             <?php endif; ?>
-            <?php if ($peut_modifier) : ?>
-              <button id="toggle-mode-edition" class="bouton-edition-toggle" aria-label="<?= esc_attr__('Paramètres organisateur', 'chassesautresor-com'); ?>">
-                <i class="fa-solid fa-gear"></i>
-              </button>
-            <?php endif; ?>
           </div>
         </div>
         <p class="header-organisateur__description">
@@ -178,11 +173,6 @@ $classes_header .= ' container container--boxed';
   </div>
 </div>
 
-<?php
-get_template_part('template-parts/organisateur/organisateur-edition-main', null, [
-  'organisateur_id' => $organisateur_id
-]);
-?>
 <script>
   document.addEventListener('DOMContentLoaded', function() {
     document.body.dataset.organisateurId = "<?= esc_attr($organisateur_id); ?>";

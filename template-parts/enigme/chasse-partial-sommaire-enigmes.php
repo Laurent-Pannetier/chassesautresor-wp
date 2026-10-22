@@ -166,7 +166,7 @@ foreach ($ids_enigmes as $enigme_id) {
     $reglages_url = '';
     $peut_modifier = function_exists('utilisateur_peut_modifier_enigme')
         && utilisateur_peut_modifier_enigme($enigme_id);
-    if ($peut_modifier && function_exists('get_permalink')) {
+    if ($peut_modifier && function_exists('cta_shell_edition_url')) {
         $tab = 'param';
         $validation = $infos_chasse['statut_validation'] ?? '';
         if (!in_array($validation, ['creation', 'correction'], true)) {
@@ -180,12 +180,7 @@ foreach ($ids_enigmes as $enigme_id) {
         $section = function_exists('cta_shell_normalize_edition_section')
             ? cta_shell_normalize_edition_section('enigme', $tab)
             : 'parametres';
-        $permalink = (string) get_permalink($enigme_id);
-        $reglages_url = function_exists('cta_shell_edition_url')
-            ? cta_shell_edition_url('enigme', $enigme_id, $section)
-            : (function_exists('add_query_arg')
-                ? (string) add_query_arg(['edition' => 'open', 'tab' => $tab], $permalink)
-                : $permalink . '?edition=open&tab=' . rawurlencode($tab));
+        $reglages_url = cta_shell_edition_url('enigme', $enigme_id, $section);
     }
 
     $lignes[] = [
@@ -237,13 +232,8 @@ if ($peut_ajouter && !$has_incomplete) {
 }
 
 $edition_chasse_url = '';
-if ($peut_editer_chasse && function_exists('get_permalink')) {
-    $permalink_chasse = (string) get_permalink($chasse_id);
-    $edition_chasse_url = function_exists('cta_shell_edition_url')
-        ? cta_shell_edition_url('chasse', (int) $chasse_id, 'parametres')
-        : (function_exists('add_query_arg')
-            ? (string) add_query_arg(['edition' => 'open', 'tab' => 'param'], $permalink_chasse)
-            : $permalink_chasse . '?edition=open&tab=param');
+if ($peut_editer_chasse && function_exists('cta_shell_edition_url')) {
+    $edition_chasse_url = cta_shell_edition_url('chasse', (int) $chasse_id, 'parametres');
 }
 ?>
 <div class="sommaire-bd">
@@ -346,7 +336,7 @@ if ($peut_editer_chasse && function_exists('get_permalink')) {
                                         $ligne['image_id'],
                                         '',
                                         ['thumbnail'],
-                                        ['sizes' => '5rem']
+                                        ['sizes' => '4.25rem']
                                     );
                                     ?>
                                 <?php else : ?>

@@ -622,6 +622,7 @@ require_once $inc_path . 'single-hunt-home.php';
 require_once $inc_path . 'single-hunt-seo.php';
 require_once $inc_path . 'footer-functions.php';
 require_once $inc_path . 'app-shell.php';
+require_once $inc_path . 'auth-screen.php';
 
 require_once $inc_path . 'edition/edition-core.php';
 require_once $inc_path . 'edition/edition-organisateur.php';
@@ -633,17 +634,10 @@ require_once $inc_path . 'edition/edition-securite.php';
 require_once $inc_path . 'shell-edition.php';
 
 /**
- * Injecte automatiquement `acf_form_head()` pour les fiches chasse.
+ * Injecte `acf_form_head()` sur la page d’édition Outils.
  *
- * Ce hook est nécessaire pour que les panneaux latéraux basés sur `acf_form()`
- * (notamment la description WYSIWYG) fonctionnent correctement en front-end.
- *
- * - Il doit être exécuté avant toute sortie HTML.
- * - Il active la prise en charge des redirections, messages de succès, et champs ACF dynamiques.
- * - ACF recommande son appel dans le `header.php`, mais ici on l'injecte proprement via `wp_head`
- *   uniquement pour les chasses.
- *
- * 💡 À terme, cette fonction pourrait être déplacée dans un fichier dédié (ex : acf-hooks.php)
+ * Les champs ACF (description, galerie) ne sont rendus que sur cet écran.
+ * L'appel doit précéder toute sortie HTML.
  *
  * @hook wp_head
  */
@@ -651,7 +645,7 @@ add_action('wp_head', 'forcer_acf_form_head_chasse', 0);
 function forcer_acf_form_head_chasse()
 {
     $shellTarget = function_exists('cta_shell_edition_target') ? cta_shell_edition_target() : null;
-    if ($shellTarget === null && !is_singular('chasse')) {
+    if ($shellTarget === null) {
         return;
     }
     if (!function_exists('acf_form_head')) {
