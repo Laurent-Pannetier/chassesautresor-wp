@@ -176,6 +176,8 @@ const closeImmersiveWidget = form => {
   replyHomes.delete(form);
 };
 
+window.closeImmersiveReplyWidget = closeImmersiveWidget;
+
 const openImmersiveWidget = form => {
   if (!form?.classList.contains('is-reply-widget')) return;
   if (form.classList.contains('is-immersive-open')) return;

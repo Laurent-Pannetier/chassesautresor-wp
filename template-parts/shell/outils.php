@@ -11,8 +11,12 @@ $is_admin = function_exists('cta_shell_user_is_administrator') && cta_shell_user
 $hunt_id = function_exists('cat_get_managed_hunt_id_for_user')
     ? (int) cat_get_managed_hunt_id_for_user()
     : 0;
+$is_organizer = function_exists('current_user_can') && (
+    current_user_can('organisateur') || current_user_can('organisateur_creation')
+);
 $can_reset = $is_admin || (
-    function_exists('cat_is_demo_mode')
+    $is_organizer
+    && function_exists('cat_is_demo_mode')
     && cat_is_demo_mode()
     && function_exists('is_user_logged_in')
     && is_user_logged_in()

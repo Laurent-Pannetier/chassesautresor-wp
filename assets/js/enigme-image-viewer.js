@@ -4,8 +4,8 @@
  * s’ajoutent à cette galerie (y compris via AJAX).
  *
  * Une page 16:9 occupe le viewport (`object-fit: contain`). Le feuilletage
- * se fait au glissement horizontal, au clavier, ou avec les flèches au
- * survol. Un tap affiche le bandeau ; un double tap ou un pincement ouvre
+ * se fait au glissement horizontal, au clavier, ou avec les flèches du
+ * bandeau. Un tap affiche le bandeau ; un double tap ou un pincement ouvre
  * la lightbox en taille native (1:1).
  */
 (function () {
@@ -38,6 +38,132 @@
   const formatShowPageLabel = (pageNumber) =>
     showPageLabel.replace('%d', String(pageNumber));
 
+  const DOT_PAGE_LIMIT = 6;
+
+  const pagerElement = (gallery) =>
+    gallery.querySelector('.galerie-enigme__pager') ||
+    document.querySelector('.galerie-enigme__pager');
+
+  const comicTrackActive = (gallery) =>
+    gallery.classList.contains('is-comic-active') ||
+    (gallery.hasAttribute('data-comic-reader') &&
+      document.body.classList.contains('comic-reader'));
+
+  const clearPagerTrack = (gallery) => {
+    const pager = pagerElement(gallery);
+    if (!pager) {
+      return;
+    }
+    pager.querySelector('.galerie-enigme__track')?.remove();
+    pager.classList.remove('is-counter-only');
+    delete pager.dataset.enigmeGalleryRef;
+    const label = pager.querySelector('.galerie-enigme__page-label');
+    if (label?.hasAttribute('aria-live')) {
+      pager.setAttribute('aria-live', label.getAttribute('aria-live'));
+      label.removeAttribute('aria-live');
+    }
+  };
+
+  const syncPagerTrack = (gallery, activeIndex) => {
+    const pager = pagerElement(gallery);
+    const total = gallery.querySelectorAll('.galerie-enigme__slide').length;
+    if (!pager || total < 2) {
+      return;
+    }
+    if (gallery.id) {
+      pager.dataset.enigmeGalleryRef = gallery.id;
+    }
+
+    let track = pager.querySelector('.galerie-enigme__track');
+    if (!track) {
+      track = document.createElement('div');
+      track.className = 'galerie-enigme__track';
+      const label = pager.querySelector('.galerie-enigme__page-label');
+      if (pager.hasAttribute('aria-live') && label && !label.hasAttribute('aria-live')) {
+        label.setAttribute('aria-live', pager.getAttribute('aria-live'));
+        pager.removeAttribute('aria-live');
+      }
+      pager.insertBefore(track, label || null);
+    }
+
+    const ensureNav = (direction) => {
+      const name = direction < 0 ? 'prev' : 'next';
+      let button = track.querySelector(`.galerie-enigme__pager-nav--${name}`);
+      if (!button) {
+        button = document.createElement('button');
+        button.type = 'button';
+        button.className = `galerie-enigme__pager-nav galerie-enigme__pager-nav--${name}`;
+        button.dataset.galleryStep = String(direction);
+        button.setAttribute('aria-label', direction < 0 ? prevPageLabel : nextPageLabel);
+        const glyph = document.createElement('span');
+        glyph.setAttribute('aria-hidden', 'true');
+        glyph.textContent = direction < 0 ? '\u2039' : '\u203a';
+        button.appendChild(glyph);
+        if (direction < 0) {
+          track.prepend(button);
+        } else {
+          track.appendChild(button);
+        }
+      }
+      button.disabled = direction < 0 ? activeIndex <= 0 : activeIndex >= total - 1;
+      return button;
+    };
+
+    const prev = ensureNav(-1);
+    const next = ensureNav(1);
+    const showDots = total <= DOT_PAGE_LIMIT;
+    pager.classList.toggle('is-counter-only', !showDots);
+
+    const existingDots = track.querySelector('.galerie-enigme__dots');
+    if (!showDots) {
+      existingDots?.remove();
+      return;
+    }
+
+    const dots = existingDots || document.createElement('div');
+    if (!existingDots) {
+      dots.className = 'galerie-enigme__dots';
+      dots.setAttribute('role', 'tablist');
+      dots.setAttribute('aria-label', pagesListLabel);
+    }
+    track.insertBefore(dots, next);
+    if (track.firstElementChild !== prev) {
+      track.prepend(prev);
+    }
+    if (dots.childElementCount !== total) {
+      dots.replaceChildren();
+      for (let index = 0; index < total; index += 1) {
+        const dot = document.createElement('button');
+        dot.type = 'button';
+        dot.className = 'galerie-enigme__dot';
+        dot.setAttribute('role', 'tab');
+        dot.dataset.galleryGoto = String(index);
+        dot.setAttribute('aria-label', formatShowPageLabel(index + 1));
+        dots.appendChild(dot);
+      }
+    }
+    dots.querySelectorAll('.galerie-enigme__dot').forEach((dot) => {
+      const isActive = Number(dot.dataset.galleryGoto) === activeIndex;
+      dot.classList.toggle('is-active', isActive);
+      dot.setAttribute('aria-selected', isActive ? 'true' : 'false');
+    });
+  };
+
+  const galleryFor = (node) => {
+    const host = node.closest?.('[data-enigme-gallery]');
+    if (host) {
+      return host;
+    }
+    const ref = node.closest?.('[data-enigme-gallery-ref]')?.getAttribute('data-enigme-gallery-ref');
+    if (ref) {
+      const match = document.getElementById(ref);
+      if (match) {
+        return match;
+      }
+    }
+    return document.querySelector('[data-enigme-gallery]');
+  };
+
   const updateGalleryChrome = (gallery, activeIndex) => {
     const slides = gallery.querySelectorAll('.galerie-enigme__slide');
     const total = slides.length;
@@ -56,6 +182,10 @@
     }
     if (next) {
       next.disabled = activeIndex >= total - 1;
+    }
+
+    if (comicTrackActive(gallery)) {
+      syncPagerTrack(gallery, activeIndex);
     }
   };
 
@@ -807,6 +937,10 @@
       watchStructure();
       document.body.classList.add('comic-reader');
       gallery.classList.add('is-comic-active');
+      const activeIndex = [...gallery.querySelectorAll('.galerie-enigme__slide')].findIndex(
+        (slide) => slide.classList.contains('is-active')
+      );
+      syncPagerTrack(gallery, activeIndex >= 0 ? activeIndex : 0);
       playIntro();
     };
 
@@ -823,6 +957,7 @@
       }
       hintObserver?.disconnect();
       structureObserver?.disconnect();
+      clearPagerTrack(gallery);
       restoreParked();
       controls?.remove();
       controls = null;
@@ -946,7 +1081,7 @@
   const onViewerClick = (event) => {
     const stepButton = event.target.closest('[data-gallery-step]');
     if (stepButton) {
-      const gallery = stepButton.closest('[data-enigme-gallery]');
+      const gallery = galleryFor(stepButton);
       if (!gallery) {
         return;
       }
@@ -960,7 +1095,7 @@
 
     const thumb = event.target.closest('[data-gallery-goto]');
     if (thumb) {
-      const gallery = thumb.closest('[data-enigme-gallery]');
+      const gallery = galleryFor(thumb);
       if (!gallery) {
         return;
       }

@@ -1,3 +1,34 @@
+const RESOLVED_REPLY_MS = 1500;
+
+function dismissResolvedReply(form) {
+  if (!form || form.dataset.replySettled === '1') return;
+  form.dataset.replySettled = '1';
+  const key = form.dataset.riddleReplyKey || '';
+  const opener = key
+    ? document.querySelector(`[data-riddle-open-widget][data-riddle-reply-key="${key}"]`)
+    : null;
+  const launcher = opener?.closest('.reponse-launcher');
+  if (typeof window.closeImmersiveReplyWidget === 'function') {
+    window.closeImmersiveReplyWidget(form);
+  } else {
+    form.hidden = true;
+    form.classList.remove('is-immersive-open');
+    document.body.classList.remove('riddle-widget-immersive-open');
+    document.querySelector('.riddle-widget-immersive-backdrop')?.remove();
+  }
+  form.remove();
+  if (!launcher || launcher.querySelector('.reponse-launcher__solved')) return;
+  const solved = document.createElement('p');
+  solved.className = 'reponse-launcher__solved';
+  const __ = window.wp?.i18n?.__ || (s => s);
+  solved.innerHTML = `<i class="fa-solid fa-circle-check" aria-hidden="true"></i> ${__(
+    'Énigme résolue',
+    'chassesautresor-com'
+  )}`;
+  if (opener) opener.replaceWith(solved);
+  else launcher.append(solved);
+}
+
 function resetInteractiveFinalAnswerWidget(form) {
   const answerInput = form.querySelector('input[name="reponse"]');
   if (answerInput && answerInput.type === 'hidden') answerInput.value = '';
@@ -120,7 +151,13 @@ function initFormulaireAutomatique() {
             feedback.style.display = 'block';
             const enigmeId = form.querySelector('input[name="enigme_id"]')?.value;
             const titre = form.querySelector('h3');
-            form.replaceChildren(titre, feedback);
+            const chrome = form.querySelector('.riddle-widget-immersive__chrome');
+            form.replaceChildren(...[chrome, titre, feedback].filter(Boolean));
+            const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+            window.setTimeout(
+              () => dismissResolvedReply(form),
+              reducedMotion ? 700 : RESOLVED_REPLY_MS
+            );
             const currentMenuItem = document.querySelector('.enigme-menu li.active');
             if (currentMenuItem) {
               currentMenuItem.classList.remove('non-engagee', 'bloquee', 'en-attente');

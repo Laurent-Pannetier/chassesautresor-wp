@@ -270,6 +270,88 @@ function cat_render_hunt_edition_notice(): void
 }
 
 /**
+ * Demo strip under the home sphere. The player's engagement stays in place.
+ */
+function cat_render_demo_player_progress_reset(): void
+{
+    if (!function_exists('cat_is_demo_mode') || !cat_is_demo_mode()) {
+        return;
+    }
+    if (!function_exists('is_user_logged_in') || !is_user_logged_in()) {
+        return;
+    }
+
+    $userId = (int) get_current_user_id();
+    $huntId = function_exists('cat_get_primary_hunt_id') ? (int) cat_get_primary_hunt_id() : 0;
+    if (
+        $userId <= 0
+        || $huntId <= 0
+        || !function_exists('utilisateur_est_engage_dans_chasse')
+        || !utilisateur_est_engage_dans_chasse($userId, $huntId)
+    ) {
+        return;
+    }
+
+    cat_enqueue_demo_player_progress_reset();
+    ?>
+    <section class="player-progress-reset" aria-labelledby="player-progress-reset-title">
+        <p id="player-progress-reset-title" class="player-progress-reset__text">
+            <strong class="player-progress-reset__label">
+                <?php esc_html_e('Mode démo.', 'chassesautresor-com'); ?>
+            </strong>
+            <?php
+            esc_html_e(
+                'Votre participation est conservée. Énigmes, indices, tentatives et trophées de jeu repartent de zéro.',
+                'chassesautresor-com'
+            );
+            ?>
+        </p>
+        <button type="button" class="bouton-secondaire player-progress-reset__button" data-reset-my-progress>
+            <?php esc_html_e('Recommencer', 'chassesautresor-com'); ?>
+        </button>
+    </section>
+    <?php
+}
+
+/**
+ * Load the confirmation script only when the demo restart strip is shown.
+ */
+function cat_enqueue_demo_player_progress_reset(): void
+{
+    if (
+        !function_exists('wp_enqueue_script')
+        || !function_exists('get_stylesheet_directory')
+        || !function_exists('get_stylesheet_directory_uri')
+    ) {
+        return;
+    }
+
+    $relative = '/assets/js/player-progress-reset.js';
+    $path = get_stylesheet_directory() . $relative;
+    if (!is_readable($path)) {
+        return;
+    }
+
+    wp_enqueue_script(
+        'player-progress-reset',
+        get_stylesheet_directory_uri() . $relative,
+        [],
+        (string) filemtime($path),
+        true
+    );
+    wp_localize_script('player-progress-reset', 'playerProgressReset', [
+        'ajax_url' => admin_url('admin-ajax.php'),
+        'nonce' => wp_create_nonce('cta_reset_my_progress'),
+        'confirm' => __(
+            'Confirmez-vous la remise à zéro ? Votre participation est conservée.',
+            'chassesautresor-com'
+        ),
+        'error' => __('La réinitialisation a échoué.', 'chassesautresor-com'),
+        'ajaxError' => __('Impossible de contacter le serveur.', 'chassesautresor-com'),
+    ]);
+}
+
+/**
  * Album table of contents and hunt solutions at the top of engaged, organizer and admin homes.
  */
 function cat_render_single_hunt_home_enigmas(): void

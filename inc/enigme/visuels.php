@@ -359,8 +359,8 @@ function enigme_collect_step_comic_pages(int $enigme_id, int $user_id): array
  * Affiche une galerie d’images d’une énigme si l’utilisateur y a droit.
  *
  * Une seule page 16:9 (1920 × 1080) est visible à la fois, plein cadre.
- * Le feuilletage se fait au glissement, au clavier, ou avec les flèches
- * au survol. Un tap affiche le bandeau (Répondre, indices, numéro de page).
+ * Le feuilletage se fait au glissement ou au clavier. Un tap affiche le
+ * bandeau (Répondre, pastilles de page, flèches).
  * Un double tap ou un pincement ouvre l’image en taille d’origine.
  * Les images d’étapes débloquées s’ajoutent comme pages suivantes.
  *

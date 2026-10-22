@@ -341,11 +341,21 @@ add_action('wp_enqueue_scripts', 'charger_script_site_protection_card');
 function charger_script_reset_stats_card() {
     $is_account_area = preg_match('#^/mon-compte(?:/|$|\\?)#', $_SERVER['REQUEST_URI'] ?? '');
     $on_outils = function_exists('cta_shell_request_slug') && cta_shell_request_slug() === 'outils';
-    $is_demo_user = is_user_logged_in()
-        && function_exists('cat_is_demo_mode')
-        && cat_is_demo_mode();
+    $settings = function_exists('cat_get_site_experience_settings')
+        ? cat_get_site_experience_settings()
+        : [];
+    $is_admin = function_exists('current_user_can') && current_user_can('administrator');
+    $is_organizer = function_exists('current_user_can')
+        && (current_user_can('organisateur') || current_user_can('organisateur_creation'));
+    $can_reset = class_exists(ChassesAuTresor\Core\Site\SiteExperienceService::class)
+        && (new ChassesAuTresor\Core\Site\SiteExperienceService())->canResetStatistics(
+            $is_admin,
+            function_exists('is_user_logged_in') && is_user_logged_in(),
+            is_array($settings) ? $settings : [],
+            $is_organizer
+        );
 
-    if ($is_account_area || $on_outils || $is_demo_user) {
+    if (($is_account_area || $on_outils) && $can_reset) {
         wp_enqueue_script(
             'reset-stats-card',
             get_stylesheet_directory_uri() . '/assets/js/reset-stats-card.js',
