@@ -10,6 +10,7 @@ defined('ABSPATH') || exit;
  * 🔹 get_image_enigme() → Renvoie l’URL de l’image principale d’une énigme ou un placeholder.
  * 🔹 enigme_a_une_image() → Vérifie si l’énigme a une image définie.
  * 🔹 get_url_vignette_enigme() → Retourne l’URL proxy de la première vignette d’une énigme.
+ * 🔹 enigme_sommaire_vignette_html() → Inclut la miniature du sommaire dans le HTML.
  * 🔹 afficher_picture_vignette_enigme() → Affiche un bloc <picture> responsive pour une énigme.
  */
 
@@ -628,6 +629,34 @@ function get_url_vignette_enigme(int $enigme_id, string $taille = 'thumbnail'): 
     );
 }
 
+
+/**
+ * Vignette du sommaire, peinte avec le HTML de la page.
+ *
+ * Le fichier miniature voyage dans la réponse déjà limitée à ce visiteur.
+ * Le proxy /voir-image-enigme garde sa vérification : son URL signée se
+ * partage, ces octets non. Un fichier absent ou trop lourd revient au proxy,
+ * demandé tout de suite.
+ */
+function enigme_sommaire_vignette_html(int $image_id, string $alt = ''): string
+{
+    if (function_exists('cta_inline_riddle_thumbnail')) {
+        $inlined = cta_inline_riddle_thumbnail($image_id, $alt);
+        if (is_string($inlined) && $inlined !== '') {
+            return $inlined;
+        }
+    }
+
+    return build_picture_enigme(
+        $image_id,
+        $alt,
+        ['thumbnail'],
+        [
+            'sizes' => '4.25rem',
+            'loading' => 'eager',
+        ]
+    );
+}
 
 /**
  * Affiche un bloc <picture> responsive pour une énigme.

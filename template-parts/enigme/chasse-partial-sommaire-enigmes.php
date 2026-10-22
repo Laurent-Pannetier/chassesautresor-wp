@@ -330,13 +330,18 @@ if ($peut_editer_chasse && function_exists('cta_shell_edition_url')) {
                     <div class="sommaire-bd__corps">
                         <a class="sommaire-bd__lien" href="<?php echo esc_url($ligne['url']); ?>">
                             <span class="<?php echo esc_attr($classes_vignette); ?>">
-                                <?php if ($ligne['image_id'] > 0 && function_exists('build_picture_enigme')) : ?>
+                                <?php if (
+                                    $ligne['image_id'] > 0
+                                    && function_exists('enigme_sommaire_vignette_html')
+                                ) : ?>
+                                    <?php echo enigme_sommaire_vignette_html((int) $ligne['image_id'], ''); ?>
+                                <?php elseif ($ligne['image_id'] > 0 && function_exists('build_picture_enigme')) : ?>
                                     <?php
                                     echo build_picture_enigme(
                                         $ligne['image_id'],
                                         '',
                                         ['thumbnail'],
-                                        ['sizes' => '4.25rem']
+                                        ['sizes' => '4.25rem', 'loading' => 'eager']
                                     );
                                     ?>
                                 <?php else : ?>
