@@ -3414,6 +3414,47 @@ body.shell-edition .edition-tab.active:focus-visible {
     font-size: 0.875rem;
 }
 
+.indice-modal-form .indice-acces {
+    margin: var(--space-md) 0;
+    padding: var(--space-sm);
+    border: 1px solid var(--color-editor-border);
+    border-radius: 8px;
+}
+
+.indice-modal-form .indice-acces-help {
+    margin: 0 0 var(--space-sm);
+    font-size: 0.85rem;
+}
+
+.indice-modal-form .indice-prerequis-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    max-height: 9rem;
+    overflow: auto;
+}
+
+.indice-modal-form .indice-prerequis-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+}
+
+.indice-modal-form .indice-delai-minutes {
+    width: 6rem;
+    margin-inline: var(--space-xs);
+}
+
+.indice-modal-form .indice-delai-ancrage {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+.indice-modal-form .indice-delai-ancrage[hidden] {
+    display: none;
+}
+
 .indice-modal-form .date-wrapper input,
 .solution-modal-form .delai-wrapper input {
     width: 100%;

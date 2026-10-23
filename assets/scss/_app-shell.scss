@@ -3382,3 +3382,189 @@ body.admin-bar.shell-edition .app-sidebar {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+/* Indices et solutions : même carte et même tableau que classement / progression. */
+body.shell-edition .edition-animation-table {
+  margin-top: 1.5rem;
+}
+
+body.shell-edition .edition-animation-table > h3 {
+  margin: 0;
+  padding: 0.75rem 1rem 0.7rem 1.1rem;
+  border: 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--shell-accent) 42%, var(--shell-border));
+  background:
+    linear-gradient(90deg, var(--shell-accent), var(--shell-accent)) left / 0.28rem 100% no-repeat,
+    color-mix(in srgb, var(--shell-accent) 16%, var(--shell-surface-2));
+  color: var(--shell-text);
+  font-size: 1.12rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  line-height: 1.25;
+  text-transform: uppercase;
+}
+
+body.shell-edition .edition-animation-table .liste-indices,
+body.shell-edition .edition-animation-table .liste-solutions {
+  overflow-x: auto;
+}
+
+body.shell-edition .edition-animation-table .indices-table-header,
+body.shell-edition .edition-animation-table .solutions-table-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0.75rem 0.85rem;
+}
+
+body.shell-edition .edition-animation-table .liste-indices > p,
+body.shell-edition .edition-animation-table .liste-solutions > p {
+  margin: 0;
+  padding: 0.9rem 1rem 1rem;
+  color: var(--shell-muted);
+}
+
+body.shell-edition .edition-animation-table .stats-table {
+  width: 100%;
+  margin: 0;
+  border: 0;
+  border-collapse: collapse;
+  background: transparent;
+  color: var(--shell-text);
+}
+
+body.shell-edition .edition-animation-table .stats-table thead {
+  background: color-mix(in srgb, var(--shell-bg) 42%, var(--shell-surface));
+  color: var(--shell-muted);
+}
+
+body.shell-edition .edition-animation-table .stats-table th,
+body.shell-edition .edition-animation-table .stats-table td {
+  border: 0;
+  border-bottom: 1px solid var(--shell-border);
+  background: transparent;
+  color: var(--shell-text);
+  padding: 0.7rem 0.85rem;
+  font-weight: 400;
+  text-align: left;
+  vertical-align: middle;
+}
+
+body.shell-edition .edition-animation-table .stats-table thead th {
+  padding-top: 0.48rem;
+  padding-bottom: 0.42rem;
+  background: transparent;
+  color: var(--shell-muted);
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+body.shell-edition .edition-animation-table .stats-table tbody tr:nth-child(odd),
+body.shell-edition .edition-animation-table .stats-table tbody tr:nth-child(even) {
+  background: transparent;
+}
+
+body.shell-edition .edition-animation-table .stats-table tbody tr:last-child > * {
+  border-bottom: 0;
+}
+
+body.shell-edition .edition-animation-table .indices-table th.indice-actions,
+body.shell-edition .edition-animation-table .indices-table td.indice-actions,
+body.shell-edition .edition-animation-table .solutions-table th.solution-actions,
+body.shell-edition .edition-animation-table .solutions-table td.solution-actions {
+  text-align: center;
+}
+
+body.shell-edition .edition-animation-table .stats-table a {
+  color: var(--shell-accent-strong);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+body.shell-edition .edition-animation-table .stats-table a:hover,
+body.shell-edition .edition-animation-table .stats-table a:focus-visible {
+  color: var(--shell-accent);
+  opacity: 1;
+}
+
+body.shell-edition .edition-animation-table .stats-table td > div + div {
+  color: var(--shell-muted);
+  font-weight: 400;
+}
+
+body.shell-edition .edition-animation-table .etiquette {
+  border-color: var(--shell-border);
+  background: var(--shell-surface-2);
+  color: var(--shell-text);
+}
+
+body.shell-edition .edition-animation-table .etiquette-success {
+  background: var(--shell-state-active-bg);
+  border-color: var(--shell-state-active-border);
+  color: var(--shell-state-active-text);
+}
+
+body.shell-edition .edition-animation-table .etiquette-pending {
+  background: var(--shell-state-pending-bg);
+  border-color: var(--shell-state-pending-border);
+  color: var(--shell-state-pending-text);
+}
+
+body.shell-edition .edition-animation-table .etiquette-error {
+  background: var(--shell-state-blocked-bg);
+  border-color: var(--shell-state-blocked-border);
+  color: var(--shell-state-blocked-text);
+}
+
+body.shell-edition .edition-animation-table .indices-toggle,
+body.shell-edition .edition-animation-table .solutions-toggle {
+  color: var(--shell-accent-strong);
+  font-weight: 600;
+  opacity: 1;
+}
+
+body.shell-edition .edition-animation-table .indices-toggle:hover,
+body.shell-edition .edition-animation-table .indices-toggle:focus-visible,
+body.shell-edition .edition-animation-table .solutions-toggle:hover,
+body.shell-edition .edition-animation-table .solutions-toggle:focus-visible {
+  color: var(--shell-accent);
+  opacity: 1;
+  background: none;
+}
+
+body.shell-edition .edition-animation-table .badge-action.edit,
+body.shell-edition .edition-animation-table .badge-action.edit:hover,
+body.shell-edition .edition-animation-table .badge-action.edit:focus-visible {
+  background: var(--shell-secondary-button-bg);
+  color: var(--shell-secondary-button-text);
+  opacity: 1;
+}
+
+body.shell-edition .edition-animation-table .badge-action.delete,
+body.shell-edition .edition-animation-table .badge-action.delete:hover,
+body.shell-edition .edition-animation-table .badge-action.delete:focus-visible {
+  background: var(--shell-danger-button-bg);
+  color: var(--shell-danger-button-text);
+  opacity: 1;
+}
+
+body.shell-edition .edition-animation-table .pager {
+  margin: 0;
+  padding: 0.65rem 0.85rem 0.85rem;
+  color: var(--shell-text);
+}
+
+body.shell-edition .edition-animation-table .pager button,
+body.shell-edition .edition-animation-table .pager button:hover,
+body.shell-edition .edition-animation-table .pager button:focus-visible {
+  background: var(--shell-surface-2);
+  color: var(--shell-text);
+  opacity: 1;
+}
+
+body.shell-edition .edition-animation-table .pager-info {
+  color: var(--shell-muted);
+}

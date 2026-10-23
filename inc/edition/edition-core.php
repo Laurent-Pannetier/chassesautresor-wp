@@ -212,6 +212,35 @@ function enqueue_core_edit_scripts(array $additional = [])
             'needDate'    => __('Date et heure requises', 'chassesautresor-com'),
             'invalidDate' => __('Date invalide', 'chassesautresor-com'),
             'ajaxError'   => __('Erreur réseau', 'chassesautresor-com'),
+            'playerAccess' => __('Accès du joueur', 'chassesautresor-com'),
+            'playerAccessHelp' => __(
+                'La date ci-dessus publie l’indice pour tout le monde.',
+                'chassesautresor-com'
+            ) . ' ' . __(
+                'Le délai retarde l’ouverture pour chaque joueur.',
+                'chassesautresor-com'
+            ),
+            'prerequisites' => __('Prérequis', 'chassesautresor-com'),
+            'prerequisitesHelp' => __(
+                'Comme pour une énigme : le joueur doit avoir consulté chacun des indices cochés.',
+                'chassesautresor-com'
+            ),
+            'noPrereq' => __('Aucun autre indice disponible comme prérequis.', 'chassesautresor-com'),
+            'delay' => __('Délai', 'chassesautresor-com'),
+            'minutes' => __('minutes', 'chassesautresor-com'),
+            'delayHelp' => __('60 minutes = 1 heure. 0 n’ajoute aucune attente.', 'chassesautresor-com'),
+            'delayAfterRiddle' => __('Après le premier engagement dans l’énigme', 'chassesautresor-com'),
+            'delayAfterHunt' => __('Après le premier engagement dans la chasse', 'chassesautresor-com'),
+            'delayAfterPrerequisite' => __('Après le dernier prérequis consulté', 'chassesautresor-com'),
+            'delayAfterPrerequisiteHelp' => __(
+                'S’il y a plusieurs prérequis, le délai commence quand le joueur a consulté le dernier.',
+                'chassesautresor-com'
+            ),
+            'needPrereq' => __('Sélectionnez au moins un prérequis pour ce délai.', 'chassesautresor-com'),
+            'cycle' => __(
+                'Ce prérequis créerait une boucle entre des indices.',
+                'chassesautresor-com'
+            ),
           ],
         ]
       );

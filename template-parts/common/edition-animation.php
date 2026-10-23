@@ -529,13 +529,13 @@ if ($objet_type === 'chasse') {
           $has_other_solutions = $has_solution_enigme ? $total_solutions > 1 : $total_solutions > 0;
           ?>
 
+          <div class="progression-table-card edition-animation-table">
           <h3
             id="<?= esc_attr($objet_type); ?>-section-indices"
             data-titre-enigme="<?= esc_attr__('Indices pour %s', 'chassesautresor-com'); ?>"
             data-titre-chasse="<?= esc_attr__('Indices pour toute la chasse %s', 'chassesautresor-com'); ?>"
             data-enigme-title="<?= esc_attr($enigme_title); ?>"
             data-chasse-title="<?= esc_attr($chasse_title); ?>"
-            style="margin-top: var(--space-xl);"
           >
             <?php if ($indices_objet_type === 'chasse') : ?>
               <?= esc_html(sprintf(__('Indices pour toute la chasse %s', 'chassesautresor-com'), $chasse_title)); ?>
@@ -562,7 +562,9 @@ if ($objet_type === 'chasse') {
             ]);
             ?>
           </div>
+          </div>
 
+          <div class="progression-table-card edition-animation-table">
           <h3
             id="<?= esc_attr($objet_type); ?>-section-solutions"
             data-titre-enigme="<?= esc_attr__('Solutions pour %s', 'chassesautresor-com'); ?>"
@@ -602,6 +604,7 @@ if ($objet_type === 'chasse') {
                 'objet_id'   => $solutions_objet_id,
             ]);
             ?>
+          </div>
           </div>
 
           <div class="edition-animation-prefill" data-indice='<?= wp_json_encode($indice_prefill); ?>' data-solution='<?= wp_json_encode($solution_prefill); ?>'></div>

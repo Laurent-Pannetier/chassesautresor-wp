@@ -29,6 +29,25 @@
           <p><label><input type="radio" name="indice_disponibilite" value="immediate" checked /> ${indicesCreate.texts.immediate}</label>
              <label><input type="radio" name="indice_disponibilite" value="differe" /> ${indicesCreate.texts.differe}</label></p>
           <p class="date-wrapper" style="display:none;"><input type="datetime-local" name="indice_date_disponibilite" /></p>
+          <fieldset class="indice-acces">
+            <legend>${indicesCreate.texts.playerAccess}</legend>
+            <p class="indice-acces-help">${indicesCreate.texts.playerAccessHelp}</p>
+            <div class="indice-prerequis">
+              <p>${indicesCreate.texts.prerequisites}</p>
+              <p class="indice-acces-help">${indicesCreate.texts.prerequisitesHelp}</p>
+              <div class="indice-prerequis-list"></div>
+            </div>
+            <p><label>${indicesCreate.texts.delay}
+              <input type="number" class="indice-delai-minutes" name="indice_delai_minutes" min="0" max="10080" step="1" value="0" />
+              ${indicesCreate.texts.minutes}
+            </label></p>
+            <p class="indice-acces-help">${indicesCreate.texts.delayHelp}</p>
+            <div class="indice-delai-ancrage" hidden>
+              <label><input type="radio" name="indice_delai_ancrage" value="engagement" checked /> <span class="indice-delai-engagement-label"></span></label>
+              <label><input type="radio" name="indice_delai_ancrage" value="prerequis" /> ${indicesCreate.texts.delayAfterPrerequisite}</label>
+              <p class="indice-acces-help">${indicesCreate.texts.delayAfterPrerequisiteHelp}</p>
+            </div>
+          </fieldset>
           <div class="indice-modal-footer"><span class="indice-state-message"></span><button type="submit" class="indice-modal-validate bouton-cta">${indicesCreate.texts.valider}</button></div>
         </form>
       </div>`;
@@ -44,6 +63,14 @@
       d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
       return d.toISOString().slice(0, 16);
     })();
+
+    var delayInput = overlay.querySelector('input[name="indice_delai_minutes"]');
+    var selectedPrereq = (btn.dataset.indicePrerequis || '').split(',').filter(Boolean);
+    var engagementLabel = overlay.querySelector('.indice-delai-engagement-label');
+    engagementLabel.textContent =
+      btn.dataset.objetType === 'chasse'
+        ? indicesCreate.texts.delayAfterHunt
+        : indicesCreate.texts.delayAfterRiddle;
 
     var isEdit = !!btn.dataset.indiceId;
     if (isEdit) {
@@ -70,10 +97,101 @@
         dateInput.value = btn.dataset.indiceDate || defaultDate;
         overlay.querySelector('.date-wrapper').style.display = '';
       }
+      delayInput.value = btn.dataset.indiceDelai || '0';
+      var storedAnchor = btn.dataset.indiceDelaiAncrage || 'engagement';
+      overlay.querySelectorAll('input[name="indice_delai_ancrage"]').forEach(function (radio) {
+        radio.checked = radio.value === storedAnchor;
+      });
     } else {
       dateInput.value = defaultDate;
     }
     var lastDateValue = dateInput.value;
+    var prereqRequest = 0;
+    var anchorRestored = false;
+    syncAnchor();
+    loadPrerequisites(btn.dataset.objetType, btn.dataset.objetId, btn.dataset.indiceId || '');
+
+    function selectedPrerequisiteIds() {
+      return Array.prototype.map.call(
+        overlay.querySelectorAll('input[name="indice_acces_pre_requis[]"]:checked'),
+        function (box) {
+          return box.value;
+        }
+      );
+    }
+
+    function syncAnchor() {
+      var minutes = parseInt(delayInput.value, 10) || 0;
+      var anchorWrap = overlay.querySelector('.indice-delai-ancrage');
+      anchorWrap.hidden = minutes <= 0;
+      var any = selectedPrerequisiteIds().length > 0;
+      var prereqRadio = overlay.querySelector('input[name="indice_delai_ancrage"][value="prerequis"]');
+      var engagementRadio = overlay.querySelector('input[name="indice_delai_ancrage"][value="engagement"]');
+      if (!anchorRestored && any && btn.dataset.indiceDelaiAncrage === 'prerequis') {
+        prereqRadio.checked = true;
+        anchorRestored = true;
+      }
+      prereqRadio.disabled = !any;
+      if (!any && prereqRadio.checked) {
+        engagementRadio.checked = true;
+      }
+    }
+
+    function loadPrerequisites(objetType, objetId, indiceId) {
+      var requestId = ++prereqRequest;
+      var list = overlay.querySelector('.indice-prerequis-list');
+      list.textContent = indicesCreate.texts.loading;
+      if (!objetId) {
+        list.textContent = indicesCreate.texts.noPrereq;
+        syncAnchor();
+        return;
+      }
+      var fd = new FormData();
+      fd.append('action', 'indice_lister_prerequis');
+      fd.append('nonce', indicesCreate.nonce || '');
+      fd.append('objet_type', objetType || '');
+      fd.append('objet_id', objetId || '');
+      if (indiceId) {
+        fd.append('indice_id', indiceId);
+      }
+      fetch(indicesCreate.ajaxUrl, { method: 'POST', credentials: 'same-origin', body: fd })
+        .then(function (r) { return r.json(); })
+        .then(function (res) {
+          if (requestId !== prereqRequest) {
+            return;
+          }
+          list.textContent = '';
+          var indices = res.success && res.data && res.data.indices ? res.data.indices : [];
+          if (!indices.length) {
+            list.textContent = indicesCreate.texts.noPrereq;
+            syncAnchor();
+            return;
+          }
+          indices.forEach(function (indice) {
+            var label = document.createElement('label');
+            label.className = 'indice-prerequis-item';
+            var input = document.createElement('input');
+            input.type = 'checkbox';
+            input.name = 'indice_acces_pre_requis[]';
+            input.value = String(indice.id);
+            input.checked = selectedPrereq.indexOf(String(indice.id)) !== -1;
+            input.addEventListener('change', function () {
+              syncAnchor();
+              refreshState();
+            });
+            var span = document.createElement('span');
+            span.textContent = indice.title || '';
+            label.appendChild(input);
+            label.appendChild(span);
+            list.appendChild(label);
+          });
+          syncAnchor();
+          refreshState();
+        })
+        .catch(function () {
+          list.textContent = indicesCreate.texts.ajaxError;
+        });
+    }
 
     function close() {
       overlay.remove();
@@ -168,6 +286,8 @@
       var dispo = overlay.querySelector('input[name="indice_disponibilite"]:checked').value;
       var select = overlay.querySelector('select[name="indice_enigme_linked"]');
       var riddleSelected = !select || select.value !== '';
+      var minutes = parseInt(delayInput.value, 10);
+      var anchor = overlay.querySelector('input[name="indice_delai_ancrage"]:checked');
       var state = 'desactive';
       var message = '';
       var complete = content !== '' || image !== '';
@@ -195,6 +315,11 @@
         }
       }
 
+      if (state !== 'desactive' && minutes > 0 && anchor && anchor.value === 'prerequis' && !selectedPrerequisiteIds().length) {
+        state = 'desactive';
+        message = indicesCreate.texts.needPrereq;
+      }
+
       validateBtn.disabled = !(state === 'accessible' || state === 'programme');
       stateMessage.textContent = message;
     }
@@ -209,7 +334,16 @@
       fetch(indicesCreate.ajaxUrl, { method: 'POST', credentials: 'same-origin', body: data })
         .then(function (r) { return r.json(); })
         .then(function (res) {
-          if (!res.success) return;
+          if (!res.success) {
+            var code = typeof res.data === 'string' ? res.data : '';
+            stateMessage.textContent = code === 'cycle_prerequis'
+              ? indicesCreate.texts.cycle
+              : code === 'missing_prerequisites'
+                ? indicesCreate.texts.needPrereq
+                : indicesCreate.texts.ajaxError;
+            validateBtn.disabled = false;
+            return;
+          }
           close();
           var selector =
             '.liste-indices[data-objet-type="' +
@@ -291,6 +425,8 @@
           btn.dataset.indiceRang = selected && selected.dataset.indiceRang ? selected.dataset.indiceRang : '';
           titleSpan.textContent = selected ? selected.text : '';
           titleEl.textContent = indicesCreate.texts.indiceTitre.replace('%d', btn.dataset.indiceRang || '');
+          selectedPrereq = [];
+          loadPrerequisites('enigme', select.value, '');
           refreshState();
         });
       select.addEventListener('change', function () {
@@ -300,9 +436,16 @@
         btn.dataset.indiceRang = opt && opt.dataset.indiceRang ? opt.dataset.indiceRang : '';
         titleSpan.textContent = opt ? opt.text : '';
         titleEl.textContent = indicesCreate.texts.indiceTitre.replace('%d', btn.dataset.indiceRang || '');
+        selectedPrereq = [];
+        loadPrerequisites('enigme', select.value, '');
         refreshState();
       });
     }
+
+    delayInput.addEventListener('input', function () {
+      syncAnchor();
+      refreshState();
+    });
 
     refreshState();
   }

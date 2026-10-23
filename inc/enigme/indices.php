@@ -81,6 +81,8 @@ function charger_script_deblocage_indice(): void
             'pts'   => __('pts', 'chassesautresor-com'),
             'unlock'=> __('Débloquer l\'indice', 'chassesautresor-com'),
             'close' => __('Fermer', 'chassesautresor-com'),
+            'consulted' => __('Consulté', 'chassesautresor-com'),
+            'unavailable' => __('Cet indice n’est pas encore disponible.', 'chassesautresor-com'),
         ],
     ]);
 }

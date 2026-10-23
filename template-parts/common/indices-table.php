@@ -102,6 +102,22 @@ if (empty($indices)) {
             }
 
             $etat       = get_field('indice_cache_etat_systeme', $indice->ID) ?: '';
+            $prereq_ids = [];
+            $prereq_raw = get_field('indice_acces_pre_requis', $indice->ID);
+            if (is_array($prereq_raw)) {
+                foreach ($prereq_raw as $prereq_item) {
+                    if (is_object($prereq_item)) {
+                        $prereq_ids[] = (int) ($prereq_item->ID ?? 0);
+                    } elseif (is_array($prereq_item)) {
+                        $prereq_ids[] = (int) ($prereq_item['ID'] ?? 0);
+                    } else {
+                        $prereq_ids[] = (int) $prereq_item;
+                    }
+                }
+            }
+            $prereq_ids = array_values(array_filter($prereq_ids));
+            $delay_minutes = (int) (get_field('indice_delai_minutes', $indice->ID) ?: 0);
+            $delay_anchor = (string) (get_field('indice_delai_ancrage', $indice->ID) ?: 'aucun');
             $etat_class = 'etiquette-error';
             $etat_label = __($etat, 'chassesautresor-com');
             if ($etat === 'accessible') {
@@ -174,6 +190,9 @@ if (empty($indices)) {
                         data-indice-contenu="<?= esc_attr($contenu); ?>"
                         data-indice-disponibilite="<?= esc_attr($dispo); ?>"
                         data-indice-date="<?= esc_attr($date_dispo); ?>"
+                        data-indice-prerequis="<?= esc_attr(implode(',', $prereq_ids)); ?>"
+                        data-indice-delai="<?= esc_attr((string) $delay_minutes); ?>"
+                        data-indice-delai-ancrage="<?= esc_attr($delay_anchor); ?>"
                         title="<?= esc_attr__('Éditer', 'chassesautresor-com'); ?>"
                     >
                         <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>

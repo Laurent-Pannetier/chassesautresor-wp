@@ -83,34 +83,62 @@
   .indice-label {
     display: inline-flex;
     align-items: center;
+    flex-wrap: nowrap;
     gap: var(--space-xs);
     padding: calc(var(--space-xs) / 2) var(--space-sm);
     border-radius: 4px;
     font-weight: 600;
     font-size: 0.875rem;
+    line-height: 1.2;
+    white-space: nowrap;
     border: 2px solid transparent;
   }
 
   .indice-link {
     text-decoration: none;
+    cursor: pointer;
 
     &--locked,
-    &--unlocked,
     &--upcoming {
       background-color: var(--color-gris-3);
       color: var(--color-white);
     }
 
+    &--unlocked,
+    &--consulted {
+      background-color: transparent;
+      color: var(--color-titre-enigme);
+      border-color: var(--color-accent);
+    }
+
     &--active {
-      background-color: var(--color-secondary);
-      border-color: var(--color-secondary);
-      color: var(--color-white);
+      background-color: var(--color-primary);
+      border-color: var(--color-primary);
+      color: var(--color-text-fond-clair);
     }
   }
 
-  .indice-label.indice-link--upcoming {
-    background-color: var(--color-gris-3);
-    color: var(--color-white);
+  .indice-link__label,
+  .indice-link__countdown {
+    white-space: nowrap;
+  }
+
+  .indice-link__countdown {
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+  }
+
+  .indice-label.indice-link--delay,
+  .indice-label.indice-link--upcoming,
+  .indice-label.indice-link--prerequisite {
+    background-color: transparent;
+    color: var(--color-titre-enigme);
+    border-color: var(--color-gris-3);
+    border-style: dashed;
+    box-shadow: none;
+    cursor: default;
+    opacity: 0.62;
+    pointer-events: none;
   }
 
   .btn-debloquer-indice {
@@ -2611,24 +2639,33 @@ body.comic-reader .comic-hud__sheet .solution {
 body.comic-reader .comic-hud__controls {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  grid-template-areas:
+    "pager answer spacer"
+    "hints hints hints";
   align-items: center;
   column-gap: 0.75rem;
+  row-gap: 0.45rem;
   width: 100%;
 }
 
 body.comic-reader .comic-hud__controls .galerie-enigme__pager {
-  grid-column: 1;
+  grid-area: pager;
   justify-self: start;
 }
 
 body.comic-reader .comic-hud__controls .reponse-launcher {
-  grid-column: 2;
+  grid-area: answer;
   justify-self: center;
+  position: relative;
+  z-index: 1;
 }
 
 body.comic-reader .comic-hud__controls .zone-indices {
-  grid-column: 3;
-  justify-self: end;
+  grid-area: hints;
+  justify-self: stretch;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
 }
 
 body.comic-reader .comic-hud__sheet,
@@ -2837,7 +2874,54 @@ body.comic-reader .is-comic-hud .zone-indices {
 body.comic-reader .is-comic-hud .zone-indices-line,
 body.comic-reader .is-comic-hud .indice-list {
   flex-wrap: nowrap;
+  align-items: center;
   margin: 0;
+  min-width: 0;
+  max-width: 100%;
+}
+
+body.comic-reader .is-comic-hud .indice-list {
+  overflow-x: auto;
+  justify-content: safe center;
+  scrollbar-width: thin;
+}
+
+body.comic-reader .is-comic-hud .indice-link,
+body.comic-reader .is-comic-hud .indice-label {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #f4f1ea;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+body.comic-reader .is-comic-hud .indice-link--consulted {
+  background: rgba(255, 215, 0, 0.16);
+  border-color: rgba(255, 215, 0, 0.75);
+  color: #ffe9a0;
+}
+
+body.comic-reader .is-comic-hud .indice-link--active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-text-fond-clair);
+}
+
+body.comic-reader .is-comic-hud .indice-label.indice-link--delay,
+body.comic-reader .is-comic-hud .indice-label.indice-link--upcoming,
+body.comic-reader .is-comic-hud .indice-label.indice-link--prerequisite {
+  background: transparent;
+  color: rgba(244, 241, 234, 0.55);
+  border-style: dashed;
+  border-color: rgba(255, 255, 255, 0.28);
+  box-shadow: none;
+  cursor: default;
+  opacity: 1;
+  pointer-events: none;
+}
+
+body.comic-reader .is-comic-hud .indice-link__countdown {
+  font-variant-numeric: tabular-nums;
 }
 
 body.comic-reader .is-comic-hud .zone-indices-line__label {
@@ -2853,7 +2937,7 @@ body.comic-reader .is-comic-hud .zone-indices-line__label {
 }
 
 body.comic-reader .is-comic-hud .indice-link__label {
-  max-width: 6.5rem;
+  max-width: 9rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
