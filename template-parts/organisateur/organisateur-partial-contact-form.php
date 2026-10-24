@@ -13,10 +13,6 @@ if (!is_user_logged_in()) {
     wp_redirect(wp_login_url());
     exit;
 }
-add_filter('body_class', function($classes) {
-    return array_diff($classes, ['edition-active']);
-});
-
 $organisateur_id = get_organisateur_id_from_context($args ?? []);
 $nom_organisateur = get_the_title($organisateur_id);
 
@@ -82,14 +78,5 @@ if ($est_en_creation) :
     </div>
   </div>
 </section>
-
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    document.body.classList.remove('edition-active');
-    if (localStorage.getItem('modeEditionActif')) {
-      localStorage.removeItem('modeEditionActif');
-    }
-  });
-</script>
 
 <?php get_footer(); ?>

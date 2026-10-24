@@ -27,7 +27,7 @@ $total   = $args['total'] ?? $total ?? 0;
   </div>
 </div>
 <?php if (!empty($gagnants)) : ?>
-<table class="stats-table compact">
+<table class="stats-table">
   <thead>
     <tr>
       <th scope="col"></th>

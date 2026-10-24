@@ -48,6 +48,93 @@ function cta_shell_normalize_edition_section(string $type, string $section): str
 }
 
 /**
+ * DOM id of an editor tab for a content type and a section name.
+ */
+function cta_shell_edition_panel_id(string $type, string $section): string
+{
+    $panels = [
+        'enigme' => [
+            'parametres' => 'enigme-tab-param',
+            'stats' => 'enigme-tab-stats',
+            'animation' => 'enigme-tab-animation',
+            'tentatives' => 'enigme-tab-soumission',
+        ],
+        'chasse' => [
+            'parametres' => 'chasse-tab-param',
+            'stats' => 'chasse-tab-stats',
+            'animation' => 'chasse-tab-animation',
+        ],
+        'organisateur' => [
+            'parametres' => 'organisateur-tab-param',
+            'stats' => 'organisateur-tab-stats',
+            'animation' => 'organisateur-tab-animation',
+            'revenus' => 'organisateur-tab-revenus',
+        ],
+    ];
+    $type = in_array($type, ['chasse', 'organisateur'], true) ? $type : 'enigme';
+    $section = cta_shell_normalize_edition_section($type, $section);
+
+    return $panels[$type][$section] ?? $panels[$type]['parametres'];
+}
+
+/**
+ * Whether the current Outils screen should show this tab.
+ */
+function cta_shell_edition_tab_is_active(string $type, string $panelId): bool
+{
+    $target = cta_shell_edition_target();
+    $section = is_array($target) ? (string) $target['section'] : 'parametres';
+
+    return cta_shell_edition_panel_id($type, $section) === $panelId;
+}
+
+/**
+ * Class and target attributes for an editor tab button.
+ */
+function cta_shell_edition_tab_button_attr(string $type, string $panelId): string
+{
+    $class = 'edition-tab';
+    if (cta_shell_edition_tab_is_active($type, $panelId)) {
+        $class .= ' active';
+    }
+
+    return 'class="' . esc_attr($class) . '" data-target="' . esc_attr($panelId) . '"';
+}
+
+/**
+ * Id, class and visibility attributes for an editor tab panel.
+ */
+function cta_shell_edition_tab_panel_attr(string $type, string $panelId): string
+{
+    $active = cta_shell_edition_tab_is_active($type, $panelId);
+    $class = 'edition-tab-content' . ($active ? ' active' : '');
+    $html = 'id="' . esc_attr($panelId) . '" class="' . esc_attr($class) . '"';
+    if (!$active) {
+        $html .= ' style="display:none;"';
+    }
+
+    return $html;
+}
+
+/**
+ * A requested section must be rewritten when it is not the one the screen will show.
+ */
+function cta_shell_edition_section_needs_canonical_redirect(
+    string $rawSection,
+    string $acceptedSection,
+    bool $hasLegacyParam
+): bool {
+    if ($hasLegacyParam) {
+        return true;
+    }
+    if ($rawSection === '' && $acceptedSection === 'parametres') {
+        return false;
+    }
+
+    return $rawSection !== $acceptedSection;
+}
+
+/**
  * Public URL of a dashboard editor screen.
  */
 function cta_shell_edition_url(string $type, int $id, string $section = 'parametres'): string
@@ -122,6 +209,8 @@ function cta_shell_accept_edition_target(string $type, int $id): ?array
     $requested = isset($_GET['section']) ? sanitize_key(wp_unslash($_GET['section'])) : 'parametres';
     if ($requested === 'parametres' && isset($_GET['onglet'])) {
         $requested = sanitize_key(wp_unslash($_GET['onglet']));
+    } elseif ($requested === 'parametres' && isset($_GET['tab'])) {
+        $requested = sanitize_key(wp_unslash($_GET['tab']));
     }
     $section = cta_shell_normalize_edition_section($type, $requested);
     if ($type === 'enigme' && $section === 'tentatives' && function_exists('get_field')) {
@@ -163,6 +252,7 @@ function cta_shell_edition_body_class(array $classes): array
     }
 
     $classes[] = 'shell-edition';
+    $classes[] = 'shell-edition-tabs-ready';
     $classes[] = 'mode-edition';
     if ($target['type'] === 'chasse') {
         $classes[] = 'edition-active-chasse';
@@ -207,6 +297,55 @@ function cta_shell_redirect_legacy_edition(): void
     exit;
 }
 add_action('template_redirect', 'cta_shell_redirect_legacy_edition');
+
+/**
+ * Align the address with the section the editor will actually open.
+ *
+ * Legacy names (soumission, onglet, tab) and a refused section (Tentatives
+ * when the riddle has no validation) are replaced. Extra arguments such as
+ * uid stay on the URL.
+ */
+function cta_shell_redirect_canonical_edition_section(): void
+{
+    if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'GET') {
+        return;
+    }
+
+    $target = cta_shell_edition_target();
+    if ($target === null) {
+        return;
+    }
+
+    $rawSection = isset($_GET['section']) ? sanitize_key((string) wp_unslash($_GET['section'])) : '';
+    $hasLegacy = isset($_GET['onglet']) || isset($_GET['tab']);
+    if (!cta_shell_edition_section_needs_canonical_redirect(
+        $rawSection,
+        (string) $target['section'],
+        $hasLegacy
+    )) {
+        return;
+    }
+
+    $preserved = [];
+    foreach ($_GET as $key => $value) {
+        if (!is_string($key)) {
+            continue;
+        }
+        if (in_array($key, ['section', 'onglet', 'tab', 'enigme', 'chasse', 'organisateur'], true)) {
+            continue;
+        }
+        $preserved[$key] = wp_unslash($value);
+    }
+
+    $url = cta_shell_edition_url((string) $target['type'], (int) $target['id'], (string) $target['section']);
+    if ($preserved !== []) {
+        $url = add_query_arg($preserved, $url);
+    }
+
+    wp_safe_redirect($url);
+    exit;
+}
+add_action('template_redirect', 'cta_shell_redirect_canonical_edition_section', 11);
 
 /**
  * @param array{type:string,id:int,section:string} $target
@@ -307,8 +446,10 @@ function cta_shell_ordered_riddle_posts(int $huntId): array
 
 /**
  * Hunt and riddle list under Outils, including the add action when it is allowed.
+ *
+ * @param bool $expanded False keeps the list out of view and out of tab order.
  */
-function cta_shell_render_outils_submenu(): void
+function cta_shell_render_outils_submenu(bool $expanded = true): void
 {
     if (!function_exists('cta_shell_user_sees_outils') || !cta_shell_user_sees_outils()) {
         return;
@@ -333,7 +474,11 @@ function cta_shell_render_outils_submenu(): void
         return;
     }
 
-    echo '<ul class="app-nav__sub" id="app-nav-outils-enigmes">';
+    echo '<ul class="app-nav__sub" id="app-nav-outils-enigmes"';
+    if (!$expanded) {
+        echo ' hidden';
+    }
+    echo '>';
     if ($canEditHunt) {
         $isCurrentHunt = $huntId === $currentHuntId;
         $huntTitle = get_the_title($huntId);

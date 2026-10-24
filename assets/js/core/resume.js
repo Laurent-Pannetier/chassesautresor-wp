@@ -333,6 +333,7 @@ function mettreAJourLigneResume(ligne, champ, estRempli, type) {
     ligne.closest('.resume-bloc')?.classList.contains('resume-obligatoire') &&
     !(
       (type === 'chasse' && champ === 'chasse_infos_recompense_valeur') ||
+      (type === 'chasse' && champ === 'chasse_bandeau_accueil') ||
       (type === 'enigme' && ['enigme_visuel_legende', 'enigme_visuel_texte'].includes(champ))
     );
   ligne.classList.toggle('champ-attention', estObligatoire && !estRempli);

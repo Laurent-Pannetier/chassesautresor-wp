@@ -22,13 +22,9 @@ $can_reset = $is_admin || (
     && is_user_logged_in()
 );
 $can_seed = function_exists('cat_user_can_seed_statistics') && cat_user_can_seed_statistics($hunt_id);
-$fixture_count = $can_seed && function_exists('cat_count_statistics_fixtures')
-    ? cat_count_statistics_fixtures()
-    : 0;
 $fixture_total = class_exists(ChassesAuTresor\Core\Admin\StatisticsFixtureService::class)
     ? ChassesAuTresor\Core\Admin\StatisticsFixtureService::PLAYER_COUNT
     : 48;
-$hunt_title = $hunt_id > 0 && function_exists('get_the_title') ? (string) get_the_title($hunt_id) : '';
 
 $protection = '';
 if ($is_admin && class_exists(ChassesAuTresor\Core\Messages\AccountToolsRenderer::class)) {
@@ -71,67 +67,13 @@ if ($is_admin && class_exists(ChassesAuTresor\Core\Messages\AccountToolsRenderer
                     <div class="dashboard-card-content">
                         <p>
                             <?php
-                            if ($hunt_title !== '') {
-                                echo esc_html(sprintf(
-                                    /* translators: 1: player count, 2: hunt title. */
-                                    __(
-                                        'Crée %1$d comptes fictifs et remplit les statistiques de « %2$s ».',
-                                        'chassesautresor-com'
-                                    ),
-                                    $fixture_total,
-                                    $hunt_title
-                                ));
-                            } else {
-                                echo esc_html(sprintf(
-                                    /* translators: %d: player count. */
-                                    __(
-                                        'Crée %d comptes fictifs et remplit les statistiques de cette chasse.',
-                                        'chassesautresor-com'
-                                    ),
-                                    $fixture_total
-                                ));
-                            }
-                            ?>
-                        </p>
-                        <p>
-                            <?php esc_html_e(
-                                'Chaque énigme, étape et indice reçoit des joueurs, des soumissions et des dates variées.',
-                                'chassesautresor-com'
-                            ); ?>
-                        </p>
-                        <p>
-                            <?php esc_html_e(
-                                'Huit équipes de quatre joueurs sont créées ; les autres joueurs restent en solo.',
-                                'chassesautresor-com'
-                            ); ?>
-                        </p>
-                        <p>
-                            <?php esc_html_e(
-                                'Les dates couvrent le jour, la semaine, le mois et le total.',
-                                'chassesautresor-com'
-                            ); ?>
-                        </p>
-                        <p>
-                            <?php esc_html_e(
-                                'Ces comptes ne peuvent pas se connecter.',
-                                'chassesautresor-com'
-                            ); ?>
-                            <?php esc_html_e(
-                                'Ils disparaissent quand le mode démo est désactivé.',
-                                'chassesautresor-com'
-                            ); ?>
-                        </p>
-                        <p>
-                            <?php
                             echo esc_html(sprintf(
-                                /* translators: %d: current fixture player count. */
-                                _n(
-                                    '%d joueur de test présent.',
-                                    '%d joueurs de test présents.',
-                                    $fixture_count,
+                                /* translators: %d: player count. */
+                                __(
+                                    'Crée %d comptes fictifs et remplit les statistiques.',
                                     'chassesautresor-com'
                                 ),
-                                $fixture_count
+                                $fixture_total
                             ));
                             ?>
                         </p>
@@ -148,6 +90,10 @@ if ($is_admin && class_exists(ChassesAuTresor\Core\Messages\AccountToolsRenderer
                 <?php echo $protection; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
             <?php endif; ?>
             <?php
+            if ($is_admin && function_exists('cta_shell_render_hunt_sphere_switch')) {
+                // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+                echo cta_shell_render_hunt_sphere_switch();
+            }
             if ($is_admin) {
                 myaccount_render_dashboard_placeholder(
                     __('Points', 'chassesautresor-com'),

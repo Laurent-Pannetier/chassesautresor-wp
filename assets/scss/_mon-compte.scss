@@ -1523,11 +1523,17 @@ body.woocommerce h2 {
 }
 
 .site-protection-card .stats-content,
-.site-protection-card .dashboard-card-content {
+.site-protection-card .dashboard-card-content,
+.hunt-banner-sphere-card .dashboard-card-content {
     display: flex;
     align-items: center;
     gap: 0.75rem;
     flex-wrap: wrap;
+}
+
+.hunt-banner-sphere-card__note {
+    flex-basis: 100%;
+    margin: 0;
 }
 
 .myaccount-riddle-stats-list {

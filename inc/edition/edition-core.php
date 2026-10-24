@@ -107,7 +107,6 @@ function enqueue_core_edit_scripts(array $additional = [])
     $core_scripts = [
         'helpers'          => 'helpers.js',
         'ajax'             => 'ajax.js',
-        'ui'               => 'ui.js',
         'resume'           => 'resume.js',
         'image-utils'      => 'image-utils.js',
         'date-fields'      => 'date-fields.js',
@@ -170,7 +169,7 @@ function enqueue_core_edit_scripts(array $additional = [])
       $versions[$handle] = file_exists($file) ? filemtime($file) : null;
     }
 
-    $deps = ['helpers', 'ajax', 'ui', 'champ-init'];
+    $deps = ['helpers', 'ajax', 'champ-init'];
     if ($uses_i18n($file)) {
       $deps[] = 'wp-i18n';
     }
@@ -427,20 +426,19 @@ add_action('admin_head', 'ajouter_barre_progression_top');
 // ==================================================
 // 🧮 OUTILS DE FORMATAGE GÉNÉRIQUES
 // ==================================================
-// 🔹 injection_classe_edition_active() → Ajoute la classe "edition-active"
+// 🔹 injection_classe_edition_active() → Ajoute la classe "mode-edition" sur /mon-compte
 // 🔹 formater_date() → Formate une date (ou retourne "Non spécifiée")
 // 🔹 convertir_en_datetime() → Convertit une string en DateTime
 // 🔹 convertir_en_timestamp() → Date au format d/m/Y → timestamp
 
 /**
- * Injecte automatiquement la classe CSS "edition-active" dans le <body> si l'utilisateur peut éditer le contenu.
+ * Ajoute la classe CSS "mode-edition" sur le tableau de bord /mon-compte.
  *
- * Le mode d'édition des fiches vit sur la page Outils.
- * Ici, la classe ne sert plus que le tableau de bord /mon-compte.
+ * L'édition des fiches vit sur la page Outils, qui pose ses propres classes.
  *
  * @hook body_class
  * @param array $classes Liste actuelle des classes du <body>
- * @return array Liste modifiée avec ou sans "edition-active"
+ * @return array Liste modifiée
  */
 add_filter( 'body_class', 'injection_classe_edition_active' );
 function injection_classe_edition_active( array $classes ): array

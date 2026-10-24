@@ -55,6 +55,7 @@ if ($huntId <= 0 && $hunts !== []) {
 $teamId = is_array($team) ? (int) ($team['id'] ?? 0) : 0;
 if (
     $huntId > 0
+    && $teamId > 0
     && class_exists(ChassesAuTresor\Core\Teams\TeamPerformanceApplicationService::class)
 ) {
     global $wpdb;
@@ -73,10 +74,13 @@ if (
         ];
     }
     $performance['hunts'] = $teamHunts;
-    $performance['ajax'] = [
-        'url' => function_exists('admin_url') ? admin_url('admin-ajax.php') : '',
-        'nonce' => function_exists('wp_create_nonce') ? wp_create_nonce('cat_team_performance') : '',
-    ];
+    $rankingBase = function_exists('cta_shell_location_url') ? cta_shell_location_url('classement') : '';
+    $performance['ranking_url'] = $rankingBase !== '' && function_exists('add_query_arg')
+        ? (string) add_query_arg(
+            ['chasse' => (string) $huntId, 'vue' => 'equipes'],
+            $rankingBase
+        )
+        : '';
     $view['performance'] = $performance;
 }
 

@@ -231,29 +231,47 @@ tbody tr:nth-child(even) {
   background-color: rgba(0, 0, 0, 0.02);
 }
 
-/* ====== Stat tables ====== */
+/* Tableaux de stats : mêmes jetons, entêtes et séparateurs que .progression-data-table. */
+.stats-table {
+  margin: 0;
+  border: 0;
+  background: transparent;
+  color: var(--shell-text);
+}
+
 .stats-table thead {
-  background-color: rgba(255, 255, 255, 0.06);
-  color: var(--color-text-primary);
+  background: color-mix(in srgb, var(--shell-bg) 42%, var(--shell-surface));
+  color: var(--shell-muted);
 }
 
 .stats-table th,
 .stats-table td {
-  padding: 8px 12px;
-  border: none;
-  /*color: var(--color-text-primary);*/
+  padding: 0.7rem 0.85rem;
+  border: 0;
+  border-bottom: 1px solid var(--shell-border);
+  background: transparent;
+  color: var(--shell-text);
+  text-align: left;
+  vertical-align: middle;
 }
 
-.stats-table th {
-  background-color: rgba(255, 255, 255, 0.08);
+.stats-table thead th {
+  padding-top: 0.48rem;
+  padding-bottom: 0.42rem;
+  color: var(--shell-muted);
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
 }
 
-.stats-table tbody tr:nth-child(odd) {
-  background-color: rgba(255, 255, 255, 0.04);
-}
-
+.stats-table tbody tr:nth-child(odd),
 .stats-table tbody tr:nth-child(even) {
-  background-color: rgba(255, 255, 255, 0.02);
+  background: transparent;
+}
+
+.stats-table tbody tr:last-child > * {
+  border-bottom: 0;
 }
 
 .stats-table-wrapper {
@@ -282,12 +300,6 @@ tbody tr:nth-child(even) {
   font-weight: 600;
 }
 
-.stats-table.compact th,
-.stats-table.compact td {
-  padding: 4px 8px;
-  font-size: 0.85em;
-}
-
 .stats-table th button.sort {
   background: none;
   border: none;
@@ -296,14 +308,45 @@ tbody tr:nth-child(even) {
   display: flex;
   align-items: center;
   gap: 4px;
-  justify-content: flex-end;
+  justify-content: flex-start;
   color: inherit;
   width: 100%;
-  text-align: right;
+  text-align: left;
 }
 
-.stats-table th button.sort i {
-  margin-left: 4px;
+button.participant-hints {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+  cursor: pointer;
+}
+
+.participant-hints-detail td {
+  background: color-mix(in srgb, var(--shell-bg) 55%, var(--shell-surface));
+}
+
+.participant-hints__list {
+  margin: 0.25rem 0;
+  padding: 0;
+  list-style: none;
+}
+
+.participant-hints__list li {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.25rem 1rem;
+  padding: 0.15rem 0;
+}
+
+.participant-hints__list time,
+.participant-hints__empty {
+  color: var(--shell-muted);
 }
 
 /* Indices table */

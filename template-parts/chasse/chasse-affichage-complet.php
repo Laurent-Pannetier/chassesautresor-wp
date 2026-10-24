@@ -199,19 +199,14 @@ if ($edition_active && !$est_complet) {
                 <?php endif; ?>
               </span>
               <?php if ($image_id) : ?>
-                <a
-                  href="<?= esc_url(wp_get_attachment_image_url($image_id, 'full')); ?>"
-                  class="fancybox image"
-                >
-                  <img
-                      class="chasse-image visuel-cpt img-h-max"
-                      data-cpt="chasse"
-                      data-post-id="<?= esc_attr($chasse_id); ?>"
-                      src="<?= esc_url($infos_chasse['image_url']); ?>"
-                      alt="<?= esc_attr($infos_chasse['image_alt']); ?>"
-                      sizes="(max-width: 800px) 100vw, 800px"
-                  />
-                </a>
+                <img
+                    class="chasse-image visuel-cpt img-h-max"
+                    data-cpt="chasse"
+                    data-post-id="<?= esc_attr($chasse_id); ?>"
+                    src="<?= esc_url($infos_chasse['image_url']); ?>"
+                    alt="<?= esc_attr($infos_chasse['image_alt']); ?>"
+                    sizes="(max-width: 800px) 100vw, 800px"
+                />
               <?php endif; ?>
             </div>
           </div>

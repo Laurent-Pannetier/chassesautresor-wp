@@ -36,11 +36,12 @@ function initChampImage(bloc) {
 
     wp.media.view.settings.post.id = postId;
 
+    const accepteVideo = champ === 'chasse_bandeau_accueil';
     const frame = wp.media({
-      title: 'Choisir une image',
+      title: accepteVideo ? 'Choisir une image ou une vidéo' : 'Choisir une image',
       multiple: false,
-      library: { type: 'image' },
-      button: { text: 'Utiliser cette image' }
+      library: { type: accepteVideo ? ['image', 'video'] : 'image' },
+      button: { text: accepteVideo ? 'Utiliser ce fichier' : 'Utiliser cette image' }
     });
 
     bloc.__mediaFrame = frame; // 💾 stocké pour usage unique
@@ -49,10 +50,12 @@ function initChampImage(bloc) {
       const selection = frame.state().get('selection').first();
       const id = selection?.id;
       const fullUrl = selection?.attributes?.url;
+      const mime = selection?.attributes?.mime || '';
       const ficheUrl =
         selection?.attributes?.sizes?.['chasse-fiche']?.url || fullUrl;
       const mediumUrl = selection?.attributes?.sizes?.medium?.url || ficheUrl;
       const thumbUrl = selection?.attributes?.sizes?.thumbnail?.url || mediumUrl;
+      const isVideo = mime.indexOf('video/') === 0 || /\.(mp4|webm|ogg)(\?|$)/i.test(fullUrl || '');
       if (!id || !fullUrl) return;
 
       document
@@ -60,10 +63,27 @@ function initChampImage(bloc) {
         .forEach((el) => {
           el.classList.remove('champ-vide');
           el.classList.add('champ-rempli');
-          const imgEl = el.querySelector('img');
-          if (imgEl) {
-            imgEl.src = thumbUrl;
-            imgEl.srcset = thumbUrl;
+          if (isVideo) {
+            el.querySelectorAll('img').forEach((img) => img.remove());
+            let video = el.querySelector('video');
+            if (!video) {
+              video = document.createElement('video');
+              video.muted = true;
+              video.playsInline = true;
+              video.preload = 'metadata';
+              video.setAttribute('aria-hidden', 'true');
+              const affichage = el.querySelector('.champ-affichage');
+              if (affichage) {
+                affichage.insertBefore(video, affichage.firstChild);
+              }
+            }
+            video.src = fullUrl;
+          } else {
+            const imgEl = el.querySelector('img');
+            if (imgEl) {
+              imgEl.src = thumbUrl;
+              imgEl.srcset = thumbUrl;
+            }
           }
           const hidden = el.querySelector('.champ-input');
           if (hidden) {
@@ -111,8 +131,11 @@ function initChampImage(bloc) {
             if (typeof window.mettreAJourResumeInfos === 'function') {
               window.mettreAJourResumeInfos();
             }
-            if (typeof window.mettreAJourVisuelCPT === 'function') {
-              mettreAJourVisuelCPT(cpt, postId, ficheUrl, fullUrl);
+            if (
+              champ !== 'chasse_bandeau_accueil' &&
+              typeof window.mettreAJourVisuelCPT === 'function'
+            ) {
+              mettreAJourVisuelCPT(cpt, postId, ficheUrl);
             }
           } else {
             if (feedback) {

@@ -931,18 +931,16 @@ msgid "Réponse acceptée"
 msgstr "Answer"
 
 #: inc/enigme/reponses.php:449
-#, fuzzy
-msgid "Réponse refusée"
-msgstr "Access denied"
+msgid "Réponse invalidée"
+msgstr "Answer invalidated"
 
 #: inc/enigme/reponses.php:451
 msgid "Félicitations ! Votre réponse est correcte."
 msgstr ""
 
 #: inc/enigme/reponses.php:452
-#, fuzzy
-msgid "Votre réponse est incorrecte."
-msgstr "Your answer"
+msgid "Votre réponse a été invalidée."
+msgstr "Your answer was invalidated."
 
 #: inc/enigme/reponses.php:454
 #, fuzzy
@@ -3362,3 +3360,7 @@ msgstr "Log in to access the riddles of %s."
 #: src/Site/PlayerEnigmasAccessHandler.php
 msgid "Connectez-vous pour accéder aux énigmes."
 msgstr "Log in to access the riddles."
+
+#: template-parts/shell/sidebar.php
+msgid "Chasse et énigmes"
+msgstr "Hunt and riddles"

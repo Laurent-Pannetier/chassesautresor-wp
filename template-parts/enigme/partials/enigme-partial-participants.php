@@ -45,7 +45,7 @@ if (empty($participants)) :
     endif;
 else : ?>
 <h3><?= esc_html__('Liste participants', 'chassesautresor-com'); ?></h3>
-<table class="stats-table compact">
+<table class="stats-table">
   <thead>
       <tr>
         <th scope="col"><?= esc_html__('Nom', 'chassesautresor-com'); ?></th>
@@ -71,17 +71,38 @@ else : ?>
           </button>
         </th>
         <?php endif; ?>
+        <th scope="col"><?= esc_html__('Indices', 'chassesautresor-com'); ?></th>
         <th scope="col"><?= esc_html__('Trouvé', 'chassesautresor-com'); ?></th>
       </tr>
   </thead>
   <tbody>
     <?php foreach ($participants as $p) : ?>
+    <?php
+    $hintCount = max(0, (int) ($p['nb_indices'] ?? 0));
+    $hintLabel = sprintf(
+        _n('%d indice débloqué', '%d indices débloqués', $hintCount, 'chassesautresor-com'),
+        $hintCount
+    );
+    ?>
     <tr>
       <td><?= esc_html($p['username']); ?></td>
       <td><?= esc_html(mysql2date('d/m/Y H:i', $p['date_engagement'])); ?></td>
       <?php if ($mode_validation !== 'aucune') : ?>
       <td><?= esc_html($p['nb_tentatives']); ?></td>
       <?php endif; ?>
+      <td class="participant-hints-count">
+        <?php if ($hintCount > 0) : ?>
+          <button
+            type="button"
+            class="participant-hints"
+            data-user-id="<?= esc_attr((string) (int) ($p['user_id'] ?? 0)); ?>"
+            aria-expanded="false"
+            aria-label="<?= esc_attr($hintLabel); ?>"
+          ><?= esc_html((string) $hintCount); ?></button>
+        <?php else : ?>
+          <span aria-label="<?= esc_attr__('Aucun indice', 'chassesautresor-com'); ?>">—</span>
+        <?php endif; ?>
+      </td>
       <td>
         <?php if ($p['trouve']) : ?>
           <i class="fa-solid fa-check fa-xl"></i>

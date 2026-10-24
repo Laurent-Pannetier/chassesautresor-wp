@@ -2,8 +2,8 @@
 
 .sommaire-bd {
   max-width: 42rem;
-  margin: var(--space-md) auto var(--space-lg);
-  padding: var(--space-lg) var(--space-md) var(--space-sm);
+  margin: 0 auto var(--space-lg);
+  padding: var(--space-md) var(--space-md) var(--space-sm);
   border: 1px solid rgba(28, 20, 12, 0.16);
   border-radius: 2px;
   background:
@@ -18,7 +18,7 @@
 .sommaire-bd .sommaire-bd__kicker {
   margin: 0 0 var(--space-md);
   color: #5c4632;
-  font-family: var(--font-main);
+  font-family: "Skranji", Palatino, "Palatino Linotype", serif;
   font-size: 0.78rem;
   font-weight: 700;
   letter-spacing: 0.22em;
@@ -155,7 +155,7 @@
 }
 
 .sommaire-bd__precision {
-  margin: 0 0 0.45rem 4.9rem;
+  margin: 0 0 0.45rem 5.7rem;
   color: #5c4632;
   font-size: 0.82rem;
   line-height: 1.35;
@@ -197,7 +197,7 @@
   display: flex;
   align-items: center;
   gap: 0.7rem;
-  min-height: 4.25rem;
+  min-height: 5rem;
   margin: 0 -0.25rem;
   padding: 0.6rem 0.25rem;
   color: inherit;
@@ -219,8 +219,8 @@
 .sommaire-bd__vignette {
   display: block;
   flex: 0 0 auto;
-  width: 4.25rem;
-  height: 3.2rem;
+  width: 5rem;
+  height: 3.75rem;
   padding: 2px;
   overflow: hidden;
   border: 1px solid #1a140f;
@@ -251,9 +251,10 @@
   flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
+  color: #3a2a1c;
   font-family: var(--font-main);
   font-size: 1.02rem;
-  font-weight: 600;
+  font-weight: 500;
   line-height: 1.3;
   letter-spacing: 0.01em;
 }
@@ -314,18 +315,22 @@
 
 @media (--bp-tablet) {
   .sommaire-bd {
-    padding: var(--space-xl) var(--space-xl) var(--space-md);
+    padding: var(--space-lg) var(--space-xl) var(--space-md);
+  }
+
+  .sommaire-bd__precision {
+    margin-left: 7.35rem;
   }
 
   .sommaire-bd__lien {
     gap: 0.9rem;
-    min-height: 4.75rem;
+    min-height: 6rem;
     padding: 0.7rem 0.35rem;
   }
 
   .sommaire-bd__vignette {
-    width: 5.25rem;
-    height: 3.9rem;
+    width: 6.25rem;
+    height: 4.6rem;
   }
 
   .sommaire-bd__titre {

@@ -35,6 +35,9 @@ add_action( 'after_setup_theme', 'cta_load_textdomain' );
 function cta_register_image_sizes() {
     // Allow taller hunt visuals so CSS can scale up to 800px height
     add_image_size( 'chasse-fiche', 1024, 800, false );
+    // Hero planche steps between WordPress "large" (1024) and the original.
+    add_image_size( 'enigme-1280', 1280, 1280, false );
+    add_image_size( 'enigme-1600', 1600, 1600, false );
 }
 add_action( 'after_setup_theme', 'cta_register_image_sizes' );
 
@@ -305,6 +308,13 @@ add_action('wp_enqueue_scripts', function () {
         null
     );
 
+    wp_enqueue_style(
+        'chassesautresor-skranji',
+        'https://fonts.googleapis.com/css2?family=Skranji:wght@700&display=swap',
+        [],
+        null
+    );
+
     $script_dir = $theme_uri . '/assets/js/';
 
     if (is_user_logged_in() && function_exists('cat_notification_unread_count')) {
@@ -506,17 +516,6 @@ add_action('wp_enqueue_scripts', function () {
 
     }
 });
-
-add_action('wp_enqueue_scripts', function () {
-    if (!is_singular('chasse')) {
-        wp_dequeue_script('jquery-fancybox');
-        wp_dequeue_script('jquery-metadata');
-        wp_dequeue_script('jquery-easing');
-        wp_dequeue_script('jquery-mousewheel');
-        wp_dequeue_style('fancybox');
-        wp_dequeue_style('fancybox-ie');
-    }
-}, 20);
 
 /**
  * Disables the language dropdown on the login page.

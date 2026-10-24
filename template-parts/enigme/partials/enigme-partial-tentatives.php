@@ -15,6 +15,7 @@ $page = $args['page'] ?? $page ?? 1;
 $par_page = $args['par_page'] ?? $par_page ?? 20;
 $total = $args['total'] ?? $total ?? 0;
 $pages = $args['pages'] ?? $pages ?? (int) ceil($total / $par_page);
+$focus_uid = isset($args['focus_uid']) ? (string) $args['focus_uid'] : '';
 ?>
 <?php if (empty($tentatives)) : ?>
 <p><?= esc_html__('Aucune tentative de soumission.', 'chassesautresor-com'); ?></p>
@@ -33,14 +34,20 @@ $pages = $args['pages'] ?? $pages ?? (int) ceil($total / $par_page);
     $user       = get_userdata($tent->user_id);
     $login      = ($user && isset($user->user_login)) ? $user->user_login : esc_html__('Inconnu', 'chassesautresor-com');
     $date       = mysql2date('d/m/y H:i', $tent->date_tentative);
+    $uid        = isset($tent->tentative_uid) ? (string) $tent->tentative_uid : '';
     $is_pending = ($tent->resultat === 'attente' && (int) $tent->traitee === 0);
-    $pending    = $is_pending ? ' tentative-pending' : '';
+    $row_classes = [];
+    if ($is_pending) {
+        $row_classes[] = 'tentative-pending';
+    }
+    if ($focus_uid !== '' && $uid === $focus_uid) {
+        $row_classes[] = 'tentative-focus';
+    }
   ?>
-    <tr class="<?= $pending ?>">
+    <tr class="<?= esc_attr(implode(' ', $row_classes)); ?>">
       <td><?= esc_html($date); ?></td>
       <td><?= esc_html($login); ?></td>
       <?php
-      $uid     = isset($tent->tentative_uid) ? (string) $tent->tentative_uid : '';
       $options = $uid !== '' ? cta_prepare_masked_proposition_options($uid) : [];
       echo cta_render_proposition_cell($uid !== '' ? '' : ($tent->reponse_saisie ?? ''), false, 39, $options);
       ?>

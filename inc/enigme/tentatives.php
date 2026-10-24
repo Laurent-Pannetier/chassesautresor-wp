@@ -148,6 +148,11 @@ function recuperer_tentatives_enigme(int $enigme_id, int $limit = 5, int $offset
     return cat_get_riddle_attempt_service()->findForRiddle($enigme_id, $limit, $offset);
 }
 
+function page_tentatives_pour_uid(int $enigme_id, string $uid, int $per_page): int
+{
+    return cat_get_riddle_attempt_service()->pageForAttempt($enigme_id, $uid, $per_page);
+}
+
 /**
  * Compte le nombre total de tentatives pour une énigme.
  *

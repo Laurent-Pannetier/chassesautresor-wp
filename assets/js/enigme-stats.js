@@ -1,9 +1,10 @@
 function initEnigmeStats() {
   const container = document.getElementById('enigme-stats');
   const select = document.getElementById('enigme-periode');
-  if (!container || !select) {
+  if (!container || !select || container.dataset.statsBound === '1') {
     return;
   }
+  container.dataset.statsBound = '1';
 
   const cards = {
     participants: container.querySelector('[data-stat="participants"] .stat-value'),
@@ -76,9 +77,62 @@ function initEnigmeStats() {
         });
     }
 
+    function hintTexts() {
+      return (typeof EnigmeStats !== 'undefined' && EnigmeStats.texts) ? EnigmeStats.texts : {};
+    }
+
+    function toggleHints(button) {
+      const row = button.closest('tr');
+      if (!row) return;
+      const existing = row.nextElementSibling;
+      if (existing && existing.classList.contains('participant-hints-detail')) {
+        const open = existing.hidden;
+        existing.hidden = !open;
+        button.setAttribute('aria-expanded', open ? 'true' : 'false');
+        return;
+      }
+
+      const detail = document.createElement('tr');
+      detail.className = 'participant-hints-detail';
+      const cell = document.createElement('td');
+      cell.colSpan = row.cells.length;
+      cell.textContent = '…';
+      detail.appendChild(cell);
+      row.after(detail);
+      button.setAttribute('aria-expanded', 'true');
+
+      const texts = hintTexts();
+      fetch(EnigmeStats.ajaxUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          action: 'enigme_indices_participant',
+          enigme_id: postId,
+          user_id: button.dataset.userId || '',
+          nonce: EnigmeStats.nonce,
+        }),
+      })
+        .then((r) => r.json())
+        .then((res) => {
+          if (!res.success) {
+            cell.textContent = texts.error || 'Impossible de charger ces indices.';
+            return;
+          }
+          cell.innerHTML = res.data.html;
+        })
+        .catch(() => {
+          cell.textContent = texts.error || 'Impossible de charger ces indices.';
+        });
+    }
+
     participantsWrapper.addEventListener('click', (e) => {
       const btn = e.target.closest('button');
       if (!btn) return;
+      if (btn.classList.contains('participant-hints')) {
+        e.preventDefault();
+        toggleHints(btn);
+        return;
+      }
       if (btn.classList.contains('pager-first')) {
         e.preventDefault();
         charger(1);
@@ -114,5 +168,8 @@ function initEnigmeStats() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', initEnigmeStats);
-initEnigmeStats();
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initEnigmeStats);
+} else {
+  initEnigmeStats();
+}

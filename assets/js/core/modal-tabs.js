@@ -35,7 +35,7 @@
   document.addEventListener('DOMContentLoaded', () => {
     const shell = document.querySelector('.shell-edition');
     document.querySelectorAll('.edition-tabs').forEach((tabs) => {
-      const container = tabs.closest('.edition-panel-modal') || tabs.closest('.edition-panel');
+      const container = tabs.closest('.edition-panel');
       if (!container) return;
       const buttons = Array.from(tabs.querySelectorAll('.edition-tab'));
       buttons.forEach((button) => {

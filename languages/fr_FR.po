@@ -935,18 +935,16 @@ msgid "Réponse acceptée"
 msgstr "Réponse"
 
 #: inc/enigme/reponses.php:449
-#, fuzzy
-msgid "Réponse refusée"
-msgstr "Accès refusé"
+msgid "Réponse invalidée"
+msgstr "Réponse invalidée"
 
 #: inc/enigme/reponses.php:451
 msgid "Félicitations ! Votre réponse est correcte."
 msgstr ""
 
 #: inc/enigme/reponses.php:452
-#, fuzzy
-msgid "Votre réponse est incorrecte."
-msgstr "Votre réponse"
+msgid "Votre réponse a été invalidée."
+msgstr "Votre réponse a été invalidée."
 
 #: inc/enigme/reponses.php:454
 #, fuzzy
@@ -3324,3 +3322,7 @@ msgstr "Connectez-vous pour accéder aux énigmes de %s."
 #: src/Site/PlayerEnigmasAccessHandler.php
 msgid "Connectez-vous pour accéder aux énigmes."
 msgstr "Connectez-vous pour accéder aux énigmes."
+
+#: template-parts/shell/sidebar.php
+msgid "Chasse et énigmes"
+msgstr "Chasse et énigmes"

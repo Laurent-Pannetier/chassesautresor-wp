@@ -28,6 +28,34 @@ $nombre_enigmes = count($enigme_ids);
 
 $image_id   = $infos_chasse['image_id'] ?? null;
 $image_url  = $image_id ? wp_get_attachment_image_src($image_id, 'thumbnail')[0] : null;
+$banner_raw = function_exists('get_field') ? get_field('chasse_bandeau_accueil', $chasse_id) : null;
+$banner_id  = 0;
+if (is_array($banner_raw)) {
+    $banner_id = (int) ($banner_raw['ID'] ?? $banner_raw['id'] ?? 0);
+} elseif (is_numeric($banner_raw)) {
+    $banner_id = (int) $banner_raw;
+}
+$banner_mime = '';
+if (is_array($banner_raw) && !empty($banner_raw['mime_type']) && is_string($banner_raw['mime_type'])) {
+    $banner_mime = $banner_raw['mime_type'];
+}
+if ($banner_mime === '' && $banner_id > 0 && function_exists('get_post_mime_type')) {
+    $detected_mime = get_post_mime_type($banner_id);
+    $banner_mime = is_string($detected_mime) ? $detected_mime : '';
+}
+$banner_is_video = strncmp($banner_mime, 'video/', 6) === 0;
+$banner_url = '';
+if ($banner_is_video) {
+    if (is_array($banner_raw) && !empty($banner_raw['url']) && is_string($banner_raw['url'])) {
+        $banner_url = $banner_raw['url'];
+    } elseif ($banner_id > 0 && function_exists('wp_get_attachment_url')) {
+        $resolved_banner = wp_get_attachment_url($banner_id);
+        $banner_url = is_string($resolved_banner) ? $resolved_banner : '';
+    }
+} elseif ($banner_id > 0) {
+    $banner_src = wp_get_attachment_image_src($banner_id, 'medium');
+    $banner_url = is_array($banner_src) ? (string) $banner_src[0] : '';
+}
 $description = $infos_chasse['description'];
 $titre = get_the_title($chasse_id);
 $liens = $infos_chasse['liens'];
@@ -94,13 +122,19 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
             </h1>
         </div>
         <div class="edition-tabs">
-          <button class="edition-tab active" data-target="chasse-tab-param"><?= esc_html__('Paramètres', 'chassesautresor-com'); ?></button>
-          <button class="edition-tab" data-target="chasse-tab-stats"><?= esc_html__('Statistiques', 'chassesautresor-com'); ?></button>
-          <button class="edition-tab" data-target="chasse-tab-animation"><?= esc_html__('Animation', 'chassesautresor-com'); ?></button>
+          <button <?= cta_shell_edition_tab_button_attr('chasse', 'chasse-tab-param'); ?>>
+            <?= esc_html__('Paramètres', 'chassesautresor-com'); ?>
+          </button>
+          <button <?= cta_shell_edition_tab_button_attr('chasse', 'chasse-tab-stats'); ?>>
+            <?= esc_html__('Statistiques', 'chassesautresor-com'); ?>
+          </button>
+          <button <?= cta_shell_edition_tab_button_attr('chasse', 'chasse-tab-animation'); ?>>
+            <?= esc_html__('Animation', 'chassesautresor-com'); ?>
+          </button>
         </div>
     </div>
 
-    <div id="chasse-tab-param" class="edition-tab-content active">
+    <div <?= cta_shell_edition_tab_panel_attr('chasse', 'chasse-tab-param'); ?>>
       <i class="fa-solid fa-sliders tab-watermark" aria-hidden="true"></i>
       <div class="edition-panel-header">
         <h2><i class="fa-solid fa-sliders"></i> <?= esc_html__('Paramètres', 'chassesautresor-com'); ?></h2>
@@ -215,6 +249,111 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
                                 <?php endif; ?>
                             </div>
                             <input type="hidden" class="champ-input" value="<?= esc_attr($image_id ?? '') ?>">
+                            <div class="champ-feedback"></div>
+                            <?php
+                        },
+                    ]
+                );
+                ?>
+
+                <?php
+                get_template_part(
+                    'template-parts/common/edition-row',
+                    null,
+                    [
+                        'class'      => 'champ-chasse champ-img champ-img--bandeau '
+                            . ($banner_id > 0 ? 'champ-rempli' : 'champ-vide')
+                            . ($peut_editer ? '' : ' champ-desactive'),
+                        'attributes' => [
+                            'data-champ'   => 'chasse_bandeau_accueil',
+                            'data-cpt'     => 'chasse',
+                            'data-post-id' => $chasse_id,
+                        ],
+                        'label' => function () {
+                            ?>
+                            <label>
+                                <?= esc_html__('Bandeau d’accueil', 'chassesautresor-com'); ?>
+                                <span class="edition-row-hint">
+                                    <?= esc_html__(
+                                        'Image fixe ou vidéo MP4. Vide : l’image de la chasse est reprise.',
+                                        'chassesautresor-com'
+                                    ); ?>
+                                </span>
+                            </label>
+                            <?php
+                        },
+                        'content' => function () use ($banner_url, $banner_id, $banner_is_video, $peut_editer, $chasse_id) {
+                            $transparent = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
+                            ?>
+                            <div class="champ-affichage">
+                                <?php if ($peut_editer) : ?>
+                                    <?php if ($banner_is_video && $banner_url !== '') : ?>
+                                        <video
+                                            class="champ-bandeau-preview"
+                                            src="<?= esc_url($banner_url); ?>"
+                                            muted
+                                            playsinline
+                                            preload="metadata"
+                                            aria-hidden="true"
+                                        ></video>
+                                        <button type="button"
+                                            class="champ-modifier"
+                                            data-cpt="chasse"
+                                            data-post-id="<?= esc_attr($chasse_id); ?>"
+                                            aria-label="<?= esc_attr__('Modifier le bandeau', 'chassesautresor-com'); ?>">
+                                            <?= esc_html__('modifier', 'chassesautresor-com'); ?>
+                                        </button>
+                                    <?php elseif ($banner_url !== '') : ?>
+                                        <img
+                                            src="<?= esc_url($banner_url); ?>"
+                                            alt="<?= esc_attr__('Bandeau d’accueil', 'chassesautresor-com'); ?>"
+                                        />
+                                        <button type="button"
+                                            class="champ-modifier"
+                                            data-cpt="chasse"
+                                            data-post-id="<?= esc_attr($chasse_id); ?>"
+                                            aria-label="<?= esc_attr__('Modifier le bandeau', 'chassesautresor-com'); ?>">
+                                            <?= esc_html__('modifier', 'chassesautresor-com'); ?>
+                                        </button>
+                                    <?php else : ?>
+                                        <button type="button"
+                                            class="champ-modifier"
+                                            data-cpt="chasse"
+                                            data-post-id="<?= esc_attr($chasse_id); ?>"
+                                            aria-label="<?= esc_attr__('Ajouter un bandeau', 'chassesautresor-com'); ?>">
+                                            <img
+                                                src="<?= esc_url($transparent); ?>"
+                                                alt="<?= esc_attr__('Bandeau d’accueil', 'chassesautresor-com'); ?>"
+                                            />
+                                            <span class="champ-ajout-image">
+                                                <?= esc_html__('ajouter un bandeau', 'chassesautresor-com'); ?>
+                                            </span>
+                                        </button>
+                                    <?php endif; ?>
+                                <?php else : ?>
+                                    <?php if ($banner_is_video && $banner_url !== '') : ?>
+                                        <video
+                                            class="champ-bandeau-preview"
+                                            src="<?= esc_url($banner_url); ?>"
+                                            muted
+                                            playsinline
+                                            preload="metadata"
+                                            aria-hidden="true"
+                                        ></video>
+                                    <?php elseif ($banner_url !== '') : ?>
+                                        <img
+                                            src="<?= esc_url($banner_url); ?>"
+                                            alt="<?= esc_attr__('Bandeau d’accueil', 'chassesautresor-com'); ?>"
+                                        />
+                                    <?php else : ?>
+                                        <span class="champ-ajout-image">
+                                            <?= esc_html__('ajouter un bandeau', 'chassesautresor-com'); ?>
+                                        </span>
+                                    <?php endif; ?>
+                                <?php endif; ?>
+                            </div>
+                            <input type="hidden" class="champ-input"
+                                value="<?= esc_attr($banner_id > 0 ? (string) $banner_id : ''); ?>">
                             <div class="champ-feedback"></div>
                             <?php
                         },
@@ -787,7 +926,7 @@ $isTitreParDefaut = strtolower(trim($titre)) === strtolower($champTitreParDefaut
     </div> <!-- .edition-panel-body -->
     </div> <!-- #chasse-tab-param -->
 
-    <div id="chasse-tab-stats" class="edition-tab-content" style="display:none;">
+    <div <?= cta_shell_edition_tab_panel_attr('chasse', 'chasse-tab-stats'); ?>>
       <i class="fa-solid fa-chart-column tab-watermark" aria-hidden="true"></i>
       <div class="edition-panel-header">
         <h2><i class="fa-solid fa-chart-column"></i> <?= esc_html__('Statistiques', 'chassesautresor-com'); ?></h2>

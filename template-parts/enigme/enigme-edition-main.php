@@ -82,14 +82,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['uid'], $_POST['action
           </h1>
         </div>
       <div class="edition-tabs">
-        <button class="edition-tab active" data-target="enigme-tab-param"><?= esc_html__('Paramètres', 'chassesautresor-com'); ?></button>
-        <button class="edition-tab" data-target="enigme-tab-stats"><?= esc_html__('Statistiques', 'chassesautresor-com'); ?></button>
-        <button class="edition-tab" data-target="enigme-tab-animation"><?= esc_html__('Animation', 'chassesautresor-com'); ?></button>
-        <button class="edition-tab" data-target="enigme-tab-soumission"<?= $mode_validation === 'aucune' ? ' style="display:none;"' : ''; ?>><?= esc_html__('Tentatives', 'chassesautresor-com'); ?></button>
+        <button <?= cta_shell_edition_tab_button_attr('enigme', 'enigme-tab-param'); ?>>
+          <?= esc_html__('Paramètres', 'chassesautresor-com'); ?>
+        </button>
+        <button <?= cta_shell_edition_tab_button_attr('enigme', 'enigme-tab-stats'); ?>>
+          <?= esc_html__('Statistiques', 'chassesautresor-com'); ?>
+        </button>
+        <button <?= cta_shell_edition_tab_button_attr('enigme', 'enigme-tab-animation'); ?>>
+          <?= esc_html__('Animation', 'chassesautresor-com'); ?>
+        </button>
+        <button
+          <?= cta_shell_edition_tab_button_attr('enigme', 'enigme-tab-soumission'); ?>
+          <?= $mode_validation === 'aucune' ? 'style="display:none;"' : ''; ?>
+        >
+          <?= esc_html__('Tentatives', 'chassesautresor-com'); ?>
+        </button>
       </div>
     </div>
 
-<div id="enigme-tab-param" class="edition-tab-content active">
+<div <?= cta_shell_edition_tab_panel_attr('enigme', 'enigme-tab-param'); ?>>
       <i class="fa-solid fa-sliders tab-watermark" aria-hidden="true"></i>
       <div class="edition-panel-header">
         <h2><i class="fa-solid fa-sliders"></i> <?= esc_html__('Paramètres', 'chassesautresor-com'); ?></h2>
@@ -826,7 +837,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['uid'], $_POST['action
       </div> <!-- .edition-panel-body -->
     </div> <!-- #enigme-tab-param -->
 
-    <div id="enigme-tab-stats" class="edition-tab-content" style="display:none;">
+    <div <?= cta_shell_edition_tab_panel_attr('enigme', 'enigme-tab-stats'); ?>>
       <i class="fa-solid fa-chart-column tab-watermark" aria-hidden="true"></i>
       <div class="edition-panel-header">
         <h2><i class="fa-solid fa-chart-column"></i> <?= esc_html__('Statistiques', 'chassesautresor-com'); ?></h2>
@@ -964,7 +975,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['uid'], $_POST['action
       </div>
     </div>
 
-<div id="enigme-tab-soumission" class="edition-tab-content" style="display:none;">
+<div <?= cta_shell_edition_tab_panel_attr('enigme', 'enigme-tab-soumission'); ?>>
   <i class="fa-solid fa-paper-plane tab-watermark" aria-hidden="true"></i>
   <div class="edition-panel-header">
       <h2><i class="fa-solid fa-paper-plane"></i> <?= esc_html__('Tentatives', 'chassesautresor-com'); ?> <span class="total-tentatives">(<?= intval(compter_tentatives_enigme($enigme_id)); ?>)</span></h2>
@@ -974,20 +985,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['uid'], $_POST['action
     require_once get_stylesheet_directory() . '/inc/enigme/tentatives.php';
   }
 
-  $page_tentatives = max(1, intval($_GET['page_tentatives'] ?? 1));
   $par_page = 20;
+  $focus_uid = isset($_GET['uid']) ? sanitize_text_field(wp_unslash((string) $_GET['uid'])) : '';
+  $jumpToAttempt = $focus_uid !== ''
+      && !isset($_GET['page_tentatives'])
+      && function_exists('page_tentatives_pour_uid');
+  if ($jumpToAttempt) {
+      $page_tentatives = page_tentatives_pour_uid($enigme_id, $focus_uid, $par_page);
+  } else {
+      $page_tentatives = max(1, intval($_GET['page_tentatives'] ?? 1));
+  }
   $offset = ($page_tentatives - 1) * $par_page;
   $tentatives = recuperer_tentatives_enigme($enigme_id, $par_page, $offset);
   $total_tentatives = compter_tentatives_enigme($enigme_id);
   $pages_tentatives = (int) ceil($total_tentatives / $par_page);
   ?>
-  <div class="liste-tentatives" data-page="<?= esc_attr($page_tentatives); ?>" data-total="<?= esc_attr($total_tentatives); ?>" data-pages="<?= esc_attr($pages_tentatives); ?>">
+  <div
+    class="liste-tentatives"
+    data-page="<?= esc_attr($page_tentatives); ?>"
+    data-total="<?= esc_attr($total_tentatives); ?>"
+    data-pages="<?= esc_attr($pages_tentatives); ?>"
+    data-focus-uid="<?= esc_attr($focus_uid); ?>"
+  >
     <?php get_template_part('template-parts/enigme/partials/enigme-partial-tentatives', null, [
       'tentatives' => $tentatives,
       'page'       => $page_tentatives,
       'par_page'   => $par_page,
       'total'      => $total_tentatives,
       'pages'      => $pages_tentatives,
+      'focus_uid'  => $focus_uid,
     ]); ?>
   </div>
 </div>

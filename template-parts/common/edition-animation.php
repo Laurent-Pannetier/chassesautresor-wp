@@ -69,7 +69,7 @@ if ($objet_type === 'chasse') {
 }
 
 ?>
-<div id="<?= esc_attr($objet_type); ?>-tab-animation" class="edition-tab-content" style="display:none;">
+<div <?= cta_shell_edition_tab_panel_attr((string) $objet_type, $objet_type . '-tab-animation'); ?>>
   <i class="fa-solid fa-bullhorn tab-watermark" aria-hidden="true"></i>
   <div class="edition-panel-header">
     <h2>

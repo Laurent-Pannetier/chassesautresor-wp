@@ -55,13 +55,76 @@ $render_link = static function (array $item): void {
 <aside id="app-sidebar" class="app-sidebar" aria-label="<?php esc_attr_e('Navigation', 'chassesautresor-com'); ?>">
     <nav class="app-nav" aria-label="<?php esc_attr_e('Navigation principale', 'chassesautresor-com'); ?>">
         <?php foreach ($primary as $item) : ?>
-            <?php $render_link($item); ?>
-            <?php if (($item['key'] ?? '') === 'outils' && (!empty($item['active']) || !empty($item['section']))) : ?>
+            <?php
+            $submenu = '';
+            $outils_expanded = false;
+            if (($item['key'] ?? '') === 'outils' && function_exists('cta_shell_render_outils_submenu')) {
+                $outils_expanded = !empty($item['active']) || !empty($item['section']);
+                ob_start();
+                cta_shell_render_outils_submenu($outils_expanded);
+                $submenu = trim((string) ob_get_clean());
+            }
+            ?>
+            <?php if ($submenu !== '') : ?>
                 <?php
-                if (function_exists('cta_shell_render_outils_submenu')) {
-                    cta_shell_render_outils_submenu();
+                $branch_class = 'app-nav__branch';
+                if (!empty($item['active'])) {
+                    $branch_class .= ' is-active';
+                }
+                if (!empty($item['section'])) {
+                    $branch_class .= ' is-section';
                 }
                 ?>
+                <div class="<?php echo esc_attr($branch_class); ?>">
+                    <?php $render_link($item); ?>
+                    <button
+                        type="button"
+                        class="app-nav__disclosure"
+                        data-app-nav-disclosure
+                        data-outils-context="<?php echo $outils_expanded ? '1' : '0'; ?>"
+                        aria-expanded="<?php echo $outils_expanded ? 'true' : 'false'; ?>"
+                        aria-controls="app-nav-outils-enigmes"
+                        aria-label="<?php esc_attr_e('Chasse et énigmes', 'chassesautresor-com'); ?>"
+                    >
+                        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                            <path
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2.4"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="M9 6l6 6-6 6"
+                            />
+                        </svg>
+                    </button>
+                </div>
+                <?php
+                // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+                echo $submenu;
+                ?>
+                <?php if (!$outils_expanded) : ?>
+                    <script>
+                        (function () {
+                            try {
+                                if (localStorage.getItem('cta_outils_submenu') !== 'open') {
+                                    return;
+                                }
+                                var list = document.getElementById('app-nav-outils-enigmes');
+                                var button = document.querySelector('[data-app-nav-disclosure]');
+                                if (list) {
+                                    list.removeAttribute('hidden');
+                                }
+                                if (button) {
+                                    button.setAttribute('aria-expanded', 'true');
+                                }
+                            } catch (error) {
+                                return;
+                            }
+                        })();
+                    </script>
+                <?php endif; ?>
+            <?php else : ?>
+                <?php $render_link($item); ?>
             <?php endif; ?>
         <?php endforeach; ?>
     </nav>

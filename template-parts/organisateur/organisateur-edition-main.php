@@ -74,14 +74,22 @@ $is_complete = (
         </h1>
       </div>
       <div class="edition-tabs">
-        <button class="edition-tab active" data-target="organisateur-tab-param"><?= esc_html__('Paramètres', 'chassesautresor-com'); ?></button>
-        <button class="edition-tab" data-target="organisateur-tab-stats"><?= esc_html__('Statistiques', 'chassesautresor-com'); ?></button>
-        <button class="edition-tab" data-target="organisateur-tab-animation"><?= esc_html__('Animation', 'chassesautresor-com'); ?></button>
-        <button class="edition-tab" data-target="organisateur-tab-revenus"><?= esc_html__('Points', 'chassesautresor-com'); ?></button>
+        <button <?= cta_shell_edition_tab_button_attr('organisateur', 'organisateur-tab-param'); ?>>
+          <?= esc_html__('Paramètres', 'chassesautresor-com'); ?>
+        </button>
+        <button <?= cta_shell_edition_tab_button_attr('organisateur', 'organisateur-tab-stats'); ?>>
+          <?= esc_html__('Statistiques', 'chassesautresor-com'); ?>
+        </button>
+        <button <?= cta_shell_edition_tab_button_attr('organisateur', 'organisateur-tab-animation'); ?>>
+          <?= esc_html__('Animation', 'chassesautresor-com'); ?>
+        </button>
+        <button <?= cta_shell_edition_tab_button_attr('organisateur', 'organisateur-tab-revenus'); ?>>
+          <?= esc_html__('Points', 'chassesautresor-com'); ?>
+        </button>
       </div>
     </div>
 
-    <div id="organisateur-tab-param" class="edition-tab-content active">
+    <div <?= cta_shell_edition_tab_panel_attr('organisateur', 'organisateur-tab-param'); ?>>
       <i class="fa-solid fa-sliders tab-watermark" aria-hidden="true"></i>
       <div class="edition-panel-header">
         <h2><i class="fa-solid fa-sliders"></i> <?= esc_html__('Paramètres', 'chassesautresor-com'); ?></h2>
@@ -373,7 +381,7 @@ $is_complete = (
       </div> <!-- .edition-panel-body -->
     </div> <!-- #organisateur-tab-param -->
 
-    <div id="organisateur-tab-stats" class="edition-tab-content" style="display:none;">
+    <div <?= cta_shell_edition_tab_panel_attr('organisateur', 'organisateur-tab-stats'); ?>>
       <i class="fa-solid fa-chart-column tab-watermark" aria-hidden="true"></i>
       <div class="edition-panel-header">
         <h2><i class="fa-solid fa-chart-column"></i> <?= esc_html__('Statistiques', 'chassesautresor-com'); ?></h2>
@@ -385,7 +393,7 @@ $is_complete = (
       ); ?>
     </div>
 
-    <div id="organisateur-tab-revenus" class="edition-tab-content" style="display:none;">
+    <div <?= cta_shell_edition_tab_panel_attr('organisateur', 'organisateur-tab-revenus'); ?>>
       <i class="fa-solid fa-coins tab-watermark" aria-hidden="true"></i>
       <div class="edition-panel-header">
         <h2><i class="fa-solid fa-coins"></i> <?= esc_html__('Points', 'chassesautresor-com'); ?></h2>

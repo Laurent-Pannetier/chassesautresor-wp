@@ -1,6 +1,6 @@
 <?php
 /**
- * Classement page: hunt ranking, then one ranking per riddle.
+ * Classement page: player ranking, or the team ranking.
  *
  * @package chassesautresor
  */

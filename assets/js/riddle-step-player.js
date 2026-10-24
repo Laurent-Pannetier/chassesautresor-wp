@@ -134,7 +134,12 @@ const syncStepPageToGallery = article => {
     previewUrl: article.dataset.stepPagePreview,
     fullUrl: article.dataset.stepPageFull,
     thumbUrl: article.dataset.stepPageThumb || article.dataset.stepPagePreview,
-    alt: article.dataset.stepPageAlt || ''
+    alt: article.dataset.stepPageAlt || '',
+    srcset: article.dataset.stepPageSrcset || '',
+    webpSrcset: article.dataset.stepPageSrcsetWebp || '',
+    sizes: article.dataset.stepPageSizes || '',
+    width: article.dataset.stepPageWidth || '',
+    height: article.dataset.stepPageHeight || ''
   });
 };
 

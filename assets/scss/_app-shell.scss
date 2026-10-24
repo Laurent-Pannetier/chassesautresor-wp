@@ -290,7 +290,10 @@ html[data-theme="day"] .app-topbar__hunt {
 .app-sidebar .screen-reader-text,
 .hunt-banner .screen-reader-text,
 .team-stats .screen-reader-text,
-.app-placeholder .screen-reader-text {
+.app-placeholder .screen-reader-text,
+.app-progression .screen-reader-text,
+.app-equipe .screen-reader-text,
+.app-classement .screen-reader-text {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -551,6 +554,81 @@ img.avatar-pirate {
   color: inherit;
 }
 
+.app-nav__branch {
+  display: flex;
+  align-items: center;
+  min-height: 2.55rem;
+  border-radius: 999px;
+  color: var(--shell-text);
+}
+
+.app-nav__branch:hover,
+.app-nav__branch:focus-within {
+  background: var(--shell-surface-2);
+}
+
+.app-nav__branch.is-active,
+.app-nav__branch.is-active:hover,
+.app-nav__branch.is-active:focus-within {
+  background: var(--shell-accent);
+  color: var(--shell-accent-text);
+}
+
+.app-nav__branch.is-section,
+.app-nav__branch.is-section:hover,
+.app-nav__branch.is-section:focus-within {
+  background: var(--shell-accent-soft);
+  color: var(--shell-text);
+}
+
+.app-nav__branch .app-nav__link {
+  flex: 1 1 auto;
+  min-width: 0;
+  background: transparent;
+  color: inherit;
+}
+
+.app-nav__branch .app-nav__link:hover,
+.app-nav__branch .app-nav__link:focus-visible,
+.app-nav__branch .app-nav__link.is-active,
+.app-nav__branch .app-nav__link.is-section {
+  background: transparent;
+  color: inherit;
+}
+
+.app-nav__disclosure {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 2.55rem;
+  height: 2.55rem;
+  margin-right: 0.15rem;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  appearance: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.app-nav__disclosure:hover,
+.app-nav__disclosure:focus-visible {
+  background: transparent;
+  color: inherit;
+}
+
+.app-nav__disclosure svg {
+  width: 0.85rem;
+  height: 0.85rem;
+  transition: transform 0.15s ease;
+}
+
+.app-nav__disclosure[aria-expanded='true'] svg {
+  transform: rotate(90deg);
+}
+
 .app-nav__badge {
   min-width: 1.35rem;
   margin-left: auto;
@@ -746,16 +824,21 @@ img.avatar-pirate {
 }
 
 .hunt-banner {
+  --hunt-banner-height: clamp(7.5rem, 18vh, 11rem);
   overflow: hidden;
-  margin: 0 0 1.5rem;
+  margin: 0 0 0.75rem;
   border: 1px solid var(--shell-border);
   border-radius: 1.15rem;
   background: var(--shell-surface);
 }
 
+.hunt-banner__sphere,
+.hunt-banner__frame {
+  height: var(--hunt-banner-height);
+}
+
 .hunt-banner__sphere {
   position: relative;
-  height: 12.5rem;
   background:
     radial-gradient(circle at 50% 46%, var(--shell-accent-soft), transparent 28rem),
     var(--shell-bg);
@@ -831,6 +914,25 @@ html[data-theme="day"] .hunt-banner__sphere::after {
   }
 }
 
+.hunt-banner__frame {
+  overflow: hidden;
+}
+
+.hunt-banner__frame picture {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.hunt-banner__frame picture img,
+.hunt-banner__frame > .hunt-banner__photo,
+.hunt-banner__frame > .hunt-banner__video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .hunt-banner__empty {
   display: flex;
   align-items: center;
@@ -844,10 +946,12 @@ html[data-theme="day"] .hunt-banner__sphere::after {
 
 .player-progress-reset {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
   gap: 0.75rem;
-  margin: 0 0 1.5rem;
-  padding: 0.85rem 1rem;
+  margin: 0 0 0.75rem;
+  padding: 0.65rem 0.85rem;
   border: 1px solid var(--shell-border);
   border-radius: 1.15rem;
   background: var(--shell-card-background);
@@ -855,6 +959,8 @@ html[data-theme="day"] .hunt-banner__sphere::after {
 }
 
 .player-progress-reset__text {
+  flex: 1 1 auto;
+  min-width: 0;
   margin: 0;
   color: var(--shell-muted);
   font-size: 0.95rem;
@@ -866,18 +972,10 @@ html[data-theme="day"] .hunt-banner__sphere::after {
 }
 
 .player-progress-reset__button {
-  align-self: flex-start;
+  align-self: center;
   flex: 0 0 auto;
   margin: 0;
   cursor: pointer;
-}
-
-@media (--bp-small) {
-  .player-progress-reset {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-  }
 }
 
 .hunt-edition-notice {
@@ -1183,6 +1281,7 @@ html[data-theme="day"] .home-enigmas-preserve {
 .player-summary__tile,
 .progression-leaderboard,
 .equipe-performance__primary,
+.equipe-performance__rank,
 .equipe-performance__compact article,
 .equipe-ranking {
   border: 1px solid var(--shell-border);
@@ -1213,6 +1312,7 @@ html[data-theme="day"] .home-enigmas-preserve {
 
 .player-summary__mini,
 .player-summary__tile,
+.equipe-performance__rank,
 .equipe-performance__compact article {
   min-width: 0;
   padding: 0.75rem;
@@ -1220,9 +1320,20 @@ html[data-theme="day"] .home-enigmas-preserve {
 
 .player-summary__mini .team-stat__value,
 .player-summary__tile .team-stat__value,
+.equipe-performance__rank .team-stat__value,
 .equipe-performance__compact .team-stat__value {
   margin-top: 0.6rem;
   font-size: 1.4rem;
+}
+
+.equipe-performance__rank a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.equipe-performance__rank a:hover,
+.equipe-performance__rank a:focus-visible {
+  text-decoration: underline;
 }
 
 .progression-leaderboard,
@@ -1473,15 +1584,23 @@ html[data-theme="day"] .home-enigmas-preserve {
   gap: 0.65rem;
 }
 
-.player-summary__compact,
-.equipe-performance__compact {
+.player-summary__compact {
   display: contents;
+}
+
+.equipe-performance__compact {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
+  margin-top: 0;
 }
 
 .player-summary__primary,
 .player-summary__mini,
 .player-summary__tile,
 .equipe-performance__primary,
+.equipe-performance__rank,
 .equipe-performance__compact article {
   min-height: 0;
   margin: 0;
@@ -1497,6 +1616,7 @@ html[data-theme="day"] .home-enigmas-preserve {
 .equipe-performance__primary .team-stat__value,
 .player-summary__mini .team-stat__value,
 .player-summary__tile .team-stat__value,
+.equipe-performance__rank .team-stat__value,
 .equipe-performance__compact .team-stat__value {
   margin-top: 0.55rem;
   font-size: 1.65rem;
@@ -1829,6 +1949,33 @@ html[data-theme="day"] .home-enigmas-preserve {
   margin-top: 1rem;
 }
 
+.player-ranking .equipe-ranking {
+  margin-top: 0;
+}
+
+.progression-hints {
+  margin: 0;
+}
+
+.progression-hints__summary {
+  cursor: pointer;
+  color: var(--shell-muted);
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+.progression-hints-hunt .progression-riddles__title {
+  margin-bottom: 0.35rem;
+}
+
+.progression-hints-chart {
+  margin-top: 0.65rem;
+}
+
+.progression-hints-chart .progression-steps-chart__row {
+  grid-template-columns: minmax(0, 8.5rem) minmax(0, 1fr) auto;
+}
+
 .progression-intro,
 .progression-note,
 .progression-hint,
@@ -1958,8 +2105,50 @@ html[data-theme="day"] .home-enigmas-preserve {
   font-weight: 700;
 }
 
+.progression-figures__detail {
+  margin: 0;
+  color: var(--shell-muted);
+  font-size: 0.75rem;
+  font-weight: 400;
+}
+
+.progression-figures__item--alert dt,
+.progression-figures__item--alert dd,
+.progression-figures__item--alert a {
+  color: var(--shell-icon-progression);
+}
+
+.progression-figures__item--alert a {
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.15em;
+}
+
+.progression-scope {
+  display: inline-block;
+  margin-left: 0.35rem;
+  padding: 0.05rem 0.4rem;
+  border-radius: 999px;
+  background: var(--shell-surface-2);
+  color: var(--shell-muted);
+  font-size: 0.65rem;
+  font-weight: 700;
+  line-height: 1.4;
+  vertical-align: 0.15em;
+}
+
+.progression-figures__item--alert dt .progression-scope {
+  color: var(--shell-muted);
+}
+
+.progression-series__reading {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
 .progression-dropoff h4,
-.progression-series figcaption {
+.progression-series figcaption,
+.progression-series__summary {
   margin: 0 0 0.45rem;
   color: var(--shell-text);
   font-size: 0.9rem;
@@ -1980,9 +2169,18 @@ html[data-theme="day"] .home-enigmas-preserve {
 
 .progression-steps-chart__row {
   display: grid;
-  grid-template-columns: minmax(0, 7.5rem) minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 7.5rem) minmax(0, 1fr) auto auto;
   gap: 0.45rem;
   align-items: center;
+}
+
+.progression-steps-chart__row--break .progression-steps-chart__label,
+.progression-steps-chart__row--break .progression-steps-chart__value {
+  color: var(--shell-icon-progression);
+}
+
+.progression-steps-chart__row--break .progression-steps-chart__fill {
+  background: var(--shell-icon-progression);
 }
 
 .progression-steps-chart__label {
@@ -2010,6 +2208,18 @@ html[data-theme="day"] .home-enigmas-preserve {
 .progression-steps-chart__value {
   color: var(--shell-text);
   font-size: 0.8rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.progression-steps-chart__share,
+.progression-steps-chart__attempts {
+  color: var(--shell-muted);
+  font-size: 0.75rem;
+  font-weight: 400;
+}
+
+.progression-steps-chart__attempts {
   font-weight: 700;
 }
 
@@ -2044,36 +2254,75 @@ html[data-theme="day"] .home-enigmas-preserve {
   color: var(--shell-icon-progression);
 }
 
-.progression-series svg {
+.progression-series__summary {
+  cursor: pointer;
+}
+
+.progression-series .progression-dropoff {
+  margin-top: 0.85rem;
+}
+
+.progression-columns {
+  display: flex;
+  align-items: stretch;
+  gap: 0.25rem;
+  height: 7rem;
+  margin: 0.35rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.progression-columns__item {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+  height: 100%;
+}
+
+.progression-columns__value {
+  height: 1rem;
+  color: var(--shell-text);
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1rem;
+}
+
+.progression-columns__plot {
+  position: relative;
+  width: 100%;
+  height: 4.7rem;
+}
+
+.progression-columns__bar {
+  position: absolute;
+  right: 18%;
+  bottom: 0;
+  left: 18%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: 2px;
+  overflow: hidden;
+  border-radius: 0.2rem 0.2rem 0 0;
+  background: var(--shell-accent);
+}
+
+.progression-columns__success {
   display: block;
   width: 100%;
-  height: auto;
+  background: var(--shell-icon-rules);
 }
 
-.progression-series__grid {
-  stroke: var(--shell-border);
-  stroke-width: 1;
-}
-
-.progression-series__line {
-  fill: none;
-  stroke: currentColor;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-width: 2;
-}
-
-.progression-series__line--total {
-  color: var(--shell-accent);
-}
-
-.progression-series__line--success {
-  color: var(--shell-icon-rules);
-}
-
-.progression-series text {
-  fill: var(--shell-muted);
-  font-size: 11px;
+.progression-columns__label {
+  height: 1.15rem;
+  margin-top: 0.15rem;
+  overflow: hidden;
+  color: var(--shell-muted);
+  font-size: 0.65rem;
+  line-height: 1.15rem;
+  white-space: nowrap;
 }
 
 .app-placeholder {
@@ -2120,6 +2369,7 @@ html[data-theme="day"] .home-enigmas-preserve {
 .app-topbar__profile:focus-visible,
 .app-topbar__trophies:focus-visible,
 .app-nav__link:focus-visible,
+.app-nav__disclosure:focus-visible,
 .app-theme__option:focus-visible,
 .app-nav-toggle:focus-visible {
   outline: 2px solid var(--shell-accent);
@@ -2129,10 +2379,6 @@ html[data-theme="day"] .home-enigmas-preserve {
 @media (--bp-small) {
   .app-topbar__player {
     display: inline;
-  }
-
-  .hunt-banner__sphere {
-    height: 15rem;
   }
 }
 
@@ -2270,7 +2516,7 @@ html[data-theme="day"] .home-enigmas-preserve {
   }
 
   .equipe-performance__summary {
-    grid-template-columns: 1.2fr repeat(3, minmax(0, 1fr));
+    grid-template-columns: 1.4fr minmax(0, 1fr);
   }
 
   .progression-data-table--player-ranking th:nth-child(3),
@@ -2356,12 +2602,9 @@ html[data-theme="day"] .home-enigmas-preserve {
     width: 20%;
   }
 
-  .progression-steps-chart__row {
+  .progression-steps-chart__row,
+  .progression-hints-chart .progression-steps-chart__row {
     grid-template-columns: minmax(0, 11rem) minmax(0, 1fr) auto;
-  }
-
-  .hunt-banner__sphere {
-    height: 18rem;
   }
 }
 
@@ -2396,10 +2639,6 @@ html[data-theme="day"] .home-enigmas-preserve {
 
   .progression-organizer .team-stats__grid {
     grid-template-columns: repeat(5, minmax(0, 1fr));
-  }
-
-  .hunt-banner__sphere {
-    height: 22rem;
   }
 }
 
@@ -2450,7 +2689,8 @@ body.admin-bar.shell-edition .app-sidebar {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .app-sidebar {
+  .app-sidebar,
+  .app-nav__disclosure svg {
     transition: none;
   }
 }
@@ -2458,6 +2698,10 @@ body.admin-bar.shell-edition .app-sidebar {
 .app-nav__link.is-section {
   background: var(--shell-accent-soft);
   color: var(--shell-text);
+}
+
+.app-nav__sub[hidden] {
+  display: none;
 }
 
 .app-nav__sub {
@@ -3138,6 +3382,12 @@ body.admin-bar.shell-edition .app-sidebar {
   gap: 1rem;
 }
 
+.trophies-grid--player,
+.trophies-wall {
+  grid-template-columns: repeat(auto-fill, 14.5rem);
+  justify-content: start;
+}
+
 .trophy-card {
   display: flex;
   align-items: flex-start;
@@ -3193,9 +3443,275 @@ body.admin-bar.shell-edition .app-sidebar {
   text-transform: uppercase;
 }
 
-.trophy-card__date {
-  margin-top: 0.55rem !important;
-  font-size: 0.8rem;
+.trophy-card--square {
+  position: relative;
+  box-sizing: border-box;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.5rem;
+  width: 14.5rem;
+  height: 14.5rem;
+  padding: 0.75rem;
+  overflow: hidden;
+}
+
+.trophy-card--square .trophy-card__image,
+.trophy-card--square .trophy-card__fallback {
+  width: 100%;
+  height: 7.5rem;
+  border-radius: 0.85rem;
+}
+
+.trophy-card--square .trophy-card__scope {
+  overflow: hidden;
+  font-size: 0.68rem;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.trophy-card--square .trophy-card__content h2 {
+  margin: 0.05rem 0 0.2rem;
+  overflow: hidden;
+  font-size: 1.05rem;
+  line-height: 1.15;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.trophy-card--square .trophy-card__content p:not(.trophy-card__scope) {
+  overflow: hidden;
+  font-size: 0.82rem;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.trophy-card--labeled {
+  position: relative;
+  overflow: hidden;
+  padding-bottom: 2.35rem;
+}
+
+.trophy-card--square.trophy-card--labeled {
+  padding-bottom: 2rem;
+}
+
+.trophy-card--labeled .trophy-card__content {
+  padding-right: 1.6rem;
+}
+
+.trophy-card--square.trophy-card--labeled .trophy-card__content {
+  padding-right: 0;
+}
+
+.trophy-card__gear {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.55rem;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  color: var(--shell-muted);
+  font-size: 0.95rem;
+  line-height: 1;
+  text-decoration: none;
+}
+
+.trophy-card--square .trophy-card__gear {
+  top: 0.85rem;
+  right: 0.85rem;
+  border-radius: 999px;
+  background: rgba(8, 12, 18, 0.55);
+  color: #fff;
+}
+
+.trophy-card__banner {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  margin: 0;
+  padding: 0.35rem 0.85rem;
+  background: rgba(8, 12, 18, 0.55);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.trophy-card--none {
+  border-style: dashed;
+  opacity: 0.72;
+}
+
+.trophy-card__details {
+  margin-top: 0.75rem;
+}
+
+.trophy-card--square .trophy-card__details {
+  position: absolute;
+  top: 0.95rem;
+  left: 0.95rem;
+  z-index: 2;
+  margin-top: 0;
+}
+
+.trophy-card--square .trophy-card__count {
+  min-width: 1.15rem;
+  height: 1.15rem;
+  padding: 0 0.28rem;
+  border: 0;
+  background: rgba(8, 12, 18, 0.45);
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 600;
+}
+
+.trophy-card--square:has(details[open]) {
+  z-index: 3;
+  overflow: visible;
+}
+
+.trophy-card--square .trophy-card__details[open] .trophy-card__holders {
+  position: absolute;
+  top: calc(100% + 0.3rem);
+  left: 0;
+  z-index: 4;
+  min-width: 8.5rem;
+  margin: 0;
+  padding: 0.35rem 0.55rem;
+  border: 1px solid var(--shell-border);
+  border-radius: 0.7rem;
+  background: var(--shell-surface);
+  box-shadow: var(--shell-shadow);
+}
+
+.trophy-card__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  padding: 0.15rem 0.65rem;
+  border: 1px solid var(--shell-border);
+  border-radius: 999px;
+  background: var(--shell-accent-soft);
+  color: var(--shell-accent-strong);
+  font-weight: 800;
+  cursor: pointer;
+  list-style: none;
+}
+
+.trophy-card__count::-webkit-details-marker {
+  display: none;
+}
+
+.trophy-card__count::marker {
+  content: "";
+}
+
+.trophy-card__holders {
+  margin: 0.65rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.trophy-card__holders li + li {
+  margin-top: 0.25rem;
+}
+
+.trophy-create {
+  margin: 0 0 1.35rem;
+}
+
+.trophy-create__toggle {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.45rem 0.9rem;
+  border-radius: 999px;
+  background: var(--shell-primary-button-bg);
+  color: var(--shell-primary-button-text);
+  font-weight: 800;
+  cursor: pointer;
+  list-style: none;
+}
+
+.trophy-create__toggle::-webkit-details-marker {
+  display: none;
+}
+
+.trophy-create__toggle::marker {
+  content: "";
+}
+
+.trophy-create__form {
+  display: grid;
+  gap: 0.85rem;
+  max-width: 36rem;
+  margin-top: 0.85rem;
+  padding: 1rem;
+  border: 1px solid var(--shell-accent);
+  border-radius: 1.15rem;
+  background: var(--shell-surface);
+}
+
+.trophy-create__form label {
+  display: grid;
+  gap: 0.3rem;
+  color: var(--shell-text);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.trophy-create__form input,
+.trophy-create__form textarea,
+.trophy-create__form select {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--shell-border);
+  border-radius: 0.7rem;
+  background: var(--shell-surface-2);
+  color: var(--shell-text);
+  font: inherit;
+  font-weight: 500;
+}
+
+.trophy-create__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.trophy-create__submit,
+.trophy-create__cancel {
+  padding: 0.45rem 0.9rem;
+  border-radius: 999px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.trophy-create__submit {
+  border: 0;
+  background: var(--shell-primary-button-bg);
+  color: var(--shell-primary-button-text);
+}
+
+.trophy-create__cancel {
+  border: 1px solid var(--shell-border);
+  background: transparent;
+  color: var(--shell-text);
+  font-weight: 700;
+}
+
+.trophy-create__notice {
+  margin: 0;
+  color: var(--shell-state-blocked-text);
+  font-size: 0.85rem;
 }
 
 .trophies-page__empty,
@@ -3356,7 +3872,7 @@ body.admin-bar.shell-edition .app-sidebar {
     grid-template-columns: 1fr 1fr;
   }
 
-  .trophies-grid {
+  .trophies-grid:not(.trophies-grid--player):not(.trophies-wall) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -3423,59 +3939,6 @@ body.shell-edition .edition-animation-table .liste-solutions > p {
   margin: 0;
   padding: 0.9rem 1rem 1rem;
   color: var(--shell-muted);
-}
-
-body.shell-edition .edition-animation-table .stats-table {
-  width: 100%;
-  margin: 0;
-  border: 0;
-  border-collapse: collapse;
-  background: transparent;
-  color: var(--shell-text);
-}
-
-body.shell-edition .edition-animation-table .stats-table thead {
-  background: color-mix(in srgb, var(--shell-bg) 42%, var(--shell-surface));
-  color: var(--shell-muted);
-}
-
-body.shell-edition .edition-animation-table .stats-table th,
-body.shell-edition .edition-animation-table .stats-table td {
-  border: 0;
-  border-bottom: 1px solid var(--shell-border);
-  background: transparent;
-  color: var(--shell-text);
-  padding: 0.7rem 0.85rem;
-  font-weight: 400;
-  text-align: left;
-  vertical-align: middle;
-}
-
-body.shell-edition .edition-animation-table .stats-table thead th {
-  padding-top: 0.48rem;
-  padding-bottom: 0.42rem;
-  background: transparent;
-  color: var(--shell-muted);
-  font-size: 0.64rem;
-  font-weight: 700;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-}
-
-body.shell-edition .edition-animation-table .stats-table tbody tr:nth-child(odd),
-body.shell-edition .edition-animation-table .stats-table tbody tr:nth-child(even) {
-  background: transparent;
-}
-
-body.shell-edition .edition-animation-table .stats-table tbody tr:last-child > * {
-  border-bottom: 0;
-}
-
-body.shell-edition .edition-animation-table .indices-table th.indice-actions,
-body.shell-edition .edition-animation-table .indices-table td.indice-actions,
-body.shell-edition .edition-animation-table .solutions-table th.solution-actions,
-body.shell-edition .edition-animation-table .solutions-table td.solution-actions {
-  text-align: center;
 }
 
 body.shell-edition .edition-animation-table .stats-table a {

@@ -439,7 +439,15 @@ function ca_render_dashboard_tentatives(): void
                 </div>
                 <?php if ($view['success'] > 0) : ?>
                 <div class="meta-etiquette meta-etiquette--success">
-                    <span><?php printf(esc_html(_n('%d bonne réponse', '%d bonnes rponses', $view['success'], 'chassesautresor-com')), $view['success']); ?></span>
+                    <span><?php echo esc_html(sprintf(
+                        _n(
+                            '%d bonne réponse',
+                            '%d bonnes réponses',
+                            $view['success'],
+                            'chassesautresor-com'
+                        ),
+                        $view['success']
+                    )); ?></span>
                 </div>
                 <?php endif; ?>
             </div>

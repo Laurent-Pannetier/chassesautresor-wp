@@ -37,7 +37,6 @@ extensions actives :
 - LiteSpeed Cache
 - Hostinger Tools
 - Hostinger Easy Onboarding
-- Fancybox 3 (remplace Firelight Lightbox)
 - Imagify 
 - MC4WP : Mailchimp pour WordPress
 
@@ -1230,11 +1229,9 @@ Le fichier est injecté ou mis à jour par `RiddleImageProtectionService`
 ### 🖼️ Galerie publique (`afficher_visuels_enigme()`)
 
 - Appelée depuis le template `single-enigme.php`
-- Affiche l’image principale dans une `<a>` cliquable, avec `rel="lightbox-enigme"` et `class="fancybox image"`
-- Utilise Fancybox 3 (ancien Firelight/Easy Fancybox)
+- Une page est visible à la fois ; le feuilletage se fait au glissement ou au clavier
+- Un double tap ou un pincement ouvre l’image en taille d’origine via la lightbox du thème (`.enigme-lightbox`, `assets/js/enigme-image-viewer.js`)
 - Toutes les images sont servies via `/voir-image-enigme?id=...`
-- Les vignettes permettent de changer l’image principale (JS), sans déclencher la lightbox
-- Le conteneur `.image-principale` utilise `min-height` pour éviter le scroll au changement
 
 ---
 

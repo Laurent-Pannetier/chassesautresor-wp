@@ -338,6 +338,45 @@ function charger_script_site_protection_card() {
 }
 add_action('wp_enqueue_scripts', 'charger_script_site_protection_card');
 
+/**
+ * Loads the home-banner sphere switch on the administrator tools page only.
+ */
+function charger_script_hunt_banner_sphere_card(): void
+{
+    $on_outils = function_exists('cta_shell_request_slug')
+        && cta_shell_request_slug() === 'outils'
+        && function_exists('current_user_can')
+        && current_user_can('administrator');
+    if (!$on_outils) {
+        return;
+    }
+
+    $relative = '/assets/js/hunt-banner-sphere-card.js';
+    $path = get_stylesheet_directory() . $relative;
+    if (!is_readable($path)) {
+        return;
+    }
+
+    wp_enqueue_script(
+        'hunt-banner-sphere-card',
+        get_stylesheet_directory_uri() . $relative,
+        [],
+        (string) filemtime($path),
+        true
+    );
+    wp_localize_script(
+        'hunt-banner-sphere-card',
+        'huntBannerSphereCard',
+        [
+            'ajax_url' => admin_url('admin-ajax.php'),
+            'nonce' => wp_create_nonce('cta_hunt_banner_sphere'),
+            'activated' => __('Activée', 'chassesautresor-com'),
+            'deactivated' => __('Désactivée', 'chassesautresor-com'),
+        ]
+    );
+}
+add_action('wp_enqueue_scripts', 'charger_script_hunt_banner_sphere_card');
+
 function charger_script_reset_stats_card() {
     $is_account_area = preg_match('#^/mon-compte(?:/|$|\\?)#', $_SERVER['REQUEST_URI'] ?? '');
     $on_outils = function_exists('cta_shell_request_slug') && cta_shell_request_slug() === 'outils';

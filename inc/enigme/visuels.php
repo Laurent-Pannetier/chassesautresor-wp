@@ -48,9 +48,29 @@ function enigme_picture_size_width(int $image_id, string $size): int
         'medium' => 300,
         'medium_large' => 768,
         'large' => 1024,
+        'enigme-1280' => 1280,
+        'enigme-1600' => 1600,
         'full' => 1920,
         default => 300,
     };
+}
+
+/**
+ * Marches de la planche, entre la taille large et l’original.
+ *
+ * @return list<string>
+ */
+function enigme_planche_size_names(): array
+{
+    return ['enigme-1280', 'enigme-1600'];
+}
+
+/**
+ * @return list<string>
+ */
+function enigme_picture_size_order(): array
+{
+    return ['thumbnail', 'medium', 'large', 'enigme-1280', 'enigme-1600', 'full'];
 }
 
 /**
@@ -75,31 +95,183 @@ function enigme_picture_srcset(array $candidates, bool $webp): string
 }
 
 /**
- * Génère le HTML d'un bloc <picture> pour un ID d'image donné.
- * Le srcset utilise la largeur réelle de chaque taille : l'attribut sizes choisit le fichier.
+ * Srcset WebP. Un trou au milieu est sauté vers la taille supérieure.
+ * Sans WebP sur la plus grande taille, aucune source WebP : le JPEG peut
+ * encore monter jusqu’à l’original.
  *
- * @param int    $image_id  ID de l'image.
- * @param string $alt       Texte alternatif.
- * @param array  $sizes     Tailles WordPress à utiliser (la plus grande en dernier).
- * @param array  $img_attrs Attributs supplémentaires pour la balise <img> finale.
- * @param string $floor     Plus petite taille à inclure. Vide = vignette (comportement historique).
- * @return string
+ * @param array<int, array{url:string,webp:string,width:int}> $candidates
  */
-function build_picture_enigme(
-    int $image_id,
-    string $alt,
-    array $sizes,
-    array $img_attrs = [],
-    string $floor = ''
-): string {
-    $order = ['thumbnail', 'medium', 'large', 'full'];
+function enigme_picture_webp_srcset(array $candidates): string
+{
+    if ($candidates === []) {
+        return '';
+    }
 
+    $largest = $candidates[array_key_last($candidates)];
+    if (($largest['webp'] ?? '') === '') {
+        return '';
+    }
+
+    $ready = [];
+    foreach ($candidates as $candidate) {
+        if (($candidate['webp'] ?? '') !== '') {
+            $ready[] = $candidate;
+        }
+    }
+
+    return enigme_picture_srcset($ready, true);
+}
+
+/**
+ * Largeur peinte d’une planche 16:9 dans le lecteur plein écran.
+ * Une fenêtre plus large que 16:9 est limitée par la hauteur.
+ */
+function enigme_hero_picture_sizes(): string
+{
+    return '(min-aspect-ratio: 16/9) calc(100vh * 16 / 9), 100vw';
+}
+
+/**
+ * Crée une taille de planche manquante à côté du fichier original.
+ * Les images déjà en ligne n’ont pas ces dérivés tant qu’elles ne sont pas revues.
+ */
+function enigme_ensure_planche_size(int $image_id, string $size): void
+{
+    if ($image_id <= 0 || !in_array($size, enigme_planche_size_names(), true)) {
+        return;
+    }
+    if (!function_exists('wp_get_attachment_metadata') || !function_exists('get_attached_file')) {
+        return;
+    }
+
+    $meta = wp_get_attachment_metadata($image_id);
+    $attached = get_attached_file($image_id);
+    if (!is_array($meta) || !is_string($attached) || $attached === '' || !is_file($attached)) {
+        return;
+    }
+
+    $existing = isset($meta['sizes'][$size]['file']) ? (string) $meta['sizes'][$size]['file'] : '';
+    if ($existing !== '') {
+        $existing_path = rtrim(dirname($attached), '/\\') . '/' . $existing;
+        if (is_file($existing_path)) {
+            enigme_write_webp_sibling($existing_path);
+            return;
+        }
+    }
+
+    if (!function_exists('image_make_intermediate_size')) {
+        $library = ABSPATH . 'wp-admin/includes/image.php';
+        if (is_file($library)) {
+            require_once $library;
+        }
+    }
+    if (
+        !function_exists('image_make_intermediate_size')
+        || !function_exists('wp_get_additional_image_sizes')
+    ) {
+        return;
+    }
+
+    $registered = wp_get_additional_image_sizes();
+    if (!isset($registered[$size]['width'], $registered[$size]['height'])) {
+        return;
+    }
+
+    $target_width = (int) $registered[$size]['width'];
+    $target_height = (int) $registered[$size]['height'];
+    $original_width = (int) ($meta['width'] ?? 0);
+    $original_height = (int) ($meta['height'] ?? 0);
+    if (
+        $original_width > 0
+        && $original_height > 0
+        && $original_width <= $target_width
+        && $original_height <= $target_height
+    ) {
+        return;
+    }
+
+    $lock_key = 'enigme_planche_' . $image_id . '_' . $size;
+    if (function_exists('get_transient') && get_transient($lock_key)) {
+        return;
+    }
+    if (function_exists('set_transient')) {
+        set_transient($lock_key, 1, 60);
+    }
+
+    $resized = image_make_intermediate_size(
+        $attached,
+        $target_width,
+        $target_height,
+        !empty($registered[$size]['crop'])
+    );
+    if (!is_array($resized) || empty($resized['file'])) {
+        return;
+    }
+
+    $meta = wp_get_attachment_metadata($image_id);
+    if (!is_array($meta)) {
+        $meta = [];
+    }
+    if (!isset($meta['sizes']) || !is_array($meta['sizes'])) {
+        $meta['sizes'] = [];
+    }
+    $meta['sizes'][$size] = [
+        'file' => (string) $resized['file'],
+        'width' => (int) ($resized['width'] ?? 0),
+        'height' => (int) ($resized['height'] ?? 0),
+        'mime-type' => (string) ($resized['mime-type'] ?? ''),
+    ];
+    if (function_exists('wp_update_attachment_metadata')) {
+        wp_update_attachment_metadata($image_id, $meta);
+    }
+    enigme_write_webp_sibling(rtrim(dirname($attached), '/\\') . '/' . $resized['file']);
+    if (function_exists('delete_transient')) {
+        delete_transient($lock_key);
+    }
+}
+
+/**
+ * Fichier .webp à côté du JPEG, lu par la source WebP du <picture>.
+ */
+function enigme_write_webp_sibling(string $path): void
+{
+    if (
+        !function_exists('wp_image_editor_supports')
+        || !wp_image_editor_supports(['mime_type' => 'image/webp'])
+        || !function_exists('wp_get_image_editor')
+        || !is_file($path)
+    ) {
+        return;
+    }
+
+    $webp_path = preg_replace('/\.(jpe?g|png|gif)$/i', '.webp', $path);
+    if (!is_string($webp_path) || $webp_path === $path || is_file($webp_path)) {
+        return;
+    }
+
+    $editor = wp_get_image_editor($path);
+    if (is_wp_error($editor)) {
+        return;
+    }
+    $saved = $editor->save($webp_path, 'image/webp');
+    if (is_wp_error($saved) && is_file($webp_path)) {
+        unlink($webp_path);
+    }
+}
+
+/**
+ * @param array<int, string> $requested
+ * @return list<string>
+ */
+function enigme_picture_resolved_sizes(array $requested, string $floor): array
+{
+    $order = enigme_picture_size_order();
     $valid_sizes = function_exists('get_intermediate_image_sizes')
         ? get_intermediate_image_sizes()
         : ['thumbnail', 'medium', 'large'];
     $valid_sizes[] = 'full';
     $valid_sizes = array_intersect($valid_sizes, $order);
-    $sizes       = array_values(array_intersect($sizes, $valid_sizes));
+    $sizes = array_values(array_intersect($requested, $valid_sizes));
     if (!$sizes) {
         $sizes = ['full'];
     }
@@ -116,19 +288,22 @@ function build_picture_enigme(
     if ($largest_index < $floor_index) {
         $largest_index = $floor_index;
     }
+
     $sizes = array_values(array_intersect(
         array_slice($order, $floor_index, $largest_index - $floor_index + 1),
         $valid_sizes
     ));
-    if (!$sizes) {
-        $sizes = ['full'];
-    }
 
-    usort(
-        $sizes,
-        static fn (string $a, string $b): int => array_search($a, $order, true) <=> array_search($b, $order, true)
-    );
+    return $sizes !== [] ? $sizes : ['full'];
+}
 
+/**
+ * @param array<int, string> $requested
+ * @return list<array{url:string,webp:string,width:int,size:string}>
+ */
+function enigme_picture_candidates(int $image_id, array $requested, string $floor = ''): array
+{
+    $sizes = enigme_picture_resolved_sizes($requested, $floor);
     $can_webp = function_exists('wp_image_editor_supports')
         && wp_image_editor_supports(['mime_type' => 'image/webp']);
 
@@ -191,6 +366,7 @@ function build_picture_enigme(
     $candidates = [];
     $seen_widths = [];
     foreach ($sizes as $size) {
+        enigme_ensure_planche_size($image_id, $size);
         $url = $url_builder($image_id, $size);
         if ($url === '') {
             continue;
@@ -208,22 +384,43 @@ function build_picture_enigme(
         ];
     }
 
+    return $candidates;
+}
+
+/**
+ * Génère le HTML d'un bloc <picture> pour un ID d'image donné.
+ * Le srcset utilise la largeur réelle de chaque taille : l'attribut sizes choisit le fichier.
+ *
+ * @param int    $image_id  ID de l'image.
+ * @param string $alt       Texte alternatif.
+ * @param array  $sizes     Tailles WordPress à utiliser (la plus grande en dernier).
+ * @param array  $img_attrs Attributs supplémentaires pour la balise <img> finale.
+ * @param string $floor     Plus petite taille à inclure. Vide = vignette (comportement historique).
+ * @return string
+ */
+function build_picture_enigme(
+    int $image_id,
+    string $alt,
+    array $sizes,
+    array $img_attrs = [],
+    string $floor = ''
+): string {
+    $candidates = enigme_picture_candidates($image_id, $sizes, $floor);
     if ($candidates === []) {
         return '';
     }
 
     $fallback = $candidates[0];
-    $html = "<picture>\n";
-    $webp_ready = true;
-    foreach ($candidates as $candidate) {
-        if ($candidate['webp'] === '') {
-            $webp_ready = false;
-            break;
-        }
+    if (!isset($img_attrs['sizes'])) {
+        $img_attrs['sizes'] = '(min-width:1025px) 400px, (min-width:769px) 300px, (min-width:481px) 200px, 100vw';
     }
-    if ($webp_ready) {
-        $html .= '  <source type="image/webp" srcset="'
-            . enigme_picture_srcset($candidates, true) . "\">\n";
+    $sizes_value = (string) $img_attrs['sizes'];
+
+    $html = "<picture>\n";
+    $webp_srcset = enigme_picture_webp_srcset($candidates);
+    if ($webp_srcset !== '') {
+        $html .= '  <source type="image/webp" sizes="' . esc_attr($sizes_value)
+            . '" srcset="' . $webp_srcset . "\">\n";
     }
 
     $dimensions = function_exists('wp_get_attachment_image_src')
@@ -241,9 +438,6 @@ function build_picture_enigme(
     if (!isset($img_attrs['referrerpolicy'])) {
         $img_attrs['referrerpolicy'] = 'no-referrer';
     }
-    if (!isset($img_attrs['sizes'])) {
-        $img_attrs['sizes'] = '(min-width:1025px) 400px, (min-width:769px) 300px, (min-width:481px) 200px, 100vw';
-    }
 
     $attr_str = '';
     foreach ($img_attrs as $key => $value) {
@@ -256,6 +450,44 @@ function build_picture_enigme(
     $html .= "</picture>\n";
 
     return $html;
+}
+
+/**
+ * Données du même <picture> que la planche, pour une page ajoutée sans rechargement.
+ *
+ * Les URLs sont déjà échappées pour un attribut HTML.
+ *
+ * @return array{src:string,srcset:string,webp_srcset:string,sizes:string,width:int,height:int}
+ */
+function enigme_hero_picture_payload(int $image_id): array
+{
+    $sizes = enigme_hero_picture_sizes();
+    $empty = [
+        'src' => '',
+        'srcset' => '',
+        'webp_srcset' => '',
+        'sizes' => $sizes,
+        'width' => 0,
+        'height' => 0,
+    ];
+    $candidates = enigme_picture_candidates($image_id, ['large', 'full'], 'large');
+    if ($candidates === []) {
+        return $empty;
+    }
+
+    $fallback = $candidates[0];
+    $dimensions = function_exists('wp_get_attachment_image_src')
+        ? wp_get_attachment_image_src($image_id, $fallback['size'])
+        : null;
+
+    return [
+        'src' => $fallback['url'],
+        'srcset' => enigme_picture_srcset($candidates, false),
+        'webp_srcset' => enigme_picture_webp_srcset($candidates),
+        'sizes' => $sizes,
+        'width' => is_array($dimensions) ? (int) ($dimensions[1] ?? 0) : 0,
+        'height' => is_array($dimensions) ? (int) ($dimensions[2] ?? 0) : 0,
+    ];
 }
 
 /**
@@ -455,7 +687,7 @@ function afficher_visuels_enigme(
 
         $attrs = [
             'class' => $classes,
-            'sizes' => '100vw',
+            'sizes' => enigme_hero_picture_sizes(),
             'decoding' => 'async',
             'referrerpolicy' => 'no-referrer',
         ];

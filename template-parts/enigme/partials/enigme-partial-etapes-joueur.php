@@ -51,17 +51,37 @@ if ($riddleId <= 0 || $visibleIds === []) {
     $pageFullUrl = '';
     $pageThumbUrl = '';
     $pageAlt = '';
+    $pageSrcset = '';
+    $pageWebpSrcset = '';
+    $pageSizes = '';
+    $pageWidth = 0;
+    $pageHeight = 0;
     if ($hasImage) {
         $pageAlt = trim((string) get_post_meta($imageId, '_wp_attachment_image_alt', true));
         if ($pageAlt === '') {
             $pageAlt = __('Page débloquée', 'chassesautresor-com');
         }
-        $pagePreviewUrl = function_exists('cta_voir_image_enigme_url')
-            ? cta_voir_image_enigme_url($imageId, 'large')
-            : add_query_arg(
-                ['id' => $imageId, 'taille' => 'large'],
-                site_url('/voir-image-enigme')
+        $payload = function_exists('enigme_hero_picture_payload')
+            ? enigme_hero_picture_payload($imageId)
+            : null;
+        if (is_array($payload) && $payload['src'] !== '') {
+            // Déjà échappé comme le srcset du <picture>.
+            $pagePreviewUrl = $payload['src'];
+            $pageSrcset = $payload['srcset'];
+            $pageWebpSrcset = $payload['webp_srcset'];
+            $pageSizes = $payload['sizes'];
+            $pageWidth = (int) $payload['width'];
+            $pageHeight = (int) $payload['height'];
+        } else {
+            $pagePreviewUrl = esc_url(
+                function_exists('cta_voir_image_enigme_url')
+                    ? cta_voir_image_enigme_url($imageId, 'large')
+                    : add_query_arg(
+                        ['id' => $imageId, 'taille' => 'large'],
+                        site_url('/voir-image-enigme')
+                    )
             );
+        }
         $pageFullUrl = function_exists('cta_voir_image_enigme_url')
             ? cta_voir_image_enigme_url($imageId, 'full')
             : add_query_arg(
@@ -81,10 +101,23 @@ if ($riddleId <= 0 || $visibleIds === []) {
       data-player-step-id="<?= esc_attr($stepId); ?>"
       <?php if ($hasImage) : ?>
         data-step-page-image-id="<?= esc_attr((string) $imageId); ?>"
-        data-step-page-preview="<?= esc_url($pagePreviewUrl); ?>"
+        data-step-page-preview="<?= $pagePreviewUrl; ?>"
         data-step-page-full="<?= esc_url($pageFullUrl); ?>"
         data-step-page-thumb="<?= esc_url($pageThumbUrl); ?>"
         data-step-page-alt="<?= esc_attr($pageAlt); ?>"
+        <?php if ($pageSrcset !== '') : ?>
+          data-step-page-srcset="<?= $pageSrcset; ?>"
+        <?php endif; ?>
+        <?php if ($pageWebpSrcset !== '') : ?>
+          data-step-page-srcset-webp="<?= $pageWebpSrcset; ?>"
+        <?php endif; ?>
+        <?php if ($pageSizes !== '') : ?>
+          data-step-page-sizes="<?= esc_attr($pageSizes); ?>"
+        <?php endif; ?>
+        <?php if ($pageWidth > 0) : ?>
+          data-step-page-width="<?= esc_attr((string) $pageWidth); ?>"
+          data-step-page-height="<?= esc_attr((string) $pageHeight); ?>"
+        <?php endif; ?>
       <?php endif; ?>
     >
       <?php if (trim($content) !== '') : ?>

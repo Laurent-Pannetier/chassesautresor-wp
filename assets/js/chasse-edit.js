@@ -262,8 +262,7 @@ window.rafraichirCarteSolutions = rafraichirCarteSolutions;
     if (bloc.classList.contains('champ-img')) {
       if (typeof initChampImage === 'function') initChampImage(bloc);
     } else if (champ === 'chasse_principale_liens') {
-      const bouton = bloc.querySelector('.champ-modifier');
-      if (bouton && typeof initLiensChasse === 'function') initLiensChasse(bloc);
+      return;
     } else {
       if (typeof initChampTexte === 'function') initChampTexte(bloc);
     }
@@ -542,38 +541,6 @@ window.rafraichirCarteSolutions = rafraichirCarteSolutions;
   window.addEventListener('solution-created', () => {
     rafraichirCarteSolutions();
   });
-
-  function rafraichirCarteLiens() {
-    const card = document.querySelector('.dashboard-card.champ-liens');
-    if (!card) return;
-    const dataEl = card.querySelector('.champ-donnees');
-    let valeurs = [];
-    if (dataEl && dataEl.dataset.valeurs) {
-      try {
-        valeurs = JSON.parse(dataEl.dataset.valeurs);
-      } catch (e) {
-        valeurs = [];
-      }
-    }
-    const filled = Array.isArray(valeurs) && valeurs.length > 0;
-    card.classList.toggle('champ-rempli', filled);
-    card.classList.toggle('champ-vide', !filled);
-  }
-
-  window.addEventListener('liens-publics-updated', rafraichirCarteLiens);
-
-// ==============================
-// 🔗 Initialisation des liens chasse
-// ==============================
-function initLiensChasse(bloc) {
-  if (typeof window.initLiensPublics === 'function') {
-    initLiensPublics(bloc, {
-      panneauId: 'panneau-liens-chasse',
-      formId: 'formulaire-liens-chasse',
-      action: 'modifier_champ_chasse'
-    });
-  }
-}
 
 // ==============================
 // 🔎 Validation logique entre date de début et date de fin

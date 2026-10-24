@@ -193,33 +193,173 @@ function cta_shell_close(): void
 }
 
 /**
- * Hunt visual used as the home header. No overlay copy is added.
+ * Option that turns the rolling home-banner sphere on. Off is the normal mode.
  */
-function cta_shell_hunt_image_url(int $huntId): string
+function cta_shell_hunt_sphere_option(): string
 {
-    if ($huntId <= 0) {
-        return '';
+    return 'cta_hunt_banner_sphere_enabled';
+}
+
+/**
+ * The sphere is opt-in. Absent or any value other than "1" keeps the still image.
+ */
+function cta_shell_hunt_sphere_enabled(): bool
+{
+    if (!function_exists('get_option')) {
+        return false;
     }
 
-    $image = '';
+    return (string) get_option(cta_shell_hunt_sphere_option(), '0') === '1';
+}
+
+/**
+ * Reads an ACF image or file value into an attachment source.
+ *
+ * @param mixed $imageData
+ * @return array{id:int,url:string,mime:string}
+ */
+function cta_shell_image_value_source($imageData): array
+{
+    $source = ['id' => 0, 'url' => '', 'mime' => ''];
+    if (is_array($imageData)) {
+        if (!empty($imageData['ID'])) {
+            $source['id'] = (int) $imageData['ID'];
+        } elseif (!empty($imageData['id'])) {
+            $source['id'] = (int) $imageData['id'];
+        }
+        if (!empty($imageData['url']) && is_string($imageData['url'])) {
+            $source['url'] = $imageData['url'];
+        }
+        if (!empty($imageData['mime_type']) && is_string($imageData['mime_type'])) {
+            $source['mime'] = $imageData['mime_type'];
+        }
+    } elseif (is_numeric($imageData)) {
+        $source['id'] = (int) $imageData;
+    } elseif (is_string($imageData) && $imageData !== '') {
+        $source['url'] = $imageData;
+    }
+
+    return $source;
+}
+
+/**
+ * Whether the attachment should play in the home strip instead of being cropped as a picture.
+ */
+function cta_shell_attachment_is_video(string $mime, string $url = ''): bool
+{
+    if (strncmp($mime, 'video/', 6) === 0) {
+        return true;
+    }
+
+    $path = strtolower((string) parse_url($url, PHP_URL_PATH));
+
+    return (bool) preg_match('/\.(mp4|webm|ogg)$/', $path);
+}
+
+/**
+ * Fills a missing MIME type and URL from the attachment id.
+ *
+ * @param array{id:int,url:string,mime?:string} $source
+ * @return array{id:int,url:string,mime:string}
+ */
+function cta_shell_resolve_image_source(array $source): array
+{
+    if (!isset($source['mime'])) {
+        $source['mime'] = '';
+    }
+
+    if ($source['mime'] === '' && $source['id'] > 0 && function_exists('get_post_mime_type')) {
+        $mime = get_post_mime_type($source['id']);
+        $source['mime'] = is_string($mime) ? $mime : '';
+    }
+
+    $isVideo = cta_shell_attachment_is_video($source['mime'], $source['url']);
+    if (
+        $source['url'] === ''
+        && $source['id'] > 0
+        && !$isVideo
+        && function_exists('wp_get_attachment_image_url')
+    ) {
+        $resolved = wp_get_attachment_image_url($source['id'], 'full');
+        $source['url'] = is_string($resolved) ? $resolved : '';
+    }
+
+    if (
+        $source['url'] === ''
+        && $source['id'] > 0
+        && $isVideo
+        && function_exists('wp_get_attachment_url')
+    ) {
+        $resolved = wp_get_attachment_url($source['id']);
+        $source['url'] = is_string($resolved) ? $resolved : '';
+    }
+
+    return $source;
+}
+
+/**
+ * @param array{id:int,url:string} $source
+ */
+function cta_shell_image_source_is_empty(array $source): bool
+{
+    return $source['id'] <= 0 && $source['url'] === '';
+}
+
+/**
+ * Hunt visual used by the login screen, the cards and the sphere texture.
+ *
+ * @return array{id:int,url:string}
+ */
+function cta_shell_hunt_image_source(int $huntId): array
+{
+    $source = ['id' => 0, 'url' => '', 'mime' => ''];
+    if ($huntId <= 0) {
+        return $source;
+    }
+
     if (function_exists('get_field')) {
-        $imageData = get_field('chasse_principale_image', $huntId);
-        if (is_array($imageData)) {
-            if (!empty($imageData['url'])) {
-                $image = (string) $imageData['url'];
-            } elseif (!empty($imageData['ID']) && function_exists('wp_get_attachment_image_url')) {
-                $image = (string) wp_get_attachment_image_url((int) $imageData['ID'], 'full');
-            }
-        } elseif (!empty($imageData) && function_exists('wp_get_attachment_image_url')) {
-            $image = (string) wp_get_attachment_image_url((int) $imageData, 'full');
+        $source = cta_shell_image_value_source(get_field('chasse_principale_image', $huntId));
+    }
+
+    if ($source['id'] <= 0 && function_exists('get_post_thumbnail_id')) {
+        $source['id'] = (int) get_post_thumbnail_id($huntId);
+    }
+
+    $source = cta_shell_resolve_image_source($source);
+
+    if ($source['url'] === '' && function_exists('get_the_post_thumbnail_url')) {
+        $thumb = get_the_post_thumbnail_url($huntId, 'full');
+        $source['url'] = is_string($thumb) ? $thumb : '';
+    }
+
+    return $source;
+}
+
+/**
+ * Wide home strip. The panoramic field wins; the hunt poster is the fallback.
+ *
+ * @return array{id:int,url:string}
+ */
+function cta_shell_hunt_banner_image_source(int $huntId): array
+{
+    if ($huntId > 0 && function_exists('get_field')) {
+        $banner = cta_shell_resolve_image_source(
+            cta_shell_image_value_source(get_field('chasse_bandeau_accueil', $huntId))
+        );
+        if (!cta_shell_image_source_is_empty($banner)) {
+            return $banner;
         }
     }
 
-    if ($image === '' && function_exists('get_the_post_thumbnail_url')) {
-        $thumb = get_the_post_thumbnail_url($huntId, 'full');
-        $image = is_string($thumb) ? $thumb : '';
-    }
+    return cta_shell_hunt_image_source($huntId);
+}
 
+/**
+ * Direct image URL for the sphere texture. WebP is preferred when Imagify has one.
+ */
+function cta_shell_hunt_image_url(int $huntId): string
+{
+    $image = cta_shell_hunt_image_source($huntId)['url'];
     if ($image !== '' && function_exists('imagify_get_webp_url')) {
         $webp = imagify_get_webp_url($image);
         if (is_string($webp) && $webp !== '') {
@@ -259,13 +399,43 @@ function cta_shell_enqueue_hunt_sphere(): void
 }
 
 /**
- * Renders the hunt header. The image is mapped onto a sphere that rolls sideways.
- * An empty frame is used when no image exists.
+ * Still banner image. WordPress prints the attachment so Imagify can rewrite it.
+ */
+function cta_shell_hunt_banner_photo_markup(int $attachmentId, string $url, string $alt): string
+{
+    if ($attachmentId > 0 && function_exists('wp_get_attachment_image')) {
+        $attributes = [
+            'class' => 'hunt-banner__photo',
+            'loading' => 'eager',
+            'decoding' => 'async',
+            'fetchpriority' => 'high',
+        ];
+        if ($alt !== '') {
+            $attributes['alt'] = $alt;
+        }
+        $html = wp_get_attachment_image($attachmentId, 'large', false, $attributes);
+        if (is_string($html) && $html !== '') {
+            return $html;
+        }
+    }
+
+    if ($url === '' || !function_exists('esc_url') || !function_exists('esc_attr')) {
+        return '';
+    }
+
+    return '<img class="hunt-banner__photo" src="' . esc_url($url) . '" alt="' . esc_attr($alt)
+        . '" loading="eager" decoding="async" fetchpriority="high">';
+}
+
+/**
+ * Renders the hunt header.
+ * A video in the home strip plays for every role, even when the sphere is on.
+ * Otherwise the sphere is loaded only when an administrator has switched it on,
+ * and the hunt image stays a normal picture Imagify can optimize.
  */
 function cta_shell_render_hunt_banner(): void
 {
     $huntId = function_exists('cat_get_primary_hunt_id') ? (int) cat_get_primary_hunt_id() : 0;
-    $url = cta_shell_hunt_image_url($huntId);
     $alt = '';
     if ($huntId > 0 && function_exists('get_the_title')) {
         $alt = (string) get_the_title($huntId);
@@ -273,25 +443,239 @@ function cta_shell_render_hunt_banner(): void
 
     $label = esc_attr__('Image de la chasse', 'chassesautresor-com');
     echo '<section class="hunt-banner" aria-label="' . $label . '">';
-    if ($url !== '') {
-        cta_shell_enqueue_hunt_sphere();
-        $src = esc_url($url);
-        echo '<div class="hunt-banner__sphere" data-hunt-sphere data-image="' . $src . '">';
-        echo '<canvas class="hunt-banner__canvas" aria-hidden="true"></canvas>';
-        echo '<img class="hunt-banner__fallback" src="' . $src . '" alt="' . esc_attr($alt) . '">';
-        echo '</div>';
-        echo '<script>(function(){var s=document.currentScript,n=s&&s.previousElementSibling;';
-        echo 'if(n){n.classList.add("is-pending");}})();</script>';
+    if (cta_shell_hunt_sphere_enabled() && !cta_shell_hunt_banner_is_video($huntId)) {
+        cta_shell_render_hunt_banner_sphere($huntId, $alt);
     } else {
-        echo '<p class="hunt-banner__empty">';
-        echo esc_html__('Emplacement de l’image de la chasse', 'chassesautresor-com');
-        echo '</p>';
+        cta_shell_render_hunt_banner_photo($huntId, $alt);
     }
     echo '</section>';
 }
 
 /**
- * Hunt ranking, then one ranking per riddle. An empty note is shown when no hunt applies.
+ * Whether the home strip field currently stores a video.
+ */
+function cta_shell_hunt_banner_is_video(int $huntId): bool
+{
+    $source = cta_shell_hunt_banner_image_source($huntId);
+
+    return cta_shell_attachment_is_video(
+        (string) ($source['mime'] ?? ''),
+        (string) ($source['url'] ?? '')
+    );
+}
+
+/**
+ * Rolling sphere. This is the only path that prints the canvas and loads its script.
+ */
+function cta_shell_render_hunt_banner_sphere(int $huntId, string $alt): void
+{
+    $url = cta_shell_hunt_image_url($huntId);
+    if ($url === '') {
+        cta_shell_render_hunt_banner_empty();
+        return;
+    }
+
+    cta_shell_enqueue_hunt_sphere();
+    $src = esc_url($url);
+    echo '<div class="hunt-banner__sphere" data-hunt-sphere data-image="' . $src . '">';
+    echo '<canvas class="hunt-banner__canvas" aria-hidden="true"></canvas>';
+    echo '<img class="hunt-banner__fallback" src="' . $src . '" alt="' . esc_attr($alt) . '">';
+    echo '</div>';
+    echo '<script>(function(){var s=document.currentScript,n=s&&s.previousElementSibling;';
+    echo 'if(n){n.classList.add("is-pending");}})();</script>';
+}
+
+/**
+ * Muted strip, played once. The file is on the element itself so playback
+ * does not depend on a deferred script or a reduced-motion check.
+ * A late script must not restart a clip that already began.
+ */
+function cta_shell_hunt_banner_video_markup(string $url, string $poster): string
+{
+    if ($url === '' || !function_exists('esc_url')) {
+        return '';
+    }
+
+    $posterAttr = $poster !== '' ? ' poster="' . esc_url($poster) . '"' : '';
+
+    return '<video class="hunt-banner__video" src="' . esc_url($url) . '"'
+        . $posterAttr
+        . ' autoplay muted playsinline preload="auto" aria-hidden="true"></video>'
+        . '<script>(function(){var s=document.currentScript;'
+        . 'var v=(s&&s.previousElementSibling)||document.querySelector(".hunt-banner__video");'
+        . 'if(!v||!v.play||v.ended||v.currentTime>0){return;}'
+        . 'v.muted=true;v.loop=false;'
+        . 'var p=v.play();if(p&&p.catch){p.catch(function(){});}'
+        . '})();</script>';
+}
+
+/**
+ * Normal picture, or the MP4 stored in the same banner field.
+ * No canvas and no sphere script.
+ */
+function cta_shell_render_hunt_banner_photo(int $huntId, string $alt): void
+{
+    $source = cta_shell_hunt_banner_image_source($huntId);
+    $mime = (string) ($source['mime'] ?? '');
+    if (cta_shell_attachment_is_video($mime, (string) $source['url'])) {
+        $poster = (string) cta_shell_hunt_image_source($huntId)['url'];
+        if ($poster === $source['url']) {
+            $poster = '';
+        }
+        $html = cta_shell_hunt_banner_video_markup((string) $source['url'], $poster);
+    } else {
+        $html = cta_shell_hunt_banner_photo_markup($source['id'], $source['url'], $alt);
+    }
+    if ($html === '') {
+        cta_shell_render_hunt_banner_empty();
+        return;
+    }
+
+    echo '<div class="hunt-banner__frame">';
+    echo $html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    echo '</div>';
+}
+
+/**
+ * Empty frame used when the hunt has no image yet.
+ */
+function cta_shell_render_hunt_banner_empty(): void
+{
+    echo '<p class="hunt-banner__empty">';
+    echo esc_html__('Emplacement de l’image de la chasse', 'chassesautresor-com');
+    echo '</p>';
+}
+
+/**
+ * The home strip was created as an ACF image field, which rejects an MP4
+ * and drops a video id the next time the post is saved.
+ *
+ * @param mixed $field
+ * @return mixed
+ */
+function cta_shell_prepare_home_banner_field($field)
+{
+    if (!is_array($field)) {
+        return $field;
+    }
+    if (function_exists('acf_is_screen') && acf_is_screen('acf-field-group')) {
+        return $field;
+    }
+
+    $field['type'] = 'file';
+    $field['return_format'] = 'array';
+    $field['mime_types'] = 'jpg,jpeg,png,gif,webp,mp4,webm';
+    if (empty($field['library'])) {
+        $field['library'] = 'all';
+    }
+
+    return $field;
+}
+add_filter('acf/load_field/name=chasse_bandeau_accueil', 'cta_shell_prepare_home_banner_field');
+
+/**
+ * Keeps image-only attachment checks from blocking this field.
+ *
+ * @param mixed $isImageField
+ * @param mixed $field
+ */
+function cta_shell_banner_field_allows_video($isImageField, $field = null): bool
+{
+    if (is_array($field)) {
+        $name = (string) ($field['_name'] ?? $field['name'] ?? '');
+        if ($name === 'chasse_bandeau_accueil') {
+            return false;
+        }
+    }
+
+    return (bool) $isImageField;
+}
+add_filter(
+    'acf/is_image_field/name=chasse_bandeau_accueil',
+    'cta_shell_banner_field_allows_video',
+    10,
+    2
+);
+
+/**
+ * A video attachment is valid in the home strip. Other failures stay in place.
+ *
+ * @param mixed $valid
+ * @param mixed $value
+ * @param mixed $field
+ * @param mixed $input
+ * @return mixed
+ */
+function cta_shell_banner_value_is_allowed($valid, $value, $field = null, $input = null)
+{
+    unset($field, $input);
+    if (!is_numeric($value) || !function_exists('get_post_mime_type')) {
+        return $valid;
+    }
+
+    $mime = get_post_mime_type((int) $value);
+    if (is_string($mime) && strncmp($mime, 'video/', 6) === 0) {
+        return true;
+    }
+
+    return $valid;
+}
+add_filter(
+    'acf/validate_value/name=chasse_bandeau_accueil',
+    'cta_shell_banner_value_is_allowed',
+    20,
+    4
+);
+
+/**
+ * Administrator tile that turns the home-banner sphere on or off.
+ */
+function cta_shell_render_hunt_sphere_switch(): string
+{
+    $isAdmin = function_exists('cta_shell_user_is_administrator') && cta_shell_user_is_administrator();
+    if (!$isAdmin) {
+        return '';
+    }
+
+    $enabled = cta_shell_hunt_sphere_enabled();
+    $status = $enabled
+        ? __('Activée', 'chassesautresor-com')
+        : __('Désactivée', 'chassesautresor-com');
+
+    ob_start();
+    ?>
+    <div class="dashboard-card hunt-banner-sphere-card" data-hunt-banner-sphere>
+        <div class="dashboard-card-header">
+            <i class="fas fa-globe" aria-hidden="true"></i>
+            <h3><?php esc_html_e('Sphère du bandeau', 'chassesautresor-com'); ?></h3>
+        </div>
+        <div class="dashboard-card-content">
+            <label class="switch-control">
+                <input
+                    type="checkbox"
+                    id="hunt-banner-sphere-toggle"
+                    <?php checked($enabled); ?>
+                    aria-label="<?php esc_attr_e('Activer la sphère du bandeau', 'chassesautresor-com'); ?>"
+                >
+                <span class="switch-slider"></span>
+            </label>
+            <span id="hunt-banner-sphere-status"><?php echo esc_html($status); ?></span>
+            <p class="hunt-banner-sphere-card__note">
+                <?php esc_html_e(
+                    'Désactivée, le bandeau sert l’image sans charger le script de la sphère.',
+                    'chassesautresor-com'
+                ); ?>
+            </p>
+        </div>
+    </div>
+    <?php
+
+    return (string) ob_get_clean();
+}
+
+/**
+ * Player ranking or team ranking for the current hunt.
+ * An empty note is shown when no hunt applies.
  */
 function cta_shell_render_player_ranking(): void
 {
@@ -333,11 +717,66 @@ function cta_shell_render_player_ranking(): void
         return;
     }
 
+    $board = 'joueurs';
+    if (isset($_GET['vue'])) {
+        $requestedBoard = function_exists('sanitize_key')
+            ? sanitize_key(wp_unslash((string) $_GET['vue']))
+            : (string) $_GET['vue'];
+        if ($requestedBoard === 'equipes') {
+            $board = 'equipes';
+        }
+    }
+    $currentHuntUrl = '';
+    foreach ($hunts as $hunt) {
+        if ((int) $hunt['id'] === $hunt_id) {
+            $currentHuntUrl = (string) $hunt['url'];
+            break;
+        }
+    }
+    $joueursUrl = function_exists('remove_query_arg')
+        ? (string) remove_query_arg('vue', $currentHuntUrl)
+        : $currentHuntUrl;
+    $equipesUrl = function_exists('add_query_arg')
+        ? (string) add_query_arg('vue', 'equipes', $joueursUrl)
+        : $joueursUrl;
+    if ($board === 'equipes') {
+        foreach ($hunts as $index => $hunt) {
+            $hunts[$index]['url'] = function_exists('add_query_arg')
+                ? (string) add_query_arg('vue', 'equipes', (string) $hunt['url'])
+                : (string) $hunt['url'];
+        }
+    }
+
     global $wpdb;
-    $view = (new \ChassesAuTresor\Core\Progress\PlayerProgressionApplicationService(
-        new \ChassesAuTresor\Core\Progress\ProgressionOverviewRepository($wpdb),
-        new \ChassesAuTresor\Core\Progress\PlayerProgressionRepository($wpdb)
-    ))->rankingPage($user_id, $hunt_id);
+    $views = [
+        [
+            'id' => 'joueurs',
+            'title' => __('Joueurs', 'chassesautresor-com'),
+            'url' => $joueursUrl,
+        ],
+        [
+            'id' => 'equipes',
+            'title' => __('Équipes', 'chassesautresor-com'),
+            'url' => $equipesUrl,
+        ],
+    ];
+    if ($board === 'equipes') {
+        $fragment = cta_shell_team_ranking_fragment($user_id, $hunt_id);
+        $view = [
+            'hunt_id' => $hunt_id,
+            'board' => 'equipes',
+            'views' => $views,
+            'team_ranking_html' => $fragment['html'],
+            'team_ajax' => $fragment['ajax'],
+        ];
+    } else {
+        $view = (new \ChassesAuTresor\Core\Progress\PlayerProgressionApplicationService(
+            new \ChassesAuTresor\Core\Progress\ProgressionOverviewRepository($wpdb),
+            new \ChassesAuTresor\Core\Progress\PlayerProgressionRepository($wpdb)
+        ))->rankingPage($user_id, $hunt_id);
+        $view['board'] = 'joueurs';
+        $view['views'] = $views;
+    }
     echo (new \ChassesAuTresor\Core\Messages\PlayerProgressionRenderer())->renderRanking(
         $view,
         $hunts,
@@ -347,6 +786,47 @@ function cta_shell_render_player_ranking(): void
             'nonce' => function_exists('wp_create_nonce') ? wp_create_nonce('cat_player_progression') : '',
         ]
     );
+}
+
+/**
+ * Team leaderboard shown on the Équipes tab of Classement.
+ *
+ * @return array{html:string,ajax:array{url:string,nonce:string}}
+ */
+function cta_shell_team_ranking_fragment(int $user_id, int $hunt_id): array
+{
+    $ajax = [
+        'url' => function_exists('admin_url') ? admin_url('admin-ajax.php') : '',
+        'nonce' => function_exists('wp_create_nonce') ? wp_create_nonce('cat_team_performance') : '',
+    ];
+    $empty = '<p class="equipe-note">'
+        . esc_html__('Aucune équipe classée.', 'chassesautresor-com') . '</p>';
+    $ready = class_exists(\ChassesAuTresor\Core\Teams\TeamPerformanceApplicationService::class)
+        && class_exists(\ChassesAuTresor\Core\Teams\TeamPerformanceRepository::class)
+        && class_exists(\ChassesAuTresor\Core\Teams\TeamPageRenderer::class)
+        && class_exists(\ChassesAuTresor\Core\Teams\TeamRepository::class);
+    if (!$ready) {
+        return ['html' => $empty, 'ajax' => $ajax];
+    }
+
+    global $wpdb;
+    $teamId = (new \ChassesAuTresor\Core\Teams\TeamRepository($wpdb))->activeTeamId($user_id);
+    $ranking = (new \ChassesAuTresor\Core\Teams\TeamPerformanceApplicationService(
+        new \ChassesAuTresor\Core\Teams\TeamPerformanceRepository($wpdb)
+    ))->ranking($teamId, $hunt_id, 1, $user_id);
+    $renderer = new \ChassesAuTresor\Core\Teams\TeamPageRenderer(
+        static function (int $attachmentId): string {
+            if (!function_exists('wp_get_attachment_image_url')) {
+                return '';
+            }
+            $url = wp_get_attachment_image_url($attachmentId, 'thumbnail');
+
+            return is_string($url) ? $url : '';
+        },
+        function_exists('cta_shell_icon') ? (string) cta_shell_icon('team') : ''
+    );
+
+    return ['html' => $renderer->ranking($ranking), 'ajax' => $ajax];
 }
 
 /**
@@ -493,7 +973,7 @@ function cta_shell_enqueue(): void
         }
     }
 
-    if (function_exists('cta_shell_request_slug') && cta_shell_request_slug() === 'equipe') {
+    if ($shellSlug === 'classement') {
         $teamPath = get_stylesheet_directory() . '/assets/js/team-performance.js';
         if (file_exists($teamPath)) {
             wp_enqueue_script(

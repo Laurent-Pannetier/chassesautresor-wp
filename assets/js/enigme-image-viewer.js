@@ -1,12 +1,15 @@
 /**
- * Viewer d’images d’énigme : lecteur BD plein écran et lightbox.
+ * Viewer d’images d’énigme : lecteur BD plein écran et loupe.
  * Couvre le hero (`[data-enigme-gallery]`). Les pages d’étapes débloquées
  * s’ajoutent à cette galerie (y compris via AJAX).
  *
  * Une page 16:9 occupe le viewport (`object-fit: contain`). Le feuilletage
  * se fait au glissement horizontal, au clavier, ou avec les flèches du
- * bandeau. Un tap affiche le bandeau ; un double tap ou un pincement ouvre
- * la lightbox en taille native (1:1).
+ * bandeau. Un tap affiche le bandeau.
+ *
+ * Avec une souris, un clic arme une loupe ×4 qui suit le pointeur sur
+ * l’image. Un second clic ou Échap l’éteint. Au toucher, un double tap ou
+ * un pincement ouvre la lightbox en taille native.
  */
 (function () {
   window.__enigmeViewerDispose?.();
@@ -388,6 +391,12 @@
     img.loading = 'lazy';
     img.decoding = 'async';
     img.referrerPolicy = 'no-referrer';
+    if (page.srcset) {
+      img.srcset = page.srcset;
+    }
+    if (page.sizes) {
+      img.sizes = page.sizes;
+    }
     if (page.width) {
       img.width = Number(page.width);
     }
@@ -401,7 +410,18 @@
     hint.textContent =
       (window.EnigmeImageViewer && window.EnigmeImageViewer.zoomHint) || 'Agrandir';
 
-    zoom.appendChild(img);
+    const picture = document.createElement('picture');
+    if (page.webpSrcset) {
+      const source = document.createElement('source');
+      source.type = 'image/webp';
+      source.srcset = page.webpSrcset;
+      if (page.sizes) {
+        source.sizes = page.sizes;
+      }
+      picture.appendChild(source);
+    }
+    picture.appendChild(img);
+    zoom.appendChild(picture);
     zoom.appendChild(hint);
     figure.appendChild(zoom);
     if (nextNav) {
@@ -729,7 +749,11 @@
       if (event.pointerType === 'mouse' && event.button !== 0) {
         return;
       }
-      pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+      pointers.set(event.pointerId, {
+        x: event.clientX,
+        y: event.clientY,
+        type: event.pointerType,
+      });
       if (pointers.size >= 2) {
         pinchBase = pointerDistance();
         gesture = null;
@@ -751,10 +775,16 @@
       if (!pointers.has(event.pointerId)) {
         return;
       }
-      pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+      const previous = pointers.get(event.pointerId);
+      pointers.set(event.pointerId, {
+        x: event.clientX,
+        y: event.clientY,
+        type: event.pointerType || previous.type,
+      });
       if (pointers.size >= 2) {
         const distance = pointerDistance();
-        if (pinchBase > 0 && distance > pinchBase * 1.18) {
+        const touchPinch = [...pointers.values()].every((point) => point.type !== 'mouse');
+        if (pinchBase > 0 && distance > pinchBase * 1.18 && touchPinch) {
           pinchBase = distance * 4;
           openActiveLightbox();
         }
@@ -813,10 +843,15 @@
           window.clearTimeout(tapTimer);
           tapTimer = null;
         }
-        openActiveLightbox();
+        if (event.pointerType !== 'mouse') {
+          openActiveLightbox();
+        }
         return;
       }
       lastTapAt = now;
+      if (event.pointerType === 'mouse') {
+        return;
+      }
       if (tapTimer) {
         window.clearTimeout(tapTimer);
       }
@@ -1104,13 +1139,23 @@
       return;
     }
 
-    const zoomTrigger = event.target.closest('[data-enigme-lightbox-src]');
+    const zoomTrigger = event.target.closest?.('[data-enigme-lightbox-src]');
     if (!zoomTrigger) {
+      if (mouseDriven() && event.target.closest?.('.galerie-enigme__stage')) {
+        event.preventDefault();
+        toggleLens(event);
+      }
       return;
     }
 
-    if (zoomTrigger.closest('[data-enigme-gallery].is-comic-active')) {
+    if (
+      zoomTrigger.closest('[data-enigme-gallery].is-comic-active') ||
+      mouseDriven()
+    ) {
       event.preventDefault();
+      if (mouseDriven()) {
+        toggleLens(event);
+      }
       return;
     }
 
@@ -1121,6 +1166,13 @@
       zoomTrigger
     );
   };
+  let lastPointerType = '';
+  const mouseDriven = () =>
+    lastPointerType === 'mouse' ||
+    (lastPointerType !== 'touch' && finePointerQuery().matches);
+  let toggleLens = () => {};
+  let disarmLens = () => {};
+
   document.addEventListener('click', onViewerClick);
 
   const onViewerKeydown = (event) => {
@@ -1128,7 +1180,12 @@
       if (document.querySelector('form.is-reply-widget.is-immersive-open')) {
         return;
       }
-      closeLightbox();
+      if (document.querySelector('.enigme-lightbox-overlay')) {
+        event.preventDefault();
+        closeLightbox();
+        return;
+      }
+      disarmLens();
       return;
     }
 
@@ -1159,7 +1216,7 @@
       gallery.dispatchEvent(new CustomEvent('comic-page-change', { bubbles: true }));
     }
   };
-  document.addEventListener('keydown', onViewerKeydown);
+  document.addEventListener('keydown', onViewerKeydown, true);
 
   document.querySelectorAll('[data-enigme-gallery]').forEach((gallery) => {
     const active = [...gallery.querySelectorAll('.galerie-enigme__slide')].findIndex(
@@ -1393,9 +1450,287 @@
     }
   };
 
+  const LOUPE_SIZE = 240;
+  const LOUPE_SCALE = 4;
+  const LOUPE_DRAG_PX = 12;
+
+  const axisFraction = (token) => {
+    const value = token || '50%';
+    if (value.endsWith('%')) {
+      const fraction = parseFloat(value) / 100;
+      return Number.isFinite(fraction) ? Math.min(1, Math.max(0, fraction)) : 0.5;
+    }
+    if (value === 'left' || value === 'top') {
+      return 0;
+    }
+    if (value === 'right' || value === 'bottom') {
+      return 1;
+    }
+    return 0.5;
+  };
+
+  const contentRect = (img) => {
+    const bounds = img.getBoundingClientRect();
+    const frame = {
+      left: bounds.left,
+      top: bounds.top,
+      width: bounds.width,
+      height: bounds.height,
+    };
+    if (!frame.width || !frame.height) {
+      return null;
+    }
+    const style = window.getComputedStyle(img);
+    const fit = style.objectFit;
+    const naturalW = img.naturalWidth;
+    const naturalH = img.naturalHeight;
+    if ((fit !== 'contain' && fit !== 'cover') || !naturalW || !naturalH) {
+      return frame;
+    }
+    const parts = (style.objectPosition || '50% 50%').trim().split(/\s+/);
+    const fractionX = axisFraction(parts[0]);
+    const fractionY = axisFraction(parts[1]);
+    const elementRatio = frame.width / frame.height;
+    const imageRatio = naturalW / naturalH;
+    const wider = imageRatio > elementRatio;
+    let width = frame.width;
+    let height = frame.height;
+    if (fit === 'contain') {
+      if (wider) {
+        height = frame.width / imageRatio;
+      } else {
+        width = frame.height * imageRatio;
+      }
+    } else if (wider) {
+      width = frame.height * imageRatio;
+    } else {
+      height = frame.width / imageRatio;
+    }
+    return {
+      left: frame.left + (frame.width - width) * fractionX,
+      top: frame.top + (frame.height - height) * fractionY,
+      width,
+      height,
+    };
+  };
+
+  const containsPoint = (rect, x, y) =>
+    x >= rect.left &&
+    y >= rect.top &&
+    x <= rect.left + rect.width &&
+    y <= rect.top + rect.height;
+
+  const initPointerLens = () => {
+    const lens = document.createElement('div');
+    lens.className = 'enigme-loupe';
+    lens.hidden = true;
+    lens.setAttribute('aria-hidden', 'true');
+
+    const image = document.createElement('img');
+    image.className = 'enigme-loupe__image';
+    image.alt = '';
+    image.decoding = 'async';
+    image.draggable = false;
+    image.referrerPolicy = 'no-referrer';
+
+    const cross = document.createElement('span');
+    cross.className = 'enigme-loupe__cross';
+    cross.setAttribute('aria-hidden', 'true');
+
+    lens.append(image, cross);
+    document.body.appendChild(lens);
+
+    let activeTrigger = null;
+    let press = null;
+    let armed = false;
+    let dragClick = false;
+    let pressedZoom = null;
+
+    const zoomTriggerFrom = (event) =>
+      eventElement(event)?.closest?.('[data-enigme-lightbox-src]') ||
+      (event.type === 'click' ? pressedZoom : null);
+
+    const clearTarget = () => {
+      activeTrigger?.classList.remove('is-loupe-target');
+      activeTrigger = null;
+    };
+
+    const conceal = () => {
+      lens.hidden = true;
+      clearTarget();
+    };
+
+    const disarm = () => {
+      armed = false;
+      conceal();
+    };
+
+    const eventElement = (event) => {
+      if (event.target instanceof Element) {
+        return event.target;
+      }
+      return event.target?.parentElement || null;
+    };
+
+    const mouseEvent = (event) =>
+      event.pointerType === 'mouse' ||
+      (event.pointerType !== 'touch' && mouseDriven());
+
+    const place = (event) => {
+      if (editionActive()) {
+        disarm();
+        return;
+      }
+      if (!armed || !mouseEvent(event)) {
+        return;
+      }
+      if (press?.dragged) {
+        conceal();
+        return;
+      }
+      const trigger = zoomTriggerFrom(event);
+      const source = trigger?.getAttribute('data-enigme-lightbox-src') || '';
+      const picture = trigger?.querySelector('img') || null;
+      if (!trigger || !source || !picture) {
+        conceal();
+        return;
+      }
+      const rect = contentRect(picture);
+      if (!rect || !containsPoint(rect, event.clientX, event.clientY)) {
+        conceal();
+        return;
+      }
+      if (image.getAttribute('src') !== source) {
+        image.src = source;
+      }
+      const ratioX = (event.clientX - rect.left) / rect.width;
+      const ratioY = (event.clientY - rect.top) / rect.height;
+      const zoomedWidth = rect.width * LOUPE_SCALE;
+      const zoomedHeight = rect.height * LOUPE_SCALE;
+      lens.style.left = `${event.clientX - LOUPE_SIZE / 2}px`;
+      lens.style.top = `${event.clientY - LOUPE_SIZE / 2}px`;
+      image.style.width = `${zoomedWidth}px`;
+      image.style.height = `${zoomedHeight}px`;
+      image.style.left = `${LOUPE_SIZE / 2 - ratioX * zoomedWidth}px`;
+      image.style.top = `${LOUPE_SIZE / 2 - ratioY * zoomedHeight}px`;
+      if (activeTrigger !== trigger) {
+        clearTarget();
+        activeTrigger = trigger;
+        trigger.classList.add('is-loupe-target');
+      }
+      lens.hidden = false;
+    };
+
+    toggleLens = (event) => {
+      if (dragClick) {
+        dragClick = false;
+        return;
+      }
+      if (editionActive() || !mouseEvent(event)) {
+        return;
+      }
+      const trigger = zoomTriggerFrom(event);
+      if (!trigger) {
+        pressedZoom = null;
+        return;
+      }
+      if (armed) {
+        pressedZoom = null;
+        disarm();
+        return;
+      }
+      const picture = trigger.querySelector('img');
+      const rect = picture ? contentRect(picture) : null;
+      if (!rect || !containsPoint(rect, event.clientX, event.clientY)) {
+        pressedZoom = null;
+        return;
+      }
+      armed = true;
+      place(event);
+      pressedZoom = null;
+    };
+    disarmLens = disarm;
+
+    const onPointerDown = (event) => {
+      lastPointerType = event.pointerType || lastPointerType;
+      dragClick = false;
+      pressedZoom = event.pointerType === 'mouse'
+        ? eventElement(event)?.closest?.('[data-enigme-lightbox-src]') || null
+        : null;
+      if (event.pointerType !== 'mouse' || event.button !== 0) {
+        return;
+      }
+      press = {
+        id: event.pointerId,
+        x: event.clientX,
+        y: event.clientY,
+        dragged: false,
+      };
+    };
+
+    const onPointerMove = (event) => {
+      if (press && press.id === event.pointerId) {
+        const distance = Math.hypot(event.clientX - press.x, event.clientY - press.y);
+        if (distance > LOUPE_DRAG_PX) {
+          press.dragged = true;
+        }
+      }
+      place(event);
+    };
+
+    const onPointerUp = (event) => {
+      if (!press || press.id !== event.pointerId) {
+        return;
+      }
+      const wasDrag = press.dragged;
+      press = null;
+      dragClick = wasDrag;
+      if (wasDrag) {
+        place(event);
+      }
+    };
+
+    const onPointerLeave = (event) => {
+      if (!event.relatedTarget) {
+        press = null;
+        conceal();
+      }
+    };
+
+    const onEditionChange = () => {
+      if (editionActive()) {
+        press = null;
+        disarm();
+      }
+    };
+
+    const editionObserver = new MutationObserver(onEditionChange);
+    editionObserver.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+
+    document.addEventListener('pointerdown', onPointerDown);
+    document.addEventListener('pointermove', onPointerMove);
+    document.addEventListener('pointerup', onPointerUp);
+    document.addEventListener('pointercancel', onPointerUp);
+    document.addEventListener('pointerleave', onPointerLeave);
+
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown);
+      document.removeEventListener('pointermove', onPointerMove);
+      document.removeEventListener('pointerup', onPointerUp);
+      document.removeEventListener('pointercancel', onPointerUp);
+      document.removeEventListener('pointerleave', onPointerLeave);
+      editionObserver.disconnect();
+      disarm();
+      lens.remove();
+    };
+  };
+
+  const teardownLens = initPointerLens();
+
   window.__enigmeViewerDispose = () => {
     document.removeEventListener('click', onViewerClick);
-    document.removeEventListener('keydown', onViewerKeydown);
+    document.removeEventListener('keydown', onViewerKeydown, true);
+    teardownLens();
     window.__comicReaderTeardown?.();
     if (noticeTimer) {
       window.clearTimeout(noticeTimer);

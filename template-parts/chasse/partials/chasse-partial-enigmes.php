@@ -41,7 +41,7 @@ $etiquette_attrs = static function (int $col, array $cols_etiquette): string {
 
 $trouves_col = $show_points ? 5 : 4;
 ?>
-<table class="stats-table compact">
+<table class="stats-table">
   <thead>
     <tr>
       <th scope="col"><?= esc_html__('Titre', 'chassesautresor-com'); ?></th>
