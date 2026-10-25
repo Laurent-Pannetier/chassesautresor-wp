@@ -286,14 +286,7 @@ html[data-theme="day"] .app-topbar__hunt {
   }
 }
 
-.app-topbar .screen-reader-text,
-.app-sidebar .screen-reader-text,
-.hunt-banner .screen-reader-text,
-.team-stats .screen-reader-text,
-.app-placeholder .screen-reader-text,
-.app-progression .screen-reader-text,
-.app-equipe .screen-reader-text,
-.app-classement .screen-reader-text {
+.app-shell .screen-reader-text {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -833,12 +826,9 @@ img.avatar-pirate {
 }
 
 @media (--bp-desktop) {
-  .home.cat-single-hunt-cockpit--joueur .hunt-banner {
+  .home.cat-single-hunt-cockpit .hunt-banner,
+  .home.cat-single-hunt-cockpit .hunt-banner__empty {
     --hunt-banner-height: 250px;
-    min-height: 250px;
-  }
-
-  .home.cat-single-hunt-cockpit--joueur .hunt-banner__empty {
     min-height: 250px;
   }
 }
@@ -1296,45 +1286,9 @@ html[data-theme="day"] .home-enigmas-preserve {
 .equipe-performance__compact article,
 .equipe-ranking {
   border: 1px solid var(--shell-border);
-  border-radius: 1rem;
+  border-radius: 1.15rem;
   background: var(--shell-card-background);
   box-shadow: var(--shell-shadow);
-}
-
-.player-summary__primary,
-.equipe-performance__primary {
-  min-height: 9rem;
-  padding: 1.15rem;
-}
-
-.player-summary__primary .team-stat__value,
-.equipe-performance__primary .team-stat__value {
-  margin-top: 1.35rem;
-  font-size: clamp(2.4rem, 9vw, 4rem);
-}
-
-.player-summary__compact,
-.equipe-performance__compact {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.5rem;
-  margin-top: 0.65rem;
-}
-
-.player-summary__mini,
-.player-summary__tile,
-.equipe-performance__rank,
-.equipe-performance__compact article {
-  min-width: 0;
-  padding: 0.75rem;
-}
-
-.player-summary__mini .team-stat__value,
-.player-summary__tile .team-stat__value,
-.equipe-performance__rank .team-stat__value,
-.equipe-performance__compact .team-stat__value {
-  margin-top: 0.6rem;
-  font-size: 1.4rem;
 }
 
 .equipe-performance__rank a {
@@ -1349,7 +1303,7 @@ html[data-theme="day"] .home-enigmas-preserve {
 
 .progression-leaderboard,
 .equipe-ranking {
-  padding: 1rem;
+  padding: 0;
 }
 
 .progression-leaderboard h2,
@@ -1641,7 +1595,7 @@ html[data-theme="day"] .home-enigmas-preserve {
 .progression-table-card {
   padding: 0;
   border: 1px solid var(--shell-border);
-  border-radius: 1rem;
+  border-radius: 1.15rem;
   background: var(--shell-card-background);
   box-shadow: var(--shell-shadow);
   overflow: hidden;
@@ -2336,15 +2290,26 @@ html[data-theme="day"] .home-enigmas-preserve {
   white-space: nowrap;
 }
 
-.app-placeholder {
-  max-width: 40rem;
-  padding: 0.5rem 0 2rem;
+.app-page {
+  width: 100%;
+  padding: 0.25rem 0 2rem;
 }
 
-.app-placeholder__note {
+.app-page > .app-placeholder__title {
+  margin-bottom: 1rem;
+}
+
+.app-placeholder {
+  max-width: 40rem;
+}
+
+.app-placeholder__note,
+.trophies-page__empty,
+.notifications-center__empty {
   margin: 0.75rem 0 0;
   color: var(--shell-muted);
   font-size: 1rem;
+  line-height: 1.45;
 }
 
 .app-shell .app-sidebar .dashboard-nav-link,
@@ -2867,6 +2832,7 @@ body.admin-bar.shell-edition .app-sidebar {
   background: var(--shell-card-background);
   box-shadow: var(--shell-shadow);
   color: var(--shell-text);
+  backdrop-filter: none;
 }
 
 .app-shell .myaccount-main .dashboard-card:hover {
@@ -2936,16 +2902,34 @@ body.admin-bar.shell-edition .app-sidebar {
   border-color: var(--shell-accent);
 }
 
+.app-shell .myaccount-main .dashboard-card .bouton-primaire,
+.app-shell .myaccount-main .dashboard-card .bouton-secondaire,
+.app-shell .myaccount-main .dashboard-card .btn-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.5rem;
+  margin: 0.35rem 0.5rem 0.35rem 0;
+  padding: 0.45rem 1rem;
+  border-radius: 999px;
+  font-weight: 700;
+  line-height: 1.2;
+  transform: none;
+  box-shadow: none;
+}
+
 .app-shell .myaccount-main .dashboard-card .bouton-primaire {
   background: var(--shell-primary-button-bg);
   border-color: var(--shell-primary-button-bg);
   color: var(--shell-primary-button-text);
 }
 
-.app-shell .myaccount-main .dashboard-card .bouton-primaire:hover {
+.app-shell .myaccount-main .dashboard-card .bouton-primaire:hover,
+.app-shell .myaccount-main .dashboard-card .bouton-primaire:focus {
   background: var(--shell-primary-button-hover);
   border-color: var(--shell-primary-button-hover);
   color: var(--shell-primary-button-text);
+  transform: none;
 }
 
 .app-shell .myaccount-main .dashboard-card .bouton-secondaire {
@@ -2954,16 +2938,22 @@ body.admin-bar.shell-edition .app-sidebar {
   color: var(--shell-secondary-button-text);
 }
 
-.app-shell .myaccount-main .dashboard-card .bouton-secondaire:hover {
+.app-shell .myaccount-main .dashboard-card .bouton-secondaire:hover,
+.app-shell .myaccount-main .dashboard-card .bouton-secondaire:focus {
   background: var(--shell-secondary-button-hover);
   border-color: var(--shell-secondary-button-hover);
   color: var(--shell-secondary-button-text);
+  transform: none;
 }
 
-.app-shell .myaccount-main .dashboard-card .btn-danger {
+.app-shell .myaccount-main .dashboard-card .btn-danger,
+.app-shell .myaccount-main .dashboard-card .btn-danger:hover,
+.app-shell .myaccount-main .dashboard-card .btn-danger:focus {
   background: var(--shell-danger-button-bg);
   border-color: var(--shell-danger-button-bg);
   color: var(--shell-danger-button-text);
+  transform: none;
+  filter: none;
 }
 
 .app-shell .myaccount-main .dashboard-placeholder {
@@ -2973,19 +2963,47 @@ body.admin-bar.shell-edition .app-sidebar {
 .dashboard-card-action {
   display: inline-flex;
   align-items: center;
-  min-height: 2.25rem;
-  padding: 0.35rem 0.8rem;
+  min-height: 2.5rem;
+  padding: 0.45rem 1rem;
   border-radius: 999px;
-  background: var(--shell-accent);
-  color: var(--shell-accent-text);
+  background: var(--shell-primary-button-bg);
+  color: var(--shell-primary-button-text);
   font-weight: 700;
   text-decoration: none;
 }
 
-.app-equipe {
-  width: 100%;
-  max-width: none;
-  padding: 0.25rem 0 2rem;
+.dashboard-card-action:hover,
+.dashboard-card-action:focus-visible {
+  background: var(--shell-primary-button-hover);
+  color: var(--shell-primary-button-text);
+  text-decoration: none;
+}
+
+.app-equipe .bouton-secondaire,
+.app-equipe .bouton-secondaire:hover,
+.app-equipe .bouton-secondaire:focus {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.5rem;
+  margin: 0;
+  padding: 0.45rem 1rem;
+  border: 1px solid var(--shell-secondary-button-bg);
+  border-radius: 999px;
+  background: var(--shell-secondary-button-bg);
+  color: var(--shell-secondary-button-text);
+  font-weight: 700;
+  line-height: 1.2;
+  text-decoration: none;
+  transform: none;
+  box-shadow: none;
+}
+
+.app-equipe .bouton-secondaire:hover,
+.app-equipe .bouton-secondaire:focus {
+  background: var(--shell-secondary-button-hover);
+  border-color: var(--shell-secondary-button-hover);
+  color: var(--shell-secondary-button-text);
 }
 
 .equipe-grid--split,
@@ -3010,7 +3028,8 @@ body.admin-bar.shell-edition .app-sidebar {
   padding: 1rem;
   border: 1px solid var(--shell-border);
   border-radius: 1.15rem;
-  background: var(--shell-surface);
+  background: var(--shell-card-background);
+  box-shadow: var(--shell-shadow);
   color: var(--shell-text);
 }
 
@@ -3204,7 +3223,7 @@ body.admin-bar.shell-edition .app-sidebar {
   margin-top: 0.35rem;
   padding: 0.55rem 1rem;
   border: 0;
-  border-radius: 0.7rem;
+  border-radius: 999px;
   background: var(--shell-danger-button-bg);
   color: var(--shell-danger-button-text);
   font-size: 0.95rem;
@@ -3385,7 +3404,6 @@ body.admin-bar.shell-edition .app-sidebar {
 .app-trophies,
 .app-notifications {
   max-width: 58rem;
-  padding: 0.25rem 0 2rem;
 }
 
 .trophies-grid {
@@ -3406,7 +3424,8 @@ body.admin-bar.shell-edition .app-sidebar {
   padding: 1rem;
   border: 1px solid var(--shell-border);
   border-radius: 1.15rem;
-  background: var(--shell-surface);
+  background: var(--shell-card-background);
+  box-shadow: var(--shell-shadow);
   color: var(--shell-text);
 }
 
@@ -3581,6 +3600,11 @@ body.admin-bar.shell-edition .app-sidebar {
   color: #fff;
   font-size: 0.65rem;
   font-weight: 600;
+  line-height: 1.15rem;
+}
+
+.trophy-card--square .trophy-card__details[open] .trophy-card__count {
+  background: rgba(8, 12, 18, 0.82);
 }
 
 .trophy-card--square:has(details[open]) {
@@ -3594,8 +3618,11 @@ body.admin-bar.shell-edition .app-sidebar {
   left: 0;
   z-index: 4;
   min-width: 8.5rem;
+  max-height: min(16rem, 60vh);
   margin: 0;
   padding: 0.35rem 0.55rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   border: 1px solid var(--shell-border);
   border-radius: 0.7rem;
   background: var(--shell-surface);
@@ -3603,9 +3630,7 @@ body.admin-bar.shell-edition .app-sidebar {
 }
 
 .trophy-card__count {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  display: inline-block;
   min-width: 2rem;
   padding: 0.15rem 0.65rem;
   border: 1px solid var(--shell-border);
@@ -3613,6 +3638,8 @@ body.admin-bar.shell-edition .app-sidebar {
   background: var(--shell-accent-soft);
   color: var(--shell-accent-strong);
   font-weight: 800;
+  line-height: 1.2;
+  text-align: center;
   cursor: pointer;
   list-style: none;
 }
@@ -3725,11 +3752,6 @@ body.admin-bar.shell-edition .app-sidebar {
   font-size: 0.85rem;
 }
 
-.trophies-page__empty,
-.notifications-center__empty {
-  color: var(--shell-muted);
-}
-
 .notifications-center__header {
   display: flex;
   flex-direction: column;
@@ -3759,8 +3781,9 @@ body.admin-bar.shell-edition .app-sidebar {
   align-items: start;
   padding: 1rem;
   border: 1px solid var(--shell-border);
-  border-radius: 1rem;
-  background: var(--shell-surface);
+  border-radius: 1.15rem;
+  background: var(--shell-card-background);
+  box-shadow: var(--shell-shadow);
 }
 
 .notifications-list__item.is-unread {

@@ -985,6 +985,19 @@ function cta_shell_enqueue(): void
             );
         }
     }
+
+    if ($shellSlug === 'trophees') {
+        $trophyWallPath = get_stylesheet_directory() . '/assets/js/trophy-wall.js';
+        if (file_exists($trophyWallPath)) {
+            wp_enqueue_script(
+                'cta-trophy-wall',
+                get_stylesheet_directory_uri() . '/assets/js/trophy-wall.js',
+                [],
+                (string) filemtime($trophyWallPath),
+                true
+            );
+        }
+    }
 }
 add_action('wp_enqueue_scripts', 'cta_shell_enqueue');
 

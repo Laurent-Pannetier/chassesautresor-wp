@@ -2396,8 +2396,8 @@ html:not([data-theme="day"]) .woocommerce-page .account-profile .show-password-i
     padding: 0.35rem 1rem;
     border: 1px solid transparent;
     border-radius: 999px;
-    background: var(--shell-accent);
-    color: var(--shell-accent-text);
+    background: var(--shell-primary-button-bg);
+    color: var(--shell-primary-button-text);
     font-family: var(--font-main);
     font-size: 0.92rem;
     font-weight: 700;
@@ -2410,8 +2410,8 @@ html:not([data-theme="day"]) .woocommerce-page .account-profile .show-password-i
 
 .woocommerce-page .account-profile .account-button:hover,
 .woocommerce-page .account-profile .account-button:focus-visible {
-    background: var(--shell-accent-strong);
-    color: var(--shell-accent-text);
+    background: var(--shell-primary-button-hover);
+    color: var(--shell-primary-button-text);
     border-color: transparent;
     text-decoration: none;
 }
