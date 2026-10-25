@@ -832,6 +832,17 @@ img.avatar-pirate {
   background: var(--shell-surface);
 }
 
+@media (--bp-desktop) {
+  .home.cat-single-hunt-cockpit--joueur .hunt-banner {
+    --hunt-banner-height: 250px;
+    min-height: 250px;
+  }
+
+  .home.cat-single-hunt-cockpit--joueur .hunt-banner__empty {
+    min-height: 250px;
+  }
+}
+
 .hunt-banner__sphere,
 .hunt-banner__frame {
   height: var(--hunt-banner-height);

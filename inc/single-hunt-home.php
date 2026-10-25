@@ -549,6 +549,7 @@ function cat_single_hunt_cockpit_body_class(array $classes): array
     }
 
     $classes[] = 'cat-single-hunt-cockpit';
+    $classes[] = 'cat-single-hunt-cockpit--' . cat_single_hunt_home_audience();
     $classes = array_values(array_diff($classes, ['has-hero']));
 
     return $classes;
