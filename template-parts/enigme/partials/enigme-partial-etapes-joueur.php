@@ -18,7 +18,6 @@ if ($riddleId <= 0 || $visibleIds === []) {
   <?php foreach ($visibleIds as $stepId) : ?>
     <?php
     $completed = in_array($stepId, $completedIds, true);
-    $imageId = (int) get_field('etape_image', $stepId);
     $content = (string) get_field('etape_contenu', $stepId);
     $plainContent = html_entity_decode(wp_strip_all_tags($content), ENT_QUOTES | ENT_HTML5, 'UTF-8');
     $hasTextContent = preg_replace('/[\s\x{00A0}]+/u', '', $plainContent) !== '';
@@ -27,98 +26,63 @@ if ($riddleId <= 0 || $visibleIds === []) {
         $content
     ) === 1;
 
-    $hasImage = $imageId > 0;
     $hasText = $hasTextContent || $hasEmbeddedContent;
-    // Les images d’étapes vivent dans la galerie BD ; une étape terminée
-    // sans texte/média embarqué n’a plus rien à afficher ici.
+    // Les pages ne sortent qu’une fois l’étape réussie. L’étape en cours
+    // ne les embarque pas : elles servent la question suivante.
+    $revealedPages = $completed && function_exists('enigme_step_image_ids')
+        ? enigme_step_image_ids((int) $stepId)
+        : [];
+    if ($revealedPages !== []) :
+        ?>
+    <div class="riddle-step-revealed-pages" data-revealed-step-id="<?= esc_attr((string) $stepId); ?>" hidden>
+        <?php foreach ($revealedPages as $imageId) : ?>
+            <?php
+            $page = enigme_step_comic_page_view((int) $imageId);
+            if ($page['preview'] === '' || $page['full'] === '') {
+                continue;
+            }
+            ?>
+      <span
+        data-step-page-image-id="<?= esc_attr((string) $imageId); ?>"
+        data-step-page-preview="<?= $page['preview']; ?>"
+        data-step-page-full="<?= esc_url($page['full']); ?>"
+        data-step-page-thumb="<?= esc_url($page['thumb']); ?>"
+        data-step-page-alt="<?= esc_attr($page['alt']); ?>"
+            <?php if ($page['srcset'] !== '') : ?>
+        data-step-page-srcset="<?= $page['srcset']; ?>"
+            <?php endif; ?>
+            <?php if ($page['webp_srcset'] !== '') : ?>
+        data-step-page-srcset-webp="<?= $page['webp_srcset']; ?>"
+            <?php endif; ?>
+            <?php if ($page['sizes'] !== '') : ?>
+        data-step-page-sizes="<?= esc_attr($page['sizes']); ?>"
+            <?php endif; ?>
+            <?php if ($page['width'] > 0) : ?>
+        data-step-page-width="<?= esc_attr((string) $page['width']); ?>"
+        data-step-page-height="<?= esc_attr((string) $page['height']); ?>"
+            <?php endif; ?>
+      ></span>
+        <?php endforeach; ?>
+    </div>
+        <?php
+    endif;
+    // Une étape terminée sans texte n’a plus rien à montrer hors de la BD.
     if ($completed && !$hasText) {
         continue;
     }
     $isWidgetOnly = !$completed && !$hasText;
     $stepClasses = 'riddle-player-step';
     $stepClasses .= $completed ? ' is-completed' : ' is-current';
-    if ($hasImage) {
-        $stepClasses .= ' has-image';
-    }
     if ($hasText) {
         $stepClasses .= ' has-text';
     }
     if ($isWidgetOnly) {
         $stepClasses .= ' is-widget-only';
     }
-
-    $pagePreviewUrl = '';
-    $pageFullUrl = '';
-    $pageThumbUrl = '';
-    $pageAlt = '';
-    $pageSrcset = '';
-    $pageWebpSrcset = '';
-    $pageSizes = '';
-    $pageWidth = 0;
-    $pageHeight = 0;
-    if ($hasImage) {
-        $pageAlt = trim((string) get_post_meta($imageId, '_wp_attachment_image_alt', true));
-        if ($pageAlt === '') {
-            $pageAlt = __('Page débloquée', 'chassesautresor-com');
-        }
-        $payload = function_exists('enigme_hero_picture_payload')
-            ? enigme_hero_picture_payload($imageId)
-            : null;
-        if (is_array($payload) && $payload['src'] !== '') {
-            // Déjà échappé comme le srcset du <picture>.
-            $pagePreviewUrl = $payload['src'];
-            $pageSrcset = $payload['srcset'];
-            $pageWebpSrcset = $payload['webp_srcset'];
-            $pageSizes = $payload['sizes'];
-            $pageWidth = (int) $payload['width'];
-            $pageHeight = (int) $payload['height'];
-        } else {
-            $pagePreviewUrl = esc_url(
-                function_exists('cta_voir_image_enigme_url')
-                    ? cta_voir_image_enigme_url($imageId, 'large')
-                    : add_query_arg(
-                        ['id' => $imageId, 'taille' => 'large'],
-                        site_url('/voir-image-enigme')
-                    )
-            );
-        }
-        $pageFullUrl = function_exists('cta_voir_image_enigme_url')
-            ? cta_voir_image_enigme_url($imageId, 'full')
-            : add_query_arg(
-                ['id' => $imageId, 'taille' => 'full'],
-                site_url('/voir-image-enigme')
-            );
-        $pageThumbUrl = function_exists('cta_voir_image_enigme_url')
-            ? cta_voir_image_enigme_url($imageId, 'thumbnail')
-            : add_query_arg(
-                ['id' => $imageId, 'taille' => 'thumbnail'],
-                site_url('/voir-image-enigme')
-            );
-    }
     ?>
     <article
       class="<?= esc_attr($stepClasses); ?>"
-      data-player-step-id="<?= esc_attr($stepId); ?>"
-      <?php if ($hasImage) : ?>
-        data-step-page-image-id="<?= esc_attr((string) $imageId); ?>"
-        data-step-page-preview="<?= $pagePreviewUrl; ?>"
-        data-step-page-full="<?= esc_url($pageFullUrl); ?>"
-        data-step-page-thumb="<?= esc_url($pageThumbUrl); ?>"
-        data-step-page-alt="<?= esc_attr($pageAlt); ?>"
-        <?php if ($pageSrcset !== '') : ?>
-          data-step-page-srcset="<?= $pageSrcset; ?>"
-        <?php endif; ?>
-        <?php if ($pageWebpSrcset !== '') : ?>
-          data-step-page-srcset-webp="<?= $pageWebpSrcset; ?>"
-        <?php endif; ?>
-        <?php if ($pageSizes !== '') : ?>
-          data-step-page-sizes="<?= esc_attr($pageSizes); ?>"
-        <?php endif; ?>
-        <?php if ($pageWidth > 0) : ?>
-          data-step-page-width="<?= esc_attr((string) $pageWidth); ?>"
-          data-step-page-height="<?= esc_attr((string) $pageHeight); ?>"
-        <?php endif; ?>
-      <?php endif; ?>
+      data-player-step-id="<?= esc_attr((string) $stepId); ?>"
     >
       <?php if (trim($content) !== '') : ?>
         <div class="riddle-player-step__content"><?= wp_kses_post($content); ?></div>

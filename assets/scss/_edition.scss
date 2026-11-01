@@ -354,12 +354,35 @@ html:not([data-theme="day"]) body.shell-edition .riddle-step-form__content-edito
   outline-offset: 2px;
 }
 
-.riddle-step-form__image-preview img {
-  display: block;
-  width: auto;
-  max-width: 100%;
-  max-height: 240px;
+.riddle-step-form__image-preview {
+  display: grid;
+  gap: var(--space-sm);
+}
+
+.riddle-step-form__image-item {
+  display: grid;
+  grid-template-columns: 4.5rem minmax(0, 1fr);
+  gap: var(--space-xs) var(--space-sm);
+  align-items: center;
+}
+
+.riddle-step-form__image-item img {
+  grid-row: span 2;
+  width: 4.5rem;
+  height: 4.5rem;
+  object-fit: cover;
   border-radius: 6px;
+}
+
+.riddle-step-form__image-rank {
+  font-weight: 700;
+}
+
+.riddle-step-form__image-item-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  grid-column: 2;
 }
 
 .riddle-step-form__feedback {

@@ -8,14 +8,14 @@ document.addEventListener('DOMContentLoaded', () => {
   const form = editor.querySelector('.riddle-step-form');
   const formFeedback = editor.querySelector('.riddle-step-form__feedback');
   const heading = editor.querySelector('.riddle-step-form__heading');
-  const imageInput = form?.querySelector('[name="image_id"]');
   const contentInput = form?.querySelector('[name="contenu"]');
   const contentEditor = form?.querySelector('.riddle-step-form__content-editor');
   const imagePreview = editor.querySelector('.riddle-step-form__image-preview');
-  const imageRemove = editor.querySelector('.riddle-step-image-remove');
   const structureLocked = editor.dataset.structureLocked === '1';
   let dragged = null;
   let savedScroll = 0;
+  let stepImages = [];
+  let stepImageBaseline = [];
 
   const legendMark = form?.querySelector('.answer-gap-marker--legend');
   const answerFieldset = form?.querySelector('fieldset');
@@ -69,11 +69,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const shellMode = !!document.querySelector('.shell-edition');
   let stepBaselineValues = null;
-  let stepImageUrl = '';
 
   const stepPayload = () => {
     contentInput.value = contentEditor.innerHTML;
-    return Object.fromEntries(new FormData(form).entries());
+    const values = {};
+    new FormData(form).forEach((value, key) => {
+      if (key === 'image_ids[]') {
+        values[key] = values[key] || [];
+        values[key].push(value);
+        return;
+      }
+      values[key] = value;
+    });
+    return values;
   };
 
   function markStepDraft() {
@@ -86,20 +94,78 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!form) return;
     contentInput.value = contentEditor.innerHTML;
     stepBaselineValues = stepPayload();
-    stepImageUrl = imagePreview?.querySelector('img')?.getAttribute('src') || '';
+    stepImageBaseline = stepImages.map(image => ({ ...image }));
     window.ctaShellEditionSave?.setExtra('etape', false);
   };
 
-  const setImage = (id = '', url = '', silent = false) => {
-    imageInput.value = id;
-    imagePreview.innerHTML = url ? `<img src="${url}" alt="">` : '';
-    imageRemove.hidden = !url;
+  const renderImages = (silent = false) => {
+    if (!imagePreview) return;
+    imagePreview.replaceChildren();
+    const moveUp = RiddleStepsEdit.texts.moveUp || 'Monter';
+    const moveDown = RiddleStepsEdit.texts.moveDown || 'Descendre';
+    const removePage = RiddleStepsEdit.texts.removePage || 'Retirer';
+    stepImages.forEach((image, index) => {
+      const item = document.createElement('div');
+      item.className = 'riddle-step-form__image-item';
+
+      const img = document.createElement('img');
+      img.src = image.url;
+      img.alt = '';
+      item.append(img);
+
+      const rank = document.createElement('span');
+      rank.className = 'riddle-step-form__image-rank';
+      rank.textContent = String(index + 1);
+      item.append(rank);
+
+      const actions = document.createElement('div');
+      actions.className = 'riddle-step-form__image-item-actions';
+
+      const up = document.createElement('button');
+      up.type = 'button';
+      up.className = 'bouton-texte riddle-step-image-up';
+      up.textContent = moveUp;
+      up.hidden = index === 0;
+      actions.append(up);
+
+      const down = document.createElement('button');
+      down.type = 'button';
+      down.className = 'bouton-texte riddle-step-image-down';
+      down.textContent = moveDown;
+      down.hidden = index === stepImages.length - 1;
+      actions.append(down);
+
+      const remove = document.createElement('button');
+      remove.type = 'button';
+      remove.className = 'bouton-texte riddle-step-image-remove';
+      remove.textContent = removePage;
+      actions.append(remove);
+
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = 'image_ids[]';
+      input.value = image.id;
+      item.append(actions, input);
+      imagePreview.append(item);
+    });
     if (!silent) markStepDraft();
+  };
+
+  const setImages = (images, silent = false) => {
+    const seen = new Set();
+    stepImages = [];
+    images.forEach(image => {
+      const id = String(image.id || '');
+      if (!id || id === '0' || seen.has(id)) return;
+      seen.add(id);
+      stepImages.push({ id, url: String(image.url || '') });
+    });
+    renderImages(silent);
   };
 
   const applyStepValues = (values) => {
     form.querySelectorAll('input, textarea, select').forEach((field) => {
-      if (!field.name || field === contentInput || field.name === 'image_id') return;
+      if (!field.name || field === contentInput || field.name === 'image_ids[]') return;
       if (field.type === 'checkbox') {
         field.checked = values[field.name] === '1';
         return;
@@ -110,7 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     contentEditor.innerHTML = values.contenu || '';
     contentInput.value = contentEditor.innerHTML;
-    setImage(values.image_id || '', stepImageUrl, true);
+    setImages(stepImageBaseline, true);
     updateWidgetConfig();
   };
 
@@ -131,8 +197,7 @@ document.addEventListener('DOMContentLoaded', () => {
         contentInput.value = contentEditor.innerHTML;
         formFeedback.textContent = '';
         try {
-          const values = Object.fromEntries(new FormData(form).entries());
-          const step = await request('enregistrer_etape_enigme', values);
+          const step = await request('enregistrer_etape_enigme', stepPayload());
           updateCard(step);
           closeForm();
           return true;
@@ -146,6 +211,7 @@ document.addEventListener('DOMContentLoaded', () => {
       },
       restore() {
         if (!stepBaselineValues) return;
+        stepImages = stepImageBaseline.map(image => ({ ...image }));
         applyStepValues(stepBaselineValues);
         if (formFeedback) formFeedback.textContent = '';
       },
@@ -157,7 +223,7 @@ document.addEventListener('DOMContentLoaded', () => {
     form.reset();
     contentEditor.innerHTML = '';
     formFeedback.textContent = '';
-    setImage('', '', true);
+    setImages([], true);
     updateWidgetConfig();
     form.querySelector('[name="etape_id"]').value = stepId || '';
     heading.textContent = stepId ? RiddleStepsEdit.texts.editTitle : RiddleStepsEdit.texts.newTitle;
@@ -168,7 +234,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const step = await request('charger_etape_enigme', { etape_id: stepId });
         form.querySelector('[name="titre"]').value = step.title;
         contentEditor.innerHTML = step.content;
-        setImage(step.image_id || '', step.image_url || '', true);
+        const loadedImages = Array.isArray(step.images) && step.images.length
+          ? step.images
+          : (step.image_id ? [{ id: step.image_id, url: step.image_url || '' }] : []);
+        setImages(loadedImages, true);
         const widgetSelect = form.querySelector('[name="widget"]');
         if (widgetSelect) {
           widgetSelect.value = step.widget || 'click';
@@ -269,8 +338,7 @@ document.addEventListener('DOMContentLoaded', () => {
       window.ctaShellEditionSave.save();
       return;
     }
-    contentInput.value = contentEditor.innerHTML;
-    const values = Object.fromEntries(new FormData(form).entries());
+    const values = stepPayload();
     formFeedback.textContent = '';
     try {
       const step = await request('enregistrer_etape_enigme', values);
@@ -285,14 +353,40 @@ document.addEventListener('DOMContentLoaded', () => {
 
   editor.querySelector('.riddle-step-image-select')?.addEventListener('click', () => {
     if (!window.wp?.media) return;
-    const frame = wp.media({ title: RiddleStepsEdit.texts.imageTitle, multiple: false, library: { type: 'image' } });
+    const frame = wp.media({
+      title: RiddleStepsEdit.texts.imageTitle,
+      multiple: true,
+      library: { type: 'image' }
+    });
     frame.on('select', () => {
-      const image = frame.state().get('selection').first().toJSON();
-      setImage(image.id, image.sizes?.medium?.url || image.url);
+      const selected = frame.state().get('selection').toJSON();
+      setImages(stepImages.concat(selected.map(image => ({
+        id: image.id,
+        url: image.sizes?.medium?.url || image.url
+      }))));
     });
     frame.open();
   });
-  imageRemove?.addEventListener('click', () => setImage());
+  imagePreview?.addEventListener('click', event => {
+    const item = event.target.closest('.riddle-step-form__image-item');
+    if (!item) return;
+    const index = [...imagePreview.children].indexOf(item);
+    if (index < 0) return;
+    if (event.target.closest('.riddle-step-image-remove')) {
+      stepImages.splice(index, 1);
+      renderImages();
+      return;
+    }
+    if (event.target.closest('.riddle-step-image-up') && index > 0) {
+      [stepImages[index - 1], stepImages[index]] = [stepImages[index], stepImages[index - 1]];
+      renderImages();
+      return;
+    }
+    if (event.target.closest('.riddle-step-image-down') && index < stepImages.length - 1) {
+      [stepImages[index + 1], stepImages[index]] = [stepImages[index], stepImages[index + 1]];
+      renderImages();
+    }
+  });
 
   list?.addEventListener('dragstart', event => {
     if (structureLocked) {

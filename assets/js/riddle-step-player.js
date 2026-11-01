@@ -121,26 +121,35 @@ const hasMeaningfulStepContent = article => {
   return content.textContent.replace(/\u00a0/g, ' ').trim() !== '';
 };
 
-const syncStepPageToGallery = article => {
-  if (!article?.dataset?.stepPagePreview || !article?.dataset?.stepPageFull) {
+const comicPageFromNode = node => ({
+  imageId: node.dataset.stepPageImageId || '',
+  stepId: node.closest('[data-revealed-step-id]')?.dataset.revealedStepId || '',
+  previewUrl: node.dataset.stepPagePreview,
+  fullUrl: node.dataset.stepPageFull,
+  thumbUrl: node.dataset.stepPageThumb || node.dataset.stepPagePreview,
+  alt: node.dataset.stepPageAlt || '',
+  srcset: node.dataset.stepPageSrcset || '',
+  webpSrcset: node.dataset.stepPageSrcsetWebp || '',
+  sizes: node.dataset.stepPageSizes || '',
+  width: node.dataset.stepPageWidth || '',
+  height: node.dataset.stepPageHeight || '',
+  select: false
+});
+
+const revealSolvedStepPages = (parsed, stepId) => {
+  const safeStepId = String(stepId || '').replace(/[^\d]/g, '');
+  if (!safeStepId || typeof window.EnigmeGallery?.appendPage !== 'function') {
     return -1;
   }
-  if (typeof window.EnigmeGallery?.appendPage !== 'function') {
-    return -1;
-  }
-  return window.EnigmeGallery.appendPage({
-    imageId: article.dataset.stepPageImageId || '',
-    stepId: article.dataset.playerStepId || '',
-    previewUrl: article.dataset.stepPagePreview,
-    fullUrl: article.dataset.stepPageFull,
-    thumbUrl: article.dataset.stepPageThumb || article.dataset.stepPagePreview,
-    alt: article.dataset.stepPageAlt || '',
-    srcset: article.dataset.stepPageSrcset || '',
-    webpSrcset: article.dataset.stepPageSrcsetWebp || '',
-    sizes: article.dataset.stepPageSizes || '',
-    width: article.dataset.stepPageWidth || '',
-    height: article.dataset.stepPageHeight || ''
+  const host = parsed.querySelector(`[data-revealed-step-id="${safeStepId}"]`);
+  if (!host) return -1;
+  let firstIndex = -1;
+  host.querySelectorAll('[data-step-page-preview]').forEach(node => {
+    if (!node.dataset.stepPagePreview || !node.dataset.stepPageFull) return;
+    const index = window.EnigmeGallery.appendPage(comicPageFromNode(node));
+    if (firstIndex < 0 && index >= 0) firstIndex = index;
   });
+  return firstIndex;
 };
 
 const positionRiddleStepTarget = async target => {
@@ -250,6 +259,11 @@ const unlockRiddleStepContent = (form, data) => {
   if (!data.response_html) return null;
   const parsed = new DOMParser().parseFromString(data.response_html, 'text/html');
   const currentArticle = resolveStepArticleForForm(form);
+  const solvedStepId = form.querySelector('input[name="etape_id"]')?.value
+    || currentArticle?.dataset.playerStepId
+    || '';
+  const revealedIndex = revealSolvedStepPages(parsed, solvedStepId);
+  const finish = target => (target ? { target, revealedIndex } : null);
   const player = currentArticle?.closest('.riddle-steps-player')
     || document.querySelector('.riddle-steps-player');
 
@@ -268,27 +282,26 @@ const unlockRiddleStepContent = (form, data) => {
   if (data.current_step_id) {
     const selector = `[data-player-step-id="${data.current_step_id}"]`;
     const existingNext = player.querySelector(selector);
-    if (existingNext) return existingNext;
+    if (existingNext) return finish(existingNext);
     const nextArticle = parsed.querySelector(selector);
     if (!nextArticle) return null;
     player.append(nextArticle);
     initializeGpsWidgets(nextArticle);
-    syncStepPageToGallery(nextArticle);
-    return nextArticle;
+    return finish(nextArticle);
   }
 
   const existingFinal = document.querySelector('.formulaire-reponse-auto, .formulaire-reponse-manuelle');
   if (existingFinal) {
     document.dispatchEvent(new CustomEvent('riddle-step-content-updated'));
-    return existingFinal;
+    return finish(existingFinal);
   }
   const finalForm = parsed.querySelector('.formulaire-reponse-auto, .formulaire-reponse-manuelle');
-  if (!finalForm) return player;
+  if (!finalForm) return finish(player);
   const payload = finalForm.closest('.reponse-launcher') || finalForm;
   player.insertAdjacentElement('afterend', payload);
   initializeGpsWidgets(payload);
   document.dispatchEvent(new CustomEvent('riddle-step-content-updated'));
-  return finalForm;
+  return finish(finalForm);
 };
 
 const focusUnlockedContent = target => {
@@ -410,18 +423,21 @@ document.addEventListener('submit', async event => {
     if (hintStorageKey) {
       window.clearRiddleSessionHint?.(hintStorageKey);
     }
-    const target = unlockRiddleStepContent(form, result.data);
-    if (!target) {
+    const unlocked = unlockRiddleStepContent(form, result.data);
+    if (!unlocked?.target) {
       // Server already advanced; reload rather than leave the overlay stuck
       // with a false "wrong answer" and a later "step unavailable".
       window.location.reload();
       return;
     }
-    focusUnlockedContent(target);
     const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
     const gallery = window.EnigmeGallery?.getGallery?.();
-    const revealedPage = target.dataset?.stepPagePreview ? gallery : null;
-    const scrollTarget = revealedPage || target;
+    const showRevealedPage = unlocked.revealedIndex >= 0 && gallery;
+    if (showRevealedPage && typeof window.EnigmeGallery.selectSlide === 'function') {
+      window.EnigmeGallery.selectSlide(gallery, unlocked.revealedIndex);
+    }
+    const scrollTarget = showRevealedPage ? gallery : unlocked.target;
+    focusUnlockedContent(scrollTarget);
     scrollTarget.scrollIntoView({
       behavior: reducedMotion ? 'auto' : 'smooth',
       block: 'start'

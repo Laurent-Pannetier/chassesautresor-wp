@@ -946,8 +946,11 @@ li.active .enigme-menu__edit {
 }
 
 .galerie-enigme__nav:hover,
+.galerie-enigme__nav:focus,
 .galerie-enigme__nav:focus-visible {
-  background: rgba(8, 14, 28, 0.9);
+  background: rgba(8, 14, 28, 0.92);
+  color: var(--color-text-primary, #f5f5dc);
+  border-color: rgba(255, 255, 255, 0.55);
   outline: 2px solid var(--color-accent, #c45c26);
   outline-offset: 2px;
 }
@@ -2593,25 +2596,37 @@ body.comic-reader .page-enigme--reader .enigme-media-zoom:focus-visible img {
   transform: none;
 }
 
-/* Chevrons latéraux : visibles seulement quand le pointeur est sur le bord. */
+/* Chevrons latéraux : visibles seulement quand le pointeur est sur le bord.
+   Le survol global des boutons hérite la couleur du texte. En thème jour elle
+   est sombre, donc illisible sur le disque nuit. On garde le beige du site. */
 body.comic-reader .page-enigme--reader .galerie-enigme__nav {
   z-index: 5;
   width: 3rem;
   height: 3rem;
   font-size: 1.75rem;
   background: rgba(8, 14, 28, 0.78);
+  color: var(--color-text-primary, #f5f5dc);
+  border-color: rgba(255, 255, 255, 0.4);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  transition: opacity 0.18s ease, background-color 0.2s ease, visibility 0s linear 0.18s;
+  transition: opacity 0.18s ease, background-color 0.2s ease, border-color 0.2s ease, visibility 0s linear 0.18s;
 }
 
 body.comic-reader .page-enigme--reader .galerie-enigme__nav.is-edge-visible {
   opacity: 1;
   visibility: visible;
   pointer-events: auto;
-  transition: opacity 0.18s ease, background-color 0.2s ease, visibility 0s linear 0s;
+  transition: opacity 0.18s ease, background-color 0.2s ease, border-color 0.2s ease, visibility 0s linear 0s;
+}
+
+body.comic-reader .page-enigme--reader .galerie-enigme__nav:hover,
+body.comic-reader .page-enigme--reader .galerie-enigme__nav:focus,
+body.comic-reader .page-enigme--reader .galerie-enigme__nav:focus-visible {
+  background: rgba(8, 14, 28, 0.92);
+  color: var(--color-text-primary, #f5f5dc);
+  border-color: rgba(255, 255, 255, 0.72);
 }
 
 body.comic-reader .page-enigme--reader .galerie-enigme__nav:disabled {

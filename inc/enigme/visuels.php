@@ -518,10 +518,143 @@ function enigme_image_display_url(int $image_id, string $size = 'full'): string
 }
 
 /**
- * Collecte les pages BD débloquées issues des étapes intermédiaires.
+ * Identifiants de pages d’une étape, dans l’ordre de lecture.
  *
- * Les images d’étapes visibles (ou toutes les étapes pour un organisateur)
- * s’ajoutent aux pages de l’énigme dans la galerie principale.
+ * Une ancienne étape ne stocke qu’un seul identifiant : il devient la page 1.
+ *
+ * @param mixed $value
+ * @return int[]
+ */
+function enigme_normalize_step_image_ids($value): array
+{
+    if (class_exists(\ChassesAuTresor\Core\Content\RiddleStepGallery::class)) {
+        return \ChassesAuTresor\Core\Content\RiddleStepGallery::normalize($value);
+    }
+    if (is_numeric($value)) {
+        $id = (int) $value;
+
+        return $id > 0 ? [$id] : [];
+    }
+    if (!is_array($value)) {
+        return [];
+    }
+
+    $ids = [];
+    foreach ($value as $item) {
+        if (is_array($item)) {
+            $id = (int) ($item['ID'] ?? $item['id'] ?? 0);
+        } elseif (is_numeric($item)) {
+            $id = (int) $item;
+        } else {
+            continue;
+        }
+        if ($id <= 0 || in_array($id, $ids, true)) {
+            continue;
+        }
+        $ids[] = $id;
+    }
+
+    return $ids;
+}
+
+/**
+ * Pages BD d’une étape. Le repli lit aussi l’ancien champ image unique.
+ *
+ * @return int[]
+ */
+function enigme_step_image_ids(int $stepId): array
+{
+    if ($stepId <= 0 || !function_exists('get_field')) {
+        return [];
+    }
+    if (class_exists(\ChassesAuTresor\Core\Content\RiddleStepGallery::class)) {
+        return \ChassesAuTresor\Core\Content\RiddleStepGallery::idsForStep($stepId);
+    }
+
+    return enigme_normalize_step_image_ids(get_field('etape_image', $stepId));
+}
+
+/**
+ * Données d’affichage d’une page BD d’étape.
+ *
+ * Les URL issues du hero sont déjà échappées. `full` et `thumb` restent brutes.
+ *
+ * @return array{
+ *     alt:string,
+ *     preview:string,
+ *     full:string,
+ *     thumb:string,
+ *     srcset:string,
+ *     webp_srcset:string,
+ *     sizes:string,
+ *     width:int,
+ *     height:int
+ * }
+ */
+function enigme_step_comic_page_view(int $imageId): array
+{
+    $alt = trim((string) get_post_meta($imageId, '_wp_attachment_image_alt', true));
+    if ($alt === '') {
+        $alt = __('Page débloquée', 'chassesautresor-com');
+    }
+
+    $preview = '';
+    $srcset = '';
+    $webpSrcset = '';
+    $sizes = '';
+    $width = 0;
+    $height = 0;
+    $payload = enigme_hero_picture_payload($imageId);
+    if ($payload['src'] !== '') {
+        $preview = $payload['src'];
+        $srcset = $payload['srcset'];
+        $webpSrcset = $payload['webp_srcset'];
+        $sizes = $payload['sizes'];
+        $width = (int) $payload['width'];
+        $height = (int) $payload['height'];
+    } else {
+        $preview = esc_url(
+            function_exists('cta_voir_image_enigme_url')
+                ? cta_voir_image_enigme_url($imageId, 'large')
+                : add_query_arg(
+                    ['id' => $imageId, 'taille' => 'large'],
+                    site_url('/voir-image-enigme')
+                )
+        );
+    }
+
+    $full = function_exists('cta_voir_image_enigme_url')
+        ? cta_voir_image_enigme_url($imageId, 'full')
+        : add_query_arg(
+            ['id' => $imageId, 'taille' => 'full'],
+            site_url('/voir-image-enigme')
+        );
+    $thumb = function_exists('cta_voir_image_enigme_url')
+        ? cta_voir_image_enigme_url($imageId, 'thumbnail')
+        : add_query_arg(
+            ['id' => $imageId, 'taille' => 'thumbnail'],
+            site_url('/voir-image-enigme')
+        );
+
+    return [
+        'alt' => $alt,
+        'preview' => $preview,
+        'full' => $full,
+        'thumb' => $thumb,
+        'srcset' => $srcset,
+        'webp_srcset' => $webpSrcset,
+        'sizes' => $sizes,
+        'width' => $width,
+        'height' => $height,
+    ];
+}
+
+/**
+ * Collecte les pages BD gagnées en réussissant une étape.
+ *
+ * Le joueur ne reçoit que les pages des étapes déjà résolues. L’organisateur
+ * voit toute la suite, pour relire le parcours. Les pages de l’étape en cours
+ * restent cachées : elles apparaissent après la bonne réponse.
  *
  * @param int $enigme_id ID de l’énigme.
  * @param int $user_id   Joueur ou organisateur courant.
@@ -545,7 +678,7 @@ function enigme_collect_step_comic_pages(int $enigme_id, int $user_id): array
 
     $canModify = function_exists('utilisateur_peut_modifier_post')
         && utilisateur_peut_modifier_post($enigme_id);
-    $visibleStepIds = $orderedStepIds;
+    $revealedStepIds = $orderedStepIds;
 
     if (!$canModify) {
         if (
@@ -558,30 +691,41 @@ function enigme_collect_step_comic_pages(int $enigme_id, int $user_id): array
         global $wpdb;
         $state = \ChassesAuTresor\Core\Support\CoreServiceFactory::riddleStepProgress($wpdb)
             ->getState($user_id, $enigme_id, $orderedStepIds);
-        $visibleStepIds = array_map('intval', $state['visible_step_ids'] ?? []);
+        $revealedStepIds = array_map('intval', $state['completed_step_ids'] ?? []);
     }
 
     $pages = [];
     $storage = class_exists(\ChassesAuTresor\Core\Media\RiddleStepImageStorageService::class)
         ? new \ChassesAuTresor\Core\Media\RiddleStepImageStorageService()
         : null;
-    foreach ($visibleStepIds as $stepId) {
-        $imageId = (int) get_field('etape_image', $stepId);
-        if ($imageId <= 0 || $imageId === ID_IMAGE_PLACEHOLDER_ENIGME) {
-            continue;
-        }
-        // Lazily move legacy public uploads into protected storage (same as save).
-        if ($storage !== null) {
-            $securedId = $storage->ensureProtected($imageId, $enigme_id, (int) $stepId);
-            if ($securedId > 0 && $securedId !== $imageId) {
-                update_field('etape_image', $securedId, $stepId);
-                $imageId = $securedId;
+    foreach ($revealedStepIds as $stepId) {
+        $stepId = (int) $stepId;
+        $imageIds = enigme_step_image_ids($stepId);
+        $storedIds = [];
+        $changed = false;
+        foreach ($imageIds as $imageId) {
+            if ($imageId <= 0 || $imageId === ID_IMAGE_PLACEHOLDER_ENIGME) {
+                continue;
             }
+            $finalId = $imageId;
+            if ($storage !== null) {
+                $securedId = $storage->ensureProtected($imageId, $enigme_id, $stepId);
+                if ($securedId > 0) {
+                    $finalId = $securedId;
+                }
+                if ($finalId !== $imageId) {
+                    $changed = true;
+                }
+            }
+            $storedIds[] = $finalId;
+            $pages[] = [
+                'image_id' => $finalId,
+                'step_id' => $stepId,
+            ];
         }
-        $pages[] = [
-            'image_id' => $imageId,
-            'step_id' => (int) $stepId,
-        ];
+        if ($changed && $storedIds !== [] && function_exists('update_field')) {
+            update_field('etape_image', $storedIds, $stepId);
+        }
     }
 
     return $pages;
@@ -594,7 +738,7 @@ function enigme_collect_step_comic_pages(int $enigme_id, int $user_id): array
  * Le feuilletage se fait au glissement ou au clavier. Un tap affiche le
  * bandeau (Répondre, pastilles de page, flèches).
  * Un double tap ou un pincement ouvre l’image en taille d’origine.
- * Les images d’étapes débloquées s’ajoutent comme pages suivantes.
+ * Les pages des étapes déjà réussies s’ajoutent à la suite.
  *
  * Les images sont servies via proxy (/voir-image-enigme) avec tailles adaptées.
  *

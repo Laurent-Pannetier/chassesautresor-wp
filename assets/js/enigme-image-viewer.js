@@ -378,15 +378,20 @@
       return -1;
     }
 
-    const stepId = page.stepId ? String(page.stepId) : '';
-    if (stepId && gallery.querySelector(`[data-gallery-step-id="${stepId}"]`)) {
+    const stepId = page.stepId ? String(page.stepId).replace(/[^\d]/g, '') : '';
+    const imageId = page.imageId ? String(page.imageId).replace(/[^\d]/g, '') : '';
+    const selectPage = page.select !== false;
+    if (imageId) {
       const existing = gallery.querySelector(
-        `.galerie-enigme__slide[data-gallery-step-id="${stepId}"]`
+        `.galerie-enigme__slide[data-gallery-image-id="${imageId}"]`
       );
-      const index = existing
-        ? [...gallery.querySelectorAll('.galerie-enigme__slide')].indexOf(existing)
-        : -1;
-      return index >= 0 ? selectGallerySlide(gallery, index) : -1;
+      if (existing) {
+        const index = [...gallery.querySelectorAll('.galerie-enigme__slide')].indexOf(existing);
+        if (!selectPage) {
+          return index;
+        }
+        return index >= 0 ? selectGallerySlide(gallery, index) : -1;
+      }
     }
 
     ensureGalleryControls(gallery);
@@ -403,7 +408,7 @@
       'image-principale galerie-enigme__slide galerie-enigme__slide--step';
     figure.id = slideId;
     figure.dataset.galleryIndex = String(index);
-    figure.dataset.galleryImageId = String(page.imageId || '');
+    figure.dataset.galleryImageId = imageId;
     if (stepId) {
       figure.dataset.galleryStepId = stepId;
     }
@@ -486,6 +491,9 @@
     }
     thumbs.appendChild(thumb);
 
+    if (!selectPage) {
+      return index;
+    }
     return selectGallerySlide(gallery, index);
   };
 

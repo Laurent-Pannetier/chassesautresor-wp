@@ -29,7 +29,8 @@ if ($riddleId > 0) {
       <h3><?= esc_html__('Étapes intermédiaires', 'chassesautresor-com'); ?></h3>
       <p class="txt-small">
         <?= esc_html__(
-            'Les étapes sont affichées dans cet ordre et débloquent ensuite la réponse finale.',
+            'Les étapes sont affichées dans cet ordre. Leurs pages rejoignent la BD après une bonne réponse, '
+            . 'puis débloquent la suite.',
             'chassesautresor-com'
         ); ?>
       </p>
@@ -138,20 +139,18 @@ if ($riddleId > 0) {
         <textarea id="riddle-step-content" name="contenu" hidden></textarea>
       </div>
       <div class="riddle-step-form__field">
-        <label><?= esc_html__('Image de l’étape', 'chassesautresor-com'); ?></label>
-        <input type="hidden" name="image_id" value="">
+        <label><?= esc_html__('Pages révélées après la bonne réponse', 'chassesautresor-com'); ?></label>
         <div class="riddle-step-form__image-preview"></div>
         <div class="riddle-step-form__image-actions">
           <button type="button" class="bouton-secondaire riddle-step-image-select">
-            <?= esc_html__('Choisir une image', 'chassesautresor-com'); ?>
-          </button>
-          <button type="button" class="bouton-texte riddle-step-image-remove" hidden>
-            <?= esc_html__('Retirer l’image', 'chassesautresor-com'); ?>
+            <?= esc_html__('Ajouter des pages', 'chassesautresor-com'); ?>
           </button>
         </div>
         <p class="txt-small">
           <?= esc_html__(
-              'Un texte ou une image est obligatoire pour Simple clic et Réponse texte.',
+              'Ces pages s’ajoutent à la bande dessinée quand le joueur réussit l’étape. '
+              . 'La première s’ouvre, les suivantes se feuillettent avant la question d’après. '
+              . 'Un texte ou une page est obligatoire pour Simple clic et Réponse texte.',
               'chassesautresor-com'
           ); ?>
         </p>
@@ -178,7 +177,8 @@ if ($riddleId > 0) {
         <?php if ($structureLocked) : ?>
           <p class="txt-small">
             <?= esc_html__(
-                'Le parcours a commencé : le type de widget et ses réponses sont en lecture seule. Vous pouvez encore modifier le texte, l’image et la présentation ci-dessous.',
+                'Le parcours a commencé : le type de widget et ses réponses sont en lecture seule. '
+                . 'Vous pouvez encore modifier le texte, les pages et la présentation ci-dessous.',
                 'chassesautresor-com'
             ); ?>
           </p>

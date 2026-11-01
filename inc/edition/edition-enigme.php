@@ -80,7 +80,10 @@ function enqueue_script_enigme_edit()
     'texts' => [
       'newTitle' => __('Nouvelle étape', 'chassesautresor-com'),
       'editTitle' => __('Modifier l’étape', 'chassesautresor-com'),
-      'imageTitle' => __('Choisir l’image de l’étape', 'chassesautresor-com'),
+      'imageTitle' => __('Ajouter des pages à l’étape', 'chassesautresor-com'),
+      'moveUp' => __('Monter', 'chassesautresor-com'),
+      'moveDown' => __('Descendre', 'chassesautresor-com'),
+      'removePage' => __('Retirer', 'chassesautresor-com'),
       'edit' => __('Modifier', 'chassesautresor-com'),
       'delete' => __('Supprimer', 'chassesautresor-com'),
       'confirmDelete' => __('Supprimer définitivement cette étape ?', 'chassesautresor-com'),
