@@ -522,6 +522,8 @@ add_action('wp_enqueue_scripts', function () {
             'showPageLabel' => __('Afficher la page %d', 'chassesautresor-com'),
             'showControlsLabel' => __('Afficher les commandes, page %1$d / %2$d', 'chassesautresor-com'),
             'zoomHint' => __('Agrandir', 'chassesautresor-com'),
+            'homeLabel' => __('Accueil', 'chassesautresor-com'),
+            'homeUrl' => home_url('/'),
         ]);
     }
     $sidebar_dir = $theme_uri . '/assets/sidebar/';

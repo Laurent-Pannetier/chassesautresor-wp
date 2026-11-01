@@ -6,7 +6,10 @@
  * Une page 16:9 occupe le viewport (`object-fit: contain`). Le feuilletage
  * se fait au glissement horizontal, au clavier, ou avec les chevrons qui
  * apparaissent au bord de l’écran (souris). Un compteur discret reste
- * visible. Un tap affiche le bandeau.
+ * visible. Un tap affiche le bandeau du bas. Le retour vers l’accueil
+ * apparaît au survol du haut de l’écran, ou avec le bandeau au toucher.
+ * Sans réponse, indice ni texte, le bandeau reste masqué et le retour
+ * reste accessible. La topbar du site reste masquée.
  *
  * Avec une souris, un clic arme une loupe ×4 qui suit le pointeur sur
  * l’image. Un second clic ou Échap l’éteint. Au toucher, un double tap ou
@@ -35,6 +38,9 @@
   const showControlsTemplate =
     (window.EnigmeImageViewer && window.EnigmeImageViewer.showControlsLabel) ||
     'Afficher les commandes, page %1$d / %2$d';
+  const homeLabel =
+    (window.EnigmeImageViewer && window.EnigmeImageViewer.homeLabel) || 'Accueil';
+  const homeUrl = (window.EnigmeImageViewer && window.EnigmeImageViewer.homeUrl) || '/';
 
   const formatPageLabel = (current, total) =>
     pageLabelTemplate
@@ -545,7 +551,6 @@
     let tapTimer = null;
     let lastTapAt = 0;
     let pointerOverHud = false;
-    let pointerOverTopbar = false;
     let pointerNearHud = false;
     let lastPointer = null;
     let pageCounter = null;
@@ -557,7 +562,8 @@
     let hud = null;
     let controls = null;
     let lastHints = '';
-    const shellTopbar = document.querySelector('.app-topbar');
+    const HOME_INSET = 12;
+    const HOME_BAND_Y = 88;
 
     const storageKey = `comic-hud:${gallery.id || 'galerie'}`;
 
@@ -595,12 +601,110 @@
       document.body.classList.contains('riddle-widget-immersive-open') ||
       !!document.querySelector('.indice-display:not(:empty)') ||
       pointerOverHud ||
-      pointerOverTopbar ||
-      (hud && hud.contains(document.activeElement)) ||
-      !!(shellTopbar && shellTopbar.contains(document.activeElement));
+      (hud && hud.contains(document.activeElement));
+
+    const ensureHomeLink = () => {
+      let link = gallery.querySelector('.galerie-enigme__home');
+      if (!(link instanceof HTMLAnchorElement)) {
+        link = document.createElement('a');
+        link.className = 'galerie-enigme__home';
+        link.href = homeUrl;
+        const icon = document.createElement('span');
+        icon.className = 'galerie-enigme__home-icon';
+        icon.setAttribute('aria-hidden', 'true');
+        icon.textContent = '\u2190';
+        const label = document.createElement('span');
+        label.className = 'galerie-enigme__home-label';
+        label.textContent = homeLabel;
+        link.append(icon, label);
+        stage.appendChild(link);
+      }
+      return link;
+    };
+
+    const homeLink = ensureHomeLink();
+
+    const clearEditTogglePlace = () => {
+      const edit = document.querySelector('.enigme-edit-toggle--desktop');
+      if (!(edit instanceof HTMLElement)) {
+        return;
+      }
+      edit.style.removeProperty('--galerie-home-top');
+      edit.style.removeProperty('top');
+      edit.style.removeProperty('left');
+      edit.style.removeProperty('right');
+    };
+
+    const placeHomeLink = () => {
+      const top = topEdgeOffset() + HOME_INSET;
+      homeLink.style.setProperty('--galerie-home-top', `${top}px`);
+      homeLink.style.setProperty('--galerie-home-right', `${HOME_INSET}px`);
+      const edit = document.querySelector('.enigme-edit-toggle--desktop');
+      if (!(edit instanceof HTMLElement)) {
+        return;
+      }
+      edit.style.setProperty('--galerie-home-top', `${top}px`);
+      edit.style.removeProperty('left');
+      edit.style.removeProperty('right');
+    };
+
+    const inHomeBand = (point) => {
+      if (!point) {
+        return false;
+      }
+      const top = topEdgeOffset();
+      return point.y >= top && point.y <= top + HOME_BAND_Y;
+    };
+
+    const pointerOverHome = (point) =>
+      typeof point?.target?.closest === 'function' &&
+      !!point.target.closest('.galerie-enigme__home');
+
+    let homeKeyboardFocus = false;
+    let homeFocusFromPointer = false;
+    const homePinnedByKeyboard = () => homeKeyboardFocus;
+
+    const syncHomeLink = (point) => {
+      if (!readerActive || !finePointerQuery().matches) {
+        if (!homePinnedByKeyboard()) {
+          homeLink.classList.remove('is-edge-visible');
+        }
+        return;
+      }
+      const show = homePinnedByKeyboard() || pointerOverHome(point) || inHomeBand(point);
+      homeLink.classList.toggle('is-edge-visible', show);
+    };
+
+    const HUD_ACTION_SELECTOR = [
+      '.reponse-launcher',
+      '.message-joueur-statut',
+      '.indice-link',
+      '.indice-label',
+      '.riddle-player-step__content',
+    ].join(', ');
+
+    const hudIsQuiet = () => {
+      if (!hud) {
+        return true;
+      }
+      if (hud.querySelector(HUD_ACTION_SELECTOR)) {
+        return false;
+      }
+      const sheet = hud.querySelector(':scope > .comic-hud__sheet');
+      return !(sheet && sheet.textContent.trim() !== '');
+    };
+
+    const syncHudQuiet = () => {
+      const quiet = hudIsQuiet();
+      hud?.classList.toggle('is-comic-hud--empty', quiet);
+      document.body.classList.toggle('is-hud-quiet', quiet);
+      if (quiet) {
+        document.body.classList.remove('is-hud-visible');
+      }
+    };
 
     const showHud = () => {
-      if (!readerActive) {
+      if (!readerActive || hudIsQuiet()) {
         return;
       }
       document.body.classList.add('is-hud-visible');
@@ -688,6 +792,7 @@
         }
       }
       placing = false;
+      syncHudQuiet();
     };
 
     const buildHud = () => {
@@ -735,28 +840,39 @@
         pointerOverHud = false;
         scheduleHide();
       });
+      syncHudQuiet();
     };
 
-    const onTopbarEnter = () => {
-      pointerOverTopbar = true;
-      if (!readerActive) {
-        return;
-      }
-      showHud();
-      clearHide();
-    };
-
-    const onTopbarLeave = () => {
-      pointerOverTopbar = false;
-      if (readerActive) {
-        scheduleHide();
+    const mountHomeLink = () => {
+      if (homeLink.parentElement !== document.body) {
+        document.body.appendChild(homeLink);
       }
     };
 
-    if (shellTopbar) {
-      shellTopbar.addEventListener('pointerenter', onTopbarEnter);
-      shellTopbar.addEventListener('pointerleave', onTopbarLeave);
-    }
+    const restoreHomeLink = () => {
+      if (stage.isConnected && homeLink.parentElement !== stage) {
+        stage.appendChild(homeLink);
+      }
+    };
+
+    const onHomePointerDown = () => {
+      homeFocusFromPointer = true;
+    };
+    const onHomeFocus = () => {
+      homeKeyboardFocus = !homeFocusFromPointer;
+      homeFocusFromPointer = false;
+      if (homeKeyboardFocus) {
+        homeLink.classList.add('is-edge-visible');
+      }
+    };
+    const onHomeBlur = () => {
+      homeKeyboardFocus = false;
+      homeFocusFromPointer = false;
+      syncHomeLink(lastPointer);
+    };
+    homeLink.addEventListener('pointerdown', onHomePointerDown);
+    homeLink.addEventListener('focus', onHomeFocus);
+    homeLink.addEventListener('blur', onHomeBlur);
 
     const openActiveLightbox = () => {
       const trigger = gallery.querySelector(
@@ -913,6 +1029,9 @@
       gallery.querySelectorAll('.galerie-enigme__nav.is-edge-visible').forEach((button) => {
         button.classList.remove('is-edge-visible');
       });
+      if (!homePinnedByKeyboard()) {
+        homeLink.classList.remove('is-edge-visible');
+      }
     };
 
     const syncEdgeNav = (point) => {
@@ -920,17 +1039,20 @@
       const next = gallery.querySelector('.galerie-enigme__nav--next');
       if (!readerActive || !finePointerQuery().matches || !point) {
         hideEdgeNav();
+        syncHomeLink(point);
         return;
       }
       const target = point.target;
       const overNav = (selector) =>
         typeof target?.closest === 'function' && !!target.closest(selector);
-      const nearLeft = point.x <= SIDE_EDGE_PX;
-      const nearRight = point.x >= window.innerWidth - SIDE_EDGE_PX;
+      const homeBand = pointerOverHome(point) || inHomeBand(point);
+      const nearLeft = point.x <= SIDE_EDGE_PX && !homeBand;
+      const nearRight = point.x >= window.innerWidth - SIDE_EDGE_PX && !homeBand;
       const showPrev = !!(prev && !prev.disabled && (nearLeft || overNav('.galerie-enigme__nav--prev')));
       const showNext = !!(next && !next.disabled && (nearRight || overNav('.galerie-enigme__nav--next')));
       prev?.classList.toggle('is-edge-visible', showPrev);
       next?.classList.toggle('is-edge-visible', showNext);
+      syncHomeLink(point);
     };
 
     const onCounterClick = (event) => {
@@ -950,6 +1072,7 @@
     };
 
     const onPageChange = (event) => {
+      placeHomeLink();
       syncEdgeNav(lastPointer);
       if (event.detail?.source === 'edge') {
         return;
@@ -958,21 +1081,33 @@
     };
     gallery.addEventListener('comic-page-change', onPageChange);
 
+    const onImageLoad = (event) => {
+      if (event.target instanceof HTMLImageElement) {
+        placeHomeLink();
+      }
+    };
+    gallery.addEventListener('load', onImageLoad, true);
+
+    const onResize = () => {
+      if (readerActive) {
+        placeHomeLink();
+        syncHomeLink(lastPointer);
+      }
+    };
+    window.addEventListener('resize', onResize);
+
     const onMouseMove = (event) => {
       if (!readerActive || !finePointerQuery().matches) {
         return;
       }
       lastPointer = { x: event.clientX, y: event.clientY, target: event.target };
-      const offset = topEdgeOffset();
-      const nearTop = event.clientY >= offset && event.clientY <= offset + EDGE_PX;
       const nearBottom = event.clientY >= window.innerHeight - EDGE_PX;
       let overCounter = false;
       if (typeof event.target?.closest === 'function') {
-        pointerOverTopbar = !!event.target.closest('.app-topbar');
         overCounter = !!event.target.closest('.comic-page-counter');
       }
       syncEdgeNav(lastPointer);
-      if (((nearTop || nearBottom) && !overCounter) || pointerOverHud || pointerOverTopbar) {
+      if ((nearBottom && !overCounter) || pointerOverHud) {
         pointerNearHud = true;
         showHud();
         clearHide();
@@ -998,7 +1133,7 @@
       if (!readerActive) {
         return;
       }
-      if (event.target.closest?.('.is-comic-hud, .enigme-mobile-header, .app-topbar')) {
+      if (event.target.closest?.('.is-comic-hud, .enigme-mobile-header')) {
         showHud();
         clearHide();
       }
@@ -1074,6 +1209,15 @@
       watchStructure();
       document.body.classList.add('comic-reader');
       gallery.classList.add('is-comic-active');
+      mountHomeLink();
+      placeHomeLink();
+      window.requestAnimationFrame(() => {
+        if (!readerActive) {
+          return;
+        }
+        placeHomeLink();
+        syncHomeLink(lastPointer);
+      });
       const activeIndex = [...gallery.querySelectorAll('.galerie-enigme__slide')].findIndex(
         (slide) => slide.classList.contains('is-active')
       );
@@ -1087,9 +1231,13 @@
         return;
       }
       readerActive = false;
-      pointerOverTopbar = false;
       lastPointer = null;
       hideEdgeNav();
+      homeLink.classList.remove('is-edge-visible');
+      homeLink.style.removeProperty('--galerie-home-top');
+      homeLink.style.removeProperty('--galerie-home-right');
+      restoreHomeLink();
+      clearEditTogglePlace();
       pageCounter?.removeEventListener('click', onCounterClick);
       pageCounter?.remove();
       pageCounter = null;
@@ -1110,7 +1258,7 @@
       createdHud = null;
       hud = null;
       gallery.classList.remove('is-comic-active');
-      document.body.classList.remove('comic-reader', 'is-hud-visible');
+      document.body.classList.remove('comic-reader', 'is-hud-visible', 'is-hud-quiet');
     };
 
     const syncEdition = () => {
@@ -1133,8 +1281,11 @@
       stage.removeEventListener('pointerup', onPointerUp);
       stage.removeEventListener('pointercancel', onPointerUp);
       gallery.removeEventListener('comic-page-change', onPageChange);
-      shellTopbar?.removeEventListener('pointerenter', onTopbarEnter);
-      shellTopbar?.removeEventListener('pointerleave', onTopbarLeave);
+      gallery.removeEventListener('load', onImageLoad, true);
+      window.removeEventListener('resize', onResize);
+      homeLink.removeEventListener('pointerdown', onHomePointerDown);
+      homeLink.removeEventListener('focus', onHomeFocus);
+      homeLink.removeEventListener('blur', onHomeBlur);
       document.removeEventListener('mousemove', onMouseMove);
       document.removeEventListener('mouseout', onDocumentMouseOut);
       document.removeEventListener('focusin', onFocusIn);
@@ -1223,6 +1374,10 @@
   };
 
   const onViewerClick = (event) => {
+    if (event.target.closest?.('.galerie-enigme__home')) {
+      return;
+    }
+
     const stepButton = event.target.closest('[data-gallery-step]');
     if (stepButton) {
       const gallery = galleryFor(stepButton);

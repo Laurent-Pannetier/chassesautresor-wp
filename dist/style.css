@@ -9085,6 +9085,14 @@ body.no-scroll {
   display: none;
 }
 
+.participation:not(:has(.reponse-launcher,
+.message-joueur-statut,
+.indice-link,
+.indice-label,
+.riddle-player-step__content)) {
+  display: none;
+}
+
 .riddle-player-step label,
 .riddle-player-step__content,
 .riddle-player-step__content p {
@@ -10240,10 +10248,78 @@ body.comic-reader .menu-lateral__reveal {
 body.comic-reader .enigme-mobile-header {
   position: fixed;
   top: 0;
-  right: 0;
+  right: auto;
   left: 0;
+  width: auto;
+  justify-content: flex-start;
   margin: 0;
   padding: calc(0.4rem + env(safe-area-inset-top, 0px)) 0.75rem 0.4rem;
+}
+
+/* Retour accueil : coin haut droit de l’écran, révélé sur tout le haut. */
+.galerie-enigme__home {
+  display: none;
+}
+
+body.comic-reader .galerie-enigme__home {
+  position: fixed;
+  z-index: 60;
+  top: max(var(--galerie-home-top, 0.75rem), 0.75rem + env(safe-area-inset-top, 0px));
+  right: max(var(--galerie-home-right, 0.75rem), 0.75rem + env(safe-area-inset-right, 0px));
+  left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2.75rem;
+  margin: 0;
+  padding: 0.35rem 0.85rem 0.35rem 0.7rem;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 999px;
+  background: rgba(8, 14, 28, 0.78);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  color: var(--color-text-primary, #f5f5dc);
+  font: inherit;
+  font-size: 0.95rem;
+  line-height: 1;
+  text-decoration: none;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s ease, background-color 0.2s ease, border-color 0.2s ease;
+}
+
+body.comic-reader .galerie-enigme__home-icon {
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+body.comic-reader .galerie-enigme__home.is-edge-visible,
+body.comic-reader .galerie-enigme__home:focus-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+body.comic-reader .galerie-enigme__home:hover,
+body.comic-reader .galerie-enigme__home:focus-visible {
+  background: rgba(8, 14, 28, 0.92);
+  color: var(--color-text-primary, #f5f5dc);
+  border-color: rgba(255, 255, 255, 0.72);
+}
+
+body.comic-reader .galerie-enigme__home:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+@media (hover: none), (pointer: coarse) {
+  body.comic-reader.is-hud-visible .galerie-enigme__home,
+  body.comic-reader.is-hud-quiet .galerie-enigme__home {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+body.comic-reader .enigme-edit-toggle--desktop {
+  top: max(var(--galerie-home-top, 0.75rem), 0.75rem + env(safe-area-inset-top, 0px));
+  right: calc(9.25rem + env(safe-area-inset-right, 0px));
 }
 
 body.comic-reader:not(.is-hud-visible) .enigme-mobile-header,
@@ -10253,21 +10329,9 @@ body.comic-reader:not(.is-hud-visible) .enigme-edit-toggle--desktop {
   pointer-events: none;
 }
 
-/* La topbar du site suit le bandeau du bas : hors champ tant que le HUD est caché. */
+/* La topbar du site, déconnexion comprise, ne s’affiche pas dans le lecteur. */
 body.comic-reader .app-topbar {
-  position: fixed;
-  right: 0;
-  left: 0;
-  z-index: 45;
-  transform: translateY(-110%);
-  pointer-events: none;
-  transition: transform 0.28s ease;
-}
-
-body.comic-reader.is-hud-visible .app-topbar,
-body.comic-reader .app-topbar:focus-within {
-  transform: none;
-  pointer-events: auto;
+  display: none;
 }
 
 body.comic-reader .is-comic-hud {
@@ -10298,6 +10362,10 @@ body.comic-reader.is-hud-visible .is-comic-hud,
 body.comic-reader .is-comic-hud:focus-within {
   transform: none;
   pointer-events: auto;
+}
+
+body.comic-reader .is-comic-hud.is-comic-hud--empty {
+  display: none;
 }
 
 body.comic-reader .is-comic-hud .participation-header--empty {
@@ -10668,7 +10736,7 @@ body.comic-reader .is-comic-hud .participation-infos {
 @media (prefers-reduced-motion: reduce) {
   body.comic-reader .is-comic-hud,
   body.comic-reader .enigme-mobile-header,
-  body.comic-reader .app-topbar,
+  body.comic-reader .galerie-enigme__home,
   body.comic-reader .page-enigme--reader .galerie-enigme__nav,
   body.comic-reader .is-comic-hud .galerie-enigme__dot::before {
     transition: none;

@@ -737,6 +737,7 @@ function enigme_collect_step_comic_pages(int $enigme_id, int $user_id): array
  * Une seule page 16:9 (1920 × 1080) est visible à la fois, plein cadre.
  * Le feuilletage se fait au glissement ou au clavier. Un tap affiche le
  * bandeau (Répondre, pastilles de page, flèches).
+ * Un lien « Accueil » apparaît au survol du haut de l’écran.
  * Un double tap ou un pincement ouvre l’image en taille d’origine.
  * Les pages des étapes déjà réussies s’ajoutent à la suite.
  *
@@ -873,6 +874,13 @@ function afficher_visuels_enigme(
             . ' aria-label="' . esc_attr__('Page suivante', 'chassesautresor-com') . '">'
             . '<span aria-hidden="true">&rsaquo;</span></button>';
     }
+
+    $home_url = function_exists('home_url') ? home_url('/') : '/';
+    echo '<a class="galerie-enigme__home" href="' . esc_url($home_url) . '">'
+        . '<span class="galerie-enigme__home-icon" aria-hidden="true">&larr;</span>'
+        . '<span class="galerie-enigme__home-label">'
+        . esc_html__('Accueil', 'chassesautresor-com')
+        . '</span></a>';
 
     echo '</div>';
 
