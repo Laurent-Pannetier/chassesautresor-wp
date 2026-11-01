@@ -521,7 +521,8 @@ function cta_shell_render_outils_submenu(bool $expanded = true): void
 
         echo '<li class="app-nav__subitem app-nav__subitem--riddle';
         echo $isCurrent ? ' is-current' : '';
-        echo '" data-nav-cpt="enigme" data-nav-id="' . esc_attr((string) $riddleId) . '">';
+        echo '" data-nav-cpt="enigme" data-nav-id="' . esc_attr((string) $riddleId) . '"';
+        echo ' data-riddle-id="' . esc_attr((string) $riddleId) . '">';
         echo '<a class="app-nav__sublink' . ($isCurrent ? ' is-active' : '') . '" href="';
         echo esc_url(cta_shell_edition_url('enigme', $riddleId, 'parametres')) . '"';
         if ($isCurrent) {
@@ -531,11 +532,23 @@ function cta_shell_render_outils_submenu(bool $expanded = true): void
         echo '<span class="app-nav__markers">';
         if ($missing !== []) {
             $popoverId = 'enigme-gaps-' . $riddleId;
+            $buttonId = 'enigme-gaps-btn-' . $riddleId;
+            $summary = sprintf(
+                /* translators: %s: blocking items, separated by semicolons. */
+                __('Énigme incomplète : %s', 'chassesautresor-com'),
+                implode(' ; ', $missing)
+            );
             echo '<button type="button" class="app-nav__marker app-nav__marker--incomplete"';
+            echo ' id="' . esc_attr($buttonId) . '"';
             echo ' popovertarget="' . esc_attr($popoverId) . '"';
-            echo ' aria-label="' . esc_attr__('Éléments manquants', 'chassesautresor-com') . '">';
+            echo ' title="' . esc_attr($summary) . '"';
+            echo ' aria-label="' . esc_attr($summary) . '">';
             echo '<i class="fa-solid fa-exclamation" aria-hidden="true"></i></button>';
-            echo '<div id="' . esc_attr($popoverId) . '" popover class="app-nav__status-pop"><ul>';
+            echo '<div id="' . esc_attr($popoverId) . '" popover class="app-nav__status-pop"';
+            echo ' anchor="' . esc_attr($buttonId) . '">';
+            echo '<p class="app-nav__status-pop-title">';
+            echo esc_html__('Cette énigme bloque l’activation :', 'chassesautresor-com');
+            echo '</p><ul>';
             foreach ($missing as $label) {
                 echo '<li>' . esc_html($label) . '</li>';
             }
@@ -549,11 +562,7 @@ function cta_shell_render_outils_submenu(bool $expanded = true): void
         echo '</span></li>';
     }
 
-    $canAdd = $huntId > 0
-        && !$hasIncomplete
-        && function_exists('utilisateur_peut_ajouter_enigme')
-        && utilisateur_peut_ajouter_enigme($huntId, $userId);
-    if ($canAdd) {
+    if ($canAddNow) {
         $addUrl = add_query_arg(
             [
                 'chasse_id' => $huntId,
@@ -561,7 +570,8 @@ function cta_shell_render_outils_submenu(bool $expanded = true): void
             ],
             home_url('/creer-enigme/')
         );
-        echo '<li class="app-nav__subitem app-nav__subitem--add">';
+        echo '<li class="app-nav__subitem app-nav__subitem--add"';
+        echo $hasIncomplete ? ' hidden>' : '>';
         echo '<a class="app-nav__add" href="' . esc_url($addUrl) . '">';
         echo '<i class="fa-solid fa-circle-plus" aria-hidden="true"></i>';
         echo '<span>' . esc_html__('Ajouter une énigme', 'chassesautresor-com') . '</span>';
@@ -628,11 +638,12 @@ function cta_shell_render_organizer_edit_card(): string
 }
 
 /**
- * Hover opens the missing-items popover. Click remains available on touch screens.
+ * Hover opens the missing-items popover on every shell page.
+ * Click remains available on touch screens.
  */
 function cta_shell_enqueue_edition_nav(): void
 {
-    if (!function_exists('cta_shell_request_slug') || cta_shell_request_slug() !== 'outils') {
+    if (!function_exists('is_user_logged_in') || !is_user_logged_in()) {
         return;
     }
 
@@ -648,6 +659,11 @@ function cta_shell_enqueue_edition_nav(): void
         (string) filemtime($path),
         true
     );
+    wp_localize_script('cta-shell-edition-nav', 'CtaShellEditionNav', [
+        'incomplete' => __('Énigme incomplète : %s', 'chassesautresor-com'),
+        'heading' => __('Cette énigme bloque l’activation :', 'chassesautresor-com'),
+        'addRiddle' => __('Ajouter une énigme', 'chassesautresor-com'),
+    ]);
 }
 add_action('wp_enqueue_scripts', 'cta_shell_enqueue_edition_nav');
 

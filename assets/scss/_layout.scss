@@ -207,6 +207,18 @@ header.site-header {
   text-shadow: 1px 1px 4px rgba(0,0,0,0.7);
 }
 
+.hero-title.hero-title--visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .hero-title__line1,
 .hero-title__line2 {
   display: block;

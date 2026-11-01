@@ -17,10 +17,66 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   };
 
+  const legendMark = form?.querySelector('.answer-gap-marker--legend');
+  const answerFieldset = form?.querySelector('fieldset');
+
+  const showLegendIssue = message => {
+    if (!legendMark) return;
+    const tip = legendMark.querySelector('.answer-gap-marker__tip');
+    if (!message) {
+      legendMark.hidden = true;
+      legendMark.removeAttribute('data-message');
+      legendMark.removeAttribute('title');
+      if (tip) tip.textContent = '';
+      answerFieldset?.classList.remove('is-invalid');
+      return;
+    }
+    if (tip) tip.textContent = message;
+    legendMark.dataset.message = message;
+    legendMark.title = message;
+    legendMark.hidden = false;
+    answerFieldset?.classList.add('is-invalid');
+  };
+
   const showForm = show => {
     form.hidden = !show;
     if (editButton) editButton.hidden = show;
     if (summary) summary.hidden = show;
+    if (show) showLegendIssue(editor.dataset.issue || '');
+  };
+
+  const setNotice = message => {
+    const current = summary?.querySelector('.riddle-final-answer-editor__notice');
+    if (!message) {
+      current?.remove();
+      editor.dataset.issue = '';
+      showLegendIssue('');
+      row?.classList.remove('champ-vide', 'champ-attention');
+      row?.classList.add('champ-rempli');
+      return;
+    }
+    editor.dataset.issue = message;
+    let notice = current;
+    if (!notice && summary) {
+      notice = document.createElement('span');
+      notice.className = 'answer-gap-marker riddle-final-answer-editor__notice';
+      notice.tabIndex = 0;
+      notice.innerHTML = '<i class="fa-solid fa-exclamation" aria-hidden="true"></i>'
+        + '<span class="answer-gap-marker__label"></span>'
+        + '<span class="answer-gap-marker__tip" role="tooltip"></span>';
+      const editButtonInSummary = summary.querySelector('.riddle-final-answer-edit');
+      if (editButtonInSummary) summary.insertBefore(notice, editButtonInSummary);
+      else summary.appendChild(notice);
+    }
+    if (!notice) return;
+    const labelText = notice.querySelector('.answer-gap-marker__label');
+    const tip = notice.querySelector('.answer-gap-marker__tip');
+    if (labelText) labelText.textContent = RiddleFinalAnswerEdit.texts.incomplete;
+    if (tip) tip.textContent = message;
+    notice.dataset.message = message;
+    notice.title = message;
+    row?.classList.add('champ-vide', 'champ-attention');
+    row?.classList.remove('champ-rempli');
   };
 
   const collectValues = () => {
@@ -88,24 +144,7 @@ document.addEventListener('DOMContentLoaded', () => {
       throw new Error(result.data?.message || RiddleFinalAnswerEdit.texts.error);
     }
     if (label) label.textContent = result.data.summary || label.textContent;
-    const incomplete = summary?.querySelector('.riddle-final-answer-editor__notice');
-    if (result.data.complete) {
-      incomplete?.remove();
-      row?.classList.remove('champ-vide', 'champ-attention');
-      row?.classList.add('champ-rempli');
-    } else if (!incomplete && summary) {
-      const notice = document.createElement('span');
-      notice.className = 'riddle-final-answer-editor__notice';
-      notice.textContent = RiddleFinalAnswerEdit.texts.incomplete;
-      const editButtonInSummary = summary.querySelector('.riddle-final-answer-edit');
-      if (editButtonInSummary) {
-        summary.insertBefore(notice, editButtonInSummary);
-      } else {
-        summary.appendChild(notice);
-      }
-      row?.classList.add('champ-vide');
-      row?.classList.remove('champ-rempli');
-    }
+    setNotice(result.data.complete ? '' : (result.data.issue || RiddleFinalAnswerEdit.texts.incomplete));
     if (typeof window.forcerRecalculStatutEnigme === 'function') {
       window.forcerRecalculStatutEnigme(RiddleFinalAnswerEdit.riddleId);
     }
@@ -146,9 +185,12 @@ document.addEventListener('DOMContentLoaded', () => {
           showForm(false);
           return true;
         } catch (error) {
-          feedback.textContent = error instanceof Error && error.message
+          const message = error instanceof Error && error.message
             ? error.message
             : RiddleFinalAnswerEdit.texts.error;
+          feedback.textContent = message;
+          showLegendIssue(message);
+          answerFieldset?.scrollIntoView?.({ block: 'nearest' });
           throw error;
         }
       },
@@ -172,9 +214,12 @@ document.addEventListener('DOMContentLoaded', () => {
       await persistAnswer();
       showForm(false);
     } catch (error) {
-      feedback.textContent = error instanceof Error && error.message
+      const message = error instanceof Error && error.message
         ? error.message
         : RiddleFinalAnswerEdit.texts.error;
+      feedback.textContent = message;
+      showLegendIssue(message);
+      answerFieldset?.scrollIntoView?.({ block: 'nearest' });
     } finally {
       submit.disabled = false;
     }

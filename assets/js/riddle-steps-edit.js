@@ -17,6 +17,27 @@ document.addEventListener('DOMContentLoaded', () => {
   let dragged = null;
   let savedScroll = 0;
 
+  const legendMark = form?.querySelector('.answer-gap-marker--legend');
+  const answerFieldset = form?.querySelector('fieldset');
+
+  const showLegendIssue = message => {
+    if (!legendMark) return;
+    const tip = legendMark.querySelector('.answer-gap-marker__tip');
+    if (!message) {
+      legendMark.hidden = true;
+      legendMark.removeAttribute('data-message');
+      legendMark.removeAttribute('title');
+      if (tip) tip.textContent = '';
+      answerFieldset?.classList.remove('is-invalid');
+      return;
+    }
+    if (tip) tip.textContent = message;
+    legendMark.dataset.message = message;
+    legendMark.title = message;
+    legendMark.hidden = false;
+    answerFieldset?.classList.add('is-invalid');
+  };
+
   const updateWidgetConfig = () => {
     const widgetSelect = form?.querySelector('[name="widget"]');
     if (!widgetSelect) return;
@@ -116,7 +137,10 @@ document.addEventListener('DOMContentLoaded', () => {
           closeForm();
           return true;
         } catch (error) {
-          formFeedback.textContent = error instanceof Error ? error.message : '';
+          const message = error instanceof Error ? error.message : '';
+          formFeedback.textContent = message;
+          showLegendIssue(message);
+          answerFieldset?.scrollIntoView?.({ block: 'nearest' });
           throw error;
         }
       },
@@ -137,6 +161,8 @@ document.addEventListener('DOMContentLoaded', () => {
     updateWidgetConfig();
     form.querySelector('[name="etape_id"]').value = stepId || '';
     heading.textContent = stepId ? RiddleStepsEdit.texts.editTitle : RiddleStepsEdit.texts.newTitle;
+    const card = stepId ? list.querySelector(`[data-step-id="${stepId}"]`) : null;
+    const storedIssue = card?.querySelector('.answer-gap-marker')?.dataset.message || '';
     if (stepId) {
       try {
         const step = await request('charger_etape_enigme', { etape_id: stepId });
@@ -167,6 +193,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     overview.hidden = true;
     form.hidden = false;
+    showLegendIssue(storedIssue);
     captureStepBaseline();
     form.querySelector('[name="titre"]').focus();
   };
@@ -200,6 +227,8 @@ document.addEventListener('DOMContentLoaded', () => {
       list.append(card);
     }
     card.querySelector('.riddle-step-card__content strong').textContent = step.title;
+    card.classList.remove('is-incomplete');
+    card.querySelector('.answer-gap-marker')?.remove();
     renumber();
   };
 
@@ -249,6 +278,8 @@ document.addEventListener('DOMContentLoaded', () => {
       closeForm();
     } catch (error) {
       formFeedback.textContent = error.message;
+      showLegendIssue(error.message);
+      answerFieldset?.scrollIntoView?.({ block: 'nearest' });
     }
   });
 

@@ -103,40 +103,6 @@ function cat_prevent_shared_cache_of_single_hunt_cockpit(): void
 add_action('wp', 'cat_prevent_shared_cache_of_single_hunt_cockpit', 0);
 
 /**
- * Single line shown over the hunt visual. Uses only the start date.
- */
-function cat_primary_hunt_start_line(int $huntId): string
-{
-    $fallback = __('Date de départ bientôt annoncée', 'chassesautresor-com');
-    if ($huntId <= 0) {
-        return $fallback;
-    }
-
-    $raw = '';
-    if (function_exists('preparer_infos_affichage_chasse')) {
-        $info = preparer_infos_affichage_chasse($huntId, (int) get_current_user_id());
-        $raw = (string) ($info['champs']['date_debut'] ?? '');
-    } elseif (function_exists('get_field')) {
-        $raw = (string) get_field('chasse_infos_date_debut', $huntId);
-    }
-
-    if ($raw === '') {
-        return $fallback;
-    }
-
-    $formatted = function_exists('formater_date') ? formater_date($raw) : $raw;
-    if ($formatted === '') {
-        return $fallback;
-    }
-
-    return sprintf(
-        /* translators: %s: formatted hunt start date. */
-        __('Départ le %s', 'chassesautresor-com'),
-        $formatted
-    );
-}
-
-/**
  * Recalculate a hunt before it is shown, so a manual winner announcement
  * does not leave a stale "terminée" status on screen.
  */

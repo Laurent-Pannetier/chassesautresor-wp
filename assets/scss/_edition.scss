@@ -180,6 +180,87 @@
   align-items: center;
   gap: var(--space-xs);
   margin: 0;
+  overflow: visible;
+}
+
+.answer-gap-marker {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  max-width: 100%;
+  color: #8a6504;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.2;
+  cursor: help;
+}
+
+.answer-gap-marker > i {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 1.15rem;
+  height: 1.15rem;
+  border-radius: 999px;
+  background: #e0a106;
+  color: #1c1403;
+  font-size: 0.68rem;
+}
+
+.answer-gap-marker__label {
+  color: inherit;
+}
+
+.answer-gap-marker__tip {
+  display: none;
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 0.4rem);
+  left: 0;
+  width: max-content;
+  max-width: min(18rem, 70vw);
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--shell-border, #d7d0c4);
+  border-radius: 0.65rem;
+  background: var(--shell-surface, #fff);
+  color: var(--shell-text, #1c1403);
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.35;
+  white-space: normal;
+  text-align: left;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
+}
+
+.answer-gap-marker:hover .answer-gap-marker__tip,
+.answer-gap-marker:focus .answer-gap-marker__tip,
+.answer-gap-marker:focus-visible .answer-gap-marker__tip {
+  display: block;
+}
+
+.answer-gap-marker[hidden] {
+  display: none;
+}
+
+.answer-gap-marker--legend {
+  margin-left: 0.35rem;
+  vertical-align: middle;
+}
+
+html:not([data-theme="day"]) .answer-gap-marker {
+  color: #f0c14b;
+}
+
+.riddle-step-card.is-incomplete {
+  border-color: #e0a106;
+}
+
+fieldset.is-invalid {
+  outline: 2px solid #e0a106;
+  outline-offset: 6px;
+  border-radius: 8px;
 }
 
 .riddle-final-answer-form {
@@ -1421,8 +1502,13 @@ body.shell-edition .riddle-final-answer-editor__label {
 }
 
 body.shell-edition .riddle-final-answer-editor__notice {
-  color: var(--shell-muted);
+  color: #8a6504;
   font-size: 0.78rem;
+  font-weight: 700;
+}
+
+html:not([data-theme="day"]) body.shell-edition .riddle-final-answer-editor__notice {
+  color: #f0c14b;
 }
 
 body.shell-edition .edition-panel .riddle-final-answer-edit {

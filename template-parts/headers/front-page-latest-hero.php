@@ -19,7 +19,6 @@ $cta_html    = $args['cta_html'] ?? '';
 $cta_message = $args['cta_message'] ?? '';
 $single_hunt = !empty($args['single_hunt']);
 $demo_mode   = !empty($args['demo_mode']);
-$start_line  = isset($args['start_line']) ? (string) $args['start_line'] : '';
 ?>
 <section
   class="bandeau-hero bandeau-hero--latest-chasse<?php echo $single_hunt ? ' is-home-hero-visible' : ''; ?>"
@@ -31,24 +30,26 @@ $start_line  = isset($args['start_line']) ? (string) $args['start_line'] : '';
     <?php if ($image_fond) : ?>style="background-image: url('<?php echo esc_url($image_fond); ?>');"<?php endif; ?>
   >
     <div class="contenu-hero">
-      <p class="hero-eyebrow">
-        <?php
-        echo esc_html(
-            $demo_mode
-                ? __('Aperçu de la chasse', 'chassesautresor-com')
-                : ($single_hunt
-                ? __('La chasse au trésor', 'chassesautresor-com')
-                : __('À la une', 'chassesautresor-com'))
-        );
-        ?>
-      </p>
+      <?php if (!$demo_mode || !$single_hunt) : ?>
+        <p class="hero-eyebrow">
+          <?php
+          echo esc_html(
+              $single_hunt
+                  ? __('La chasse au trésor', 'chassesautresor-com')
+                  : __('À la une', 'chassesautresor-com')
+          );
+          ?>
+        </p>
+      <?php endif; ?>
       <?php if ($single_hunt) : ?>
-        <h1 class="hero-title"><?php echo esc_html($titre); ?></h1>
+        <h1 class="hero-title hero-title--visually-hidden"><?php echo esc_html($titre); ?></h1>
+        <p class="hero-start">
+          <span class="chasse-badge chasse-badge--region hero-start__badge">
+            <?php esc_html_e('Noël 2027', 'chassesautresor-com'); ?>
+          </span>
+        </p>
       <?php else : ?>
         <h2 class="hero-title"><?php echo esc_html($titre); ?></h2>
-      <?php endif; ?>
-      <?php if ($single_hunt && $start_line !== '') : ?>
-        <p class="hero-start"><?php echo esc_html($start_line); ?></p>
       <?php endif; ?>
       <?php if ($description) : ?>
         <p class="hero-description"><?php echo esc_html($description); ?></p>

@@ -372,6 +372,9 @@ function initEnigmeEdit() {
       .then(res => {
         if (res.success) {
           DEBUG && console.log('🔄 Statut système de l’énigme recalculé');
+          if (Array.isArray(res.data?.missing) && typeof window.ctaSyncRiddleNavGap === 'function') {
+            window.ctaSyncRiddleNavGap(postId, res.data.missing);
+          }
           mettreAJourCTAValidationChasse(postId);
         } else {
           console.warn('⚠️ Échec recalcul statut énigme :', res.data);

@@ -97,6 +97,12 @@
               return;
             }
             applyView(card, toggle, status, help, badgeLabel, icon, labelOff, labelOn, view);
+            if (
+              Object.prototype.hasOwnProperty.call(view, 'can_add_riddle')
+              && typeof window.ctaSyncAddRiddleAvailability === 'function'
+            ) {
+              window.ctaSyncAddRiddleAvailability(!!view.can_add_riddle, view.add_riddle_url || '');
+            }
           })
           .catch(() => {
             toggle.checked = previous;
@@ -107,5 +113,9 @@
     });
   };
 
-  document.addEventListener('DOMContentLoaded', () => init(document));
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => init(document));
+  } else {
+    init(document);
+  }
 })();

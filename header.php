@@ -211,9 +211,6 @@ if ( function_exists( 'cta_shell_open' ) ) {
                     'cta_message' => $cta_data['cta_message'] ?? '',
                     'single_hunt' => $is_single_hunt_site,
                     'demo_mode'   => $is_demo_site,
-                    'start_line'  => $is_single_hunt_site && function_exists( 'cat_primary_hunt_start_line' )
-                        ? cat_primary_hunt_start_line( $latest_chasse_id )
-                        : '',
                 ]
             );
             $latest_hero_markup = ob_get_clean();

@@ -736,8 +736,34 @@
             render();
           }
         }, 2500);
-        return true;
+        return refreshRiddleNav().then(() => true);
       });
+  }
+
+  function refreshRiddleNav() {
+    if (cpt() !== 'enigme' || typeof window.ctaSyncRiddleNavGap !== 'function') {
+      return Promise.resolve();
+    }
+    const id = postId();
+    if (!id) return Promise.resolve();
+
+    return fetch(ajaxurl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        action: 'forcer_recalcul_statut_enigme',
+        post_id: id,
+        nonce: nonce(),
+      }),
+    })
+      .then((response) => response.json())
+      .then((res) => {
+        const missing = res?.data?.missing;
+        if (res?.success && Array.isArray(missing)) {
+          window.ctaSyncRiddleNavGap(id, missing);
+        }
+      })
+      .catch(() => {});
   }
 
   function writeBank(box, raw) {

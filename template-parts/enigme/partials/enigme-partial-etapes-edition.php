@@ -59,9 +59,14 @@ if ($riddleId > 0) {
     <?php foreach ($stepIds as $index => $stepId) : ?>
       <?php
       $label = get_the_title($stepId);
+      $stepIssue = (new ChassesAuTresor\Core\Content\RiddleStepCompletenessService())->issueMessage(
+          (int) $stepId,
+          'get_the_title',
+          'get_field'
+      );
       ?>
       <li
-        class="riddle-step-card"
+        class="riddle-step-card<?= $stepIssue !== '' ? ' is-incomplete' : ''; ?>"
         data-step-id="<?= esc_attr($stepId); ?>"
         draggable="<?= $editable && !$structureLocked ? 'true' : 'false'; ?>"
       >
@@ -73,6 +78,18 @@ if ($riddleId > 0) {
         <span class="riddle-step-card__rank"><?= esc_html((string) ($index + 1)); ?></span>
         <span class="riddle-step-card__content">
           <strong><?= esc_html($label); ?></strong>
+          <?php if ($stepIssue !== '') : ?>
+            <?php
+            get_template_part(
+                'template-parts/enigme/partials/enigme-partial-answer-gap',
+                null,
+                [
+                    'message' => $stepIssue,
+                    'id' => 'answer-gap-step-' . (int) $stepId,
+                ]
+            );
+            ?>
+          <?php endif; ?>
         </span>
         <?php if ($editable) : ?>
           <span class="riddle-step-card__actions">
@@ -144,7 +161,20 @@ if ($riddleId > 0) {
       $widgetReadonly = $structureLocked ? 'disabled' : '';
       ?>
       <fieldset class="riddle-step-form__field" data-widget-readonly="<?= $structureLocked ? '1' : '0'; ?>">
-        <legend><?= esc_html__('Réponse de l’étape', 'chassesautresor-com'); ?></legend>
+        <legend>
+          <?= esc_html__('Réponse de l’étape', 'chassesautresor-com'); ?>
+          <?php
+          get_template_part(
+              'template-parts/enigme/partials/enigme-partial-answer-gap',
+              null,
+              [
+                  'compact' => true,
+                  'hidden' => true,
+                  'id' => 'answer-gap-step-legend-' . $riddleId,
+              ]
+          );
+          ?>
+        </legend>
         <?php if ($structureLocked) : ?>
           <p class="txt-small">
             <?= esc_html__(

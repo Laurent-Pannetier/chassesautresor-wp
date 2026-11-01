@@ -2676,7 +2676,8 @@ body.admin-bar.shell-edition .app-sidebar {
   color: var(--shell-text);
 }
 
-.app-nav__sub[hidden] {
+.app-nav__sub[hidden],
+.app-nav__subitem[hidden] {
   display: none;
 }
 
@@ -2805,14 +2806,25 @@ body.admin-bar.shell-edition .app-sidebar {
 
 .app-nav__status-pop,
 .hunt-lifecycle-card__gaps-pop {
-  max-width: 16rem;
-  margin: 0;
+  position: fixed;
+  inset: unset;
+  width: max-content;
+  max-width: min(18rem, calc(100vw - 1.5rem));
+  margin: auto;
   padding: 0.65rem 0.8rem;
   border: 1px solid var(--shell-border);
   border-radius: 0.7rem;
   background: var(--shell-surface);
   color: var(--shell-text);
   box-shadow: var(--shell-shadow);
+  position-area: inline-end span-block-end;
+}
+
+.app-nav__status-pop-title,
+.hunt-lifecycle-card__gaps-pop p {
+  margin: 0 0 0.45rem;
+  font-size: 0.82rem;
+  font-weight: 700;
 }
 
 .app-nav__status-pop ul,

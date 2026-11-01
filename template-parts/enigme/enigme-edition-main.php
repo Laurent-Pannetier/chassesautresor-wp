@@ -33,7 +33,11 @@ $date_deblocage = $date_obj ? $date_obj->format('Y-m-d\TH:i') : '';
 
 $finalAnswerPersistence = new ChassesAuTresor\Core\Progress\RiddleFinalAnswerWidgetPersistenceService();
 $finalAnswerValues = $finalAnswerPersistence->loadEditorValues((int) $enigme_id);
-$finalAnswerComplete = $mode_validation !== 'automatique' || $finalAnswerPersistence->isComplete((int) $enigme_id);
+$finalAnswerIssue = '';
+if ($mode_validation === 'automatique') {
+    $finalAnswerIssue = $finalAnswerPersistence->issueMessage((int) $enigme_id);
+}
+$finalAnswerComplete = $mode_validation !== 'automatique' || $finalAnswerIssue === '';
 $finalAnswerWidgets = (new ChassesAuTresor\Core\Progress\AnswerWidgetEditorViewService())
     ->widgetsForTarget('enigme');
 $finalAnswerWidgetLabel = __('Réponse texte', 'chassesautresor-com');
@@ -483,7 +487,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['uid'], $_POST['action
                 'template-parts/common/edition-row',
                 null,
                 [
-                    'class'      => 'champ-enigme champ-reponse-finale-widget champ-groupe-reponse-automatique cache' . ($finalAnswerComplete ? ' champ-rempli' : ' champ-vide') . ($peut_editer ? '' : ' champ-desactive'),
+                    'class'      => 'champ-enigme champ-reponse-finale-widget champ-groupe-reponse-automatique cache'
+                        . ($finalAnswerComplete ? ' champ-rempli' : ' champ-vide champ-attention')
+                        . ($peut_editer ? '' : ' champ-desactive'),
                     'attributes' => [
                         'data-champ'   => 'enigme_reponse_widget',
                         'data-cpt'     => 'enigme',
@@ -515,6 +521,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['uid'], $_POST['action
                         $finalAnswerWidgets,
                         $finalAnswerWidgetLabel,
                         $finalAnswerComplete,
+                        $finalAnswerIssue,
                         $peut_editer,
                         $enigme_id
                     ) {
@@ -523,13 +530,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['uid'], $_POST['action
                           class="riddle-final-answer-editor"
                           data-riddle-id="<?= esc_attr($enigme_id); ?>"
                           data-editable="<?= $peut_editer ? '1' : '0'; ?>"
+                          data-issue="<?= esc_attr($finalAnswerIssue); ?>"
                         >
                           <div class="riddle-final-answer-editor__summary">
                             <strong class="riddle-final-answer-editor__label"><?= esc_html($finalAnswerWidgetLabel); ?></strong>
                             <?php if (!$finalAnswerComplete) : ?>
-                              <span class="riddle-final-answer-editor__notice">
-                                <?= esc_html__('configuration incomplète', 'chassesautresor-com'); ?>
-                              </span>
+                              <?php
+                                get_template_part(
+                                    'template-parts/enigme/partials/enigme-partial-answer-gap',
+                                    null,
+                                    [
+                                        'message' => $finalAnswerIssue !== ''
+                                            ? $finalAnswerIssue
+                                            : __(
+                                                'La configuration de la réponse automatique est incomplète.',
+                                                'chassesautresor-com'
+                                            ),
+                                        'class' => 'riddle-final-answer-editor__notice',
+                                        'id' => 'answer-gap-final-' . (int) $enigme_id,
+                                    ]
+                                );
+                              ?>
                             <?php endif; ?>
                             <?php if ($peut_editer) : ?>
                               <button type="button" class="riddle-final-answer-edit">
@@ -538,8 +559,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['uid'], $_POST['action
                             <?php endif; ?>
                           </div>
                           <form class="riddle-final-answer-form" hidden>
-                            <fieldset class="riddle-step-form__field">
-                              <legend><?= esc_html__('Mode de réponse', 'chassesautresor-com'); ?></legend>
+                            <fieldset class="riddle-step-form__field<?= $finalAnswerComplete ? '' : ' is-invalid'; ?>">
+                              <legend>
+                                <?= esc_html__('Mode de réponse', 'chassesautresor-com'); ?>
+                                <?php
+                                get_template_part(
+                                    'template-parts/enigme/partials/enigme-partial-answer-gap',
+                                    null,
+                                    [
+                                        'message' => $finalAnswerIssue,
+                                        'compact' => true,
+                                        'hidden' => $finalAnswerComplete,
+                                        'id' => 'answer-gap-final-legend-' . (int) $enigme_id,
+                                    ]
+                                );
+                                ?>
+                              </legend>
                               <label for="riddle-final-answer-widget"><?= esc_html__('Type de widget', 'chassesautresor-com'); ?></label>
                               <select id="riddle-final-answer-widget" name="widget">
                                 <?php foreach ($finalAnswerWidgets as $widgetDefinition) : ?>
