@@ -368,7 +368,7 @@ html[data-theme="day"] .app-topbar__hunt {
 
 .app-topbar__team-label {
   color: var(--shell-muted);
-  font-size: 0.62rem;
+  font-size: var(--font-xs);
   font-weight: 700;
   letter-spacing: 0.06em;
   line-height: 1.1;
@@ -629,7 +629,7 @@ img.avatar-pirate {
   border-radius: 999px;
   background: var(--shell-icon-notifications);
   color: #fff;
-  font-size: 0.7rem;
+  font-size: var(--font-xs);
   font-weight: 800;
   line-height: 1.2;
   text-align: center;
@@ -1394,7 +1394,7 @@ html[data-theme="day"] .home-enigmas-preserve {
 .equipe-ranking__identity small {
   margin-top: 0.1rem;
   color: var(--shell-muted);
-  font-size: 0.7rem;
+  font-size: var(--font-xs);
 }
 
 .progression-ranking-list__score,
@@ -1639,7 +1639,7 @@ html[data-theme="day"] .home-enigmas-preserve {
   display: block;
   margin: 0 0 0.2rem;
   color: var(--shell-accent-strong);
-  font-size: 0.68rem;
+  font-size: var(--font-xs);
   font-weight: 800;
   letter-spacing: 0.08em;
   line-height: 1.2;
@@ -1679,7 +1679,7 @@ html[data-theme="day"] .home-enigmas-preserve {
   padding-top: 0.48rem;
   padding-bottom: 0.42rem;
   color: var(--shell-muted);
-  font-size: 0.64rem;
+  font-size: var(--font-xs);
   font-weight: 700;
   letter-spacing: 0.09em;
   text-transform: uppercase;
@@ -1757,7 +1757,7 @@ html[data-theme="day"] .home-enigmas-preserve {
 .progression-table-identity small {
   display: block;
   color: var(--shell-muted);
-  font-size: 0.68rem;
+  font-size: var(--font-xs);
 }
 
 .progression-data-table--player-ranking th:nth-child(3),
@@ -1836,7 +1836,7 @@ html[data-theme="day"] .home-enigmas-preserve {
   left: 0.85rem;
   color: var(--shell-muted);
   content: attr(data-label);
-  font-size: 0.64rem;
+  font-size: var(--font-xs);
   font-weight: 700;
   text-transform: uppercase;
 }
@@ -2095,7 +2095,7 @@ html[data-theme="day"] .home-enigmas-preserve {
   border-radius: 999px;
   background: var(--shell-surface-2);
   color: var(--shell-muted);
-  font-size: 0.65rem;
+  font-size: var(--font-xs);
   font-weight: 700;
   line-height: 1.4;
   vertical-align: 0.15em;
@@ -2249,7 +2249,7 @@ html[data-theme="day"] .home-enigmas-preserve {
 .progression-columns__value {
   height: 1rem;
   color: var(--shell-text);
-  font-size: 0.7rem;
+  font-size: var(--font-xs);
   font-weight: 700;
   line-height: 1rem;
 }
@@ -2285,7 +2285,7 @@ html[data-theme="day"] .home-enigmas-preserve {
   margin-top: 0.15rem;
   overflow: hidden;
   color: var(--shell-muted);
-  font-size: 0.65rem;
+  font-size: var(--font-xs);
   line-height: 1.15rem;
   white-space: nowrap;
 }
@@ -2446,7 +2446,7 @@ html[data-theme="day"] .home-enigmas-preserve {
   }
 
   .app-topbar__team-label {
-    font-size: 0.72rem;
+    font-size: var(--font-xs);
   }
 
   .app-topbar__trophies {
@@ -2643,7 +2643,7 @@ body.admin-bar.shell-edition .app-sidebar {
   height: calc(100dvh - var(--shell-topbar-height) - 32px - var(--shell-savebar-offset));
 }
 
-@media (max-width: 782px) {
+@media (--bp-wp-admin) {
   body.admin-bar .app-topbar {
     top: 46px;
   }
@@ -2741,7 +2741,7 @@ body.admin-bar.shell-edition .app-sidebar {
 
 .app-nav__subtype {
   color: var(--shell-muted);
-  font-size: 0.65rem;
+  font-size: var(--font-xs);
   font-weight: 700;
   letter-spacing: 0.08em;
   line-height: 1.2;
@@ -3467,7 +3467,7 @@ body.admin-bar.shell-edition .app-sidebar {
 .trophy-card__scope,
 .notifications-list__type {
   color: var(--shell-accent);
-  font-size: 0.72rem;
+  font-size: var(--font-xs);
   font-weight: 800;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -3494,7 +3494,7 @@ body.admin-bar.shell-edition .app-sidebar {
 
 .trophy-card--square .trophy-card__scope {
   overflow: hidden;
-  font-size: 0.68rem;
+  font-size: var(--font-xs);
   white-space: nowrap;
   text-overflow: ellipsis;
 }
@@ -3598,7 +3598,7 @@ body.admin-bar.shell-edition .app-sidebar {
   border: 0;
   background: rgba(8, 12, 18, 0.45);
   color: #fff;
-  font-size: 0.65rem;
+  font-size: var(--font-xs);
   font-weight: 600;
   line-height: 1.15rem;
 }

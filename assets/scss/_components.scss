@@ -110,7 +110,11 @@ body.logged-in .ast-header-account-wrap .ast-header-account-type-icon .ahfb-svg-
 .cta-header-account-menu__link:focus-visible {
   background: rgba(255, 255, 255, 0.08);
   color: var(--color-primary, #e1a95f);
-  outline: none;
+}
+
+.cta-header-account-menu__link:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
 }
 
 .cta-header-account-menu__link--logout {
@@ -235,14 +239,22 @@ body .wp-block-file .wp-block-file__button:focus,
   border-color: currentColor;
 }
 
+.btn-lire-plus,
+.bouton-retour {
+  min-height: 2.75rem;
+}
+
 
 /* ========== 🚀 BOUTON CTA ========== */
 
 .bouton-cta {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     padding: 6px 10px;
+    min-height: 2.75rem;
     background-color: var(--color-gris-3);
-    color: var(--color-text-secondary);
+    color: var(--text-on-gold);
     border-radius: 5px;
     text-decoration: none;
     font-weight: bold;
@@ -299,7 +311,7 @@ body .wp-block-file .wp-block-file__button:focus,
     display: inline-block;
     padding: var(--space-xxs) var(--space-xs);
     background: var(--color-secondary);
-    color: var(--color-text-primary);
+    color: var(--text-on-gold);
     border-radius: 12px;
     font-size: 0.75rem;
     font-weight: 600;
@@ -929,16 +941,18 @@ a.ajout-link:focus-visible {
 
 /* Couleurs par statut (alignées sur le nuancier) */
 .badge-statut.statut-en_cours {
-  background-color: var(--color-success);
+  background-color: var(--color-success-strong);
+  color: var(--color-white);
 }
 
 .badge-statut.statut-payante {
   background-color: var(--color-primary);
-  color: var(--color-text-primary);
+  color: var(--text-on-gold);
 }
 
 .badge-statut.statut-a_venir {
   background-color: var(--color-grey-medium);
+  color: var(--text-on-gold);
 }
 
 .badge-statut.statut-termine {
@@ -947,6 +961,7 @@ a.ajout-link:focus-visible {
 
 .badge-statut.statut-revision {
   background-color: var(--color-error);
+  color: var(--color-white);
 }
 
 
@@ -1437,7 +1452,7 @@ a.addtoany_share span {
 .breadcrumb li + li::before {
   content: '›';
   margin: 0 var(--space-xs);
-  color: var(--color-text-secondary);
+  color: var(--color-text-muted);
 }
 
 .breadcrumb a {

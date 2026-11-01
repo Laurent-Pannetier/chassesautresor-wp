@@ -104,6 +104,13 @@ function initChampTexte(bloc) {
     input.addEventListener('input', () => {
       clearTimeout(timer);
       const brute = input.value.trim();
+      if (
+        champ === 'post_title'
+        && (cpt === 'enigme' || cpt === 'chasse')
+        && typeof window.mettreAJourTitreMenuShell === 'function'
+      ) {
+        window.mettreAJourTitreMenuShell(cpt, postId, brute);
+      }
 
       timer = setTimeout(() => {
         if (champ === 'email_contact') {

@@ -900,7 +900,7 @@ onDateFieldUpdated() est appelé automatiquement dès la réponse AJAX (pas beso
   --color-editor-success:          #188038;   /* ✅ Message de validation */
 
   --color-editor-field-hover:      #E8F0FE;   /* 💠 Fond des champs actifs / survolés */
-  --color-editor-placeholder:      #9AA0A6;   /* 💬 Placeholder ou aide contextuelle */
+  --color-editor-placeholder:      #6B6B6B;   /* 💬 Placeholder lisible sur fond édition */
 }
 
 /* 🔗 Bridge HSL ↔️ nuancier existant (ne remplace rien) */
@@ -920,7 +920,7 @@ onDateFieldUpdated() est appelé automatiquement dès la réponse AJAX (pas beso
   --editor-success-hsl:         138 68% 30%; /* = #188038 → var(--color-editor-success) */
 
   --editor-field-hover-hsl:     218 92% 95%; /* = #E8F0FE → var(--color-editor-field-hover) */
-  --editor-placeholder-hsl:     210 06% 63%; /* = #9AA0A6 → var(--color-editor-placeholder) */
+  --editor-placeholder-hsl:     0 0% 42%; /* = #6B6B6B → var(--color-editor-placeholder) */
 }
 
 /* 🎨 Tokens shadcn/ui attendus (utilisés comme hsl(var(--token))) */

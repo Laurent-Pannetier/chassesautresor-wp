@@ -4,8 +4,9 @@
  * s’ajoutent à cette galerie (y compris via AJAX).
  *
  * Une page 16:9 occupe le viewport (`object-fit: contain`). Le feuilletage
- * se fait au glissement horizontal, au clavier, ou avec les flèches du
- * bandeau. Un tap affiche le bandeau.
+ * se fait au glissement horizontal, au clavier, ou avec les chevrons qui
+ * apparaissent au bord de l’écran (souris). Un compteur discret reste
+ * visible. Un tap affiche le bandeau.
  *
  * Avec une souris, un clic arme une loupe ×4 qui suit le pointeur sur
  * l’image. Un second clic ou Échap l’éteint. Au toucher, un double tap ou
@@ -31,6 +32,9 @@
   const showPageLabel =
     (window.EnigmeImageViewer && window.EnigmeImageViewer.showPageLabel) ||
     'Afficher la page %d';
+  const showControlsTemplate =
+    (window.EnigmeImageViewer && window.EnigmeImageViewer.showControlsLabel) ||
+    'Afficher les commandes, page %1$d / %2$d';
 
   const formatPageLabel = (current, total) =>
     pageLabelTemplate
@@ -40,6 +44,28 @@
 
   const formatShowPageLabel = (pageNumber) =>
     showPageLabel.replace('%d', String(pageNumber));
+
+  const formatShowControlsLabel = (current, total) =>
+    showControlsTemplate
+      .replace('%1$d', String(current))
+      .replace('%2$d', String(total))
+      .replace('%d', String(current));
+
+  const paintPageCounter = (current, total) => {
+    const counter = document.querySelector('.comic-page-counter');
+    if (!counter) {
+      return;
+    }
+    if (total < 2) {
+      counter.hidden = true;
+      counter.textContent = '';
+      counter.removeAttribute('aria-label');
+      return;
+    }
+    counter.hidden = false;
+    counter.textContent = `${current} / ${total}`;
+    counter.setAttribute('aria-label', formatShowControlsLabel(current, total));
+  };
 
   const DOT_PAGE_LIMIT = 6;
 
@@ -177,6 +203,9 @@
     if (pager && total > 0) {
       pager.textContent = formatPageLabel(activeIndex + 1, total);
     }
+    if (total > 0) {
+      paintPageCounter(activeIndex + 1, total);
+    }
 
     const prev = gallery.querySelector('.galerie-enigme__nav--prev');
     const next = gallery.querySelector('.galerie-enigme__nav--next');
@@ -270,7 +299,7 @@
     });
   };
 
-  const selectGallerySlide = (gallery, index) => {
+  const selectGallerySlide = (gallery, index, options = {}) => {
     const slides = [...gallery.querySelectorAll('.galerie-enigme__slide')];
     const thumbs = gallery.querySelectorAll('[data-gallery-goto]');
     if (!slides.length) {
@@ -334,7 +363,10 @@
     }
     if (previousIndex !== target) {
       gallery.dispatchEvent(
-        new CustomEvent('comic-page-change', { bubbles: true, detail: { index: target } })
+        new CustomEvent('comic-page-change', {
+          bubbles: true,
+          detail: { index: target, source: options.source || '' },
+        })
       );
     }
     return target;
@@ -462,6 +494,7 @@
   const HUD_PAGE_MS = 1400;
   const HUD_EDGE_MS = 800;
   const EDGE_PX = 72;
+  const SIDE_EDGE_PX = 80;
   const TAP_MS = 320;
   const SWIPE_PX = 48;
 
@@ -506,6 +539,8 @@
     let pointerOverHud = false;
     let pointerOverTopbar = false;
     let pointerNearHud = false;
+    let lastPointer = null;
+    let pageCounter = null;
     let pinchBase = 0;
     let gesture = null;
     const pointers = new Map();
@@ -866,20 +901,70 @@
     stage.addEventListener('pointerup', onPointerUp);
     stage.addEventListener('pointercancel', onPointerUp);
 
-    const onPageChange = () => revealHud(HUD_PAGE_MS);
+    const hideEdgeNav = () => {
+      gallery.querySelectorAll('.galerie-enigme__nav.is-edge-visible').forEach((button) => {
+        button.classList.remove('is-edge-visible');
+      });
+    };
+
+    const syncEdgeNav = (point) => {
+      const prev = gallery.querySelector('.galerie-enigme__nav--prev');
+      const next = gallery.querySelector('.galerie-enigme__nav--next');
+      if (!readerActive || !finePointerQuery().matches || !point) {
+        hideEdgeNav();
+        return;
+      }
+      const target = point.target;
+      const overNav = (selector) =>
+        typeof target?.closest === 'function' && !!target.closest(selector);
+      const nearLeft = point.x <= SIDE_EDGE_PX;
+      const nearRight = point.x >= window.innerWidth - SIDE_EDGE_PX;
+      const showPrev = !!(prev && !prev.disabled && (nearLeft || overNav('.galerie-enigme__nav--prev')));
+      const showNext = !!(next && !next.disabled && (nearRight || overNav('.galerie-enigme__nav--next')));
+      prev?.classList.toggle('is-edge-visible', showPrev);
+      next?.classList.toggle('is-edge-visible', showNext);
+    };
+
+    const onCounterClick = (event) => {
+      event.preventDefault();
+      revealHud();
+    };
+
+    const ensurePageCounter = () => {
+      pageCounter = document.createElement('button');
+      pageCounter.type = 'button';
+      pageCounter.className = 'comic-page-counter';
+      pageCounter.addEventListener('click', onCounterClick);
+      document.body.appendChild(pageCounter);
+      const slides = gallery.querySelectorAll('.galerie-enigme__slide');
+      const active = [...slides].findIndex((slide) => slide.classList.contains('is-active'));
+      paintPageCounter((active >= 0 ? active : 0) + 1, slides.length);
+    };
+
+    const onPageChange = (event) => {
+      syncEdgeNav(lastPointer);
+      if (event.detail?.source === 'edge') {
+        return;
+      }
+      revealHud(HUD_PAGE_MS);
+    };
     gallery.addEventListener('comic-page-change', onPageChange);
 
     const onMouseMove = (event) => {
       if (!readerActive || !finePointerQuery().matches) {
         return;
       }
+      lastPointer = { x: event.clientX, y: event.clientY, target: event.target };
       const offset = topEdgeOffset();
       const nearTop = event.clientY >= offset && event.clientY <= offset + EDGE_PX;
       const nearBottom = event.clientY >= window.innerHeight - EDGE_PX;
+      let overCounter = false;
       if (typeof event.target?.closest === 'function') {
         pointerOverTopbar = !!event.target.closest('.app-topbar');
+        overCounter = !!event.target.closest('.comic-page-counter');
       }
-      if (nearTop || nearBottom || pointerOverHud || pointerOverTopbar) {
+      syncEdgeNav(lastPointer);
+      if (((nearTop || nearBottom) && !overCounter) || pointerOverHud || pointerOverTopbar) {
         pointerNearHud = true;
         showHud();
         clearHide();
@@ -891,6 +976,15 @@
       }
     };
     document.addEventListener('mousemove', onMouseMove);
+
+    const onDocumentMouseOut = (event) => {
+      if (event.relatedTarget) {
+        return;
+      }
+      lastPointer = null;
+      hideEdgeNav();
+    };
+    document.addEventListener('mouseout', onDocumentMouseOut);
 
     const onFocusIn = (event) => {
       if (!readerActive) {
@@ -976,6 +1070,7 @@
         (slide) => slide.classList.contains('is-active')
       );
       syncPagerTrack(gallery, activeIndex >= 0 ? activeIndex : 0);
+      ensurePageCounter();
       playIntro();
     };
 
@@ -985,6 +1080,11 @@
       }
       readerActive = false;
       pointerOverTopbar = false;
+      lastPointer = null;
+      hideEdgeNav();
+      pageCounter?.removeEventListener('click', onCounterClick);
+      pageCounter?.remove();
+      pageCounter = null;
       clearHide();
       if (tapTimer) {
         window.clearTimeout(tapTimer);
@@ -1028,6 +1128,7 @@
       shellTopbar?.removeEventListener('pointerenter', onTopbarEnter);
       shellTopbar?.removeEventListener('pointerleave', onTopbarLeave);
       document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseout', onDocumentMouseOut);
       document.removeEventListener('focusin', onFocusIn);
       document.removeEventListener('focusout', onFocusOut);
       clearHide();
@@ -1042,7 +1143,7 @@
   };
 
   window.EnigmeGallery = {
-    selectSlide: (gallery, index) => selectGallerySlide(gallery, index),
+    selectSlide: (gallery, index, options) => selectGallerySlide(gallery, index, options),
     appendPage: appendGalleryPage,
     getGallery: () => document.querySelector('[data-enigme-gallery]'),
     initReader: initComicReader,
@@ -1124,7 +1225,10 @@
       const current = [...gallery.querySelectorAll('.galerie-enigme__slide')].findIndex(
         (slide) => slide.classList.contains('is-active')
       );
-      selectGallerySlide(gallery, current + Number(stepButton.dataset.galleryStep || 0));
+      const edgeNav = stepButton.classList.contains('galerie-enigme__nav');
+      selectGallerySlide(gallery, current + Number(stepButton.dataset.galleryStep || 0), {
+        source: edgeNav ? 'edge' : '',
+      });
       return;
     }
 

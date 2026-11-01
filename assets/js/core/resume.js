@@ -195,6 +195,12 @@ window.onChampSimpleMisAJour = function (champ, postId, valeur, cpt, extra) {
     if (typeof window.mettreAJourTitreHeader === 'function') {
       window.mettreAJourTitreHeader(cpt, valeur);
     }
+    if (
+      (cpt === 'enigme' || cpt === 'chasse')
+      && typeof window.mettreAJourTitreMenuShell === 'function'
+    ) {
+      window.mettreAJourTitreMenuShell(cpt, postId, valeur, { persisted: true });
+    }
     if (cpt === 'enigme' && typeof window.mettreAJourTitreMenuEnigme === 'function') {
       window.mettreAJourTitreMenuEnigme(valeur);
     }

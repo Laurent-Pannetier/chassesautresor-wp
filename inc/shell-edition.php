@@ -458,10 +458,13 @@ function cta_shell_render_outils_submenu(bool $expanded = true): void
     $huntId = function_exists('cat_get_managed_hunt_id_for_user')
         ? (int) cat_get_managed_hunt_id_for_user()
         : 0;
-    $riddles = cta_shell_ordered_riddle_posts($huntId);
     $current = cta_shell_edition_target();
     $currentHuntId = ($current['type'] ?? '') === 'chasse' ? (int) $current['id'] : 0;
     $currentId = ($current['type'] ?? '') === 'enigme' ? (int) $current['id'] : 0;
+    if ($currentId > 0 && function_exists('forcer_relation_enigme_dans_chasse_si_absente')) {
+        forcer_relation_enigme_dans_chasse_si_absente($currentId);
+    }
+    $riddles = cta_shell_ordered_riddle_posts($huntId);
     $canEditHunt = $huntId > 0
         && function_exists('utilisateur_peut_voir_panneau')
         && utilisateur_peut_voir_panneau($huntId);
@@ -487,7 +490,8 @@ function cta_shell_render_outils_submenu(bool $expanded = true): void
         }
 
         echo '<li class="app-nav__subitem app-nav__subitem--hunt';
-        echo $isCurrentHunt ? ' is-current">' : '">';
+        echo $isCurrentHunt ? ' is-current' : '';
+        echo '" data-nav-cpt="chasse" data-nav-id="' . esc_attr((string) $huntId) . '">';
         echo '<a class="app-nav__sublink app-nav__sublink--hunt';
         echo $isCurrentHunt ? ' is-active"' : '"';
         echo ' href="' . esc_url(cta_shell_edition_url('chasse', $huntId, 'parametres')) . '"';
@@ -516,7 +520,8 @@ function cta_shell_render_outils_submenu(bool $expanded = true): void
         }
 
         echo '<li class="app-nav__subitem app-nav__subitem--riddle';
-        echo $isCurrent ? ' is-current">' : '">';
+        echo $isCurrent ? ' is-current' : '';
+        echo '" data-nav-cpt="enigme" data-nav-id="' . esc_attr((string) $riddleId) . '">';
         echo '<a class="app-nav__sublink' . ($isCurrent ? ' is-active' : '') . '" href="';
         echo esc_url(cta_shell_edition_url('enigme', $riddleId, 'parametres')) . '"';
         if ($isCurrent) {

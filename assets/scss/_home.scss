@@ -115,7 +115,11 @@ body.accueil-fullscreen {
     background: rgba(255, 255, 255, 0.16);
     border-color: rgba(255, 255, 255, 0.35);
     transform: translateY(-1px);
-    outline: none;
+}
+
+.home-hunts__toolbar-toggle:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
 }
 
 .home-hunts__toolbar-toggle[aria-expanded="true"] {
@@ -299,7 +303,11 @@ body.accueil-fullscreen {
     background: rgba(255, 255, 255, 0.16);
     border-color: rgba(255, 255, 255, 0.35);
     transform: translateY(-1px);
-    outline: none;
+}
+
+.home-hunts__filters-reset:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
 }
 
 .home-hunts__filters-reset-icon {
@@ -377,7 +385,7 @@ body.accueil-fullscreen {
 }
 
 .home-hunts__feedback--error {
-    color: var(--color-error);
+    color: var(--color-error-text);
     font-weight: 600;
 }
 

@@ -46,7 +46,30 @@ Variables définies dans [`assets/scss/_variables-edition.scss`](../assets/scss/
 
 ## Typographie
 
-- `--font-main` : `Poppins, sans-serif`
+- `--font-main` : Poppins (400–700), avec repli système `Segoe UI`, Roboto, `Helvetica Neue`, Arial
+- `--font-body` : `1rem` (16px si le navigateur est à 100 %)
+- `--font-sm` : `0.875rem`
+- `--font-xs` : `0.75rem` — plancher du texte d'interface
+- `--leading-body` : `1.5`
+- `--leading-tight` : `1.25`
+- `--measure` : `68ch` — largeur de lecture des textes suivis
+- `--font-h1` : `clamp(1.75rem, 1.15rem + 2.2vw, 2.625rem)`
+- `--font-h2` : `clamp(1.5rem, 1.15rem + 1.4vw, 2rem)`
+- `--font-h3` : `clamp(1.25rem, 1.05rem + 0.8vw, 1.5rem)`
+
+Le corps de page reste à `1rem`. Les titres utilisent la rampe fluide ci-dessus. Les champs `input`, `select` et `textarea` restent à au moins 16px pour éviter le zoom au focus d'iOS.
+
+### Couples de contraste
+
+- `--text-on-gold` : `#152033` — texte sur or, bronze ou gris clair
+- `--color-text-muted` : `#c8c0b4` — texte atténué sur le fond nuit
+- `--color-success-strong` : `#1B7A24` — fond du badge « en cours » (texte blanc)
+- `--color-success-text` : `#9AF0C0` — succès écrit sur fond nuit
+- `--color-success-on-light` : `#0E6B1C` — succès écrit sur fond clair
+- `--color-error-text` : `#FFB4A8` — erreur écrite sur fond nuit
+- `--color-error-on-light` : `#B71C1C` — erreur écrite sur fond clair
+
+`--color-success` et `--color-error` restent les aplats (barres, bordures). Le texte sur fond nuit utilise les jetons `*-text`.
 
 ## Breakpoints
 
@@ -71,16 +94,18 @@ Points de rupture en `min-width` :
 - `--bp-xl` → `--bp-wide`
 
 ### Breakpoints de layout
-- `--breakpoint-small` : `480px`
-- `--breakpoint-mobile` : `600px`
-- `--breakpoint-tablet` : `768px`
-- `--breakpoint-desktop` : `1024px`
-- `--breakpoint-wide` : `1280px`
+- `--breakpoint-small` : alias de `--bp-small`
+- `--breakpoint-mobile` : alias de `--bp-mobile`
+- `--breakpoint-tablet` : alias de `--bp-tablet`
+- `--breakpoint-desktop` : alias de `--bp-desktop`
+- `--breakpoint-wide` : alias de `--bp-wide`
+
+Media queries nommées hors échelle principale : `--bp-compact` (720px), `--bp-auth` (960px), `--bp-wp-admin` (max-width 782px, barre d'admin WordPress).
 
 ## Grille et layout
 
 - `--container-max-width-default` : `1200px` – largeur max par défaut
-- `--container-max-width` : `var(--container-max-width-default)` (devient `none` au-delà de `--bp-xxl` pour un plein écran)
+- `--container-max-width` : `var(--container-max-width-default)` (plafonné à `90rem` au-delà de `--bp-xxl`)
 - `--container-max-width-narrow` : `800px`
 - `--grid-gap` : `1rem`
 - `--grid-columns` : `4`
@@ -97,14 +122,14 @@ Points de rupture en `min-width` :
 - `--etat-enigme-menu-incomplete` : `var(--color-error)` – énigme incomplète
 
 ### Badges d’état de chasse
-- `.badge-statut.statut-en_cours` : `background-color: var(--color-success)` – chasse en cours
-- `.badge-statut.statut-payante` : `background-color: var(--color-primary)` et `color: var(--color-text-primary)` – chasse payante
-- `.badge-statut.statut-a_venir` : `background-color: var(--color-grey-medium)` – chasse à venir
-- `.badge-statut.statut-termine` : `background-color: var(--color-text-secondary)` – chasse terminée
-- `.badge-statut.statut-revision` : `background-color: var(--color-error)` – chasse en révision
+- `.badge-statut.statut-en_cours` : fond `var(--color-success-strong)`, texte blanc
+- `.badge-statut.statut-payante` : fond `var(--color-primary)`, texte `var(--text-on-gold)`
+- `.badge-statut.statut-a_venir` : fond `var(--color-grey-medium)`, texte `var(--text-on-gold)`
+- `.badge-statut.statut-termine` : fond `var(--color-text-secondary)`, texte beige
+- `.badge-statut.statut-revision` : fond `var(--color-error)`, texte blanc
 
 ### Badges de points
-- `.badge-cout` : `background: var(--color-secondary)` et `color: var(--color-text-primary)` – coût en points (affiché sur l’image de la chasse et dans le bloc de participation d’une énigme)
+- `.badge-cout` : fond `var(--color-secondary)`, texte `var(--text-on-gold)`
 
 ### Badges de mode de fin de chasse
 - `.badge-recompense` : `background-color: rgba(255, 255, 255, 0.05)` et `color: var(--color-text-primary)` – base du badge

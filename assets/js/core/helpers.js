@@ -119,6 +119,111 @@ window.mettreAJourTitreMenuEnigme = function (valeur) {
   }
 };
 
+function identifiantNavigation(postId) {
+  return String(postId ?? '').replace(/[^\d]/g, '');
+}
+
+function titreParDefautNavigation(cpt) {
+  if (cpt === 'enigme') {
+    return window.CHP_ENIGME_DEFAUT?.titre || 'en création';
+  }
+  if (cpt === 'chasse') {
+    return window.CHP_CHASSE_DEFAUT?.titre || 'nouvelle chasse';
+  }
+  return '';
+}
+
+function titreNavigationRenseigne(cpt, valeur) {
+  const titre = String(valeur ?? '').trim().toLowerCase();
+  const defaut = String(titreParDefautNavigation(cpt) || '').trim().toLowerCase();
+  return titre !== '' && titre !== defaut;
+}
+
+function libelleTitreManquant() {
+  if (window.wp?.i18n?.__) {
+    return window.wp.i18n.__('Titre', 'chassesautresor-com');
+  }
+  return 'Titre';
+}
+
+function synchroniserMarqueurTitreEnigme(postId, valeur) {
+  const id = identifiantNavigation(postId);
+  const popover = id ? document.getElementById('enigme-gaps-' + id) : null;
+  if (!popover) {
+    return;
+  }
+  const list = popover.querySelector('ul');
+  if (!list) {
+    return;
+  }
+
+  const label = libelleTitreManquant();
+  const existing = [...list.querySelectorAll('li')].find(
+    (item) => item.textContent.trim() === label
+  );
+  if (titreNavigationRenseigne('enigme', valeur)) {
+    existing?.remove();
+  } else if (!existing) {
+    const item = document.createElement('li');
+    item.textContent = label;
+    list.appendChild(item);
+  }
+
+  if (list.querySelector('li')) {
+    return;
+  }
+
+  document
+    .querySelector(
+      '#app-nav-outils-enigmes [data-nav-cpt="enigme"][data-nav-id="' + id + '"] .app-nav__marker--incomplete'
+    )
+    ?.remove();
+  popover.remove();
+}
+
+/**
+ * Met à jour le titre dans le sous-menu Outils de la barre latérale.
+ *
+ * @param {string} cpt
+ * @param {number|string} postId
+ * @param {string} valeur
+ * @param {{persisted?: boolean}} [options] persisted retire l’alerte « Titre » une fois le titre enregistré.
+ */
+window.mettreAJourTitreMenuShell = function (cpt, postId, valeur, options) {
+  const id = identifiantNavigation(postId);
+  const titre = typeof valeur === 'string' ? valeur.trim() : '';
+  if (!id || (cpt !== 'enigme' && cpt !== 'chasse') || titre === '') {
+    return;
+  }
+
+  document
+    .querySelectorAll(
+      '#app-nav-outils-enigmes [data-nav-cpt="' + cpt + '"][data-nav-id="' + id + '"] .app-nav__sublabel'
+    )
+    .forEach((label) => {
+      label.textContent = titre;
+    });
+
+  if (cpt === 'enigme' && options?.persisted) {
+    synchroniserMarqueurTitreEnigme(id, titre);
+  }
+};
+
+/**
+ * Retire une énigme du sous-menu Outils, par exemple juste après sa suppression.
+ *
+ * @param {number|string} postId
+ */
+window.retirerEnigmeMenuShell = function (postId) {
+  const id = identifiantNavigation(postId);
+  if (!id) {
+    return;
+  }
+  document
+    .querySelector('#app-nav-outils-enigmes [data-nav-cpt="enigme"][data-nav-id="' + id + '"]')
+    ?.remove();
+};
+
 
 
 /**

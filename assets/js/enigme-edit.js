@@ -426,6 +426,9 @@ function initEnigmeEdit() {
         .then(r => r.json())
         .then(res => {
           if (res.success && res.data?.redirect) {
+            if (typeof window.retirerEnigmeMenuShell === 'function') {
+              window.retirerEnigmeMenuShell(postId);
+            }
             window.ctaShellEditionSave?.allowLeave?.();
             const back = document.querySelector('.shell-edition')?.dataset.editionBack;
             window.location.href = back || res.data.redirect;

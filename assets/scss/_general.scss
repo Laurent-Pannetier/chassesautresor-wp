@@ -30,102 +30,67 @@
    
 /* ========== 🔠 H1 – TITRE PRINCIPAL ========== */
 
+html {
+  font-size: 100%;
+}
+
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+  hyphens: manual;
+}
+
 .page header.entry-header .entry-title, h1 {
   font-family: 'Cinzel', serif;
   font-weight: 700;
-  line-height: 1.3;
+  line-height: var(--leading-tight);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   color: var(--color-primary);
-  font-size: 42px;
+  font-size: var(--font-h1);
 }
 h1.h1-diff {/* variation couleur bronze, plus petite, centrée */
-  font-size: 36px;
+  font-size: var(--font-h2);
   text-align: center;
   letter-spacing: 1px;
   color: var(--color-accent);
 }
-@media not all and (--bp-desktop) {
-  h1, .entry-content h1 {
-    font-size: 36px;
-  }
-  h1.h1-diff {
-      font-size:30px;
-  }
-}
-@media not all and (--bp-tablet) {
-  h1, .entry-content h1 {
-    font-size: 30px;
-  }
-  h1.h1-diff {
-      font-size:24px;
-  }
-}
-
-
 
 /* ========== 🔡 H2 – SOUS-TITRE DE SECTION ========== */
 
 h2, .entry-content h2 {
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-main);
   font-weight: 600;
   color: var(--color-titre-enigme); /* or vieilli */
-  line-height: 1.4;
+  line-height: var(--leading-tight);
   margin-top: var(--space-3xl);
   margin-bottom: var(--space-md);
-  font-size: 32px;
+  font-size: var(--font-h2);
 }
-
-@media not all and (--bp-desktop) {
-  h2, .entry-content h2 {
-    font-size: 28px;
-  }
-}
-
-@media not all and (--bp-tablet) {
-  h2, .entry-content h2 {
-    font-size: 24px;
-  }
-}
-
 
 /* ========== 🔤 H3 – INTERTITRE / BLOCS ========== */
 
 h3, .entry-content h3 {
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-main);
   font-weight: 500;
   color: var(--color-accent); /* bronze */
-  line-height: 1.4;
-  font-size: 24px;
+  line-height: var(--leading-tight);
+  font-size: var(--font-h3);
   margin-top: var(--space-2xl);
   margin-bottom: var(--space-sm);
 }
 
-@media not all and (--bp-desktop) {
-  .page header.entry-header .entry-title {
-    font-size: 36px;
-  }
-  h3, .entry-content h3 {
-    font-size: 22px;
-  }
-}
-
-@media not all and (--bp-tablet) {
-  .page header.entry-header .entry-title {
-    font-size: 30px;
-  }
-  h3, .entry-content h3 {
-    font-size: 20px;
-  }
-}
-
-
 /* ========== 🎨 ÉLÉMENTS HTML NATIFS ========== */
 
 body {
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-main);
+  font-size: var(--font-body);
+  line-height: var(--leading-body);
   color: var(--color-text-primary);
   background-color: var(--color-background); /* Bleu nuit (fond global) */
+  hyphens: auto;
+  text-wrap: pretty;
 }
 
 /* 🟦 Fond global avec motif typographique */
@@ -143,6 +108,21 @@ body.custom-background {
 }
 p {
     margin-bottom: var(--space-0);
+}
+
+.single-hunt-home__editorial .entry-content {
+  max-width: var(--measure);
+  margin-inline: auto;
+}
+
+.single-hunt-home__editorial .entry-content p + p {
+  margin-top: 0.75em;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="hidden"]):not([type="image"]):not([type="file"]),
+select,
+textarea {
+  font-size: max(1rem, 16px);
 }
 label {
     color: var(--color-text-primary);
@@ -187,8 +167,8 @@ ul li {
     margin-bottom: 0;
 }
 figcaption, .figcaption {
-  font-size: 0.85rem;
-  opacity: 0.7;
+  font-size: var(--font-sm);
+  color: var(--color-text-muted);
   margin-top: var(--space-xs);
   text-align: center;
   font-style: italic;
@@ -259,7 +239,7 @@ tbody tr:nth-child(even) {
   padding-top: 0.48rem;
   padding-bottom: 0.42rem;
   color: var(--shell-muted);
-  font-size: 0.64rem;
+  font-size: var(--font-xs);
   font-weight: 700;
   letter-spacing: 0.09em;
   text-transform: uppercase;
@@ -420,8 +400,10 @@ button.participant-hints {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.75rem;
-  height: 1.75rem;
+  width: 2.75rem;
+  height: 2.75rem;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
   border-radius: 50%;
   font-size: 0.875rem;
   border: 0;
@@ -546,8 +528,10 @@ button.participant-hints {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.75rem;
-  height: 1.75rem;
+  width: 2.75rem;
+  height: 2.75rem;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
   border-radius: 50%;
   font-size: 0.875rem;
   border: 0;
@@ -654,15 +638,15 @@ span.champ-obligatoire {
 
 /* ========== 📱 RESPONSIVE ========== */
 
-@media not all and (--bp-tablet) {
-    address, blockquote, body, dd, dl, dt, fieldset, figure, html, iframe, legend, li, ol, p, pre, textarea, ul  {
-        font-size:96%;
-    }
-}
-@media not all and (--bp-small) {
-    address, blockquote, body, dd, dl, dt, fieldset, figure, html, iframe, legend, li, ol, p, pre, textarea, ul {
-        font-size:93%;
-    }
+@media (forced-colors: active) {
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: 2px solid CanvasText;
+    outline-offset: 2px;
+  }
 }
 
 

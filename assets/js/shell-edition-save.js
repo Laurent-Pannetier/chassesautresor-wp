@@ -920,6 +920,12 @@
       if (champ === 'enigme_visuel_legende' && typeof window.mettreAJourLegendeEnigme === 'function') {
         window.mettreAJourLegendeEnigme(baselines.get(champ));
       }
+      if (
+        champ === 'post_title'
+        && typeof window.mettreAJourTitreMenuShell === 'function'
+      ) {
+        window.mettreAJourTitreMenuShell(bloc.dataset.cpt, bloc.dataset.postId, baselines.get(champ));
+      }
     });
     writeDates();
     applyBlocStates();

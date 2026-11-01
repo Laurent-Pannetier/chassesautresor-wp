@@ -532,7 +532,7 @@ a.chasse-badge.chasse-badge--region:focus-visible {
     flex-wrap: wrap;
     row-gap: var(--space-xs);
     justify-content: flex-start;
-    font-size: 93%;
+    font-size: var(--font-sm);
     color: var(--color-gris-3);
 }
 
@@ -643,8 +643,9 @@ a.chasse-badge.chasse-badge--region:focus-visible {
 }
 
 .chasse-description {
+  max-width: var(--measure);
   margin-top: var(--space-xl);
-  line-height: 1.6;
+  line-height: var(--leading-body);
   font-size: 1.05rem;
   padding-left: var(--space-md);
   padding-right: var(--space-md);

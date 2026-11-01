@@ -291,7 +291,7 @@ html:not([data-theme="day"]) body.shell-edition .riddle-step-form__content-edito
   justify-content: flex-end;
 }
 
-@media (min-width: 768px) {
+@media (--bp-tablet) {
   .riddle-steps-editor__header {
     flex-direction: row;
     align-items: center;
@@ -483,7 +483,7 @@ ul.resume-infos > li.edition-optional-fold {
 .edition-row.champ-optionnel .icon-attente,
 .edition-row.champ-optionnel .icone-check {
   color: var(--shell-muted, var(--color-editor-text-muted));
-  font-size: 0.72rem;
+  font-size: var(--font-xs);
 }
 
 #chasse-tab-param .edition-row-label label {
@@ -539,7 +539,7 @@ ul.resume-infos > li.edition-optional-fold {
 .qr-code-block .qr-code-url {
   flex: 1 0 100%;
   text-align: right;
-  word-break: break-all;
+  overflow-wrap: anywhere;
   opacity: 0.5;
 }
 
@@ -953,7 +953,7 @@ body .header-img-modifiable .icone-modif {
   width: 100px;
 }
 
-@media (min-width: 768px) {
+@media (--bp-tablet) {
   .edition-panel-body input.champ-texte-edit {
     width: 260px;
   }
@@ -1030,7 +1030,8 @@ body .header-img-modifiable .icone-modif {
 }
 
 .champ-edition input.champ-input:focus {
-  outline: none;
+  outline: 2px solid var(--color-editor-accent);
+  outline-offset: 2px;
   border-color: var(--color-editor-accent);
   background-color: var(--color-editor-field-hover);
 }
@@ -1096,8 +1097,8 @@ body[class*="edition-active"] .champ-modifier:not(.bouton-cta):focus {
 }
 
 body[class*="edition-active"] .champ-img .champ-modifier:focus {
-  outline: none;
-  outline-offset: 0;
+  outline: 2px solid var(--color-editor-accent);
+  outline-offset: 2px;
 }
 
 
@@ -1464,7 +1465,7 @@ body.shell-edition .edition-format-hint {
   color: var(--shell-muted);
 }
 
-@media (min-width: 768px) {
+@media (--bp-tablet) {
   body.shell-edition .edition-panel-body input.champ-texte-edit {
     width: min(100%, 36rem);
   }
@@ -2916,7 +2917,7 @@ body.shell-edition .edition-tab.active:focus-visible {
 }
 
 .help-icon--aide-small i {
-  font-size: 0.7em;
+  font-size: 0.75em;
 }
 
 /* 🎯 Pager de tableau */

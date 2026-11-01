@@ -17,7 +17,7 @@ body.auth-gate {
   margin: 0;
   background: var(--auth-bg);
   color: var(--auth-text);
-  font-family: var(--font-main, "Poppins", sans-serif);
+  font-family: var(--font-main, "Poppins", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif);
 }
 
 .auth-gate__stage {
@@ -322,7 +322,7 @@ body.auth-gate {
   display: none;
 }
 
-@media (min-width: 960px) {
+@media (--bp-auth) {
   .auth-gate__stage {
     padding: 1.5rem;
   }

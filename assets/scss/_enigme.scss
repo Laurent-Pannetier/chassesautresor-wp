@@ -342,7 +342,7 @@
   top: 50%;
   right: var(--space-sm);
   transform: translateY(-50%);
-  font-size: 0.7em;
+  font-size: 0.75em;
   color: var(--color-accent);
   opacity: 0;
   transition: opacity 0.2s, font-size 0.2s;
@@ -681,7 +681,7 @@ li.active .enigme-menu__edit {
   }
 
   .enigme-texte {
-    max-width: 72ch;
+    max-width: var(--measure);
     padding-inline: 0;
   }
 
@@ -854,8 +854,8 @@ li.active .enigme-menu__edit {
 
 .page-enigme .enigme-header .enigme-soustitre {
   margin-top: var(--space-xs);
-  color: var(--color-text-secondary);
-  font-size: 32px;
+  color: var(--color-text-muted);
+  font-size: clamp(1.25rem, 1rem + 1vw, 2rem);
 }
 
 @media not all and (--bp-tablet) {
@@ -923,8 +923,8 @@ li.active .enigme-menu__edit {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2.25rem;
-  height: 2.25rem;
+  width: 2.75rem;
+  height: 2.75rem;
   padding: 0;
   border: 1px solid rgba(255, 255, 255, 0.28);
   border-radius: 999px;
@@ -961,7 +961,7 @@ li.active .enigme-menu__edit {
   display: flex;
   justify-content: center;
   margin: 0;
-  color: var(--color-text-secondary, rgba(255, 255, 255, 0.78));
+  color: var(--color-text-muted);
   font-size: 0.9rem;
   letter-spacing: 0.02em;
 }
@@ -1153,11 +1153,11 @@ li.active .enigme-menu__edit {
 
 .enigme-lightbox__close {
   position: fixed;
-  top: var(--space-md);
-  right: var(--space-md);
+  top: max(var(--space-md), env(safe-area-inset-top));
+  right: max(var(--space-md), env(safe-area-inset-right));
   z-index: 10001;
-  width: 2.25rem;
-  height: 2.25rem;
+  width: 2.75rem;
+  height: 2.75rem;
   border: 0;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.92);
@@ -1172,6 +1172,11 @@ li.active .enigme-menu__edit {
 .enigme-lightbox__close:focus-visible {
   background: #fff;
   color: #0a0a0a;
+}
+
+.enigme-lightbox__close:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
 }
 
 .enigme-loupe,
@@ -1295,7 +1300,7 @@ li.active .enigme-menu__edit {
 
 .solution-content {
   .solution-text {
-    max-width: 1024px;
+    max-width: var(--measure);
     margin-inline: auto;
     padding: var(--space-lg);
     margin-bottom: var(--space-xl);
@@ -1316,7 +1321,7 @@ li.active .enigme-menu__edit {
 
 /* 📝 Mise en forme du texte d'énigme */
 .enigme-texte {
-  max-width: 65ch;
+  max-width: var(--measure);
   margin-inline: auto;
   padding-inline: var(--space-md);
   font-size: clamp(1rem, 1.2vw + 0.9rem, 1.25rem);
@@ -1713,8 +1718,8 @@ form.is-reply-widget.is-immersive-open:focus-visible {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2.25rem;
-  height: 2.25rem;
+  width: 2.75rem;
+  height: 2.75rem;
   padding: 0;
   border: 0;
   border-radius: 999px;
@@ -1728,7 +1733,11 @@ form.is-reply-widget.is-immersive-open:focus-visible {
 .riddle-widget-immersive__close:hover,
 .riddle-widget-immersive__close:focus-visible {
   background: rgba(255, 255, 255, 0.16);
-  outline: none;
+}
+
+.riddle-widget-immersive__close:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
 }
 
 .riddle-player-step__status {
@@ -1768,7 +1777,7 @@ form.is-reply-widget.is-immersive-open:focus-visible {
   display: block;
   margin-bottom: 0.25rem;
   color: #e8a078;
-  font-size: 0.72rem;
+  font-size: var(--font-xs);
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -2160,7 +2169,7 @@ form.is-reply-widget.is-immersive-open:focus-visible {
   background: linear-gradient(90deg, #fff 0%, #f7f7f7 82%, #dedede 100%);
   color: #343434;
   box-shadow: 0 0.25rem 0 rgba(0, 0, 0, 0.18);
-  font-size: clamp(0.65rem, 2vw, 0.95rem);
+  font-size: clamp(0.75rem, 2vw, 0.95rem);
 }
 
 .riddle-piano__key--black {
@@ -2178,7 +2187,7 @@ form.is-reply-widget.is-immersive-open:focus-visible {
   background: linear-gradient(90deg, #252525, #111 72%, #353535);
   color: #fff;
   box-shadow: 0 0.25rem 0 rgba(0, 0, 0, 0.5);
-  font-size: clamp(0.55rem, 1.6vw, 0.75rem);
+  font-size: var(--font-xs);
 }
 
 @for $position from 1 through 6 {
@@ -2358,7 +2367,7 @@ form.is-reply-widget.is-immersive-open:focus-visible {
 
 .riddle-safe__scale text {
   fill: #111;
-  font-size: 7px;
+  font-size: 10px;
   font-weight: 800;
   text-anchor: middle;
   dominant-baseline: middle;
@@ -2378,13 +2387,13 @@ form.is-reply-widget.is-immersive-open:focus-visible {
 
 .riddle-safe__display {
   fill: #111;
-  font-size: 13px;
+  font-size: var(--font-sm);
   font-weight: 700;
   text-anchor: middle;
   dominant-baseline: middle;
 }
 
-.riddle-safe__direction { font-size: 11px; }
+.riddle-safe__direction { font-size: var(--font-xs); }
 
 .riddle-safe__sequence { margin-top: var(--space-md); font-weight: 700; }
 
@@ -2584,9 +2593,64 @@ body.comic-reader .page-enigme--reader .enigme-media-zoom:focus-visible img {
   transform: none;
 }
 
-/* Les flèches de page vivent dans le bandeau, à côté des pastilles. */
+/* Chevrons latéraux : visibles seulement quand le pointeur est sur le bord. */
 body.comic-reader .page-enigme--reader .galerie-enigme__nav {
+  z-index: 5;
+  width: 3rem;
+  height: 3rem;
+  font-size: 1.75rem;
+  background: rgba(8, 14, 28, 0.78);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.18s ease, background-color 0.2s ease, visibility 0s linear 0.18s;
+}
+
+body.comic-reader .page-enigme--reader .galerie-enigme__nav.is-edge-visible {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition: opacity 0.18s ease, background-color 0.2s ease, visibility 0s linear 0s;
+}
+
+body.comic-reader .page-enigme--reader .galerie-enigme__nav:disabled {
   display: none;
+}
+
+body.comic-reader .comic-page-counter {
+  position: fixed;
+  z-index: 30;
+  left: 50%;
+  bottom: calc(0.65rem + env(safe-area-inset-bottom, 0px));
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  margin: 0;
+  padding: 0.2rem 0.7rem;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(5, 7, 12, 0.55);
+  color: rgba(255, 255, 255, 0.9);
+  font: inherit;
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  cursor: pointer;
+  transform: translateX(-50%);
+}
+
+body.comic-reader .comic-page-counter:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+body.comic-reader.is-hud-visible .comic-page-counter {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
 }
 
 body.comic-reader .enigme-mobile-header,
@@ -2769,14 +2833,14 @@ body.comic-reader .is-comic-hud .galerie-enigme__pager-nav {
   flex: 0 0 auto;
   align-items: center;
   justify-content: center;
-  width: 1.75rem;
-  height: 1.75rem;
+  width: 2.75rem;
+  height: 2.75rem;
   padding: 0;
   border: 0;
   border-radius: 999px;
   background: transparent;
   color: #f4f1ea;
-  font-size: 1.35rem;
+  font-size: 1.6rem;
   line-height: 1;
   cursor: pointer;
 }
@@ -2841,9 +2905,9 @@ body.comic-reader .is-comic-hud .galerie-enigme__dot:focus-visible {
 }
 
 body.comic-reader .is-comic-hud .galerie-enigme__page-label {
-  font-size: 0.72rem;
+  font-size: var(--font-xs);
   letter-spacing: 0.04em;
-  color: rgba(255, 255, 255, 0.72);
+  color: var(--color-text-muted);
 }
 
 body.comic-reader .is-comic-hud .galerie-enigme__pager.is-counter-only {
@@ -2880,7 +2944,7 @@ body.comic-reader .is-comic-hud .reponse-launcher {
 }
 
 .reponse-launcher__solved i {
-  color: var(--color-success);
+  color: var(--color-success-text);
 }
 
 body.comic-reader .is-comic-hud .reponse-launcher__solved {
@@ -2916,7 +2980,7 @@ body.comic-reader .is-comic-hud .reponse-launcher .reponse-launcher__open:focus-
 body.comic-reader .is-comic-hud .reponse-launcher .reponse-launcher__open:disabled,
 body.comic-reader .is-comic-hud .reponse-launcher .reponse-launcher__open.bouton-cta--pending {
   background-color: var(--color-gris-3);
-  color: var(--color-text-secondary);
+  color: var(--color-text-fond-clair);
   box-shadow: none;
   cursor: not-allowed;
   opacity: 0.65;
@@ -3038,6 +3102,7 @@ body.comic-reader .is-comic-hud .participation-infos {
   body.comic-reader .is-comic-hud,
   body.comic-reader .enigme-mobile-header,
   body.comic-reader .app-topbar,
+  body.comic-reader .page-enigme--reader .galerie-enigme__nav,
   body.comic-reader .is-comic-hud .galerie-enigme__dot::before {
     transition: none;
   }

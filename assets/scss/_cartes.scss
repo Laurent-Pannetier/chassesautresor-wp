@@ -803,7 +803,7 @@
   align-items: center;
   padding: var(--space-xs) var(--space-sm);
   font-size: 0.95rem;
-  color: var(--color-text-secondary);
+  color: var(--color-text-fond-clair);
   background-color: rgba(0, 0, 0, 0.05);
 }
 
@@ -816,7 +816,6 @@
   display: flex;
   align-items: center;
   gap: var(--space-xxs);
-  opacity: 0.8;
   line-height: 1;
 }
 
@@ -847,7 +846,6 @@
 
 .carte-enigme-footer .fa-circle-info {
   color: inherit;
-  opacity: 0.8;
 }
 
 .carte-enigme-footer--texte {
@@ -1188,7 +1186,7 @@
   font-size: 28px;
 }
 
-@media (min-width: 768px) {
+@media (--bp-tablet) {
   .carte-ajout-enigme .carte-core i,
   .carte-ajout-chasse .carte-core i {
     font-size: 32px;

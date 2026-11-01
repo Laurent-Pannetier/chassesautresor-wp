@@ -773,7 +773,7 @@
   align-items: center;
   padding: var(--space-xs) var(--space-sm);
   font-size: 0.95rem;
-  color: var(--color-text-secondary);
+  color: var(--color-text-fond-clair);
   background-color: rgba(0, 0, 0, 0.05);
 }
 
@@ -786,7 +786,6 @@
   display: flex;
   align-items: center;
   gap: var(--space-xxs);
-  opacity: 0.8;
   line-height: 1;
 }
 
@@ -817,7 +816,6 @@
 
 .carte-enigme-footer .fa-circle-info {
   color: inherit;
-  opacity: 0.8;
 }
 
 .carte-enigme-footer--texte {
@@ -1786,7 +1784,7 @@ a.chasse-badge.chasse-badge--region:focus-visible {
   flex-wrap: wrap;
   row-gap: var(--space-xs);
   justify-content: flex-start;
-  font-size: 93%;
+  font-size: var(--font-sm);
   color: var(--color-gris-3);
 }
 
@@ -1892,8 +1890,9 @@ a.chasse-badge.chasse-badge--region:focus-visible {
 }
 
 .chasse-description {
+  max-width: var(--measure);
   margin-top: var(--space-xl);
-  line-height: 1.6;
+  line-height: var(--leading-body);
   font-size: 1.05rem;
   padding-left: var(--space-md);
   padding-right: var(--space-md);
@@ -2124,7 +2123,7 @@ a.chasse-badge.chasse-badge--region:focus-visible {
 }
 
 .prix-devise {
-  font-size: 0.6em;
+  font-size: 0.75em;
   vertical-align: super;
   display: inline-block;
   margin-left: 1px;
@@ -2210,15 +2209,18 @@ a.chasse-badge.chasse-badge--region:focus-visible {
 .table-search__submit:hover, .table-search__submit:focus {
   background-color: var(--color-background-button-hover);
   transform: translateY(-1px);
-  outline: none;
+}
+.table-search__submit:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
 }
 .table-search__reset {
   align-self: flex-start;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 2.75rem;
+  height: 2.75rem;
   padding: 0;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.25);
@@ -2398,7 +2400,11 @@ body.logged-in .ast-header-account-wrap .ast-header-account-type-icon .ahfb-svg-
 .cta-header-account-menu__link:focus-visible {
   background: rgba(255, 255, 255, 0.08);
   color: var(--color-primary, #e1a95f);
-  outline: none;
+}
+
+.cta-header-account-menu__link:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
 }
 
 .cta-header-account-menu__link--logout {
@@ -2511,12 +2517,20 @@ body .wp-block-file .wp-block-file__button:focus,
   border-color: currentColor;
 }
 
+.btn-lire-plus,
+.bouton-retour {
+  min-height: 2.75rem;
+}
+
 /* ========== 🚀 BOUTON CTA ========== */
 .bouton-cta {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 6px 10px;
+  min-height: 2.75rem;
   background-color: var(--color-gris-3);
-  color: var(--color-text-secondary);
+  color: var(--text-on-gold);
   border-radius: 5px;
   text-decoration: none;
   font-weight: bold;
@@ -2577,7 +2591,7 @@ body .wp-block-file .wp-block-file__button:focus,
   display: inline-block;
   padding: var(--space-xxs) var(--space-xs);
   background: var(--color-secondary);
-  color: var(--color-text-primary);
+  color: var(--text-on-gold);
   border-radius: 12px;
   font-size: 0.75rem;
   font-weight: 600;
@@ -3181,16 +3195,18 @@ a.ajout-link:focus-visible {
 }
 /* Couleurs par statut (alignées sur le nuancier) */
 .badge-statut.statut-en_cours {
-  background-color: var(--color-success);
+  background-color: var(--color-success-strong);
+  color: var(--color-white);
 }
 
 .badge-statut.statut-payante {
   background-color: var(--color-primary);
-  color: var(--color-text-primary);
+  color: var(--text-on-gold);
 }
 
 .badge-statut.statut-a_venir {
   background-color: var(--color-grey-medium);
+  color: var(--text-on-gold);
 }
 
 .badge-statut.statut-termine {
@@ -3199,6 +3215,7 @@ a.ajout-link:focus-visible {
 
 .badge-statut.statut-revision {
   background-color: var(--color-error);
+  color: var(--color-white);
 }
 
 /* ========== 🎁 BADGE RÉCOMPENSE ========== */
@@ -3669,7 +3686,7 @@ a.addtoany_share span {
 .breadcrumb li + li::before {
   content: "›";
   margin: 0 var(--space-xs);
-  color: var(--color-text-secondary);
+  color: var(--color-text-muted);
 }
 
 .breadcrumb a {
@@ -3952,7 +3969,7 @@ a.addtoany_share span {
 }
 
 .help-icon--aide-small i {
-  font-size: 0.7em;
+  font-size: 0.75em;
 }
 
 .menu-lateral ul {
@@ -4690,7 +4707,7 @@ ul.resume-infos > li.edition-optional-fold {
 .edition-row.champ-optionnel .icon-attente,
 .edition-row.champ-optionnel .icone-check {
   color: var(--shell-muted, var(--color-editor-text-muted));
-  font-size: 0.72rem;
+  font-size: var(--font-xs);
 }
 
 #chasse-tab-param .edition-row-label label {
@@ -4745,7 +4762,7 @@ ul.resume-infos > li.edition-optional-fold {
 .qr-code-block .qr-code-url {
   flex: 1 0 100%;
   text-align: right;
-  word-break: break-all;
+  overflow-wrap: anywhere;
   opacity: 0.5;
 }
 
@@ -5217,7 +5234,8 @@ body .header-img-modifiable .icone-modif {
 }
 
 .champ-edition input.champ-input:focus {
-  outline: none;
+  outline: 2px solid var(--color-editor-accent);
+  outline-offset: 2px;
   border-color: var(--color-editor-accent);
   background-color: var(--color-editor-field-hover);
 }
@@ -5280,8 +5298,8 @@ body[class*=edition-active] .champ-modifier:not(.bouton-cta):focus {
 }
 
 body[class*=edition-active] .champ-img .champ-modifier:focus {
-  outline: none;
-  outline-offset: 0;
+  outline: 2px solid var(--color-editor-accent);
+  outline-offset: 2px;
 }
 
 /* ========== 💾 BOUTONS ÉDITION : ENREGISTRER / ANNULER ========== */
@@ -7054,7 +7072,7 @@ body.shell-edition .edition-tab.active:focus-visible {
 }
 
 .help-icon--aide-small i {
-  font-size: 0.7em;
+  font-size: 0.75em;
 }
 
 /* 🎯 Pager de tableau */
@@ -7773,7 +7791,7 @@ body.shell-edition .edition-tab.active:focus-visible {
   top: 50%;
   right: var(--space-sm);
   transform: translateY(-50%);
-  font-size: 0.7em;
+  font-size: 0.75em;
   color: var(--color-accent);
   opacity: 0;
   transition: opacity 0.2s, font-size 0.2s;
@@ -8097,7 +8115,7 @@ li.active .enigme-menu__edit {
   margin-inline: auto;
 }
 .page-enigme--compact .enigme-texte {
-  max-width: 72ch;
+  max-width: var(--measure);
   padding-inline: 0;
 }
 .page-enigme--compact .participation {
@@ -8243,8 +8261,8 @@ li.active .enigme-menu__edit {
 
 .page-enigme .enigme-header .enigme-soustitre {
   margin-top: var(--space-xs);
-  color: var(--color-text-secondary);
-  font-size: 32px;
+  color: var(--color-text-muted);
+  font-size: clamp(1.25rem, 1rem + 1vw, 2rem);
 }
 
 @media not all and (min-width: 768px) {
@@ -8307,8 +8325,8 @@ li.active .enigme-menu__edit {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2.25rem;
-  height: 2.25rem;
+  width: 2.75rem;
+  height: 2.75rem;
   padding: 0;
   border: 1px solid rgba(255, 255, 255, 0.28);
   border-radius: 999px;
@@ -8345,7 +8363,7 @@ li.active .enigme-menu__edit {
   display: flex;
   justify-content: center;
   margin: 0;
-  color: var(--color-text-secondary, rgba(255, 255, 255, 0.78));
+  color: var(--color-text-muted);
   font-size: 0.9rem;
   letter-spacing: 0.02em;
 }
@@ -8535,11 +8553,11 @@ li.active .enigme-menu__edit {
 
 .enigme-lightbox__close {
   position: fixed;
-  top: var(--space-md);
-  right: var(--space-md);
+  top: max(var(--space-md), env(safe-area-inset-top));
+  right: max(var(--space-md), env(safe-area-inset-right));
   z-index: 10001;
-  width: 2.25rem;
-  height: 2.25rem;
+  width: 2.75rem;
+  height: 2.75rem;
   border: 0;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.92);
@@ -8554,6 +8572,11 @@ li.active .enigme-menu__edit {
 .enigme-lightbox__close:focus-visible {
   background: #fff;
   color: #0a0a0a;
+}
+
+.enigme-lightbox__close:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
 }
 
 .enigme-loupe,
@@ -8671,7 +8694,7 @@ li.active .enigme-menu__edit {
 }
 
 .solution-content .solution-text {
-  max-width: 1024px;
+  max-width: var(--measure);
   margin-inline: auto;
   padding: var(--space-lg);
   margin-bottom: var(--space-xl);
@@ -8690,7 +8713,7 @@ li.active .enigme-menu__edit {
 
 /* 📝 Mise en forme du texte d'énigme */
 .enigme-texte {
-  max-width: 65ch;
+  max-width: var(--measure);
   margin-inline: auto;
   padding-inline: var(--space-md);
   font-size: clamp(1rem, 1.2vw + 0.9rem, 1.25rem);
@@ -9056,8 +9079,8 @@ form.is-reply-widget.is-immersive-open:focus-visible {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2.25rem;
-  height: 2.25rem;
+  width: 2.75rem;
+  height: 2.75rem;
   padding: 0;
   border: 0;
   border-radius: 999px;
@@ -9071,7 +9094,11 @@ form.is-reply-widget.is-immersive-open:focus-visible {
 .riddle-widget-immersive__close:hover,
 .riddle-widget-immersive__close:focus-visible {
   background: rgba(255, 255, 255, 0.16);
-  outline: none;
+}
+
+.riddle-widget-immersive__close:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
 }
 
 .riddle-player-step__status {
@@ -9107,7 +9134,7 @@ form.is-reply-widget.is-immersive-open:focus-visible {
   display: block;
   margin-bottom: 0.25rem;
   color: #e8a078;
-  font-size: 0.72rem;
+  font-size: var(--font-xs);
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -9544,7 +9571,7 @@ form.is-reply-widget.is-immersive-open:focus-visible {
   background: linear-gradient(90deg, #fff 0%, #f7f7f7 82%, #dedede 100%);
   color: #343434;
   box-shadow: 0 0.25rem 0 rgba(0, 0, 0, 0.18);
-  font-size: clamp(0.65rem, 2vw, 0.95rem);
+  font-size: clamp(0.75rem, 2vw, 0.95rem);
 }
 
 .riddle-piano__key--black {
@@ -9562,7 +9589,7 @@ form.is-reply-widget.is-immersive-open:focus-visible {
   background: linear-gradient(90deg, #252525, #111 72%, #353535);
   color: #fff;
   box-shadow: 0 0.25rem 0 rgba(0, 0, 0, 0.5);
-  font-size: clamp(0.55rem, 1.6vw, 0.75rem);
+  font-size: var(--font-xs);
 }
 
 .riddle-piano__key--black[data-position="1"] {
@@ -9784,7 +9811,7 @@ form.is-reply-widget.is-immersive-open:focus-visible {
 
 .riddle-safe__scale text {
   fill: #111;
-  font-size: 7px;
+  font-size: 10px;
   font-weight: 800;
   text-anchor: middle;
   dominant-baseline: middle;
@@ -9804,14 +9831,14 @@ form.is-reply-widget.is-immersive-open:focus-visible {
 
 .riddle-safe__display {
   fill: #111;
-  font-size: 13px;
+  font-size: var(--font-sm);
   font-weight: 700;
   text-anchor: middle;
   dominant-baseline: middle;
 }
 
 .riddle-safe__direction {
-  font-size: 11px;
+  font-size: var(--font-xs);
 }
 
 .riddle-safe__sequence {
@@ -10013,9 +10040,64 @@ body.comic-reader .page-enigme--reader .enigme-media-zoom:focus-visible img {
   transform: none;
 }
 
-/* Les flèches de page vivent dans le bandeau, à côté des pastilles. */
+/* Chevrons latéraux : visibles seulement quand le pointeur est sur le bord. */
 body.comic-reader .page-enigme--reader .galerie-enigme__nav {
+  z-index: 5;
+  width: 3rem;
+  height: 3rem;
+  font-size: 1.75rem;
+  background: rgba(8, 14, 28, 0.78);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.18s ease, background-color 0.2s ease, visibility 0s linear 0.18s;
+}
+
+body.comic-reader .page-enigme--reader .galerie-enigme__nav.is-edge-visible {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition: opacity 0.18s ease, background-color 0.2s ease, visibility 0s linear 0s;
+}
+
+body.comic-reader .page-enigme--reader .galerie-enigme__nav:disabled {
   display: none;
+}
+
+body.comic-reader .comic-page-counter {
+  position: fixed;
+  z-index: 30;
+  left: 50%;
+  bottom: calc(0.65rem + env(safe-area-inset-bottom, 0px));
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  margin: 0;
+  padding: 0.2rem 0.7rem;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(5, 7, 12, 0.55);
+  color: rgba(255, 255, 255, 0.9);
+  font: inherit;
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  cursor: pointer;
+  transform: translateX(-50%);
+}
+
+body.comic-reader .comic-page-counter:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+body.comic-reader.is-hud-visible .comic-page-counter {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
 }
 
 body.comic-reader .enigme-mobile-header,
@@ -10195,14 +10277,14 @@ body.comic-reader .is-comic-hud .galerie-enigme__pager-nav {
   flex: 0 0 auto;
   align-items: center;
   justify-content: center;
-  width: 1.75rem;
-  height: 1.75rem;
+  width: 2.75rem;
+  height: 2.75rem;
   padding: 0;
   border: 0;
   border-radius: 999px;
   background: transparent;
   color: #f4f1ea;
-  font-size: 1.35rem;
+  font-size: 1.6rem;
   line-height: 1;
   cursor: pointer;
 }
@@ -10267,9 +10349,9 @@ body.comic-reader .is-comic-hud .galerie-enigme__dot:focus-visible {
 }
 
 body.comic-reader .is-comic-hud .galerie-enigme__page-label {
-  font-size: 0.72rem;
+  font-size: var(--font-xs);
   letter-spacing: 0.04em;
-  color: rgba(255, 255, 255, 0.72);
+  color: var(--color-text-muted);
 }
 
 body.comic-reader .is-comic-hud .galerie-enigme__pager.is-counter-only {
@@ -10306,7 +10388,7 @@ body.comic-reader .is-comic-hud .reponse-launcher {
 }
 
 .reponse-launcher__solved i {
-  color: var(--color-success);
+  color: var(--color-success-text);
 }
 
 body.comic-reader .is-comic-hud .reponse-launcher__solved {
@@ -10342,7 +10424,7 @@ body.comic-reader .is-comic-hud .reponse-launcher .reponse-launcher__open:focus-
 body.comic-reader .is-comic-hud .reponse-launcher .reponse-launcher__open:disabled,
 body.comic-reader .is-comic-hud .reponse-launcher .reponse-launcher__open.bouton-cta--pending {
   background-color: var(--color-gris-3);
-  color: var(--color-text-secondary);
+  color: var(--color-text-fond-clair);
   box-shadow: none;
   cursor: not-allowed;
   opacity: 0.65;
@@ -10461,6 +10543,7 @@ body.comic-reader .is-comic-hud .participation-infos {
   body.comic-reader .is-comic-hud,
   body.comic-reader .enigme-mobile-header,
   body.comic-reader .app-topbar,
+  body.comic-reader .page-enigme--reader .galerie-enigme__nav,
   body.comic-reader .is-comic-hud .galerie-enigme__dot::before {
     transition: none;
   }
@@ -10859,92 +10942,65 @@ header .points-link:hover {
    ================================================== */
 /* ========== 🔤 POLICE DE CARACTÈRES ========== */
 /* ========== 🔠 H1 – TITRE PRINCIPAL ========== */
+html {
+  font-size: 100%;
+}
+
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+  hyphens: manual;
+}
+
 .page header.entry-header .entry-title, h1 {
   font-family: "Cinzel", serif;
   font-weight: 700;
-  line-height: 1.3;
+  line-height: var(--leading-tight);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   color: var(--color-primary);
-  font-size: 42px;
+  font-size: var(--font-h1);
 }
 
 h1.h1-diff { /* variation couleur bronze, plus petite, centrée */
-  font-size: 36px;
+  font-size: var(--font-h2);
   text-align: center;
   letter-spacing: 1px;
   color: var(--color-accent);
 }
 
-@media not all and (min-width: 1024px) {
-  h1, .entry-content h1 {
-    font-size: 36px;
-  }
-  h1.h1-diff {
-    font-size: 30px;
-  }
-}
-@media not all and (min-width: 768px) {
-  h1, .entry-content h1 {
-    font-size: 30px;
-  }
-  h1.h1-diff {
-    font-size: 24px;
-  }
-}
 /* ========== 🔡 H2 – SOUS-TITRE DE SECTION ========== */
 h2, .entry-content h2 {
-  font-family: "Poppins", sans-serif;
+  font-family: var(--font-main);
   font-weight: 600;
   color: var(--color-titre-enigme); /* or vieilli */
-  line-height: 1.4;
+  line-height: var(--leading-tight);
   margin-top: var(--space-3xl);
   margin-bottom: var(--space-md);
-  font-size: 32px;
+  font-size: var(--font-h2);
 }
 
-@media not all and (min-width: 1024px) {
-  h2, .entry-content h2 {
-    font-size: 28px;
-  }
-}
-@media not all and (min-width: 768px) {
-  h2, .entry-content h2 {
-    font-size: 24px;
-  }
-}
 /* ========== 🔤 H3 – INTERTITRE / BLOCS ========== */
 h3, .entry-content h3 {
-  font-family: "Poppins", sans-serif;
+  font-family: var(--font-main);
   font-weight: 500;
   color: var(--color-accent); /* bronze */
-  line-height: 1.4;
-  font-size: 24px;
+  line-height: var(--leading-tight);
+  font-size: var(--font-h3);
   margin-top: var(--space-2xl);
   margin-bottom: var(--space-sm);
 }
 
-@media not all and (min-width: 1024px) {
-  .page header.entry-header .entry-title {
-    font-size: 36px;
-  }
-  h3, .entry-content h3 {
-    font-size: 22px;
-  }
-}
-@media not all and (min-width: 768px) {
-  .page header.entry-header .entry-title {
-    font-size: 30px;
-  }
-  h3, .entry-content h3 {
-    font-size: 20px;
-  }
-}
 /* ========== 🎨 ÉLÉMENTS HTML NATIFS ========== */
 body {
-  font-family: "Poppins", sans-serif;
+  font-family: var(--font-main);
+  font-size: var(--font-body);
+  line-height: var(--leading-body);
   color: var(--color-text-primary);
   background-color: var(--color-background); /* Bleu nuit (fond global) */
+  hyphens: auto;
+  text-wrap: pretty;
 }
 
 /* 🟦 Fond global avec motif typographique */
@@ -10963,6 +11019,21 @@ body.custom-background {
 
 p {
   margin-bottom: var(--space-0);
+}
+
+.single-hunt-home__editorial .entry-content {
+  max-width: var(--measure);
+  margin-inline: auto;
+}
+
+.single-hunt-home__editorial .entry-content p + p {
+  margin-top: 0.75em;
+}
+
+input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]):not([type=button]):not([type=submit]):not([type=reset]):not([type=hidden]):not([type=image]):not([type=file]),
+select,
+textarea {
+  font-size: max(1rem, 16px);
 }
 
 label {
@@ -11015,8 +11086,8 @@ ul li {
 }
 
 figcaption, .figcaption {
-  font-size: 0.85rem;
-  opacity: 0.7;
+  font-size: var(--font-sm);
+  color: var(--color-text-muted);
   margin-top: var(--space-xs);
   text-align: center;
   font-style: italic;
@@ -11089,7 +11160,7 @@ tbody tr:nth-child(even) {
   padding-top: 0.48rem;
   padding-bottom: 0.42rem;
   color: var(--shell-muted);
-  font-size: 0.64rem;
+  font-size: var(--font-xs);
   font-weight: 700;
   letter-spacing: 0.09em;
   text-transform: uppercase;
@@ -11251,8 +11322,10 @@ button.participant-hints {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.75rem;
-  height: 1.75rem;
+  width: 2.75rem;
+  height: 2.75rem;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
   border-radius: 50%;
   font-size: 0.875rem;
   border: 0;
@@ -11367,8 +11440,10 @@ button.participant-hints {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.75rem;
-  height: 1.75rem;
+  width: 2.75rem;
+  height: 2.75rem;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
   border-radius: 50%;
   font-size: 0.875rem;
   border: 0;
@@ -11486,14 +11561,14 @@ span.champ-obligatoire {
 }
 
 /* ========== 📱 RESPONSIVE ========== */
-@media not all and (min-width: 768px) {
-  address, blockquote, body, dd, dl, dt, fieldset, figure, html, iframe, legend, li, ol, p, pre, textarea, ul {
-    font-size: 96%;
-  }
-}
-@media not all and (min-width: 480px) {
-  address, blockquote, body, dd, dl, dt, fieldset, figure, html, iframe, legend, li, ol, p, pre, textarea, ul {
-    font-size: 93%;
+@media (forced-colors: active) {
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: 2px solid CanvasText;
+    outline-offset: 2px;
   }
 }
 /* ==================================================
@@ -11827,7 +11902,11 @@ body.accueil-fullscreen {
   background: rgba(255, 255, 255, 0.16);
   border-color: rgba(255, 255, 255, 0.35);
   transform: translateY(-1px);
-  outline: none;
+}
+
+.home-hunts__toolbar-toggle:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
 }
 
 .home-hunts__toolbar-toggle[aria-expanded=true] {
@@ -12007,7 +12086,11 @@ body.accueil-fullscreen {
   background: rgba(255, 255, 255, 0.16);
   border-color: rgba(255, 255, 255, 0.35);
   transform: translateY(-1px);
-  outline: none;
+}
+
+.home-hunts__filters-reset:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
 }
 
 .home-hunts__filters-reset-icon {
@@ -12080,7 +12163,7 @@ body.accueil-fullscreen {
 }
 
 .home-hunts__feedback--error {
-  color: var(--color-error);
+  color: var(--color-error-text);
   font-weight: 600;
 }
 
@@ -12547,7 +12630,7 @@ body.accueil-fullscreen {
 }
 
 .sommaire-bd__alerte {
-  color: var(--color-error);
+  color: var(--color-error-on-light);
   cursor: default;
 }
 
@@ -12595,7 +12678,7 @@ body.accueil-fullscreen {
 .sommaire-bd__trouvee {
   justify-content: center;
   width: 1rem;
-  color: var(--color-success);
+  color: var(--color-success-on-light);
 }
 
 .sommaire-bd__lien {
@@ -12765,8 +12848,8 @@ body.accueil-fullscreen {
   background-color: rgba(0, 0, 0, 0.2);
   width: 100%;
   max-width: 100%;
-  padding-left: 7px;
-  padding-right: 7px;
+  padding-left: max(7px, env(safe-area-inset-left));
+  padding-right: max(7px, env(safe-area-inset-right));
 }
 
 .site-above-header-wrap .site-branding {
@@ -12824,7 +12907,11 @@ header.site-header {
 .cta-topbar-enigmes__link:hover,
 .cta-topbar-enigmes__link:focus-visible {
   color: var(--color-primary, #ffd700);
-  outline: none;
+}
+
+.cta-topbar-enigmes__link:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
 }
 
 .cta-topbar-enigmes.is-current .cta-topbar-enigmes__link {
@@ -12843,8 +12930,8 @@ header.site-header {
     padding: 0 10px;
   }
   .site-above-header-wrap {
-    padding-left: 10px;
-    padding-right: 10px;
+    padding-left: max(10px, env(safe-area-inset-left));
+    padding-right: max(10px, env(safe-area-inset-right));
   }
 }
 @media (min-width: 1024px) {
@@ -12852,8 +12939,8 @@ header.site-header {
     padding: 0;
   }
   .site-above-header-wrap {
-    padding-left: var(--space-lg);
-    padding-right: var(--space-lg);
+    padding-left: max(var(--space-lg), env(safe-area-inset-left));
+    padding-right: max(var(--space-lg), env(safe-area-inset-right));
   }
   .cta-topbar-enigmes {
     margin-right: 1rem;
@@ -13488,7 +13575,7 @@ body #primary {
   margin-top: -0.15em;
 }
 
-@media screen and (max-width: 480px) {
+@media not all and (min-width: 480px) {
   .modal-bienvenue-inner,
   .modal-contenu {
     padding: var(--space-xl);
@@ -14002,7 +14089,7 @@ body #primary {
 }
 
 .myaccount-title-greeting {
-  font-size: 0.65em;
+  font-size: 0.75em;
   font-weight: 500;
   color: rgba(255, 255, 255, 0.7);
   text-transform: none;
@@ -14032,7 +14119,7 @@ body #primary {
   gap: var(--space-3xl);
 }
 
-@media (min-width: 1025px) {
+@media (min-width: 1024px) {
   .myaccount-content {
     width: 70%;
     margin-left: auto;
@@ -14201,7 +14288,7 @@ body #primary {
   min-width: 180px;
   text-align: center;
   z-index: 201;
-  border: 1px solid var(--color-text-secondary);
+  border: 1px solid var(--color-gris-3);
 }
 
 /* ✅ Apparition propre au clic */
@@ -14219,7 +14306,7 @@ body #primary {
 
 /* ✅ Ajustement de la flèche */
 .dropdown-indicator {
-  font-size: 10px;
+  font-size: var(--font-xs);
   margin-left: 3px;
   vertical-align: middle;
 }
@@ -15233,7 +15320,7 @@ body.woocommerce h2 {
   margin-left: auto;
 }
 
-@media (max-width: 480px) {
+@media not all and (min-width: 480px) {
   .hunt-lifecycle-card__control {
     gap: 0.65rem;
   }
@@ -15353,7 +15440,7 @@ body.woocommerce h2 {
 }
 
 .myaccount-tentatives .table-header__stats .meta-etiquette--success {
-  color: var(--color-success);
+  color: var(--color-success-text);
 }
 
 .myaccount-tentatives .table-header .table-search {
@@ -16518,9 +16605,20 @@ a.bouton-edition-attention {
 }
 /* 🎨 Variables globales */
 /* Legacy aliases */
+/* Named widths that are not on the main scale */
+/* WordPress admin bar switches from 32px to 46px below 783px. */
 :root {
   /* Typographie et breakpoints */
-  --font-main: "Poppins", sans-serif; /* Police principale */
+  --font-main: "Poppins", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-body: 1rem;
+  --font-sm: 0.875rem;
+  --font-xs: 0.75rem;
+  --leading-body: 1.5;
+  --leading-tight: 1.25;
+  --measure: 68ch;
+  --font-h1: clamp(1.75rem, 1.15rem + 2.2vw, 2.625rem);
+  --font-h2: clamp(1.5rem, 1.15rem + 1.4vw, 2rem);
+  --font-h3: clamp(1.25rem, 1.05rem + 0.8vw, 1.5rem);
   --bp-xs: 374px;
   --bp-small: 480px;
   --bp-mobile: 600px;
@@ -16543,16 +16641,23 @@ a.bouton-edition-attention {
   --color-secondary: #E1A95F; /* 🟠 Couleur secondaire : lien */
   --color-accent: #CD7F32; /* 🟤 Accent : bronze */
   --color-text-primary: #F5F5DC; /* 📜 Texte principal : beige clair */
-  --color-text-secondary: #555555; /* 🎨 Texte secondaire : gris foncé */
+  --color-text-secondary: #555555; /* 🎨 Texte secondaire : gris foncé, fonds clairs */
+  --color-text-muted: #c8c0b4; /* 📜 Texte atténué lisible sur le fond nuit */
   --color-titre-enigme: #E5C07B; /* 🏆 Titre des énigmes : or vieilli */
+  --text-on-gold: #152033; /* 📜 Texte sombre sur or, bronze ou gris clair */
   --color-background: #0B132B; /* 🎭 Fond général */
   --color-background-button: #880000; /* 🔘 Fond des boutons : rouge profond */
   --color-background-button-hover: #a00000; /* 🔘 Survol des boutons : rouge foncé */
   --color-background-button-inactive: #A9A9A9; /* 🔘 Boutons inactifs : gris */
   --color-success: #228B22; /* ✅ Barre de progression */
+  --color-success-strong: #1B7A24; /* ✅ Fond de badge : blanc lisible dessus */
+  --color-success-text: #9AF0C0; /* ✅ Succès en texte sur fond nuit */
+  --color-success-on-light: #0E6B1C; /* ✅ Succès en texte sur fond clair */
   --color-filter-accent: #1F3E63; /* 🔵 Mise en avant discrète des filtres */
   --color-filter-accent-glow: rgba(31, 62, 99, 0.45); /* 🔵 Halo léger pour les interactions des filtres */
   --color-error: #D93025; /* ⚠️ Messages d'erreur */
+  --color-error-text: #FFB4A8; /* ⚠️ Erreur en texte sur fond nuit */
+  --color-error-on-light: #B71C1C; /* ⚠️ Erreur en texte sur fond clair */
   --color-white: #FFFFFF; /* ⚪ Blanc */
   --color-black: #000000; /* ⚫ Noir */
   --color-black-rgb: 0, 0, 0; /* ⚫ Noir en RGB */
@@ -16601,17 +16706,17 @@ a.bouton-edition-attention {
   --transition-fast: 0.15s ease-in-out;
   --transition-medium: 0.3s ease;
   --transition-slow: 0.6s ease;
-  /* Breakpoints layout */
-  --breakpoint-small: 480px;
-  --breakpoint-mobile: 600px;
-  --breakpoint-tablet: 768px;
-  --breakpoint-desktop: 1024px;
-  --breakpoint-wide: 1280px;
+  /* Breakpoints layout (lus par le JS, alias des jetons --bp-*) */
+  --breakpoint-small: var(--bp-small);
+  --breakpoint-mobile: var(--bp-mobile);
+  --breakpoint-tablet: var(--bp-tablet);
+  --breakpoint-desktop: var(--bp-desktop);
+  --breakpoint-wide: var(--bp-wide);
 }
 
 @media (min-width: 1440px) {
   :root {
-    --container-max-width: none;
+    --container-max-width: 90rem;
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -16619,6 +16724,13 @@ a.bouton-edition-attention {
     --transition-fast: 0s;
     --transition-medium: 0s;
     --transition-slow: 0s;
+  }
+}
+@media (prefers-contrast: more) {
+  :root {
+    --color-text-muted: var(--color-text-primary);
+    --color-success-text: #d8ffe9;
+    --color-error-text: #ffd6d0;
   }
 }
 /* 📝 Variables d’édition */
@@ -16641,7 +16753,7 @@ a.bouton-edition-attention {
   --color-editor-success: #188038; /* ✅ Message de validation */
   --color-editor-success-hover: #0F5E2C; /* ✅ Hover validation */
   --color-editor-field-hover: #E8F0FE; /* 💠 Fond des champs actifs / survolés */
-  --color-editor-placeholder: #9AA0A6; /* 💬 Placeholder ou aide contextuelle */
+  --color-editor-placeholder: #6B6B6B; /* 💬 Placeholder lisible sur fond édition */
   --editor-label-width: 309px; /* 📏 Largeur minimale des labels dans les panneaux */
   --editor-icon-width: 1rem; /* 📏 Largeur des icônes dans les panneaux */
 }
@@ -16675,7 +16787,7 @@ a.bouton-edition-attention {
   --editor-error-hsl: 4 71% 50%; /* = #D93025 → var(--color-editor-error) */
   --editor-success-hsl: 138 68% 30%; /* = #188038 → var(--color-editor-success) */
   --editor-field-hover-hsl: 218 92% 95%; /* = #E8F0FE → var(--color-editor-field-hover) */
-  --editor-placeholder-hsl: 210 06% 63%; /* = #9AA0A6 → var(--color-editor-placeholder) */
+  --editor-placeholder-hsl: 0 0% 42%; /* = #6B6B6B → var(--color-editor-placeholder) */
 }
 
 /* 🎨 Tokens shadcn/ui attendus (utilisés comme hsl(var(--token))) */
@@ -17080,7 +17192,7 @@ html[data-theme=day] .app-topbar__hunt {
 
 .app-topbar__team-label {
   color: var(--shell-muted);
-  font-size: 0.62rem;
+  font-size: var(--font-xs);
   font-weight: 700;
   letter-spacing: 0.06em;
   line-height: 1.1;
@@ -17345,7 +17457,7 @@ img.avatar-pirate {
   border-radius: 999px;
   background: var(--shell-icon-notifications);
   color: #fff;
-  font-size: 0.7rem;
+  font-size: var(--font-xs);
   font-weight: 800;
   line-height: 1.2;
   text-align: center;
@@ -18128,7 +18240,7 @@ html[data-theme=day] .home-enigmas-preserve {
 .equipe-ranking__identity small {
   margin-top: 0.1rem;
   color: var(--shell-muted);
-  font-size: 0.7rem;
+  font-size: var(--font-xs);
 }
 
 .progression-ranking-list__score,
@@ -18372,7 +18484,7 @@ html[data-theme=day] .home-enigmas-preserve {
   display: block;
   margin: 0 0 0.2rem;
   color: var(--shell-accent-strong);
-  font-size: 0.68rem;
+  font-size: var(--font-xs);
   font-weight: 800;
   letter-spacing: 0.08em;
   line-height: 1.2;
@@ -18412,7 +18524,7 @@ html[data-theme=day] .home-enigmas-preserve {
   padding-top: 0.48rem;
   padding-bottom: 0.42rem;
   color: var(--shell-muted);
-  font-size: 0.64rem;
+  font-size: var(--font-xs);
   font-weight: 700;
   letter-spacing: 0.09em;
   text-transform: uppercase;
@@ -18490,7 +18602,7 @@ html[data-theme=day] .home-enigmas-preserve {
 .progression-table-identity small {
   display: block;
   color: var(--shell-muted);
-  font-size: 0.68rem;
+  font-size: var(--font-xs);
 }
 
 .progression-data-table--player-ranking th:nth-child(3),
@@ -18569,7 +18681,7 @@ html[data-theme=day] .home-enigmas-preserve {
   left: 0.85rem;
   color: var(--shell-muted);
   content: attr(data-label);
-  font-size: 0.64rem;
+  font-size: var(--font-xs);
   font-weight: 700;
   text-transform: uppercase;
 }
@@ -18828,7 +18940,7 @@ html[data-theme=day] .home-enigmas-preserve {
   border-radius: 999px;
   background: var(--shell-surface-2);
   color: var(--shell-muted);
-  font-size: 0.65rem;
+  font-size: var(--font-xs);
   font-weight: 700;
   line-height: 1.4;
   vertical-align: 0.15em;
@@ -18982,7 +19094,7 @@ html[data-theme=day] .home-enigmas-preserve {
 .progression-columns__value {
   height: 1rem;
   color: var(--shell-text);
-  font-size: 0.7rem;
+  font-size: var(--font-xs);
   font-weight: 700;
   line-height: 1rem;
 }
@@ -19018,7 +19130,7 @@ html[data-theme=day] .home-enigmas-preserve {
   margin-top: 0.15rem;
   overflow: hidden;
   color: var(--shell-muted);
-  font-size: 0.65rem;
+  font-size: var(--font-xs);
   line-height: 1.15rem;
   white-space: nowrap;
 }
@@ -19162,7 +19274,7 @@ html[data-theme=day] .home-enigmas-preserve {
     border-radius: 1rem;
   }
   .app-topbar__team-label {
-    font-size: 0.72rem;
+    font-size: var(--font-xs);
   }
   .app-topbar__trophies {
     gap: 0.55rem;
@@ -19415,7 +19527,7 @@ body.admin-bar.shell-edition .app-sidebar {
 
 .app-nav__subtype {
   color: var(--shell-muted);
-  font-size: 0.65rem;
+  font-size: var(--font-xs);
   font-weight: 700;
   letter-spacing: 0.08em;
   line-height: 1.2;
@@ -20148,7 +20260,7 @@ body.admin-bar.shell-edition .app-sidebar {
 .trophy-card__scope,
 .notifications-list__type {
   color: var(--shell-accent);
-  font-size: 0.72rem;
+  font-size: var(--font-xs);
   font-weight: 800;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -20175,7 +20287,7 @@ body.admin-bar.shell-edition .app-sidebar {
 
 .trophy-card--square .trophy-card__scope {
   overflow: hidden;
-  font-size: 0.68rem;
+  font-size: var(--font-xs);
   white-space: nowrap;
   text-overflow: ellipsis;
 }
@@ -20279,7 +20391,7 @@ body.admin-bar.shell-edition .app-sidebar {
   border: 0;
   background: rgba(8, 12, 18, 0.45);
   color: #fff;
-  font-size: 0.65rem;
+  font-size: var(--font-xs);
   font-weight: 600;
   line-height: 1.15rem;
 }
@@ -20756,7 +20868,7 @@ body.auth-gate {
   margin: 0;
   background: var(--auth-bg);
   color: var(--auth-text);
-  font-family: var(--font-main, "Poppins", sans-serif);
+  font-family: var(--font-main, "Poppins", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif);
 }
 
 .auth-gate__stage {

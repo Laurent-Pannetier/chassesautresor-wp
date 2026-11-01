@@ -503,7 +503,7 @@
 }
 
 .myaccount-title-greeting {
-    font-size: 0.65em;
+    font-size: 0.75em;
     font-weight: 500;
     color: rgba(255, 255, 255, 0.7);
     text-transform: none;
@@ -534,7 +534,7 @@
     gap: var(--space-3xl);
 }
 
-@media (min-width: 1025px) {
+@media (--bp-desktop) {
     .myaccount-content {
         width: 70%;
         margin-left: auto;
@@ -706,7 +706,7 @@
     min-width: 180px;
     text-align: center;
     z-index: 201;
-    border:1px solid var(--color-text-secondary); ;
+    border: 1px solid var(--color-gris-3);
 }
 
 /* ✅ Apparition propre au clic */
@@ -724,7 +724,7 @@
 
 /* ✅ Ajustement de la flèche */
 .dropdown-indicator {
-    font-size: 10px;
+    font-size: var(--font-xs);
     margin-left: 3px;
     vertical-align: middle;
 }
@@ -1616,7 +1616,7 @@ body.woocommerce h2 {
     word-break: break-word;
 }
 
-@media (min-width: 720px) {
+@media (--bp-compact) {
     .myaccount-riddle-stats-metrics {
         grid-template-columns: repeat(4, minmax(0, 1fr));
     }
@@ -1760,7 +1760,7 @@ body.woocommerce h2 {
     margin-left: auto;
 }
 
-@media (max-width: 480px) {
+@media not all and (--bp-small) {
     .hunt-lifecycle-card__control {
         gap: 0.65rem;
     }
@@ -1882,7 +1882,7 @@ body.woocommerce h2 {
 }
 
 .myaccount-tentatives .table-header__stats .meta-etiquette--success {
-    color: var(--color-success);
+    color: var(--color-success-text);
 }
 
 .myaccount-tentatives .table-header .table-search {

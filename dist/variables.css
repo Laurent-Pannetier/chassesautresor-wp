@@ -14,9 +14,23 @@
 @custom-media --bp-md (--bp-tablet);
 @custom-media --bp-lg (--bp-desktop);
 @custom-media --bp-xl (--bp-wide);
+/* Named widths that are not on the main scale */
+@custom-media --bp-compact (min-width: 720px);
+@custom-media --bp-auth (min-width: 960px);
+/* WordPress admin bar switches from 32px to 46px below 783px. */
+@custom-media --bp-wp-admin (max-width: 782px);
 :root {
   /* Typographie et breakpoints */
-  --font-main: "Poppins", sans-serif; /* Police principale */
+  --font-main: "Poppins", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-body: 1rem;
+  --font-sm: 0.875rem;
+  --font-xs: 0.75rem;
+  --leading-body: 1.5;
+  --leading-tight: 1.25;
+  --measure: 68ch;
+  --font-h1: clamp(1.75rem, 1.15rem + 2.2vw, 2.625rem);
+  --font-h2: clamp(1.5rem, 1.15rem + 1.4vw, 2rem);
+  --font-h3: clamp(1.25rem, 1.05rem + 0.8vw, 1.5rem);
   --bp-xs: 374px;
   --bp-small: 480px;
   --bp-mobile: 600px;
@@ -39,20 +53,30 @@
   --color-secondary: #E1A95F; /* 🟠 Couleur secondaire : lien */
   --color-accent: #CD7F32; /* 🟤 Accent : bronze */
   --color-text-primary: #F5F5DC; /* 📜 Texte principal : beige clair */
-  --color-text-secondary: #555555; /* 🎨 Texte secondaire : gris foncé */
+  --color-text-secondary: #555555; /* 🎨 Texte secondaire : gris foncé, fonds clairs */
+  --color-text-muted: #c8c0b4; /* 📜 Texte atténué lisible sur le fond nuit */
   --color-titre-enigme: #E5C07B; /* 🏆 Titre des énigmes : or vieilli */
+  --text-on-gold: #152033; /* 📜 Texte sombre sur or, bronze ou gris clair */
   --color-background: #0B132B; /* 🎭 Fond général */
   --color-background-button: #880000; /* 🔘 Fond des boutons : rouge profond */
   --color-background-button-hover: #a00000; /* 🔘 Survol des boutons : rouge foncé */
   --color-background-button-inactive: #A9A9A9; /* 🔘 Boutons inactifs : gris */
   --color-success: #228B22; /* ✅ Barre de progression */
+  --color-success-strong: #1B7A24; /* ✅ Fond de badge : blanc lisible dessus */
+  --color-success-text: #9AF0C0; /* ✅ Succès en texte sur fond nuit */
+  --color-success-on-light: #0E6B1C; /* ✅ Succès en texte sur fond clair */
+  --color-filter-accent: #1F3E63; /* 🔵 Mise en avant discrète des filtres */
+  --color-filter-accent-glow: rgba(31, 62, 99, 0.45); /* 🔵 Halo léger pour les interactions des filtres */
   --color-error: #D93025; /* ⚠️ Messages d'erreur */
+  --color-error-text: #FFB4A8; /* ⚠️ Erreur en texte sur fond nuit */
+  --color-error-on-light: #B71C1C; /* ⚠️ Erreur en texte sur fond clair */
   --color-white: #FFFFFF; /* ⚪ Blanc */
   --color-black: #000000; /* ⚫ Noir */
   --color-black-rgb: 0, 0, 0; /* ⚫ Noir en RGB */
   --color-grey-light: #EEEEEE; /* 🌫️ Gris clair */
   --color-grey-medium: #CCCCCC; /* 🌫️ Gris moyen */
   --color-grey-dark: #333333; /* 🌫️ Gris foncé */
+  --input-placeholder-color: #8A8876; /* ✏️ Texte de placeholder lisible sur fonds clairs ou foncés */
   --color-primary-dark: #B8860B; /* 🟡 Or sombre (dégradé) */
   --color-background-dark: #060A1F; /* 🎭 Fond sombre profond */
   --color-gris-3: #adadad; /* ⚪ Gris neutre n°3 */
@@ -94,17 +118,17 @@
   --transition-fast: 0.15s ease-in-out;
   --transition-medium: 0.3s ease;
   --transition-slow: 0.6s ease;
-  /* Breakpoints layout */
-  --breakpoint-small: 480px;
-  --breakpoint-mobile: 600px;
-  --breakpoint-tablet: 768px;
-  --breakpoint-desktop: 1024px;
-  --breakpoint-wide: 1280px;
+  /* Breakpoints layout (lus par le JS, alias des jetons --bp-*) */
+  --breakpoint-small: var(--bp-small);
+  --breakpoint-mobile: var(--bp-mobile);
+  --breakpoint-tablet: var(--bp-tablet);
+  --breakpoint-desktop: var(--bp-desktop);
+  --breakpoint-wide: var(--bp-wide);
 }
 
 @media (--bp-xxl) {
   :root {
-    --container-max-width: none;
+    --container-max-width: 90rem;
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -114,5 +138,10 @@
     --transition-slow: 0s;
   }
 }
-
-/*# sourceMappingURL=variables.css.map */
+@media (prefers-contrast: more) {
+  :root {
+    --color-text-muted: var(--color-text-primary);
+    --color-success-text: #d8ffe9;
+    --color-error-text: #ffd6d0;
+  }
+}

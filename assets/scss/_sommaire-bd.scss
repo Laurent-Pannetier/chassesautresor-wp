@@ -141,7 +141,7 @@
 }
 
 .sommaire-bd__alerte {
-  color: var(--color-error);
+  color: var(--color-error-on-light);
   cursor: default;
 }
 
@@ -189,7 +189,7 @@
 .sommaire-bd__trouvee {
   justify-content: center;
   width: 1rem;
-  color: var(--color-success);
+  color: var(--color-success-on-light);
 }
 
 .sommaire-bd__lien {

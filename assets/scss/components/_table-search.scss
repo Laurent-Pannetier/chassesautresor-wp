@@ -86,7 +86,11 @@
   &__submit:focus {
     background-color: var(--color-background-button-hover);
     transform: translateY(-1px);
-    outline: none;
+  }
+
+  &__submit:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
   }
 
   &__reset {
@@ -94,8 +98,8 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 2.5rem;
-    height: 2.5rem;
+    width: 2.75rem;
+    height: 2.75rem;
     padding: 0;
     border-radius: 999px;
     border: 1px solid rgba(255, 255, 255, 0.25);

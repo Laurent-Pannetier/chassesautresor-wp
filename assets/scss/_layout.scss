@@ -35,8 +35,8 @@
     background-color: rgba(0, 0, 0, 0.2);
     width: 100%;
     max-width: 100%;
-    padding-left: 7px;
-    padding-right: 7px;
+    padding-left: max(7px, env(safe-area-inset-left));
+    padding-right: max(7px, env(safe-area-inset-right));
 }
 .site-above-header-wrap .site-branding{
     padding:0;
@@ -87,7 +87,11 @@ header.site-header {
 .cta-topbar-enigmes__link:hover,
 .cta-topbar-enigmes__link:focus-visible {
     color: var(--color-primary, #ffd700);
-    outline: none;
+}
+
+.cta-topbar-enigmes__link:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
 }
 
 .cta-topbar-enigmes.is-current .cta-topbar-enigmes__link {
@@ -106,8 +110,8 @@ header.site-header {
         padding: 0 10px;
     }
     .site-above-header-wrap {
-        padding-left: 10px;
-        padding-right: 10px;
+        padding-left: max(10px, env(safe-area-inset-left));
+        padding-right: max(10px, env(safe-area-inset-right));
     }
 }
 
@@ -116,8 +120,8 @@ header.site-header {
         padding: 0;
     }
     .site-above-header-wrap {
-        padding-left: var(--space-lg);
-        padding-right: var(--space-lg);
+        padding-left: max(var(--space-lg), env(safe-area-inset-left));
+        padding-right: max(var(--space-lg), env(safe-area-inset-right));
     }
 
     .cta-topbar-enigmes {

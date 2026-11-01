@@ -285,6 +285,46 @@ add_action(
 );
 
 /**
+ * Enqueues Poppins, the theme body font.
+ *
+ * @return void
+ */
+function cta_enqueue_poppins(): void
+{
+    wp_enqueue_style(
+        'chassesautresor-poppins',
+        'https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap',
+        [],
+        null
+    );
+}
+
+/**
+ * Preconnects the Google Fonts hosts used by the theme.
+ *
+ * @param array<int, string|array<string, string>> $urls          Resource hint URLs.
+ * @param string                                    $relation_type Hint relation.
+ * @return array<int, string|array<string, string>>
+ */
+function cta_font_resource_hints(array $urls, string $relation_type): array
+{
+    if ('preconnect' !== $relation_type) {
+        return $urls;
+    }
+
+    $urls[] = [
+        'href' => 'https://fonts.googleapis.com',
+    ];
+    $urls[] = [
+        'href'        => 'https://fonts.gstatic.com',
+        'crossorigin' => 'anonymous',
+    ];
+
+    return $urls;
+}
+add_filter('wp_resource_hints', 'cta_font_resource_hints', 10, 2);
+
+/**
  * Chargement des styles du thème parent et enfant avec prise en charge d'Astra.
  */
 add_action('wp_enqueue_scripts', function () {
@@ -300,6 +340,8 @@ add_action('wp_enqueue_scripts', function () {
         ['astra-style'],
         filemtime($theme_path . '/dist/style.css')
     );
+
+    cta_enqueue_poppins();
 
     wp_enqueue_style(
         'chassesautresor-cinzel',
@@ -478,6 +520,7 @@ add_action('wp_enqueue_scripts', function () {
             'nextPageLabel' => __('Page suivante', 'chassesautresor-com'),
             'pagesListLabel' => __('Pages de l’énigme', 'chassesautresor-com'),
             'showPageLabel' => __('Afficher la page %d', 'chassesautresor-com'),
+            'showControlsLabel' => __('Afficher les commandes, page %1$d / %2$d', 'chassesautresor-com'),
             'zoomHint' => __('Agrandir', 'chassesautresor-com'),
         ]);
     }
@@ -539,10 +582,12 @@ function cta_enqueue_login_styles(): void
     $theme_path = get_stylesheet_directory();
     $css_rel    = '/assets/css/login.css';
 
+    cta_enqueue_poppins();
+
     wp_enqueue_style(
         'cta-login',
         $theme_uri . $css_rel,
-        [],
+        ['chassesautresor-poppins'],
         filemtime($theme_path . $css_rel)
     );
 

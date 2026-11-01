@@ -7,7 +7,7 @@
     --color-text-primary: #e7eef6;
     --color-background-button: #2ec8e6;
     --color-background-button-hover: #7eebf8;
-    --font-main: 'Poppins', sans-serif;
+    --font-main: 'Poppins', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 body.login {
