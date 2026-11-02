@@ -51,18 +51,6 @@ function initEnigmeCardsReorder() {
     }
   };
 
-  const updateNavOrder = () => {
-    const menu = document.querySelector('.enigme-navigation .enigme-menu');
-    if (!menu) return;
-    const ids = Array.from(
-      grid.querySelectorAll('.carte-enigme[data-enigme-id]')
-    ).map((el) => el.dataset.enigmeId);
-    ids.forEach((id) => {
-      const item = menu.querySelector(`li[data-enigme-id="${id}"]`);
-      if (item) menu.appendChild(item);
-    });
-  };
-
   const saveOrder = () => {
     const order = Array.from(
       grid.querySelectorAll('.carte-enigme[data-enigme-id]')
@@ -83,9 +71,6 @@ function initEnigmeCardsReorder() {
         if (!res.success) {
           alert(wp.i18n.__("Erreur lors de l'enregistrement de l'ordre", 'chassesautresor-com'));
         }
-        if (res.success && window.sidebarAside?.reload) {
-          window.sidebarAside.reload(grid.dataset.chasseId);
-        }
       })
       .catch(() => {
         alert(wp.i18n.__("Erreur lors de l'enregistrement de l'ordre", 'chassesautresor-com'));
@@ -102,7 +87,6 @@ function initEnigmeCardsReorder() {
     e.preventDefault();
     cleanClasses();
     ensureAddLast();
-    updateNavOrder();
     saveOrder();
     dragged = null;
   });
@@ -110,7 +94,6 @@ function initEnigmeCardsReorder() {
   grid.addEventListener('dragend', () => {
     cleanClasses();
     ensureAddLast();
-    updateNavOrder();
     saveOrder();
     dragged = null;
   });

@@ -852,8 +852,3 @@ a.chasse-badge.chasse-badge--region:focus-visible {
   font-weight: 500;
 }
 
-@media not all and (--bp-desktop) {
-  .chasse-layout .menu-lateral {
-    display: none;
-  }
-}

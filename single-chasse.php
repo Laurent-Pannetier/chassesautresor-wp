@@ -19,9 +19,6 @@ $est_orga_associe = utilisateur_est_organisateur_associe_a_chasse($user_id, $cha
 
 $points_utilisateur = get_user_points($user_id);
 $est_engage_chasse  = utilisateur_est_engage_dans_chasse($user_id, $chasse_id);
-$peut_voir_aside    = $est_engage_chasse
-    || current_user_can('manage_options')
-    || $est_orga_associe;
 
 // Récupération centralisée des infos
 $infos_chasse = preparer_infos_affichage_chasse($chasse_id, $user_id);
@@ -90,11 +87,6 @@ $needs_validatable_message = $statut === 'revision'
 
 $statut_validation = $infos_chasse['statut_validation'];
 $nb_joueurs = $infos_chasse['nb_joueurs'];
-$sidebar_data = sidebar_prepare_chasse_nav(
-    $chasse_id,
-    $user_id,
-    0
-);
 
 // Intro texte utile en mode plateforme ; en mono-chasse le bandeau + CTA suffisent.
 if (!$compact_experience) {
@@ -171,41 +163,6 @@ cat_debug("🧪 test organisateur_associe : " . ($est_orga_associe ? 'OUI' : 'NO
 
 $can_validate     = peut_valider_chasse($chasse_id, $user_id);
 echo '<div class="container container--xl-full chasse-layout">';
-$sidebar_sections = ['navigation' => '', 'stats' => ''];
-if ($peut_voir_aside) {
-    $sidebar_sections = render_sidebar(
-        'chasse',
-        0,
-        $chasse_id,
-        $sidebar_data['menu_items'],
-        $sidebar_data['peut_ajouter_enigme'],
-        $sidebar_data['total_enigmes'],
-        $sidebar_data['has_incomplete_enigme']
-    );
-}
-?>
-
-<?php
-if ($peut_voir_aside) {
-    echo '<header class="enigme-mobile-header">';
-    echo '<div aria-hidden="true"></div>';
-    echo '<div class="enigme-mobile-actions">';
-    echo '<button type="button" class="enigme-mobile-panel-toggle" aria-controls="enigme-mobile-panel" aria-expanded="false" aria-label="'
-        . esc_attr__('Menu de navigation', 'chassesautresor-com') . '">';
-    echo '<span class="screen-reader-text">' . esc_html__('Menu de navigation', 'chassesautresor-com') . '</span>';
-    echo '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>';
-    echo '</button>';
-    echo '</div>';
-    echo '</header>';
-
-    echo '<div id="enigme-mobile-panel" class="enigme-mobile-panel" hidden>';
-    echo '<div class="enigme-mobile-panel__overlay" tabindex="-1"></div>';
-    echo '<div class="enigme-mobile-panel__sheet" role="dialog" aria-modal="true" aria-labelledby="enigme-mobile-panel-title">';
-    echo '<h2 id="enigme-mobile-panel-title" class="screen-reader-text">' . esc_html__('Navigation de la chasse', 'chassesautresor-com') . '</h2>';
-    echo '<div class="enigme-mobile-panel__content">' . ($sidebar_sections['navigation'] ?? '') . '</div>';
-    echo '</div>';
-    echo '</div>';
-}
 ?>
 
 <div

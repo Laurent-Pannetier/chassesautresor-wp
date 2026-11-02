@@ -78,12 +78,6 @@ function initFormulaireManuel() {
           launcher?.querySelector('.reponse-launcher__open')?.remove();
           parent.append(msgSuccess, msgProcessing);
 
-          const currentMenuItem = document.querySelector('.enigme-menu li.active');
-          if (currentMenuItem) {
-            currentMenuItem.classList.remove('non-engagee', 'bloquee', 'succes');
-            currentMenuItem.classList.add('en-attente');
-          }
-
           setTimeout(() => { msgSuccess.remove(); }, 5000);
         } else {
           feedback.textContent = res.data?.message || res.data;

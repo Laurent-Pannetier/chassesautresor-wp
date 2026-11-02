@@ -2092,11 +2092,6 @@ a.chasse-badge.chasse-badge--region:focus-visible {
   font-weight: 500;
 }
 
-@media not all and (min-width: 1024px) {
-  .chasse-layout .menu-lateral {
-    display: none;
-  }
-}
 .chasse-gagnant-info {
   background-color: var(--color-white);
   color: var(--color-text-fond-clair);
@@ -3767,114 +3762,7 @@ a.addtoany_share span {
     transform: translateX(100%);
   }
 }
-/* Core styles for reusable asides */
-.menu-lateral {
-  --aside-bg-rgb: 0, 0, 0;
-  --aside-opacity: 0.85;
-  background-color: rgba(var(--aside-bg-rgb, 0, 0, 0), var(--aside-opacity, 0.85));
-  padding: var(--space-md);
-  padding-bottom: 0;
-  border-radius: 6px;
-  align-self: start;
-  display: flex;
-  flex-direction: column;
-  max-height: calc(100vh - var(--space-md));
-  color: var(--color-white);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  overflow-y: auto;
-}
-
-.menu-lateral__content {
-  flex: 1 1 auto;
-  overflow-x: hidden;
-  /*background-color: inherit;*/
-}
-
-.menu-lateral__accordeons {
-  margin-top: auto;
-  flex-shrink: 0;
-  /*background-color: inherit;*/
-  width: calc(100% + 2 * var(--space-md));
-  margin-left: calc(-1 * var(--space-md));
-  margin-right: calc(-1 * var(--space-md));
-}
-
-.menu-lateral__header {
-  background-color: var(--color-primary-dark);
-  color: var(--color-white);
-  margin: calc(-1 * var(--space-md)) calc(-1 * var(--space-md)) var(--space-md);
-  padding: var(--space-sm) var(--space-md);
-  position: relative;
-  border-radius: 8px 8px 0 0;
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-}
-
-.menu-lateral__title {
-  font-size: 1.5rem;
-  margin: 0;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-}
-
-.menu-lateral__edition-toggle {
-  position: absolute;
-  top: var(--space-sm);
-  right: calc(var(--space-sm) + 2rem);
-}
-
-.menu-lateral__close {
-  position: absolute;
-  top: var(--space-sm);
-  right: var(--space-sm);
-  color: var(--color-white);
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-}
-
-.menu-lateral__header .menu-lateral__close {
-  transition: color 0.2s ease-in-out;
-}
-
-.menu-lateral__header:hover .menu-lateral__close,
-.menu-lateral__header:focus-within .menu-lateral__close {
-  color: var(--color-grey-light);
-}
-
-.menu-lateral__header .menu-lateral__edition-toggle {
-  color: var(--color-white);
-  transition: color 0.2s ease-in-out;
-}
-
-.menu-lateral__header:hover .menu-lateral__edition-toggle,
-.menu-lateral__header:focus-within .menu-lateral__edition-toggle {
-  opacity: 1;
-  color: var(--color-grey-light);
-}
-
-.menu-lateral__title a {
-  color: inherit;
-  text-decoration: none;
-  transition: color 0.2s ease-in-out;
-}
-
-.menu-lateral__title a:hover {
-  color: var(--color-primary);
-  text-decoration: underline;
-}
-
-.menu-lateral h3 {
-  font-size: 1rem;
-  margin: var(--space-md) 0 var(--space-sm);
-  padding-bottom: var(--space-xs);
-  border-bottom: 1px solid rgba(var(--color-grey-light-rgb, 220, 220, 220), 0.15);
-}
-
+/* Shared aside helpers (histograms, help, accordions). */
 .enigme-navigation__ajout {
   display: flex;
   align-items: center;
@@ -3908,12 +3796,6 @@ a.addtoany_share span {
 .enigme-navigation__ajout-lien:hover {
   color: var(--color-primary);
   text-decoration: underline;
-}
-
-.menu-lateral section + section:not(.enigme-statistiques) {
-  margin-top: var(--space-lg);
-  padding-top: var(--space-lg);
-  border-top: 1px solid var(--color-grey-light);
 }
 
 .aside-subsection-title {
@@ -3970,17 +3852,6 @@ a.addtoany_share span {
 
 .help-icon--aide-small i {
   font-size: 0.75em;
-}
-
-.menu-lateral ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.menu-lateral .sub-menu {
-  margin-left: var(--space-md);
-  padding-left: 0;
 }
 
 /* ====== Histogrammes de statistiques ====== */
@@ -4123,48 +3994,6 @@ a.addtoany_share span {
 .accordeon-contenu:not(.accordeon-ferme) {
   max-height: 1000px;
   padding-bottom: var(--space-sm);
-}
-
-@media (min-width: 1024px) {
-  .menu-lateral {
-    position: fixed;
-    top: 50%;
-    left: var(--space-md);
-    width: 320px;
-    transform: translateY(-50%);
-    transition: transform var(--transition-slow);
-    z-index: 1000;
-  }
-  .menu-lateral.is-hidden {
-    transform: translate(calc(-100% - var(--space-2xl) - var(--space-md)), -50%);
-    box-shadow: none;
-    pointer-events: none;
-  }
-  .menu-lateral__reveal {
-    position: fixed;
-    top: 50%;
-    left: var(--space-md);
-    transform: translateY(-50%);
-    background-color: var(--color-primary-dark);
-    color: var(--color-white);
-    border: none;
-    padding: var(--space-sm);
-    border-radius: 0 4px 4px 0;
-    cursor: pointer;
-    display: none;
-    height: 8rem;
-    align-items: center;
-    justify-content: center;
-    z-index: 1001;
-  }
-  .menu-lateral__reveal i {
-    pointer-events: none;
-    font-size: 1.25rem;
-  }
-}
-/* ===== Gagnants ===== */
-.enigme-gagnants tr.current-user {
-  font-weight: 700;
 }
 
 /* ====== Modal d'aide ====== */
@@ -7819,220 +7648,6 @@ body.shell-edition .edition-tab.active:focus-visible {
   max-height: 90%;
 }
 
-.menu-lateral .stats-bar-chart .bar-value,
-.menu-lateral .stats-bar-chart .bar-value--outside {
-  font-size: 1rem;
-  font-weight: 700;
-  color: rgba(var(--color-white-rgb, 255, 255, 255), 0.8);
-}
-
-.menu-lateral .stats-bar-chart .bar-row + .bar-row {
-  margin-top: 0;
-}
-
-.menu-lateral .stats-bar-chart .bar-label {
-  font-weight: 600;
-  font-size: 0.9rem;
-}
-
-/* Menu status styles */
-.enigme-menu {
-  margin-top: var(--space-lg);
-  margin-bottom: var(--space-lg);
-  list-style: none;
-  padding: 0;
-}
-
-/* Stylised bullets and indentation */
-.enigme-menu li {
-  position: relative;
-  display: flex;
-  align-items: center;
-  width: 100%;
-  margin-bottom: var(--space-xxs);
-  padding-left: calc(var(--space-md) + 16px);
-  --bullet-fill: var(--etat-enigme-menu-en-cours);
-}
-
-.enigme-menu li::before {
-  position: absolute;
-  top: 50%;
-  left: 16px;
-  transform: translateY(-50%);
-  font-family: "Font Awesome 6 Free";
-  font-weight: 900;
-  font-size: 0.75rem;
-  color: var(--bullet-fill);
-  content: "\f111";
-}
-
-.enigme-menu li > a:not(.enigme-menu__edit) {
-  display: flex;
-  align-items: center;
-  flex: 1;
-  padding: var(--space-xxs) calc(var(--space-sm) + 1.5em);
-  font-weight: 600;
-  font-size: 0.9rem;
-  color: inherit;
-  text-decoration: none;
-  border-radius: 4px;
-  min-height: 44px;
-  outline: 2px solid transparent;
-  outline-offset: 2px;
-}
-
-.enigme-menu li > a:not(.enigme-menu__edit):focus-visible {
-  outline-color: var(--color-accent);
-}
-
-.enigme-menu li > a:not(.enigme-menu__edit):visited {
-  color: inherit;
-}
-
-.enigme-menu li:not(.active):hover > a:not(.enigme-menu__edit) {
-  background-color: rgba(255, 215, 0, 0.1);
-}
-
-.enigme-menu li.bloquee {
-  --bullet-fill: var(--etat-enigme-menu-bloquee);
-}
-
-.enigme-menu__edit {
-  position: absolute;
-  top: 50%;
-  right: var(--space-sm);
-  transform: translateY(-50%);
-  font-size: 0.75em;
-  color: var(--color-accent);
-  opacity: 0;
-  transition: opacity 0.2s, font-size 0.2s;
-  background: none;
-  border: 0;
-  padding: 0;
-  line-height: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1;
-}
-
-li.active .enigme-menu__edit {
-  top: 30%;
-}
-
-.enigme-menu li:hover .enigme-menu__edit {
-  opacity: 1;
-}
-
-.enigme-menu li.active .enigme-menu__edit {
-  opacity: 1;
-  font-size: 0.9em;
-  animation: enigme-menu-pulse 2s ease-in-out infinite;
-}
-
-@keyframes enigme-menu-pulse {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.1);
-  }
-}
-.enigme-menu li.en-attente {
-  --bullet-fill: var(--etat-enigme-menu-en-attente);
-}
-
-.enigme-menu li.en-attente::before {
-  content: "";
-  box-sizing: border-box;
-  width: 8px;
-  height: 8px;
-  border: 2px solid var(--etat-enigme-menu-en-attente);
-  border-top-color: transparent;
-  border-radius: 50%;
-  background-color: transparent;
-  animation: enigme-menu-spin 0.6s linear infinite;
-}
-
-.enigme-menu li.succes {
-  --bullet-fill: var(--etat-enigme-menu-succes);
-}
-
-.enigme-menu li.succes::before,
-.enigme-menu li.complete::before {
-  content: "\f00c";
-}
-
-.enigme-menu li.incomplete::before {
-  content: "\f044";
-}
-
-.enigme-menu li.bloquee-date::before {
-  content: "\f254";
-}
-
-.enigme-menu li.bloquee-pre-requis::before {
-  content: "\f023";
-}
-
-.enigme-menu li.validation-auto::before {
-  content: "\f0e7";
-}
-
-.enigme-menu li.validation-manuelle::before {
-  content: "\f0e0";
-}
-
-.enigme-menu li.validation-aucune::before {
-  content: "\f06e";
-}
-
-.enigme-menu li.non-engagee > a:not(.enigme-menu__edit) {
-  font-weight: 600;
-}
-
-.enigme-menu li.non-engagee {
-  --bullet-fill: var(--etat-enigme-menu-non-engagee);
-}
-
-.enigme-menu li.non-engagee:not(.validation-auto):not(.validation-manuelle):not(.validation-aucune):not(.complete):not(.incomplete):not(.bloquee-date):not(.bloquee-pre-requis)::before {
-  content: none;
-}
-
-.enigme-menu li.non-engagee.validation-auto,
-.enigme-menu li.non-engagee.validation-manuelle,
-.enigme-menu li.non-engagee.validation-aucune,
-.enigme-menu li.non-engagee.complete {
-  --bullet-fill: var(--etat-enigme-menu-en-cours);
-}
-
-.enigme-menu li.non-engagee.incomplete {
-  --bullet-fill: var(--etat-enigme-menu-incomplete);
-}
-
-.enigme-menu li.incomplete {
-  --bullet-fill: var(--etat-enigme-menu-incomplete);
-}
-
-.menu-lateral.chasse-en-attente .enigme-menu li::before {
-  content: "\f111";
-  color: var(--etat-enigme-menu-en-attente);
-}
-
-.menu-lateral.joueur .enigme-menu li > a:not(.enigme-menu__edit) {
-  font-weight: 400;
-}
-
-.menu-lateral.joueur .enigme-menu li.non-engagee > a:not(.enigme-menu__edit),
-.menu-lateral.joueur .enigme-menu li.active > a:not(.enigme-menu__edit) {
-  font-weight: 600;
-}
-
-.enigme-menu li.active > a:not(.enigme-menu__edit) {
-  background-color: rgba(255, 215, 0, 0.2);
-  font-weight: 600;
-}
-
 .cards-grid.dragging {
   outline: 2px dashed var(--color-accent);
   outline-offset: -2px;
@@ -8101,44 +7716,6 @@ li.active .enigme-menu__edit {
   box-shadow: 0 0 0 4px var(--color-accent);
 }
 
-.enigme-menu--overflow {
-  margin-top: 0;
-}
-
-.enigme-menu__toggle {
-  margin-top: var(--space-sm);
-  background: none;
-  border: 0;
-  color: var(--color-accent);
-  font-weight: 600;
-  cursor: pointer;
-  position: relative;
-  transition: color 0.2s;
-}
-
-.enigme-menu__toggle[aria-expanded=true] {
-  color: var(--color-primary);
-}
-
-.enigme-menu--overflow[hidden] + .enigme-menu__toggle::before {
-  content: "";
-  position: absolute;
-  top: -16px;
-  left: 0;
-  width: 100%;
-  height: 16px;
-  background: linear-gradient(to bottom, rgba(11, 19, 43, 0), var(--color-background));
-  pointer-events: none;
-}
-
-@keyframes enigme-menu-spin {
-  from {
-    transform: translateY(-50%) rotate(0deg);
-  }
-  to {
-    transform: translateY(-50%) rotate(360deg);
-  }
-}
 .page-enigme {
   display: flex;
   flex-direction: column;
@@ -8905,9 +8482,6 @@ li.active .enigme-menu__edit {
 }
 
 @media not all and (min-width: 1024px) {
-  .enigme-layout .menu-lateral {
-    display: none;
-  }
   .enigme-mobile-header {
     justify-content: space-between;
     align-items: center;
@@ -8944,98 +8518,6 @@ li.active .enigme-menu__edit {
   }
   .enigme-edit-toggle--desktop {
     display: none;
-  }
-  .enigme-mobile-panel {
-    position: fixed;
-    inset: 0;
-    display: none;
-    z-index: 1000;
-  }
-  .enigme-mobile-panel.open {
-    display: block;
-  }
-  .enigme-mobile-panel__overlay {
-    position: absolute;
-    inset: 0;
-    background-color: rgba(var(--color-black-rgb, 0, 0, 0), 0.5);
-    backdrop-filter: blur(2px);
-  }
-  .enigme-mobile-panel__sheet {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    color: var(--color-text-primary);
-    background-color: var(--color-background-dark);
-    border-top: 1px solid rgba(var(--color-black-rgb, 0, 0, 0), 0.2);
-    border-radius: var(--space-md) var(--space-md) 0 0;
-    padding-top: calc(var(--space-lg) + env(safe-area-inset-top));
-    padding-bottom: calc(var(--space-lg) + env(safe-area-inset-bottom));
-    padding-left: calc(var(--space-lg) + env(safe-area-inset-left));
-    padding-right: calc(var(--space-lg) + env(safe-area-inset-right));
-    box-shadow: 0 -4px 16px rgba(var(--color-black-rgb, 0, 0, 0), 0.3);
-    max-height: 80vh;
-    overflow-y: auto;
-    transition: box-shadow var(--transition-medium);
-  }
-  .enigme-mobile-panel__sheet::before {
-    content: "";
-    display: block;
-    width: 3rem;
-    height: var(--space-xxs);
-    margin: 0 auto var(--space-md);
-    background-color: var(--color-grey-medium);
-    border-radius: var(--space-xs);
-  }
-  .enigme-mobile-panel.full .enigme-mobile-panel__sheet {
-    top: 0;
-    bottom: 0;
-    border-radius: 0;
-    max-height: 100vh;
-  }
-  .enigme-mobile-panel__tabs {
-    display: flex;
-    gap: var(--space-xs);
-    margin-bottom: var(--space-md);
-    position: sticky;
-    top: 0;
-    background-color: var(--color-background);
-    z-index: 1;
-  }
-  .panel-tab {
-    flex: 1;
-    background: none;
-    border: 1px solid transparent;
-    border-radius: var(--space-xs);
-    padding: var(--space-sm);
-    color: var(--color-text-primary);
-    cursor: pointer;
-    outline: 2px solid transparent;
-    outline-offset: 2px;
-    font-weight: 500;
-    transition: background-color var(--transition-fast), color var(--transition-fast);
-  }
-  .panel-tab:hover {
-    background-color: rgba(var(--color-black-rgb, 0, 0, 0), 0.2);
-  }
-  .panel-tab[aria-selected=true] {
-    background-color: var(--color-primary);
-    color: var(--color-text-fond-clair);
-    font-weight: 600;
-    box-shadow: 0 0 0 1px var(--color-primary);
-  }
-  .panel-tab:focus-visible {
-    outline-color: var(--color-accent);
-  }
-  .panel-tab-content[hidden] {
-    display: none;
-  }
-  .enigme-mobile-panel__content {
-    max-height: calc(80vh - var(--space-xl));
-    overflow-y: auto;
-  }
-  .enigme-mobile-panel.full .enigme-mobile-panel__content {
-    max-height: calc(100vh - var(--space-xl));
   }
   .page-enigme {
     margin-top: 0;
@@ -10238,11 +9720,6 @@ body.comic-reader .enigme-mobile-header,
 body.comic-reader .enigme-edit-toggle--desktop {
   z-index: 45;
   transition: opacity 0.28s ease;
-}
-
-body.comic-reader .menu-lateral,
-body.comic-reader .menu-lateral__reveal {
-  display: none;
 }
 
 body.comic-reader .enigme-mobile-header {
@@ -17234,6 +16711,7 @@ body.app-shell-active #masthead {
 }
 
 .app-topbar__brand {
+  display: none;
   min-width: 0;
   flex: 0 0 auto;
   overflow: hidden;
@@ -19594,6 +19072,9 @@ html[data-theme=day] .home-enigmas-preserve {
   }
 }
 @media (min-width: 1024px) {
+  .app-topbar__brand {
+    display: block;
+  }
   .app-shell #content.site-content {
     padding: 1.75rem 2.25rem 3.5rem;
   }

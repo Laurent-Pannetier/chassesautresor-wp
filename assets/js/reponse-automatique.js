@@ -149,7 +149,6 @@ function initFormulaireAutomatique() {
             feedback.className = 'reponse-feedback';
             feedback.innerHTML = `<i class="fa-solid fa-circle-check" style="color:var(--color-success);"></i> ${__('Bonne réponse', 'chassesautresor-com')}`;
             feedback.style.display = 'block';
-            const enigmeId = form.querySelector('input[name="enigme_id"]')?.value;
             const titre = form.querySelector('h3');
             const chrome = form.querySelector('.riddle-widget-immersive__chrome');
             form.replaceChildren(...[chrome, titre, feedback].filter(Boolean));
@@ -158,58 +157,6 @@ function initFormulaireAutomatique() {
               () => dismissResolvedReply(form),
               reducedMotion ? 700 : RESOLVED_REPLY_MS
             );
-            const currentMenuItem = document.querySelector('.enigme-menu li.active');
-            if (currentMenuItem) {
-              currentMenuItem.classList.remove('non-engagee', 'bloquee', 'en-attente');
-              currentMenuItem.classList.add('succes');
-            }
-            const sectionGagnants = document.querySelector('.enigme-gagnants');
-            const sectionStats = document.querySelector('.enigme-statistiques');
-
-            const navigation = document.querySelector('.enigme-navigation');
-            const chasseId = navigation ? navigation.dataset.chasseId : null;
-            const requests = [];
-
-            if (sectionGagnants && enigmeId) {
-              const dataW = new URLSearchParams();
-              dataW.append('action', 'enigme_recuperer_gagnants');
-              dataW.append('enigme_id', enigmeId);
-              dataW.append('nonce', RiddleSidebarAjax.nonce);
-              const req = fetch('/wp-admin/admin-ajax.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: dataW
-              })
-                .then(r => r.json())
-                .then(r => {
-                  if (r.success) {
-                    sectionGagnants.innerHTML = r.data.html;
-                  }
-                });
-              requests.push(req);
-            }
-
-            if (sectionStats && chasseId && enigmeId) {
-              const dataP = new URLSearchParams();
-              dataP.append('action', 'enigme_recuperer_progression');
-              dataP.append('chasse_id', chasseId);
-              dataP.append('enigme_id', enigmeId);
-              dataP.append('nonce', RiddleSidebarAjax.nonce);
-              const req = fetch('/wp-admin/admin-ajax.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: dataP
-              })
-                .then(r => r.json())
-                .then(r => {
-                  if (r.success) {
-                    sectionStats.innerHTML = r.data.html;
-                  }
-                });
-              requests.push(req);
-            }
-
-            Promise.allSettled(requests);
           } else {
             feedback.className = 'reponse-feedback';
             window.showRiddleEphemeralNotice?.(

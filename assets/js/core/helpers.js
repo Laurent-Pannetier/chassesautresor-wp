@@ -108,17 +108,6 @@ window.mettreAJourLegendeEnigme = function (valeur) {
   }
 };
 
-/**
- * 🔁 Met à jour dynamiquement le titre de l’énigme dans le menu latéral.
- * @param {string} valeur - Le nouveau titre à afficher
- */
-window.mettreAJourTitreMenuEnigme = function (valeur) {
-  const item = document.querySelector('.enigme-menu li.active a');
-  if (item) {
-    item.textContent = valeur;
-  }
-};
-
 function identifiantNavigation(postId) {
   return String(postId ?? '').replace(/[^\d]/g, '');
 }

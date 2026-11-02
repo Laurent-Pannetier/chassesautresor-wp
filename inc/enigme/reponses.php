@@ -198,9 +198,6 @@ function charger_script_reponse_automatique() {
             filemtime(get_stylesheet_directory() . $path),
             true
         );
-        wp_localize_script('reponse-automatique', 'RiddleSidebarAjax', [
-            'nonce' => wp_create_nonce('riddle_sidebar'),
-        ]);
     }
 }
 add_action('wp_enqueue_scripts', 'charger_script_reponse_automatique');

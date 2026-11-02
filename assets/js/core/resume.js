@@ -201,9 +201,6 @@ window.onChampSimpleMisAJour = function (champ, postId, valeur, cpt, extra) {
     ) {
       window.mettreAJourTitreMenuShell(cpt, postId, valeur, { persisted: true });
     }
-    if (cpt === 'enigme' && typeof window.mettreAJourTitreMenuEnigme === 'function') {
-      window.mettreAJourTitreMenuEnigme(valeur);
-    }
   }
 
   // ✅ ORGANISATEUR : mise à jour image
@@ -287,15 +284,6 @@ window.onChampSimpleMisAJour = function (champ, postId, valeur, cpt, extra) {
 
     if (champsResume.includes(champ) && typeof window.mettreAJourResumeInfos === 'function') {
       window.mettreAJourResumeInfos();
-    }
-    if (
-      extra &&
-      extra.complet_changed &&
-      window.sidebarAside &&
-      typeof window.sidebarAside.reload === 'function'
-    ) {
-      const cid = extra.chasse_id || document.querySelector('.enigme-navigation')?.dataset.chasseId;
-      window.sidebarAside.reload(cid);
     }
   }
 

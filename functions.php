@@ -492,16 +492,6 @@ add_action('wp_enqueue_scripts', function () {
         );
     }
 
-    if (is_singular(['enigme', 'chasse'])) {
-        wp_enqueue_script(
-            'enigme-panel',
-            $script_dir . 'enigme-panel.js',
-            [],
-            filemtime($theme_path . '/assets/js/enigme-panel.js'),
-            true
-        );
-    }
-
     if (is_singular('enigme')) {
         wp_enqueue_script(
             'enigme-image-viewer',
@@ -526,30 +516,6 @@ add_action('wp_enqueue_scripts', function () {
             'homeUrl' => home_url('/'),
         ]);
     }
-    $sidebar_dir = $theme_uri . '/assets/sidebar/';
-    if (is_singular('chasse')) {
-        wp_enqueue_script(
-            'sidebar',
-            $sidebar_dir . 'sidebar.js',
-            [],
-            filemtime($theme_path . '/assets/sidebar/sidebar.js'),
-            true
-        );
-        wp_localize_script('sidebar', 'sidebarData', [
-            'ajaxUrl' => admin_url('admin-ajax.php'),
-            'nonce' => wp_create_nonce('hunt_navigation'),
-        ]);
-    }
-    if (is_singular(['enigme', 'chasse'])) {
-        wp_enqueue_script(
-            'sidebar-menu-toggle',
-            $sidebar_dir . 'menu-toggle.js',
-            [],
-            filemtime($theme_path . '/assets/sidebar/menu-toggle.js'),
-            true
-        );
-    }
-
     if (is_singular('chasse')) {
         wp_enqueue_script(
             'chasse-engagement',
@@ -683,7 +649,6 @@ require_once $inc_path . 'organisateur-functions.php';
 require_once $inc_path . 'access-functions.php';
 require_once $inc_path . 'relations-functions.php';
 require_once $inc_path . 'layout-functions.php';
-require_once $inc_path . 'sidebar.php';
 require_once $inc_path . 'utils/liens.php';
 require_once $inc_path . 'chasse/stats.php';
 require_once $inc_path . 'organisateur/stats.php';
