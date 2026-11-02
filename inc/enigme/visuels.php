@@ -695,36 +695,16 @@ function enigme_collect_step_comic_pages(int $enigme_id, int $user_id): array
     }
 
     $pages = [];
-    $storage = class_exists(\ChassesAuTresor\Core\Media\RiddleStepImageStorageService::class)
-        ? new \ChassesAuTresor\Core\Media\RiddleStepImageStorageService()
-        : null;
     foreach ($revealedStepIds as $stepId) {
         $stepId = (int) $stepId;
-        $imageIds = enigme_step_image_ids($stepId);
-        $storedIds = [];
-        $changed = false;
-        foreach ($imageIds as $imageId) {
+        foreach (enigme_step_image_ids($stepId) as $imageId) {
             if ($imageId <= 0 || $imageId === ID_IMAGE_PLACEHOLDER_ENIGME) {
                 continue;
             }
-            $finalId = $imageId;
-            if ($storage !== null) {
-                $securedId = $storage->ensureProtected($imageId, $enigme_id, $stepId);
-                if ($securedId > 0) {
-                    $finalId = $securedId;
-                }
-                if ($finalId !== $imageId) {
-                    $changed = true;
-                }
-            }
-            $storedIds[] = $finalId;
             $pages[] = [
-                'image_id' => $finalId,
+                'image_id' => $imageId,
                 'step_id' => $stepId,
             ];
-        }
-        if ($changed && $storedIds !== [] && function_exists('update_field')) {
-            update_field('etape_image', $storedIds, $stepId);
         }
     }
 

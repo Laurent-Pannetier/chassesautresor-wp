@@ -62,45 +62,9 @@ function cta_shell_user_is_administrator(?WP_User $user = null): bool
 }
 
 /**
- * Register the Tentatives WooCommerce account endpoint.
- */
-function myaccount_register_account_endpoints(): void
-{
-    add_rewrite_endpoint('tentatives', EP_ROOT | EP_PAGES);
-}
-add_action('init', 'myaccount_register_account_endpoints');
-
-/**
- * Flush rewrite rules once after introducing account endpoints.
- */
-function myaccount_maybe_flush_account_endpoints(): void
-{
-    $version = 'tentatives-1';
-    if (get_option('ca_myaccount_endpoints_version') === $version) {
-        return;
-    }
-
-    flush_rewrite_rules(false);
-    update_option('ca_myaccount_endpoints_version', $version);
-}
-add_action('init', 'myaccount_maybe_flush_account_endpoints', 99);
-
-/**
- * Expose the Tentatives endpoint to WooCommerce query vars.
- *
- * @param array<string, string> $vars Query vars.
- * @return array<string, string>
- */
-function myaccount_register_account_query_vars(array $vars): array
-{
-    $vars['tentatives'] = 'tentatives';
-
-    return $vars;
-}
-add_filter('woocommerce_get_query_vars', 'myaccount_register_account_query_vars');
-
-/**
  * Keep Tentatives off the Accueil dashboard; they live on their own page.
+ *
+ * The endpoint itself is registered by AccountTentativesEndpoint in Core.
  */
 function myaccount_unhook_dashboard_attempts(): void
 {

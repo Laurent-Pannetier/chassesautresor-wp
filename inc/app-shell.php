@@ -1133,3 +1133,16 @@ function cta_shell_remove_account_logout(array $items): array
     return $items;
 }
 add_filter('woocommerce_account_menu_items', 'cta_shell_remove_account_logout');
+
+add_filter(
+    'chassesautresor_shell_icon',
+    static function ($html, $name) {
+        if (!function_exists('cta_shell_icon')) {
+            return $html;
+        }
+
+        return (string) cta_shell_icon((string) $name);
+    },
+    10,
+    2
+);

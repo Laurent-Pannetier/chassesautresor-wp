@@ -156,6 +156,19 @@ function cta_shell_edition_url(string $type, int $id, string $section = 'paramet
     );
 }
 
+add_filter(
+    'chassesautresor_edition_url',
+    static function ($url, $type, $id, $section) {
+        if (!function_exists('cta_shell_edition_url')) {
+            return $url;
+        }
+
+        return cta_shell_edition_url((string) $type, (int) $id, (string) $section);
+    },
+    10,
+    4
+);
+
 /**
  * @param mixed $url
  */

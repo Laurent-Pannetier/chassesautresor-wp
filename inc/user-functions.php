@@ -316,6 +316,16 @@ function ca_render_dashboard_engaged_hunts(): void
     echo ob_get_clean();
 }
 
+add_filter('chassesautresor_account_engaged_hunts_rendered', static function ($rendered) {
+    if ($rendered === true) {
+        return true;
+    }
+
+    ca_render_dashboard_engaged_hunts();
+
+    return true;
+});
+
 /**
  * Register the search context used for the tentatives table.
  *
