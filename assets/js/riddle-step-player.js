@@ -121,20 +121,31 @@ const hasMeaningfulStepContent = article => {
   return content.textContent.replace(/\u00a0/g, ' ').trim() !== '';
 };
 
-const comicPageFromNode = node => ({
-  imageId: node.dataset.stepPageImageId || '',
-  stepId: node.closest('[data-revealed-step-id]')?.dataset.revealedStepId || '',
-  previewUrl: node.dataset.stepPagePreview,
-  fullUrl: node.dataset.stepPageFull,
-  thumbUrl: node.dataset.stepPageThumb || node.dataset.stepPagePreview,
-  alt: node.dataset.stepPageAlt || '',
-  srcset: node.dataset.stepPageSrcset || '',
-  webpSrcset: node.dataset.stepPageSrcsetWebp || '',
-  sizes: node.dataset.stepPageSizes || '',
-  width: node.dataset.stepPageWidth || '',
-  height: node.dataset.stepPageHeight || '',
-  select: false
-});
+const comicPageFromNode = node => {
+  const page = {
+    imageId: node.dataset.stepPageImageId || '',
+    stepId: node.closest('[data-revealed-step-id]')?.dataset.revealedStepId || '',
+    previewUrl: node.dataset.stepPagePreview,
+    fullUrl: node.dataset.stepPageFull,
+    thumbUrl: node.dataset.stepPageThumb || node.dataset.stepPagePreview,
+    alt: node.dataset.stepPageAlt || '',
+    srcset: node.dataset.stepPageSrcset || '',
+    webpSrcset: node.dataset.stepPageSrcsetWebp || '',
+    sizes: node.dataset.stepPageSizes || '',
+    width: node.dataset.stepPageWidth || '',
+    height: node.dataset.stepPageHeight || '',
+    select: false
+  };
+  try {
+    const parsed = JSON.parse(node.dataset.stepPageBands || '[]');
+    if (Array.isArray(parsed) && parsed.length > 1) {
+      page.bands = parsed;
+    }
+  } catch (error) {
+    return page;
+  }
+  return page;
+};
 
 const revealSolvedStepPages = (parsed, stepId) => {
   const safeStepId = String(stepId || '').replace(/[^\d]/g, '');
@@ -436,7 +447,12 @@ document.addEventListener('submit', async event => {
     if (showRevealedPage && typeof window.EnigmeGallery.selectSlide === 'function') {
       window.EnigmeGallery.selectSlide(gallery, unlocked.revealedIndex);
     }
-    const scrollTarget = showRevealedPage ? gallery : unlocked.target;
+    const revealedSlide = showRevealedPage
+      ? gallery.querySelector(
+          `.galerie-enigme__slide[data-gallery-index="${unlocked.revealedIndex}"]`
+        )
+      : null;
+    const scrollTarget = revealedSlide || (showRevealedPage ? gallery : unlocked.target);
     focusUnlockedContent(scrollTarget);
     scrollTarget.scrollIntoView({
       behavior: reducedMotion ? 'auto' : 'smooth',

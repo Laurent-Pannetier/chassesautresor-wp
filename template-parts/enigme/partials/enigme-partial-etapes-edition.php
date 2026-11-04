@@ -148,8 +148,8 @@ if ($riddleId > 0) {
         </div>
         <p class="txt-small">
           <?= esc_html__(
-              'Ces pages s’ajoutent à la bande dessinée quand le joueur réussit l’étape. '
-              . 'La première s’ouvre, les suivantes se feuillettent avant la question d’après. '
+              'Ces images prolongent la première bande, sans joint. Largeur 1380 px, hauteur libre. '
+              . 'La vue descend à la première, puis la lecture continue en défilement. '
               . 'Un texte ou une page est obligatoire pour Simple clic et Réponse texte.',
               'chassesautresor-com'
           ); ?>

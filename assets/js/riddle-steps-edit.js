@@ -353,10 +353,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
   editor.querySelector('.riddle-step-image-select')?.addEventListener('click', () => {
     if (!window.wp?.media) return;
+    const settings = window.wp.media.model?.settings;
+    const previousPostId = settings?.post?.id;
+    if (settings?.post && RiddleStepsEdit.riddleId) {
+      settings.post.id = Number(RiddleStepsEdit.riddleId);
+    }
     const frame = wp.media({
       title: RiddleStepsEdit.texts.imageTitle,
       multiple: true,
       library: { type: 'image' }
+    });
+    frame.on('close', () => {
+      if (settings?.post && previousPostId !== undefined) {
+        settings.post.id = previousPostId;
+      }
     });
     frame.on('select', () => {
       const selected = frame.state().get('selection').toJSON();

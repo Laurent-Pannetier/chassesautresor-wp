@@ -1,15 +1,12 @@
 /**
- * Viewer d’images d’énigme : lecteur BD plein écran et loupe.
- * Couvre le hero (`[data-enigme-gallery]`). Les pages d’étapes débloquées
- * s’ajoutent à cette galerie (y compris via AJAX).
+ * Viewer d’images d’énigme : lecture verticale et loupe.
+ * Couvre le hero (`[data-enigme-gallery]`). Les images d’étapes débloquées
+ * s’ajoutent sous la bande (y compris via AJAX).
  *
- * Une page 16:9 occupe le viewport (`object-fit: contain`). Le feuilletage
- * se fait au glissement horizontal, au clavier, ou avec les chevrons qui
- * apparaissent au bord de l’écran (souris). Un compteur discret reste
- * visible. Un tap affiche le bandeau du bas. Le retour vers l’accueil
- * apparaît au survol du haut de l’écran, ou avec le bandeau au toucher.
- * Sans réponse, indice ni texte, le bandeau reste masqué et le retour
- * reste accessible. La topbar du site reste masquée.
+ * La colonne fait au plus 1380 px et touche les bords sur un écran plus
+ * étroit. Le défilement est celui de la page. La réponse, les indices et
+ * le texte restent sous la dernière image. Le lien Accueil reste dans le
+ * coin haut droit.
  *
  * Avec une souris, un clic arme une loupe ×4 qui suit le pointeur sur
  * l’image. Un second clic ou Échap l’éteint. Au toucher, un double tap ou
@@ -305,6 +302,16 @@
     });
   };
 
+  const scrollStripIntoView = (slide) => {
+    if (!slide || typeof slide.scrollIntoView !== 'function') {
+      return;
+    }
+    slide.scrollIntoView({
+      behavior: prefersReducedMotion() ? 'auto' : 'smooth',
+      block: 'start',
+    });
+  };
+
   const selectGallerySlide = (gallery, index, options = {}) => {
     const slides = [...gallery.querySelectorAll('.galerie-enigme__slide')];
     const thumbs = gallery.querySelectorAll('[data-gallery-goto]');
@@ -314,31 +321,21 @@
 
     const previousIndex = slides.findIndex((slide) => slide.classList.contains('is-active'));
     const target = Math.max(0, Math.min(index, slides.length - 1));
-    clearPageTurn(gallery);
-    const animate =
-      document.body.classList.contains('comic-reader') &&
-      !prefersReducedMotion() &&
-      previousIndex >= 0 &&
-      previousIndex !== target;
-    const forward = target > previousIndex;
 
     slides.forEach((slide, slideIndex) => {
       const isActive = slideIndex === target;
-      const isOutgoing = animate && slideIndex === previousIndex;
+      slide.classList.remove('is-leaving', 'is-incoming', 'is-from-next', 'is-from-prev');
       slide.classList.toggle('is-active', isActive);
-      slide.hidden = !(isActive || isOutgoing);
-      if (isOutgoing) {
-        slide.classList.add('is-leaving', forward ? 'is-from-next' : 'is-from-prev');
-      }
-      if (animate && isActive) {
-        slide.classList.add('is-incoming', forward ? 'is-from-next' : 'is-from-prev');
-      }
+      slide.hidden = false;
       slide.dataset.galleryIndex = String(slideIndex);
       const img = slide.querySelector('img');
       if (img) {
         img.classList.toggle('image-active', isActive);
         if (isActive) {
           img.id = 'image-enigme-active';
+          if (img.loading === 'lazy') {
+            img.loading = 'eager';
+          }
         } else if (img.id === 'image-enigme-active') {
           img.removeAttribute('id');
         }
@@ -352,20 +349,8 @@
     });
 
     updateGalleryChrome(gallery, target);
-    preloadNearbySlides(gallery, target);
-    if (animate) {
-      const incoming = slides[target];
-      window.requestAnimationFrame(() => {
-        incoming?.classList.remove('is-incoming', 'is-from-next', 'is-from-prev');
-      });
-      gallery._pageTurnTimer = window.setTimeout(() => {
-        const outgoing = slides[previousIndex];
-        if (outgoing && !outgoing.classList.contains('is-active')) {
-          outgoing.classList.remove('is-leaving', 'is-from-next', 'is-from-prev');
-          outgoing.hidden = true;
-        }
-        gallery._pageTurnTimer = null;
-      }, PAGE_TURN_MS);
+    if (options.scroll !== false && previousIndex !== target) {
+      scrollStripIntoView(slides[target]);
     }
     if (previousIndex !== target) {
       gallery.dispatchEvent(
@@ -376,6 +361,161 @@
       );
     }
     return target;
+  };
+
+  const bandIntersectsViewport = (node) => {
+    const rect = node.getBoundingClientRect();
+    const viewport = window.innerHeight || document.documentElement?.clientHeight || 0;
+    return rect.height > 0 && rect.bottom > 0 && rect.top < viewport;
+  };
+
+  const createWebtoonBandScheduler = (gallery) => {
+    const priority = new Set();
+    let released = false;
+
+    const images = () => [...gallery.querySelectorAll('.galerie-enigme__slide img')];
+
+    const settle = () => {
+      if (released || priority.size === 0) {
+        return;
+      }
+      const pending = [...priority].some((image) => image.dataset.bandState !== 'ready');
+      if (pending) {
+        return;
+      }
+      released = true;
+      images().forEach((image) => startImage(image));
+    };
+
+    const startImage = (image) => {
+      if (!(image instanceof HTMLImageElement)) {
+        return;
+      }
+      if (image.dataset.bandState === 'loading' || image.dataset.bandState === 'ready') {
+        return;
+      }
+      const finish = () => {
+        image.dataset.bandState = 'ready';
+        settle();
+      };
+      if (image.complete && image.getAttribute('src')) {
+        image.dataset.bandState = 'ready';
+        return;
+      }
+      image.dataset.bandState = 'loading';
+      image.addEventListener('load', finish, { once: true });
+      image.addEventListener('error', finish, { once: true });
+      const next = image.dataset.bandSrc || '';
+      if (next && image.getAttribute('src') !== next) {
+        image.src = next;
+      }
+    };
+
+    const sync = () => {
+      if (released) {
+        images().forEach((image) => startImage(image));
+        return;
+      }
+      const list = images();
+      let lastVisible = -1;
+      list.forEach((image, index) => {
+        if (bandIntersectsViewport(image)) {
+          lastVisible = index;
+        }
+      });
+      const unmeasured = list.every((image) => image.getBoundingClientRect().height === 0);
+      if (lastVisible < 0 && unmeasured && list[0]) {
+        lastVisible = 0;
+      }
+      for (let index = 0; index <= lastVisible; index += 1) {
+        priority.add(list[index]);
+        startImage(list[index]);
+      }
+      settle();
+    };
+
+    const onScroll = () => sync();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    sync();
+
+    return { sync, stop: () => window.removeEventListener('scroll', onScroll) };
+  };
+
+  const ensureWebtoonBandScheduler = (gallery) => {
+    if (!(gallery instanceof Element)) {
+      return;
+    }
+    if (!gallery.__webtoonBandSync) {
+      const scheduler = createWebtoonBandScheduler(gallery);
+      gallery.__webtoonBandSync = scheduler.sync;
+      gallery.__webtoonBandStop = scheduler.stop;
+      return;
+    }
+    gallery.__webtoonBandSync();
+  };
+
+  const appendSlideVisual = (zoom, page, alt) => {
+    const bands = Array.isArray(page.bands) ? page.bands : [];
+    if (bands.length > 1) {
+      const stack = document.createElement('span');
+      stack.className = 'webtoon-bands';
+      bands.forEach((band, index) => {
+        const image = document.createElement('img');
+        image.className = 'webtoon-band enigme-image--limited';
+        image.dataset.webtoonBand = '';
+        image.dataset.bandSrc = band.url || band.src || '';
+        image.alt = index === 0 ? alt : '';
+        image.decoding = 'async';
+        image.referrerPolicy = 'no-referrer';
+        if (page.sizes) {
+          image.sizes = page.sizes;
+        }
+        const width = Number(band.width || 0);
+        const height = Number(band.height || 0);
+        if (width > 0) {
+          image.width = width;
+        }
+        if (height > 0) {
+          image.height = height;
+        }
+        stack.appendChild(image);
+      });
+      zoom.appendChild(stack);
+      return;
+    }
+
+    const img = document.createElement('img');
+    img.className = 'enigme-image--limited';
+    img.src = page.previewUrl;
+    img.alt = alt;
+    img.loading = 'lazy';
+    img.decoding = 'async';
+    img.referrerPolicy = 'no-referrer';
+    if (page.srcset) {
+      img.srcset = page.srcset;
+    }
+    if (page.sizes) {
+      img.sizes = page.sizes;
+    }
+    if (page.width) {
+      img.width = Number(page.width);
+    }
+    if (page.height) {
+      img.height = Number(page.height);
+    }
+
+    const picture = document.createElement('picture');
+    if (page.webpSrcset) {
+      const source = document.createElement('source');
+      source.type = 'image/webp';
+      source.srcset = page.webpSrcset;
+      if (page.sizes) {
+        source.sizes = page.sizes;
+      }
+      picture.appendChild(source);
+    }
+    picture.appendChild(img);
+    zoom.appendChild(picture);
   };
 
   const appendGalleryPage = (page) => {
@@ -400,10 +540,10 @@
       }
     }
 
-    ensureGalleryControls(gallery);
     const stage = gallery.querySelector('.galerie-enigme__stage');
     const thumbs = gallery.querySelector('.galerie-enigme__thumbs');
     const nextNav = gallery.querySelector('.galerie-enigme__nav--next');
+    const homeLink = stage?.querySelector('.galerie-enigme__home') || null;
     const index = gallery.querySelectorAll('.galerie-enigme__slide').length;
     const galleryId = gallery.id || 'galerie-enigme';
     const slideId = `${galleryId}-slide-${index}`;
@@ -418,7 +558,6 @@
     if (stepId) {
       figure.dataset.galleryStepId = stepId;
     }
-    figure.hidden = true;
 
     const zoom = document.createElement('button');
     zoom.type = 'button';
@@ -426,26 +565,7 @@
     zoom.dataset.enigmeLightboxSrc = page.fullUrl;
     zoom.dataset.enigmeLightboxAlt = alt;
     zoom.setAttribute('aria-label', nativeSizeLabel);
-
-    const img = document.createElement('img');
-    img.className = 'enigme-image--limited';
-    img.src = page.previewUrl;
-    img.alt = alt;
-    img.loading = 'lazy';
-    img.decoding = 'async';
-    img.referrerPolicy = 'no-referrer';
-    if (page.srcset) {
-      img.srcset = page.srcset;
-    }
-    if (page.sizes) {
-      img.sizes = page.sizes;
-    }
-    if (page.width) {
-      img.width = Number(page.width);
-    }
-    if (page.height) {
-      img.height = Number(page.height);
-    }
+    appendSlideVisual(zoom, page, alt);
 
     const hint = document.createElement('span');
     hint.className = 'enigme-media-zoom__hint';
@@ -453,49 +573,45 @@
     hint.textContent =
       (window.EnigmeImageViewer && window.EnigmeImageViewer.zoomHint) || 'Agrandir';
 
-    const picture = document.createElement('picture');
-    if (page.webpSrcset) {
-      const source = document.createElement('source');
-      source.type = 'image/webp';
-      source.srcset = page.webpSrcset;
-      if (page.sizes) {
-        source.sizes = page.sizes;
-      }
-      picture.appendChild(source);
-    }
-    picture.appendChild(img);
-    zoom.appendChild(picture);
     zoom.appendChild(hint);
     figure.appendChild(zoom);
     if (nextNav) {
       stage.insertBefore(figure, nextNav);
-    } else {
+    } else if (homeLink) {
+      stage.insertBefore(figure, homeLink);
+    } else if (stage) {
       stage.appendChild(figure);
     }
 
-    const thumb = document.createElement('button');
-    thumb.type = 'button';
-    thumb.className = 'galerie-enigme__thumb galerie-enigme__thumb--step';
-    thumb.setAttribute('role', 'tab');
-    thumb.setAttribute('aria-selected', 'false');
-    thumb.setAttribute('aria-controls', slideId);
-    thumb.dataset.galleryGoto = String(index);
-    if (stepId) {
-      thumb.dataset.galleryStepId = stepId;
+    if (thumbs) {
+      const thumb = document.createElement('button');
+      thumb.type = 'button';
+      thumb.className = 'galerie-enigme__thumb galerie-enigme__thumb--step';
+      thumb.setAttribute('role', 'tab');
+      thumb.setAttribute('aria-selected', 'false');
+      thumb.setAttribute('aria-controls', slideId);
+      thumb.dataset.galleryGoto = String(index);
+      if (stepId) {
+        thumb.dataset.galleryStepId = stepId;
+      }
+      thumb.setAttribute('aria-label', formatShowPageLabel(index + 1));
+      if (page.thumbUrl) {
+        const thumbImg = document.createElement('img');
+        thumbImg.src = page.thumbUrl;
+        thumbImg.alt = '';
+        thumbImg.loading = 'lazy';
+        thumbImg.decoding = 'async';
+        thumbImg.referrerPolicy = 'no-referrer';
+        thumbImg.width = 72;
+        thumbImg.height = 72;
+        thumb.appendChild(thumbImg);
+      }
+      thumbs.appendChild(thumb);
     }
-    thumb.setAttribute('aria-label', formatShowPageLabel(index + 1));
-    if (page.thumbUrl) {
-      const thumbImg = document.createElement('img');
-      thumbImg.src = page.thumbUrl;
-      thumbImg.alt = '';
-      thumbImg.loading = 'lazy';
-      thumbImg.decoding = 'async';
-      thumbImg.referrerPolicy = 'no-referrer';
-      thumbImg.width = 72;
-      thumbImg.height = 72;
-      thumb.appendChild(thumbImg);
+
+    if (gallery.hasAttribute('data-webtoon') || gallery.dataset.webtoonReady === '1') {
+      ensureWebtoonBandScheduler(gallery);
     }
-    thumbs.appendChild(thumb);
 
     if (!selectPage) {
       return index;
@@ -503,42 +619,11 @@
     return selectGallerySlide(gallery, index);
   };
 
-  const HUD_HIDE_MS = 3200;
-  const HUD_INTRO_MS = 2800;
-  const HUD_PAGE_MS = 1400;
-  const HUD_EDGE_MS = 800;
-  const EDGE_PX = 72;
-  const SIDE_EDGE_PX = 80;
-  const TAP_MS = 320;
-  const SWIPE_PX = 48;
-
-  const editionActive = () =>
-    document.body.classList.contains('edition-active-enigme') ||
-    document.body.classList.contains('edition-active');
-
-  const finePointerQuery = () =>
-    window.matchMedia?.('(hover: hover) and (pointer: fine)') || { matches: false };
-
-  const hintSignature = () =>
-    [...document.querySelectorAll('.zone-indices .indice-link, .zone-indices .indice-label')]
-      .map((el) => {
-        const id = el.dataset.indiceId || el.textContent.trim();
-        const state = el.classList.contains('indice-link--upcoming')
-          ? 'wait'
-          : el.dataset.unlocked || 'label';
-        return `${id}:${state}`;
-      })
-      .join('|');
-
-  const initComicReader = (gallery) => {
-    if (!(gallery instanceof Element) || gallery.dataset.comicReaderReady === '1') {
+  const initWebtoonReader = (gallery) => {
+    if (!(gallery instanceof Element) || gallery.dataset.webtoonReady === '1') {
       return;
     }
-    gallery.dataset.comicReaderReady = '1';
-    if (!gallery.hasAttribute('data-comic-reader')) {
-      gallery.setAttribute('data-comic-reader', '');
-    }
-
+    gallery.dataset.webtoonReady = '1';
     window.__comicReaderTeardown?.();
 
     const stage = gallery.querySelector('.galerie-enigme__stage');
@@ -546,63 +631,11 @@
       return;
     }
 
-    let readerActive = false;
-    let hideTimer = null;
-    let tapTimer = null;
-    let lastTapAt = 0;
-    let pointerOverHud = false;
-    let pointerNearHud = false;
-    let lastPointer = null;
-    let pageCounter = null;
-    let pinchBase = 0;
-    let gesture = null;
-    const pointers = new Map();
-    const parked = [];
-    let createdHud = null;
-    let hud = null;
-    let controls = null;
-    let lastHints = '';
+    gallery.querySelectorAll('.galerie-enigme__slide').forEach((slide) => {
+      slide.hidden = false;
+    });
+
     const HOME_INSET = 12;
-    const HOME_BAND_Y = 88;
-
-    const storageKey = `comic-hud:${gallery.id || 'galerie'}`;
-
-    const remember = (suffix, value) => {
-      try {
-        window.sessionStorage.setItem(`${storageKey}:${suffix}`, value);
-      } catch (error) {
-        // Ignore quota / private-mode failures.
-      }
-    };
-
-    const recall = (suffix) => {
-      try {
-        return window.sessionStorage.getItem(`${storageKey}:${suffix}`) || '';
-      } catch (error) {
-        return '';
-      }
-    };
-
-    const clearHide = () => {
-      if (hideTimer) {
-        window.clearTimeout(hideTimer);
-        hideTimer = null;
-      }
-    };
-
-    const topEdgeOffset = () => {
-      if (!document.body.classList.contains('admin-bar')) {
-        return 0;
-      }
-      return window.matchMedia?.('(max-width: 782px)').matches ? 46 : 32;
-    };
-
-    const hudPinned = () =>
-      document.body.classList.contains('riddle-widget-immersive-open') ||
-      !!document.querySelector('.indice-display:not(:empty)') ||
-      pointerOverHud ||
-      (hud && hud.contains(document.activeElement));
-
     const ensureHomeLink = () => {
       let link = gallery.querySelector('.galerie-enigme__home');
       if (!(link instanceof HTMLAnchorElement)) {
@@ -624,15 +657,11 @@
 
     const homeLink = ensureHomeLink();
 
-    const clearEditTogglePlace = () => {
-      const edit = document.querySelector('.enigme-edit-toggle--desktop');
-      if (!(edit instanceof HTMLElement)) {
-        return;
+    const topEdgeOffset = () => {
+      if (!document.body.classList.contains('admin-bar')) {
+        return 0;
       }
-      edit.style.removeProperty('--galerie-home-top');
-      edit.style.removeProperty('top');
-      edit.style.removeProperty('left');
-      edit.style.removeProperty('right');
+      return window.matchMedia?.('(max-width: 782px)')?.matches ? 46 : 32;
     };
 
     const placeHomeLink = () => {
@@ -640,672 +669,121 @@
       homeLink.style.setProperty('--galerie-home-top', `${top}px`);
       homeLink.style.setProperty('--galerie-home-right', `${HOME_INSET}px`);
       const edit = document.querySelector('.enigme-edit-toggle--desktop');
-      if (!(edit instanceof HTMLElement)) {
-        return;
-      }
-      edit.style.setProperty('--galerie-home-top', `${top}px`);
-      edit.style.removeProperty('left');
-      edit.style.removeProperty('right');
-    };
-
-    const inHomeBand = (point) => {
-      if (!point) {
-        return false;
-      }
-      const top = topEdgeOffset();
-      return point.y >= top && point.y <= top + HOME_BAND_Y;
-    };
-
-    const pointerOverHome = (point) =>
-      typeof point?.target?.closest === 'function' &&
-      !!point.target.closest('.galerie-enigme__home');
-
-    let homeKeyboardFocus = false;
-    let homeFocusFromPointer = false;
-    const homePinnedByKeyboard = () => homeKeyboardFocus;
-
-    const syncHomeLink = (point) => {
-      if (!readerActive || !finePointerQuery().matches) {
-        if (!homePinnedByKeyboard()) {
-          homeLink.classList.remove('is-edge-visible');
-        }
-        return;
-      }
-      const show = homePinnedByKeyboard() || pointerOverHome(point) || inHomeBand(point);
-      homeLink.classList.toggle('is-edge-visible', show);
-    };
-
-    const HUD_ACTION_SELECTOR = [
-      '.reponse-launcher',
-      '.message-joueur-statut',
-      '.indice-link',
-      '.indice-label',
-      '.riddle-player-step__content',
-    ].join(', ');
-
-    const hudIsQuiet = () => {
-      if (!hud) {
-        return true;
-      }
-      if (hud.querySelector(HUD_ACTION_SELECTOR)) {
-        return false;
-      }
-      const sheet = hud.querySelector(':scope > .comic-hud__sheet');
-      return !(sheet && sheet.textContent.trim() !== '');
-    };
-
-    const syncHudQuiet = () => {
-      const quiet = hudIsQuiet();
-      hud?.classList.toggle('is-comic-hud--empty', quiet);
-      document.body.classList.toggle('is-hud-quiet', quiet);
-      if (quiet) {
-        document.body.classList.remove('is-hud-visible');
+      if (edit instanceof HTMLElement) {
+        edit.style.setProperty('--galerie-home-top', `${top}px`);
       }
     };
 
-    const showHud = () => {
-      if (!readerActive || hudIsQuiet()) {
-        return;
-      }
-      document.body.classList.add('is-hud-visible');
-    };
+    placeHomeLink();
 
-    const hideHud = () => {
-      if (!readerActive || hudPinned()) {
-        return;
-      }
-      document.body.classList.remove('is-hud-visible');
-    };
+    let lastTapAt = 0;
+    let lastTapX = 0;
+    let lastTapY = 0;
+    let pinchBase = 0;
+    let pinchOpened = false;
+    const pointers = new Map();
 
-    const scheduleHide = (delay = HUD_HIDE_MS) => {
-      clearHide();
-      hideTimer = window.setTimeout(hideHud, delay);
-    };
-
-    const revealHud = (delay = HUD_HIDE_MS) => {
-      showHud();
-      if (!hudPinned()) {
-        scheduleHide(delay);
-      }
-    };
-
-    const toggleHud = () => {
-      if (document.body.classList.contains('is-hud-visible')) {
-        clearHide();
-        hideHud();
-        return;
-      }
-      revealHud();
-    };
-
-    const parkNode = (node, host) => {
-      if (!(node instanceof Element) || !host || node.dataset.comicParked === '1') {
-        return;
-      }
-      parked.push({ node, parent: node.parentNode, next: node.nextSibling });
-      node.dataset.comicParked = '1';
-      host.appendChild(node);
-    };
-
-    const restoreParked = () => {
-      [...parked].reverse().forEach(({ node, parent, next }) => {
-        delete node.dataset.comicParked;
-        if (parent?.isConnected) {
-          parent.insertBefore(node, next);
-        }
-      });
-      parked.length = 0;
-    };
-
-    let placing = false;
-    const placeControls = () => {
-      if (placing || !controls || !hud) {
-        return;
-      }
-      placing = true;
-      const dock = hud.querySelector('.participation-dock');
-      const rowHost = dock || hud;
-      if (!rowHost.contains(controls)) {
-        rowHost.appendChild(controls);
-      }
-      const pager = gallery.querySelector('.galerie-enigme__pager');
-      if (pager) {
-        if (pager.dataset.comicParked !== '1') {
-          parkNode(pager, controls);
-        } else if (pager.parentElement !== controls) {
-          controls.prepend(pager);
-        }
-      }
-      document.querySelectorAll('.reponse-launcher').forEach((node) => {
-        if (node.dataset.comicParked !== '1') {
-          parkNode(node, controls);
-        } else if (node.parentElement !== controls) {
-          controls.appendChild(node);
-        }
-      });
-      const hints = document.querySelector('.zone-indices');
-      if (hints) {
-        if (hints.dataset.comicParked !== '1') {
-          parkNode(hints, controls);
-        } else if (hints.parentElement !== controls) {
-          controls.appendChild(hints);
-        }
-      }
-      placing = false;
-      syncHudQuiet();
-    };
-
-    const buildHud = () => {
-      const participation = document.querySelector('.participation');
-      const hasChrome = !!(
-        participation &&
-        participation.querySelector(
-          '.reponse-launcher, .zone-indices, .message-joueur-statut, .riddle-player-step__content'
-        )
-      );
-      if (hasChrome) {
-        hud = participation;
-      } else {
-        hud = document.createElement('div');
-        hud.className = 'comic-reader-hud';
-        hud.dataset.comicHud = '1';
-        document.body.appendChild(hud);
-        createdHud = hud;
-      }
-      hud.classList.add('is-comic-hud');
-
-      const sheet = document.createElement('div');
-      sheet.className = 'comic-hud__sheet';
-      const text = document.querySelector('.page-enigme .contenu-principal');
-      const solution = document.querySelector('.page-enigme .solution');
-      if (text && text.textContent.trim()) {
-        parkNode(text, sheet);
-      }
-      if (solution && solution.textContent.trim()) {
-        parkNode(solution, sheet);
-      }
-      if (sheet.childElementCount) {
-        hud.prepend(sheet);
-      }
-
-      controls = document.createElement('div');
-      controls.className = 'comic-hud__controls';
-      placeControls();
-
-      hud.addEventListener('pointerenter', () => {
-        pointerOverHud = true;
-        clearHide();
-      });
-      hud.addEventListener('pointerleave', () => {
-        pointerOverHud = false;
-        scheduleHide();
-      });
-      syncHudQuiet();
-    };
-
-    const mountHomeLink = () => {
-      if (homeLink.parentElement !== document.body) {
-        document.body.appendChild(homeLink);
-      }
-    };
-
-    const restoreHomeLink = () => {
-      if (stage.isConnected && homeLink.parentElement !== stage) {
-        stage.appendChild(homeLink);
-      }
-    };
-
-    const onHomePointerDown = () => {
-      homeFocusFromPointer = true;
-    };
-    const onHomeFocus = () => {
-      homeKeyboardFocus = !homeFocusFromPointer;
-      homeFocusFromPointer = false;
-      if (homeKeyboardFocus) {
-        homeLink.classList.add('is-edge-visible');
-      }
-    };
-    const onHomeBlur = () => {
-      homeKeyboardFocus = false;
-      homeFocusFromPointer = false;
-      syncHomeLink(lastPointer);
-    };
-    homeLink.addEventListener('pointerdown', onHomePointerDown);
-    homeLink.addEventListener('focus', onHomeFocus);
-    homeLink.addEventListener('blur', onHomeBlur);
-
-    const openActiveLightbox = () => {
-      const trigger = gallery.querySelector(
-        '.galerie-enigme__slide.is-active [data-enigme-lightbox-src]'
-      );
-      if (!trigger) {
+    const openFromEvent = (event) => {
+      const zoom = event.target?.closest?.('[data-enigme-lightbox-src]');
+      if (!zoom || !stage.contains(zoom)) {
         return;
       }
       openLightbox(
-        trigger.getAttribute('data-enigme-lightbox-src'),
-        trigger.getAttribute('data-enigme-lightbox-alt') || '',
-        trigger
+        zoom.getAttribute('data-enigme-lightbox-src'),
+        zoom.getAttribute('data-enigme-lightbox-alt') || '',
+        zoom
       );
     };
-
-    const pointerDistance = () => {
-      const points = [...pointers.values()];
-      if (points.length < 2) {
-        return 0;
-      }
-      return Math.hypot(points[0].x - points[1].x, points[0].y - points[1].y);
-    };
-
-    const fromControl = (event) =>
-      !!event.target.closest?.(
-        '.galerie-enigme__nav, .galerie-enigme__thumb, .is-comic-hud, a, input, textarea, select, label'
-      );
 
     const onPointerDown = (event) => {
-      if (!readerActive || fromControl(event)) {
-        return;
-      }
-      if (event.pointerType === 'mouse' && event.button !== 0) {
+      if (event.pointerType === 'mouse') {
         return;
       }
       pointers.set(event.pointerId, {
         x: event.clientX,
         y: event.clientY,
-        type: event.pointerType,
       });
-      if (pointers.size >= 2) {
-        pinchBase = pointerDistance();
-        gesture = null;
-        if (tapTimer) {
-          window.clearTimeout(tapTimer);
-          tapTimer = null;
-        }
-        return;
-      }
-      gesture = { id: event.pointerId, x: event.clientX, y: event.clientY, moved: false };
-      try {
-        stage.setPointerCapture(event.pointerId);
-      } catch (error) {
-        // jsdom and some browsers reject capture before the pointer is active.
+      if (pointers.size === 2) {
+        const [first, second] = [...pointers.values()];
+        pinchBase = Math.hypot(first.x - second.x, first.y - second.y) || 1;
+        pinchOpened = false;
       }
     };
 
     const onPointerMove = (event) => {
-      if (!pointers.has(event.pointerId)) {
+      const point = pointers.get(event.pointerId);
+      if (!point) {
         return;
       }
-      const previous = pointers.get(event.pointerId);
-      pointers.set(event.pointerId, {
-        x: event.clientX,
-        y: event.clientY,
-        type: event.pointerType || previous.type,
-      });
-      if (pointers.size >= 2) {
-        const distance = pointerDistance();
-        const touchPinch = [...pointers.values()].every((point) => point.type !== 'mouse');
-        if (pinchBase > 0 && distance > pinchBase * 1.18 && touchPinch) {
-          pinchBase = distance * 4;
-          openActiveLightbox();
-        }
+      point.x = event.clientX;
+      point.y = event.clientY;
+      if (pointers.size < 2 || pinchOpened || pinchBase <= 0) {
         return;
       }
-      if (!gesture || gesture.id !== event.pointerId) {
-        return;
-      }
-      const dx = event.clientX - gesture.x;
-      const dy = event.clientY - gesture.y;
-      if (Math.abs(dx) > 12 || Math.abs(dy) > 12) {
-        gesture.moved = true;
+      const [first, second] = [...pointers.values()];
+      const distance = Math.hypot(first.x - second.x, first.y - second.y);
+      if (distance / pinchBase >= 1.18) {
+        pinchOpened = true;
+        openFromEvent(event);
       }
     };
 
     const onPointerUp = (event) => {
-      const point = pointers.get(event.pointerId);
-      pointers.delete(event.pointerId);
-      if (!point || !readerActive) {
-        gesture = null;
-        return;
-      }
-      if (pointers.size > 0) {
-        gesture = null;
-        pinchBase = 0;
-        return;
-      }
-      const current = gesture;
-      gesture = null;
-      pinchBase = 0;
-      if (!current || current.id !== event.pointerId) {
-        return;
-      }
-      const dx = event.clientX - current.x;
-      const dy = event.clientY - current.y;
-      if (current.moved && Math.abs(dx) >= SWIPE_PX && Math.abs(dx) > Math.abs(dy) * 1.2) {
-        if (tapTimer) {
-          window.clearTimeout(tapTimer);
-          tapTimer = null;
-        }
-        lastTapAt = 0;
-        const currentIndex = [...gallery.querySelectorAll('.galerie-enigme__slide')].findIndex(
-          (slide) => slide.classList.contains('is-active')
-        );
-        selectGallerySlide(gallery, currentIndex + (dx < 0 ? 1 : -1));
-        revealHud(HUD_PAGE_MS);
-        return;
-      }
-      if (current.moved) {
-        return;
-      }
-      const now = Date.now();
-      if (now - lastTapAt < TAP_MS) {
-        lastTapAt = 0;
-        if (tapTimer) {
-          window.clearTimeout(tapTimer);
-          tapTimer = null;
-        }
-        if (event.pointerType !== 'mouse') {
-          openActiveLightbox();
-        }
-        return;
-      }
-      lastTapAt = now;
       if (event.pointerType === 'mouse') {
         return;
       }
-      if (tapTimer) {
-        window.clearTimeout(tapTimer);
+      const wasPinch = pointers.size >= 2 || pinchOpened;
+      pointers.delete(event.pointerId);
+      if (wasPinch) {
+        if (pointers.size === 0) {
+          pinchBase = 0;
+          pinchOpened = false;
+        }
+        return;
       }
-      tapTimer = window.setTimeout(() => {
-        tapTimer = null;
-        toggleHud();
-      }, TAP_MS);
+      const now = Date.now();
+      const near = Math.hypot(event.clientX - lastTapX, event.clientY - lastTapY) < 28;
+      if (lastTapAt && now - lastTapAt < 320 && near) {
+        lastTapAt = 0;
+        openFromEvent(event);
+        return;
+      }
+      lastTapAt = now;
+      lastTapX = event.clientX;
+      lastTapY = event.clientY;
     };
 
+    const onResize = () => placeHomeLink();
     stage.addEventListener('pointerdown', onPointerDown);
     stage.addEventListener('pointermove', onPointerMove);
     stage.addEventListener('pointerup', onPointerUp);
     stage.addEventListener('pointercancel', onPointerUp);
-
-    const hideEdgeNav = () => {
-      gallery.querySelectorAll('.galerie-enigme__nav.is-edge-visible').forEach((button) => {
-        button.classList.remove('is-edge-visible');
-      });
-      if (!homePinnedByKeyboard()) {
-        homeLink.classList.remove('is-edge-visible');
-      }
-    };
-
-    const syncEdgeNav = (point) => {
-      const prev = gallery.querySelector('.galerie-enigme__nav--prev');
-      const next = gallery.querySelector('.galerie-enigme__nav--next');
-      if (!readerActive || !finePointerQuery().matches || !point) {
-        hideEdgeNav();
-        syncHomeLink(point);
-        return;
-      }
-      const target = point.target;
-      const overNav = (selector) =>
-        typeof target?.closest === 'function' && !!target.closest(selector);
-      const homeBand = pointerOverHome(point) || inHomeBand(point);
-      const nearLeft = point.x <= SIDE_EDGE_PX && !homeBand;
-      const nearRight = point.x >= window.innerWidth - SIDE_EDGE_PX && !homeBand;
-      const showPrev = !!(prev && !prev.disabled && (nearLeft || overNav('.galerie-enigme__nav--prev')));
-      const showNext = !!(next && !next.disabled && (nearRight || overNav('.galerie-enigme__nav--next')));
-      prev?.classList.toggle('is-edge-visible', showPrev);
-      next?.classList.toggle('is-edge-visible', showNext);
-      syncHomeLink(point);
-    };
-
-    const onCounterClick = (event) => {
-      event.preventDefault();
-      revealHud();
-    };
-
-    const ensurePageCounter = () => {
-      pageCounter = document.createElement('button');
-      pageCounter.type = 'button';
-      pageCounter.className = 'comic-page-counter';
-      pageCounter.addEventListener('click', onCounterClick);
-      document.body.appendChild(pageCounter);
-      const slides = gallery.querySelectorAll('.galerie-enigme__slide');
-      const active = [...slides].findIndex((slide) => slide.classList.contains('is-active'));
-      paintPageCounter((active >= 0 ? active : 0) + 1, slides.length);
-    };
-
-    const onPageChange = (event) => {
-      placeHomeLink();
-      syncEdgeNav(lastPointer);
-      if (event.detail?.source === 'edge') {
-        return;
-      }
-      revealHud(HUD_PAGE_MS);
-    };
-    gallery.addEventListener('comic-page-change', onPageChange);
-
-    const onImageLoad = (event) => {
-      if (event.target instanceof HTMLImageElement) {
-        placeHomeLink();
-      }
-    };
-    gallery.addEventListener('load', onImageLoad, true);
-
-    const onResize = () => {
-      if (readerActive) {
-        placeHomeLink();
-        syncHomeLink(lastPointer);
-      }
-    };
     window.addEventListener('resize', onResize);
-
-    const onMouseMove = (event) => {
-      if (!readerActive || !finePointerQuery().matches) {
-        return;
-      }
-      lastPointer = { x: event.clientX, y: event.clientY, target: event.target };
-      const nearBottom = event.clientY >= window.innerHeight - EDGE_PX;
-      let overCounter = false;
-      if (typeof event.target?.closest === 'function') {
-        overCounter = !!event.target.closest('.comic-page-counter');
-      }
-      syncEdgeNav(lastPointer);
-      if ((nearBottom && !overCounter) || pointerOverHud) {
-        pointerNearHud = true;
-        showHud();
-        clearHide();
-        return;
-      }
-      if (pointerNearHud) {
-        pointerNearHud = false;
-        scheduleHide(HUD_EDGE_MS);
-      }
-    };
-    document.addEventListener('mousemove', onMouseMove);
-
-    const onDocumentMouseOut = (event) => {
-      if (event.relatedTarget) {
-        return;
-      }
-      lastPointer = null;
-      hideEdgeNav();
-    };
-    document.addEventListener('mouseout', onDocumentMouseOut);
-
-    const onFocusIn = (event) => {
-      if (!readerActive) {
-        return;
-      }
-      if (event.target.closest?.('.is-comic-hud, .enigme-mobile-header')) {
-        showHud();
-        clearHide();
-      }
-    };
-    const onFocusOut = () => {
-      if (readerActive) {
-        scheduleHide();
-      }
-    };
-    document.addEventListener('focusin', onFocusIn);
-    document.addEventListener('focusout', onFocusOut);
-
-    let hintObserver = null;
-    const watchHints = () => {
-      hintObserver?.disconnect();
-      const zone = document.querySelector('.zone-indices');
-      if (!zone) {
-        return;
-      }
-      lastHints = hintSignature();
-      hintObserver = new MutationObserver(() => {
-        const next = hintSignature();
-        if (next !== lastHints) {
-          lastHints = next;
-          remember('hints', next);
-          revealHud(HUD_INTRO_MS);
-          return;
-        }
-        if (hudPinned()) {
-          showHud();
-          clearHide();
-        }
-      });
-      hintObserver.observe(zone, {
-        childList: true,
-        subtree: true,
-        attributes: true,
-        attributeFilter: ['class', 'data-unlocked'],
-      });
-    };
-
-    let structureObserver = null;
-    const watchStructure = () => {
-      structureObserver?.disconnect();
-      if (!hud) {
-        return;
-      }
-      structureObserver = new MutationObserver(() => placeControls());
-      structureObserver.observe(hud, { childList: true, subtree: true });
-    };
-
-    const playIntro = () => {
-      const seen = recall('intro') === '1';
-      const hints = hintSignature();
-      const previousHints = recall('hints');
-      if (!seen) {
-        revealHud(HUD_INTRO_MS);
-        remember('intro', '1');
-      } else if (hints && hints !== previousHints) {
-        revealHud(HUD_INTRO_MS);
-      }
-      remember('hints', hints);
-      lastHints = hints;
-    };
-
-    const activate = () => {
-      if (readerActive || !gallery.isConnected || editionActive()) {
-        return;
-      }
-      readerActive = true;
-      buildHud();
-      watchHints();
-      watchStructure();
-      document.body.classList.add('comic-reader');
-      gallery.classList.add('is-comic-active');
-      mountHomeLink();
-      placeHomeLink();
-      window.requestAnimationFrame(() => {
-        if (!readerActive) {
-          return;
-        }
-        placeHomeLink();
-        syncHomeLink(lastPointer);
-      });
-      const activeIndex = [...gallery.querySelectorAll('.galerie-enigme__slide')].findIndex(
-        (slide) => slide.classList.contains('is-active')
-      );
-      syncPagerTrack(gallery, activeIndex >= 0 ? activeIndex : 0);
-      ensurePageCounter();
-      playIntro();
-    };
-
-    const deactivate = () => {
-      if (!readerActive) {
-        return;
-      }
-      readerActive = false;
-      lastPointer = null;
-      hideEdgeNav();
-      homeLink.classList.remove('is-edge-visible');
-      homeLink.style.removeProperty('--galerie-home-top');
-      homeLink.style.removeProperty('--galerie-home-right');
-      restoreHomeLink();
-      clearEditTogglePlace();
-      pageCounter?.removeEventListener('click', onCounterClick);
-      pageCounter?.remove();
-      pageCounter = null;
-      clearHide();
-      if (tapTimer) {
-        window.clearTimeout(tapTimer);
-        tapTimer = null;
-      }
-      hintObserver?.disconnect();
-      structureObserver?.disconnect();
-      clearPagerTrack(gallery);
-      restoreParked();
-      controls?.remove();
-      controls = null;
-      hud?.classList.remove('is-comic-hud');
-      hud?.querySelector(':scope > .comic-hud__sheet')?.remove();
-      createdHud?.remove();
-      createdHud = null;
-      hud = null;
-      gallery.classList.remove('is-comic-active');
-      document.body.classList.remove('comic-reader', 'is-hud-visible', 'is-hud-quiet');
-    };
-
-    const syncEdition = () => {
-      if (editionActive()) {
-        deactivate();
-        return;
-      }
-      activate();
-    };
-
-    const bodyObserver = new MutationObserver(syncEdition);
-    bodyObserver.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    ensureWebtoonBandScheduler(gallery);
 
     window.__comicReaderTeardown = () => {
-      bodyObserver.disconnect();
-      hintObserver?.disconnect();
-      structureObserver?.disconnect();
+      gallery.__webtoonBandStop?.();
+      delete gallery.__webtoonBandSync;
+      delete gallery.__webtoonBandStop;
       stage.removeEventListener('pointerdown', onPointerDown);
       stage.removeEventListener('pointermove', onPointerMove);
       stage.removeEventListener('pointerup', onPointerUp);
       stage.removeEventListener('pointercancel', onPointerUp);
-      gallery.removeEventListener('comic-page-change', onPageChange);
-      gallery.removeEventListener('load', onImageLoad, true);
       window.removeEventListener('resize', onResize);
-      homeLink.removeEventListener('pointerdown', onHomePointerDown);
-      homeLink.removeEventListener('focus', onHomeFocus);
-      homeLink.removeEventListener('blur', onHomeBlur);
-      document.removeEventListener('mousemove', onMouseMove);
-      document.removeEventListener('mouseout', onDocumentMouseOut);
-      document.removeEventListener('focusin', onFocusIn);
-      document.removeEventListener('focusout', onFocusOut);
-      clearHide();
-      if (tapTimer) {
-        window.clearTimeout(tapTimer);
-      }
-      deactivate();
-      delete gallery.dataset.comicReaderReady;
+      homeLink.style.removeProperty('--galerie-home-top');
+      homeLink.style.removeProperty('--galerie-home-right');
+      document.querySelector('.enigme-edit-toggle--desktop')
+        ?.style.removeProperty('--galerie-home-top');
+      delete gallery.dataset.webtoonReady;
+      document.body.classList.remove('comic-reader', 'is-hud-visible', 'is-hud-quiet');
     };
-
-    syncEdition();
   };
 
   window.EnigmeGallery = {
     selectSlide: (gallery, index, options) => selectGallerySlide(gallery, index, options),
     appendPage: appendGalleryPage,
     getGallery: () => document.querySelector('[data-enigme-gallery]'),
-    initReader: initComicReader,
+    initReader: initWebtoonReader,
   };
 
   const closeLightbox = () => {
@@ -1415,10 +893,7 @@
       return;
     }
 
-    if (
-      zoomTrigger.closest('[data-enigme-gallery].is-comic-active') ||
-      mouseDriven()
-    ) {
+    if (zoomTrigger.closest('[data-enigme-gallery]') || mouseDriven()) {
       event.preventDefault();
       if (mouseDriven()) {
         toggleLens(event);
@@ -1433,6 +908,13 @@
       zoomTrigger
     );
   };
+  const editionActive = () =>
+    document.body.classList.contains('edition-active-enigme') ||
+    document.body.classList.contains('edition-active');
+
+  const finePointerQuery = () =>
+    window.matchMedia?.('(hover: hover) and (pointer: fine)') || { matches: false };
+
   let lastPointerType = '';
   const mouseDriven = () =>
     lastPointerType === 'mouse' ||
@@ -1456,44 +938,18 @@
       return;
     }
 
-    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') {
-      return;
-    }
-    if (document.querySelector('.enigme-lightbox-overlay, form.is-reply-widget.is-immersive-open')) {
-      return;
-    }
-
-    const gallery = event.target.closest?.('[data-enigme-gallery]') ||
-      document.querySelector('[data-enigme-gallery]');
-    if (!gallery || gallery.querySelectorAll('.galerie-enigme__slide').length < 2) {
-      return;
-    }
-
-    const tag = (event.target && event.target.tagName) || '';
-    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || event.target?.isContentEditable) {
-      return;
-    }
-
-    const current = [...gallery.querySelectorAll('.galerie-enigme__slide')].findIndex(
-      (slide) => slide.classList.contains('is-active')
-    );
-    const delta = event.key === 'ArrowLeft' ? -1 : 1;
-    selectGallerySlide(gallery, current + delta);
-    if (gallery.classList.contains('is-comic-active')) {
-      gallery.dispatchEvent(new CustomEvent('comic-page-change', { bubbles: true }));
-    }
   };
   document.addEventListener('keydown', onViewerKeydown, true);
 
   document.querySelectorAll('[data-enigme-gallery]').forEach((gallery) => {
+    gallery.querySelectorAll('.galerie-enigme__slide').forEach((slide) => {
+      slide.hidden = false;
+    });
     const active = [...gallery.querySelectorAll('.galerie-enigme__slide')].findIndex(
       (slide) => slide.classList.contains('is-active')
     );
     updateGalleryChrome(gallery, active >= 0 ? active : 0);
-    preloadNearbySlides(gallery, active >= 0 ? active : 0);
-    if (gallery.hasAttribute('data-comic-reader')) {
-      initComicReader(gallery);
-    }
+    initWebtoonReader(gallery);
   });
 
   const noticeConfig = window.EnigmeImageViewer || {};

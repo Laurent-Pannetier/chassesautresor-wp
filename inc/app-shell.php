@@ -152,7 +152,21 @@ function cta_shell_is_virtual_request(): bool
  */
 function cta_shell_shows_sidebar(): bool
 {
-    return !function_exists('is_singular') || !is_singular('enigme');
+    return cta_shell_is_enigma_page() === false;
+}
+
+/**
+ * The shell bar (logo, hunt, account) stays off the enigma page.
+ * The strip starts at the top. Home is the floating Accueil control.
+ */
+function cta_shell_shows_topbar(): bool
+{
+    return cta_shell_is_enigma_page() === false;
+}
+
+function cta_shell_is_enigma_page(): bool
+{
+    return function_exists('is_singular') && is_singular('enigme');
 }
 
 /**
@@ -170,7 +184,9 @@ function cta_shell_open(): void
     $shellClass = $showNav ? 'app-shell' : 'app-shell app-shell--no-nav';
 
     echo '<div class="' . esc_attr($shellClass) . '" data-theme="' . esc_attr($theme) . '">';
-    get_template_part('template-parts/shell/topbar');
+    if (cta_shell_shows_topbar()) {
+        get_template_part('template-parts/shell/topbar');
+    }
     echo '<div class="app-frame">';
     if ($showNav) {
         echo '<div class="app-nav-backdrop" data-app-nav-close hidden></div>';

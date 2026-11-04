@@ -7722,7 +7722,7 @@ body.shell-edition .edition-tab.active:focus-visible {
   gap: var(--space-2xl);
   text-align: center;
   margin-top: var(--space-md);
-  /* Viewer BD : une page 16:9, contenue dans le viewport, sans crop. */
+  /* Bande BD : largeur 1380 px au plus, hauteur libre, lue en défilement. */
   --enigme-hero-max-height: min(75vh, 42rem);
   --enigme-etape-max-height: min(44vh, 24rem);
   --enigme-media-column: min(46rem, 100%);
@@ -8193,7 +8193,7 @@ body.shell-edition .edition-tab.active:focus-visible {
   }
   .enigme-media-zoom.is-loupe-target,
   .riddle-player-step__zoom.is-loupe-target,
-  body.comic-reader .page-enigme--reader .enigme-media-zoom.is-loupe-target {
+  .page-enigme--reader .enigme-media-zoom.is-loupe-target {
     cursor: none;
   }
   .enigme-media-zoom:hover .enigme-media-zoom__hint,
@@ -9490,735 +9490,142 @@ form.is-reply-widget.is-immersive-open:focus-visible {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
-/* Lecteur BD immersif : une planche 16:9 plein écran, bandeau au tap. */
-body.comic-reader {
-  overflow: hidden;
-  background: #05070c;
+/* Lecture webtoon : colonne 1380 px, bords à bord sous cette largeur, défilement de page. */
+.page-enigme.page-enigme--reader {
+  gap: 48px;
+  margin-top: 0;
 }
 
-body.single-enigme.comic-reader header.site-header,
-body.single-enigme.comic-reader #masthead {
+body:has(.page-enigme--reader) .app-topbar {
   display: none;
 }
 
-body.comic-reader .page-enigme--reader {
-  gap: 0;
-  margin: 0;
-  padding: 0;
-  max-width: none;
-  min-height: 0;
+.page-enigme.page-enigme--reader .hero-visuel {
+  width: min(100vw, 1380px);
+  max-width: 1380px;
+  margin-left: calc(50% - min(50vw, 690px));
+  margin-right: calc(50% - min(50vw, 690px));
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+  overflow: visible;
 }
 
-body.comic-reader .page-enigme--reader .bloc-titre {
-  position: absolute;
-  width: 1px;
-  height: 1px;
+.page-enigme.page-enigme--reader .hero-visuel .galerie-enigme-wrapper,
+.page-enigme.page-enigme--reader .hero-visuel .galerie-enigme__stage {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 0;
+  width: 100%;
+  margin: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+}
+
+.page-enigme.page-enigme--reader .galerie-enigme__slide,
+.page-enigme.page-enigme--reader .galerie-enigme__slide picture,
+.page-enigme.page-enigme--reader .galerie-enigme__stage picture,
+.page-enigme.page-enigme--reader .galerie-enigme__stage img,
+.page-enigme.page-enigme--reader .galerie-enigme__stage .enigme-media-zoom,
+.page-enigme.page-enigme--reader .webtoon-bands,
+.page-enigme.page-enigme--reader .webtoon-band,
+.page-enigme.page-enigme--reader .enigme-media-zoom {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  max-height: none;
+  margin: 0;
   padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+  line-height: 0;
+  overflow: visible;
+}
+
+.page-enigme.page-enigme--reader .webtoon-bands {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+}
+
+.page-enigme.page-enigme--reader .galerie-enigme__slide[hidden] {
+  display: block !important;
+}
+
+.page-enigme.page-enigme--reader .galerie-enigme__slide + .galerie-enigme__slide,
+.page-enigme.page-enigme--reader .galerie-enigme__slide--step {
+  margin: 0;
+  padding: 0;
   border: 0;
 }
 
-body.comic-reader .page-enigme--reader .hero-visuel {
-  position: fixed;
-  inset: 0;
-  z-index: 20;
+.page-enigme.page-enigme--reader .hero-visuel img,
+.page-enigme.page-enigme--reader .enigme-image--limited {
+  display: block;
   width: 100%;
-  max-width: none;
-  margin: 0;
-  overflow: hidden;
-  border-radius: 0;
-  background: #05070c;
-}
-
-body.comic-reader .page-enigme--reader .hero-visuel .galerie-enigme-wrapper,
-body.comic-reader .page-enigme--reader .hero-visuel .galerie-enigme__stage {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100vh;
-  height: 100svh;
+  max-width: 100%;
+  height: auto;
   max-height: none;
   margin: 0;
-  overflow: hidden;
   border-radius: 0;
-  background: #05070c;
-}
-
-body.comic-reader .page-enigme--reader .galerie-enigme__stage {
-  position: relative;
-  touch-action: none;
-}
-
-body.comic-reader .page-enigme--reader .galerie-enigme__slide {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0;
-  opacity: 0;
-  transform: translate3d(0, 0, 0);
-  transition: opacity 0.34s ease, transform 0.34s ease;
-  pointer-events: none;
-}
-
-body.comic-reader .page-enigme--reader .galerie-enigme__slide.is-active {
-  opacity: 1;
-  z-index: 1;
-  pointer-events: auto;
-}
-
-body.comic-reader .page-enigme--reader .galerie-enigme__slide.is-incoming {
-  z-index: 2;
-  opacity: 0;
-  transition: none;
-}
-
-body.comic-reader .page-enigme--reader .galerie-enigme__slide.is-incoming.is-from-next {
-  transform: translate3d(1.5rem, 0, 0);
-}
-
-body.comic-reader .page-enigme--reader .galerie-enigme__slide.is-incoming.is-from-prev {
-  transform: translate3d(-1.5rem, 0, 0);
-}
-
-body.comic-reader .page-enigme--reader .galerie-enigme__slide.is-leaving {
-  z-index: 0;
-  opacity: 0;
-}
-
-body.comic-reader .page-enigme--reader .galerie-enigme__slide.is-leaving.is-from-next {
-  transform: translate3d(-1.5rem, 0, 0);
-}
-
-body.comic-reader .page-enigme--reader .galerie-enigme__slide.is-leaving.is-from-prev {
-  transform: translate3d(1.5rem, 0, 0);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  body.comic-reader .page-enigme--reader .galerie-enigme__slide {
-    transition: none;
-    transform: none;
-  }
-}
-body.comic-reader .page-enigme--reader .galerie-enigme__slide.is-active,
-body.comic-reader .page-enigme--reader .galerie-enigme__stage .enigme-media-zoom,
-body.comic-reader .page-enigme--reader .galerie-enigme__stage picture,
-body.comic-reader .page-enigme--reader .galerie-enigme__stage img {
-  width: 100%;
-  height: 100%;
-  max-width: none;
-  max-height: none;
-  margin: 0;
   -o-object-fit: contain;
      object-fit: contain;
 }
 
-body.comic-reader .page-enigme--reader .enigme-media-zoom {
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  cursor: zoom-in;
-}
-
-body.comic-reader .page-enigme--reader .enigme-media-zoom__hint,
-body.comic-reader .page-enigme--reader .galerie-enigme__thumbs {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
-body.comic-reader .page-enigme--reader .enigme-media-zoom:hover img,
-body.comic-reader .page-enigme--reader .enigme-media-zoom:focus-visible img {
-  transform: none;
-}
-
-/* Chevrons latéraux : visibles seulement quand le pointeur est sur le bord.
-   Le survol global des boutons hérite la couleur du texte. En thème jour elle
-   est sombre, donc illisible sur le disque nuit. On garde le beige du site. */
-body.comic-reader .page-enigme--reader .galerie-enigme__nav {
-  z-index: 5;
-  width: 3rem;
-  height: 3rem;
-  font-size: 1.75rem;
-  background: rgba(8, 14, 28, 0.78);
-  color: var(--color-text-primary, #f5f5dc);
-  border-color: rgba(255, 255, 255, 0.4);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-  transition: opacity 0.18s ease, background-color 0.2s ease, border-color 0.2s ease, visibility 0s linear 0.18s;
-}
-
-body.comic-reader .page-enigme--reader .galerie-enigme__nav.is-edge-visible {
-  opacity: 1;
-  visibility: visible;
-  pointer-events: auto;
-  transition: opacity 0.18s ease, background-color 0.2s ease, border-color 0.2s ease, visibility 0s linear 0s;
-}
-
-body.comic-reader .page-enigme--reader .galerie-enigme__nav:hover,
-body.comic-reader .page-enigme--reader .galerie-enigme__nav:focus,
-body.comic-reader .page-enigme--reader .galerie-enigme__nav:focus-visible {
-  background: rgba(8, 14, 28, 0.92);
-  color: var(--color-text-primary, #f5f5dc);
-  border-color: rgba(255, 255, 255, 0.72);
-}
-
-body.comic-reader .page-enigme--reader .galerie-enigme__nav:disabled {
+.page-enigme.page-enigme--reader .enigme-media-zoom__hint,
+.page-enigme.page-enigme--reader .galerie-enigme__nav,
+.page-enigme.page-enigme--reader .galerie-enigme__pager,
+.page-enigme.page-enigme--reader .galerie-enigme__thumbs,
+.page-enigme.page-enigme--reader .comic-page-counter {
   display: none;
 }
 
-body.comic-reader .comic-page-counter {
-  position: fixed;
-  z-index: 30;
-  left: 50%;
-  bottom: calc(0.65rem + env(safe-area-inset-bottom, 0px));
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 2.75rem;
-  min-height: 2.75rem;
-  margin: 0;
-  padding: 0.2rem 0.7rem;
-  border: 0;
-  border-radius: 999px;
-  background: rgba(5, 7, 12, 0.55);
-  color: rgba(255, 255, 255, 0.9);
-  font: inherit;
-  font-size: 0.8rem;
-  letter-spacing: 0.04em;
-  line-height: 1;
-  cursor: pointer;
-  transform: translateX(-50%);
-}
-
-body.comic-reader .comic-page-counter:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
-}
-
-body.comic-reader.is-hud-visible .comic-page-counter {
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-}
-
-body.comic-reader .enigme-mobile-header,
-body.comic-reader .enigme-edit-toggle--desktop {
-  z-index: 45;
-  transition: opacity 0.28s ease;
-}
-
-body.comic-reader .enigme-mobile-header {
-  position: fixed;
-  top: 0;
-  right: auto;
-  left: 0;
-  width: auto;
-  justify-content: flex-start;
-  margin: 0;
-  padding: calc(0.4rem + env(safe-area-inset-top, 0px)) 0.75rem 0.4rem;
-}
-
-/* Retour accueil : coin haut droit de l’écran, révélé sur tout le haut. */
-.galerie-enigme__home {
-  display: none;
-}
-
-body.comic-reader .galerie-enigme__home {
+.page-enigme--reader .galerie-enigme__home {
   position: fixed;
   z-index: 60;
-  top: max(var(--galerie-home-top, 0.75rem), 0.75rem + env(safe-area-inset-top, 0px));
-  right: max(var(--galerie-home-right, 0.75rem), 0.75rem + env(safe-area-inset-right, 0px));
-  left: auto;
+  top: var(--galerie-home-top, 0.75rem);
+  right: var(--galerie-home-right, 0.75rem);
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  min-height: 2.75rem;
-  margin: 0;
-  padding: 0.35rem 0.85rem 0.35rem 0.7rem;
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  border-radius: 999px;
-  background: rgba(8, 14, 28, 0.78);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
-  color: var(--color-text-primary, #f5f5dc);
-  font: inherit;
-  font-size: 0.95rem;
-  line-height: 1;
-  text-decoration: none;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.18s ease, background-color 0.2s ease, border-color 0.2s ease;
-}
-
-body.comic-reader .galerie-enigme__home-icon {
-  font-size: 1.15rem;
-  line-height: 1;
-}
-
-body.comic-reader .galerie-enigme__home.is-edge-visible,
-body.comic-reader .galerie-enigme__home:focus-visible {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-body.comic-reader .galerie-enigme__home:hover,
-body.comic-reader .galerie-enigme__home:focus-visible {
-  background: rgba(8, 14, 28, 0.92);
-  color: var(--color-text-primary, #f5f5dc);
-  border-color: rgba(255, 255, 255, 0.72);
-}
-
-body.comic-reader .galerie-enigme__home:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
-}
-
-@media (hover: none), (pointer: coarse) {
-  body.comic-reader.is-hud-visible .galerie-enigme__home,
-  body.comic-reader.is-hud-quiet .galerie-enigme__home {
-    opacity: 1;
-    pointer-events: auto;
-  }
-}
-body.comic-reader .enigme-edit-toggle--desktop {
-  top: max(var(--galerie-home-top, 0.75rem), 0.75rem + env(safe-area-inset-top, 0px));
-  right: calc(9.25rem + env(safe-area-inset-right, 0px));
-}
-
-body.comic-reader:not(.is-hud-visible) .enigme-mobile-header,
-body.comic-reader:not(.is-hud-visible) .enigme-edit-toggle--desktop {
-  visibility: hidden;
-  opacity: 0;
-  pointer-events: none;
-}
-
-/* La topbar du site, déconnexion comprise, ne s’affiche pas dans le lecteur. */
-body.comic-reader .app-topbar {
-  display: none;
-}
-
-body.comic-reader .is-comic-hud {
-  position: fixed;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  z-index: 40;
-  display: flex;
-  flex-direction: column;
   gap: 0.35rem;
-  width: auto;
-  max-width: none;
   margin: 0;
-  padding: 0.45rem 0.75rem calc(0.5rem + env(safe-area-inset-bottom, 0px));
-  border: 0;
-  border-radius: 0;
-  background: linear-gradient(to top, rgba(5, 7, 12, 0.96), rgba(5, 7, 12, 0.82));
-  color: #f4f1ea;
-  box-shadow: none;
-  backdrop-filter: none;
-  transform: translateY(110%);
-  pointer-events: none;
-  transition: transform 0.28s ease;
-}
-
-body.comic-reader.is-hud-visible .is-comic-hud,
-body.comic-reader .is-comic-hud:focus-within {
-  transform: none;
-  pointer-events: auto;
-}
-
-body.comic-reader .is-comic-hud.is-comic-hud--empty {
-  display: none;
-}
-
-body.comic-reader .is-comic-hud .participation-header--empty {
-  display: none;
-}
-
-body.comic-reader .is-comic-hud .participation-dock {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 0.4rem;
-  width: 100%;
-  min-width: 0;
-}
-
-body.comic-reader .is-comic-hud .zone-reponse {
-  flex: 0 0 auto;
-  width: 100%;
-  min-width: 0;
-}
-
-body.comic-reader .is-comic-hud .zone-reponse:not(:has(.riddle-player-step__content, .message-joueur-statut, .reponse-launcher)) {
-  display: none;
-}
-
-body.comic-reader .comic-hud__sheet .contenu-principal,
-body.comic-reader .comic-hud__sheet .enigme-texte,
-body.comic-reader .comic-hud__sheet .solution {
-  margin: 0;
-  max-width: none;
-  padding: 0.15rem 0.25rem;
-}
-
-body.comic-reader .comic-hud__controls {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-  grid-template-areas: "pager answer spacer" "hints hints hints";
-  align-items: center;
-  -moz-column-gap: 0.75rem;
-       column-gap: 0.75rem;
-  row-gap: 0.45rem;
-  width: 100%;
-}
-
-body.comic-reader .comic-hud__controls .galerie-enigme__pager {
-  grid-area: pager;
-  justify-self: start;
-}
-
-body.comic-reader .comic-hud__controls .reponse-launcher {
-  grid-area: answer;
-  justify-self: center;
-  position: relative;
-  z-index: 1;
-}
-
-body.comic-reader .comic-hud__controls .zone-indices {
-  grid-area: hints;
-  justify-self: stretch;
-  width: 100%;
-  min-width: 0;
-  max-width: 100%;
-}
-
-body.comic-reader .comic-hud__sheet,
-body.comic-reader .is-comic-hud .riddle-steps-player {
-  max-height: 32svh;
-  overflow: auto;
-  text-align: left;
-}
-
-body.comic-reader .comic-hud__sheet:empty {
-  display: none;
-}
-
-body.comic-reader .is-comic-hud .riddle-player-step {
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-}
-
-body.comic-reader .is-comic-hud .galerie-enigme__pager {
-  display: flex;
-  flex: 0 0 auto;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.15rem;
-  margin: 0;
-  color: rgba(255, 255, 255, 0.86);
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(11, 19, 43, 0.72);
+  color: #fff;
   font-size: 0.85rem;
-}
-
-body.comic-reader .is-comic-hud .galerie-enigme__track {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-}
-
-body.comic-reader .is-comic-hud .galerie-enigme__pager-nav {
-  display: inline-flex;
-  flex: 0 0 auto;
-  align-items: center;
-  justify-content: center;
-  width: 2.75rem;
-  height: 2.75rem;
-  padding: 0;
-  border: 0;
-  border-radius: 999px;
-  background: transparent;
-  color: #f4f1ea;
-  font-size: 1.6rem;
-  line-height: 1;
-  cursor: pointer;
-}
-
-body.comic-reader .is-comic-hud .galerie-enigme__pager-nav:hover,
-body.comic-reader .is-comic-hud .galerie-enigme__pager-nav:focus-visible {
-  background: rgba(255, 255, 255, 0.1);
-}
-
-body.comic-reader .is-comic-hud .galerie-enigme__pager-nav:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
-}
-
-body.comic-reader .is-comic-hud .galerie-enigme__pager-nav:disabled {
-  background: transparent;
-  opacity: 0.35;
-  cursor: default;
-}
-
-body.comic-reader .is-comic-hud .galerie-enigme__dots {
-  display: flex;
-  align-items: center;
-  gap: 0.1rem;
-}
-
-body.comic-reader .is-comic-hud .galerie-enigme__dot {
-  display: inline-flex;
-  flex: 0 0 auto;
-  align-items: center;
-  justify-content: center;
-  width: 1.15rem;
-  height: 1.35rem;
-  padding: 0;
-  border: 0;
-  border-radius: 999px;
-  background: transparent;
-  cursor: pointer;
-}
-
-body.comic-reader .is-comic-hud .galerie-enigme__dot::before {
-  content: "";
-  width: 0.55rem;
-  height: 0.28rem;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.35);
-  transition: width 0.2s ease, background-color 0.2s ease;
-}
-
-body.comic-reader .is-comic-hud .galerie-enigme__dot.is-active {
-  width: 1.55rem;
-}
-
-body.comic-reader .is-comic-hud .galerie-enigme__dot.is-active::before {
-  width: 1.15rem;
-  background: var(--color-primary);
-}
-
-body.comic-reader .is-comic-hud .galerie-enigme__dot:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 1px;
-}
-
-body.comic-reader .is-comic-hud .galerie-enigme__page-label {
-  font-size: var(--font-xs);
-  letter-spacing: 0.04em;
-  color: var(--color-text-muted);
-}
-
-body.comic-reader .is-comic-hud .galerie-enigme__pager.is-counter-only {
-  display: grid;
-  grid-auto-flow: column;
-  align-items: center;
-  gap: 0.45rem;
-}
-
-body.comic-reader .is-comic-hud .galerie-enigme__pager.is-counter-only .galerie-enigme__track {
-  display: contents;
-}
-
-body.comic-reader .is-comic-hud .galerie-enigme__pager.is-counter-only .galerie-enigme__page-label {
-  order: 2;
-  font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.92);
-}
-
-body.comic-reader .is-comic-hud .galerie-enigme__pager.is-counter-only .galerie-enigme__pager-nav--next {
-  order: 3;
-}
-
-body.comic-reader .is-comic-hud .reponse-launcher {
-  justify-content: center;
-}
-
-.reponse-launcher__solved {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  margin: 0;
-  font-weight: 700;
-}
-
-.reponse-launcher__solved i {
-  color: var(--color-success-text);
-}
-
-body.comic-reader .is-comic-hud .reponse-launcher__solved {
-  color: #f4f1ea;
-}
-
-body.comic-reader .is-comic-hud .reponse-launcher .reponse-launcher__open {
-  margin: 0;
-  padding: 0.55rem 1.2rem;
-  border: 0;
-  border-radius: 999px;
-  background-color: var(--color-primary);
-  color: var(--color-text-fond-clair);
-  font-weight: 700;
   line-height: 1.2;
-  white-space: nowrap;
-  cursor: pointer;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
-}
-
-body.comic-reader .is-comic-hud .reponse-launcher .reponse-launcher__open:hover,
-body.comic-reader .is-comic-hud .reponse-launcher .reponse-launcher__open:focus-visible {
-  background-color: var(--color-primary-dark);
-  color: var(--color-text-fond-clair);
   text-decoration: none;
-}
-
-body.comic-reader .is-comic-hud .reponse-launcher .reponse-launcher__open:focus-visible {
-  outline: 2px solid var(--color-text-primary);
-  outline-offset: 2px;
-}
-
-body.comic-reader .is-comic-hud .reponse-launcher .reponse-launcher__open:disabled,
-body.comic-reader .is-comic-hud .reponse-launcher .reponse-launcher__open.bouton-cta--pending {
-  background-color: var(--color-gris-3);
-  color: var(--color-text-fond-clair);
-  box-shadow: none;
-  cursor: not-allowed;
-  opacity: 0.65;
-}
-
-body.comic-reader .is-comic-hud .zone-indices {
-  flex: 0 1 auto;
-  min-width: 0;
-  margin: 0;
-  padding: 0;
-  background: transparent;
   opacity: 1;
+  pointer-events: auto;
 }
 
-body.comic-reader .is-comic-hud .zone-indices-line,
-body.comic-reader .is-comic-hud .indice-list {
-  flex-wrap: nowrap;
-  align-items: center;
-  margin: 0;
-  min-width: 0;
-  max-width: 100%;
+.page-enigme--reader .galerie-enigme__home-icon {
+  line-height: 1;
 }
 
-body.comic-reader .is-comic-hud .indice-list {
-  overflow-x: auto;
-  justify-content: safe center;
-  scrollbar-width: thin;
+body:has(.page-enigme--reader) .enigme-edit-toggle--desktop {
+  top: var(--galerie-home-top, 0.75rem);
+  right: calc(var(--galerie-home-right, 0.75rem) + 7.75rem);
+  z-index: 60;
 }
 
-body.comic-reader .is-comic-hud .indice-link,
-body.comic-reader .is-comic-hud .indice-label {
-  flex: 0 0 auto;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.12);
-  color: #f4f1ea;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-body.comic-reader .is-comic-hud .indice-link--consulted {
-  background: rgba(255, 215, 0, 0.16);
-  border-color: rgba(255, 215, 0, 0.75);
-  color: #ffe9a0;
-}
-
-body.comic-reader .is-comic-hud .indice-link--active {
-  background: var(--color-primary);
-  border-color: var(--color-primary);
-  color: var(--color-text-fond-clair);
-}
-
-body.comic-reader .is-comic-hud .indice-label.indice-link--delay,
-body.comic-reader .is-comic-hud .indice-label.indice-link--upcoming,
-body.comic-reader .is-comic-hud .indice-label.indice-link--prerequisite {
-  background: transparent;
-  color: rgba(244, 241, 234, 0.55);
-  border-style: dashed;
-  border-color: rgba(255, 255, 255, 0.28);
-  box-shadow: none;
-  cursor: default;
-  opacity: 1;
-  pointer-events: none;
-}
-
-body.comic-reader .is-comic-hud .indice-link__countdown {
-  font-variant-numeric: tabular-nums;
-}
-
-body.comic-reader .is-comic-hud .zone-indices-line__label {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
-body.comic-reader .is-comic-hud .indice-link__label {
-  max-width: 9rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-body.comic-reader .is-comic-hud .participation-infos {
-  justify-content: center;
-  margin: 0;
-}
-
-@media (min-width: 1024px) {
-  body.comic-reader .is-comic-hud {
-    right: auto;
-    bottom: 1.25rem;
-    left: 50%;
-    width: min(36rem, 100vw - 3rem);
-    max-width: min(36rem, 100vw - 3rem);
-    padding: 0.65rem 0.95rem calc(0.7rem + env(safe-area-inset-bottom, 0px));
-    border: 1px solid rgba(255, 215, 0, 0.28);
-    border-radius: 1.15rem;
-    background: rgba(5, 7, 12, 0.72);
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(12px);
-    transform: translate(-50%, calc(100% + 1.25rem));
-  }
-  body.comic-reader.is-hud-visible .is-comic-hud,
-  body.comic-reader .is-comic-hud:focus-within {
-    transform: translate(-50%, 0);
-  }
-  body.comic-reader .comic-hud__controls {
-    gap: 1.25rem;
+@media not all and (min-width: 1024px) {
+  body:has(.page-enigme--reader) .enigme-mobile-header--no-back {
+    padding-right: calc(7.75rem + env(safe-area-inset-right, 0px));
   }
 }
-@media (prefers-reduced-motion: reduce) {
-  body.comic-reader .is-comic-hud,
-  body.comic-reader .enigme-mobile-header,
-  body.comic-reader .galerie-enigme__home,
-  body.comic-reader .page-enigme--reader .galerie-enigme__nav,
-  body.comic-reader .is-comic-hud .galerie-enigme__dot::before {
-    transition: none;
-  }
+body:has(.page-enigme--reader) {
+  overflow-x: clip;
 }
+
 /* Placeholder for future enigma style variants */
 /* 🎯 Points */
 /* 🏆 Points - affichage page */

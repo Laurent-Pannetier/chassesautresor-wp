@@ -61,6 +61,9 @@ if ($riddleId <= 0 || $visibleIds === []) {
         data-step-page-width="<?= esc_attr((string) $page['width']); ?>"
         data-step-page-height="<?= esc_attr((string) $page['height']); ?>"
             <?php endif; ?>
+            <?php if (count($page['bands']) > 1) : ?>
+        data-step-page-bands="<?= esc_attr((string) json_encode($page['bands'])); ?>"
+            <?php endif; ?>
       ></span>
         <?php endforeach; ?>
     </div>

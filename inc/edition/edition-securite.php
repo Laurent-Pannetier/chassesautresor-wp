@@ -10,7 +10,7 @@ defined('ABSPATH') || exit;
 
 
 /**
- * pour utiliser le proxy sécurisé /voir-image-enigme
+ * Remplace l’URL de galerie par le fichier statique quand le visiteur peut le voir.
  *
  * @hook acf/format_value/type=gallery
  *
@@ -24,36 +24,26 @@ function filtrer_visuels_enigme_front($images, $post_id, $field)
     if (is_admin()) {
         return $images;
     }
-    if (!is_array($images)) {
+    if (!is_array($images) || !function_exists('cta_voir_image_enigme_url')) {
         return $images;
     }
 
-    $taille = 'medium'; // peut être 'full', 'thumbnail', etc.
+    $taille = 'medium';
 
     foreach ($images as &$image) {
         if (!isset($image['ID'])) {
             continue;
         }
 
-        $image_id = $image['ID'];
-        $version  = null;
-        if (function_exists('trouver_chemin_image')) {
-            $finfo    = trouver_chemin_image($image_id, $taille);
-            $img_path = $finfo['path'] ?? null;
-            if ($img_path && file_exists($img_path)) {
-                $version = filemtime($img_path);
+        $url = cta_voir_image_enigme_url((int) $image['ID'], $taille);
+        $image['url'] = $url;
+        if ($url === '' && isset($image['sizes']) && is_array($image['sizes'])) {
+            foreach ($image['sizes'] as $size_name => $size) {
+                if (is_array($size)) {
+                    $image['sizes'][$size_name]['url'] = '';
+                }
             }
         }
-
-        $url = function_exists('cta_voir_image_enigme_url')
-            ? cta_voir_image_enigme_url((int) $image_id, $taille)
-            : site_url('/voir-image-enigme?id=' . $image_id . '&taille=' . $taille);
-        if ($version && !function_exists('cta_voir_image_enigme_url')) {
-            $url .= (str_contains($url, '?') ? '&' : '?') . 'v=' . $version;
-        } elseif ($version) {
-            $url = add_query_arg('v', $version, $url);
-        }
-        $image['url'] = $url;
     }
 
     return $images;

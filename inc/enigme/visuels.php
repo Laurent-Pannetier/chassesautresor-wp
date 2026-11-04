@@ -5,7 +5,7 @@ defined('ABSPATH') || exit;
 // 🖼️ AFFICHAGE DES VISUELS D’ÉNIGMES
 /**
  * 🔹 define('ID_IMAGE_PLACEHOLDER_ENIGME', 3925) → Définit l’identifiant de l’image placeholder utilisée pour les énigmes.
- * 🔹 enigme_image_display_url() → Retourne l’URL proxy (ou attachment) d’une image d’énigme.
+ * 🔹 enigme_image_display_url() → Retourne l’URL du fichier d’une image d’énigme.
  * 🔹 afficher_visuels_enigme() → Affiche la galerie (slideshow + lightbox) si l’utilisateur y a droit.
  * 🔹 get_image_enigme() → Renvoie l’URL de l’image principale d’une énigme ou un placeholder.
  * 🔹 enigme_a_une_image() → Vérifie si l’énigme a une image définie.
@@ -48,21 +48,22 @@ function enigme_picture_size_width(int $image_id, string $size): int
         'medium' => 300,
         'medium_large' => 768,
         'large' => 1024,
-        'enigme-1280' => 1280,
-        'enigme-1600' => 1600,
-        'full' => 1920,
+        'enigme-720' => 720,
+        'enigme-1000' => 1000,
+        'enigme-1380' => 1380,
+        'full' => 1380,
         default => 300,
     };
 }
 
 /**
- * Marches de la planche, entre la taille large et l’original.
+ * Dérivés de la bande, limités par la largeur, hauteur libre.
  *
  * @return list<string>
  */
 function enigme_planche_size_names(): array
 {
-    return ['enigme-1280', 'enigme-1600'];
+    return ['enigme-720', 'enigme-1000', 'enigme-1380'];
 }
 
 /**
@@ -70,7 +71,7 @@ function enigme_planche_size_names(): array
  */
 function enigme_picture_size_order(): array
 {
-    return ['thumbnail', 'medium', 'large', 'enigme-1280', 'enigme-1600', 'full'];
+    return ['thumbnail', 'medium', 'large', 'enigme-720', 'enigme-1000', 'enigme-1380', 'full'];
 }
 
 /**
@@ -123,12 +124,115 @@ function enigme_picture_webp_srcset(array $candidates): string
 }
 
 /**
- * Largeur peinte d’une planche 16:9 dans le lecteur plein écran.
- * Une fenêtre plus large que 16:9 est limitée par la hauteur.
+ * Colonne de lecture : pleine largeur jusqu’à 1380 px, sans agrandir.
  */
 function enigme_hero_picture_sizes(): string
 {
-    return '(min-aspect-ratio: 16/9) calc(100vh * 16 / 9), 100vw';
+    return 'min(100vw, 1380px)';
+}
+
+/**
+ * Tranches statiques d’une planche. Une image courte reste un seul fichier.
+ *
+ * @return list<array{url:string,width:int,height:int}>
+ */
+function enigme_reading_bands(int $imageId): array
+{
+    $full = enigme_image_display_url($imageId, 'full');
+    $dimensions = function_exists('wp_get_attachment_image_src')
+        ? wp_get_attachment_image_src($imageId, 'full')
+        : null;
+    $width = is_array($dimensions) ? (int) ($dimensions[1] ?? 0) : 0;
+    $height = is_array($dimensions) ? (int) ($dimensions[2] ?? 0) : 0;
+    $single = [[
+        'url' => $full,
+        'width' => $width > 0 ? $width : 1380,
+        'height' => $height > 0 ? $height : 4000,
+    ]];
+    if (
+        $full === ''
+        || !class_exists(\ChassesAuTresor\Core\Media\RiddleReadingBandService::class)
+        || !function_exists('get_attached_file')
+    ) {
+        return $single;
+    }
+
+    $file = get_attached_file($imageId);
+    if (!is_string($file) || $file === '' || !is_file($file)) {
+        return $single;
+    }
+
+    $bands = (new \ChassesAuTresor\Core\Media\RiddleReadingBandService())->ensure($file);
+    if (count($bands) <= 1) {
+        return $single;
+    }
+
+    $mapped = [];
+    foreach ($bands as $band) {
+        $url = enigme_public_file_url((string) $band['path'], $full, $file);
+        if ($url === '') {
+            return $single;
+        }
+        $mapped[] = [
+            'url' => $url,
+            'width' => (int) $band['width'],
+            'height' => (int) $band['height'],
+        ];
+    }
+
+    return $mapped;
+}
+
+function enigme_public_file_url(string $path, string $fullUrl, string $originalFile): string
+{
+    $path = str_replace('\\', '/', $path);
+    $originalFile = str_replace('\\', '/', $originalFile);
+    if ($path === $originalFile) {
+        return $fullUrl;
+    }
+
+    $originalName = basename($originalFile);
+    $bandName = basename($path);
+    if ($originalName === '' || !str_contains($fullUrl, $originalName)) {
+        return '';
+    }
+
+    return str_replace($originalName, $bandName, $fullUrl);
+}
+
+/**
+ * HTML des tranches. Seule la première de la planche de tête a un src.
+ *
+ * @param list<array{url:string,width:int,height:int}> $bands
+ */
+function enigme_webtoon_band_html(array $bands, string $alt, bool $prime): string
+{
+    $html = '<span class="webtoon-bands">';
+    foreach ($bands as $index => $band) {
+        $url = (string) ($band['url'] ?? '');
+        if ($url === '') {
+            continue;
+        }
+        $width = (int) ($band['width'] ?? 0);
+        $height = (int) ($band['height'] ?? 0);
+        $html .= '<img class="webtoon-band enigme-image--limited"';
+        if ($prime && $index === 0) {
+            $html .= ' id="image-enigme-active" src="' . esc_url($url) . '"';
+        }
+        $html .= ' data-webtoon-band data-band-src="' . esc_url($url) . '"';
+        $html .= ' alt="' . esc_attr($index === 0 ? $alt : '') . '"';
+        if ($width > 0) {
+            $html .= ' width="' . $width . '"';
+        }
+        if ($height > 0) {
+            $html .= ' height="' . $height . '"';
+        }
+        $html .= ' sizes="' . esc_attr(enigme_hero_picture_sizes()) . '"';
+        $html .= ' decoding="async" referrerpolicy="no-referrer">';
+    }
+    $html .= '</span>';
+
+    return $html;
 }
 
 /**
@@ -181,12 +285,10 @@ function enigme_ensure_planche_size(int $image_id, string $size): void
     $target_height = (int) $registered[$size]['height'];
     $original_width = (int) ($meta['width'] ?? 0);
     $original_height = (int) ($meta['height'] ?? 0);
-    if (
-        $original_width > 0
-        && $original_height > 0
-        && $original_width <= $target_width
-        && $original_height <= $target_height
-    ) {
+    $fits_width = $original_width > 0 && $original_width <= $target_width;
+    $fits_height = $target_height <= 0
+        || ($original_height > 0 && $original_height <= $target_height);
+    if ($fits_width && $fits_height) {
         return;
     }
 
@@ -331,35 +433,15 @@ function enigme_picture_candidates(int $image_id, array $requested, string $floo
         };
     } else {
         $url_builder = static function (int $id, string $size, string $format = ''): string {
-            if (function_exists('cta_voir_image_enigme_url')) {
-                return esc_url(cta_voir_image_enigme_url($id, $size, null, $format));
-            }
-            $args = [
-                'id'     => $id,
-                'taille' => $size,
-            ];
-            if ($format === 'webp') {
-                $args['fmt'] = 'webp';
-            }
-            return esc_url(add_query_arg($args, site_url('/voir-image-enigme')));
+            return esc_url(enigme_direct_image_url($id, $size, $format));
         };
-        // WebP is a distinct signed URL. Clients that cannot decode it keep the original source.
-        $webp_builder = static function (int $id, string $size) use ($can_webp, $url_builder): string {
+        // WebP is a sibling file. Clients that cannot decode it keep the original source.
+        $webp_builder = static function (int $id, string $size) use ($can_webp): string {
             if (!$can_webp) {
                 return '';
             }
-            $data = wp_get_attachment_image_src($id, $size);
-            $url  = $data[0] ?? '';
-            if (!$url) {
-                return '';
-            }
-            $upload_dir = wp_get_upload_dir();
-            $path = str_replace($upload_dir['baseurl'], $upload_dir['basedir'], $url);
-            $webp_path = preg_replace('/\.(jpe?g|png|gif)$/i', '.webp', $path);
-            if (!is_string($webp_path) || $webp_path === $path || !file_exists($webp_path)) {
-                return '';
-            }
-            return $url_builder($id, $size, 'webp');
+
+            return esc_url(enigme_direct_image_url($id, $size, 'webp'));
         };
     }
 
@@ -470,7 +552,7 @@ function enigme_hero_picture_payload(int $image_id): array
         'width' => 0,
         'height' => 0,
     ];
-    $candidates = enigme_picture_candidates($image_id, ['large', 'full'], 'large');
+    $candidates = enigme_picture_candidates($image_id, ['enigme-720', 'full'], 'enigme-720');
     if ($candidates === []) {
         return $empty;
     }
@@ -491,7 +573,42 @@ function enigme_hero_picture_payload(int $image_id): array
 }
 
 /**
- * Retourne l’URL d’affichage d’une image d’énigme (proxy signé ou attachment).
+ * URL du fichier réel. Vide si le joueur ne doit pas recevoir cette image.
+ *
+ * @param int    $image_id ID du média.
+ * @param string $size     Taille WordPress.
+ * @return string
+ */
+function enigme_direct_image_url(int $image_id, string $size = 'full', string $format = ''): string
+{
+    if ($image_id <= 0) {
+        return '';
+    }
+    if (function_exists('cta_voir_image_enigme_url')) {
+        return (string) cta_voir_image_enigme_url($image_id, $size, null, $format);
+    }
+    if (!function_exists('wp_get_attachment_image_src')) {
+        return '';
+    }
+
+    $data = wp_get_attachment_image_src($image_id, $size);
+    $url = is_array($data) ? (string) ($data[0] ?? '') : '';
+    if ($url === '' || $format !== 'webp') {
+        return $url;
+    }
+
+    $webp_url = (string) preg_replace('/\.(jpe?g|png|gif)$/i', '.webp', $url);
+    if ($webp_url === $url || !function_exists('wp_get_upload_dir')) {
+        return '';
+    }
+    $upload_dir = wp_get_upload_dir();
+    $webp_path = str_replace($upload_dir['baseurl'], $upload_dir['basedir'], $webp_url);
+
+    return is_file($webp_path) ? $webp_url : '';
+}
+
+/**
+ * Retourne l’URL d’affichage d’une image d’énigme.
  *
  * @param int    $image_id ID du média.
  * @param string $size     Taille WordPress.
@@ -499,22 +616,13 @@ function enigme_hero_picture_payload(int $image_id): array
  */
 function enigme_image_display_url(int $image_id, string $size = 'full'): string
 {
-    if ($image_id === ID_IMAGE_PLACEHOLDER_ENIGME) {
+    if ($image_id === ID_IMAGE_PLACEHOLDER_ENIGME && function_exists('wp_get_attachment_image_url')) {
         $url = wp_get_attachment_image_url($image_id, $size);
+
         return is_string($url) ? $url : '';
     }
 
-    if (function_exists('cta_voir_image_enigme_url')) {
-        return cta_voir_image_enigme_url($image_id, $size);
-    }
-
-    return add_query_arg(
-        [
-            'id'     => $image_id,
-            'taille' => $size,
-        ],
-        site_url('/voir-image-enigme')
-    );
+    return enigme_direct_image_url($image_id, $size);
 }
 
 /**
@@ -588,7 +696,8 @@ function enigme_step_image_ids(int $stepId): array
  *     webp_srcset:string,
  *     sizes:string,
  *     width:int,
- *     height:int
+ *     height:int,
+ *     bands:list<array{url:string,width:int,height:int}>
  * }
  */
 function enigme_step_comic_page_view(int $imageId): array
@@ -613,28 +722,11 @@ function enigme_step_comic_page_view(int $imageId): array
         $width = (int) $payload['width'];
         $height = (int) $payload['height'];
     } else {
-        $preview = esc_url(
-            function_exists('cta_voir_image_enigme_url')
-                ? cta_voir_image_enigme_url($imageId, 'large')
-                : add_query_arg(
-                    ['id' => $imageId, 'taille' => 'large'],
-                    site_url('/voir-image-enigme')
-                )
-        );
+        $preview = esc_url(enigme_direct_image_url($imageId, 'large'));
     }
 
-    $full = function_exists('cta_voir_image_enigme_url')
-        ? cta_voir_image_enigme_url($imageId, 'full')
-        : add_query_arg(
-            ['id' => $imageId, 'taille' => 'full'],
-            site_url('/voir-image-enigme')
-        );
-    $thumb = function_exists('cta_voir_image_enigme_url')
-        ? cta_voir_image_enigme_url($imageId, 'thumbnail')
-        : add_query_arg(
-            ['id' => $imageId, 'taille' => 'thumbnail'],
-            site_url('/voir-image-enigme')
-        );
+    $full = enigme_direct_image_url($imageId, 'full');
+    $thumb = enigme_direct_image_url($imageId, 'thumbnail');
 
     return [
         'alt' => $alt,
@@ -646,6 +738,7 @@ function enigme_step_comic_page_view(int $imageId): array
         'sizes' => $sizes,
         'width' => $width,
         'height' => $height,
+        'bands' => enigme_reading_bands($imageId),
     ];
 }
 
@@ -712,16 +805,14 @@ function enigme_collect_step_comic_pages(int $enigme_id, int $user_id): array
 }
 
 /**
- * Affiche une galerie d’images d’une énigme si l’utilisateur y a droit.
+ * Affiche les images d’une énigme si l’utilisateur y a droit.
  *
- * Une seule page 16:9 (1920 × 1080) est visible à la fois, plein cadre.
- * Le feuilletage se fait au glissement ou au clavier. Un tap affiche le
- * bandeau (Répondre, pastilles de page, flèches).
- * Un lien « Accueil » apparaît au survol du haut de l’écran.
- * Un double tap ou un pincement ouvre l’image en taille d’origine.
- * Les pages des étapes déjà réussies s’ajoutent à la suite.
+ * Lecture en défilement : une colonne min(100vw, 1380px), sans joint entre
+ * les bandes. Les images des étapes déjà réussies s’ajoutent dessous.
+ * La réponse, les indices et le texte viennent après la dernière image.
+ * Un double tap ou un pincement ouvre le détail en taille d’origine.
  *
- * Les images sont servies via proxy (/voir-image-enigme) avec tailles adaptées.
+ * Les images autorisées sont des fichiers statiques, avec les tailles adaptées.
  *
  * @param int      $enigme_id  ID du post de type énigme
  * @param int|null $user_id    Utilisateur courant (pages d’étapes débloquées)
@@ -770,22 +861,14 @@ function afficher_visuels_enigme(
 
     $caption = (string) get_field('enigme_visuel_legende', $enigme_id);
     $pageCount = count($pages);
-    $has_multiple = $pageCount > 1;
-    // Toujours ouvrir sur la première page (visuel d’énigme), pas sur la dernière étape.
+    // La première image reste le point de départ ; les suivantes sont déjà visibles.
     $activeIndex = 0;
     $gallery_id = 'galerie-enigme-' . $enigme_id;
 
-    echo '<div class="galerie-enigme-wrapper" data-enigme-gallery data-comic-reader'
+    echo '<div class="galerie-enigme-wrapper" data-enigme-gallery data-webtoon'
         . ' id="' . esc_attr($gallery_id) . '"'
         . ' data-gallery-page-count="' . esc_attr((string) $pageCount) . '">';
     echo '<div class="galerie-enigme__stage">';
-
-    if ($has_multiple) {
-        echo '<button type="button" class="galerie-enigme__nav galerie-enigme__nav--prev"'
-            . ' data-gallery-step="-1"'
-            . ' aria-label="' . esc_attr__('Page précédente', 'chassesautresor-com') . '">'
-            . '<span aria-hidden="true">&lsaquo;</span></button>';
-    }
 
     foreach ($pages as $index => $page) {
         $image_id = (int) $page['image_id'];
@@ -836,23 +919,21 @@ function afficher_visuels_enigme(
             . ' data-gallery-index="' . esc_attr((string) $index) . '"'
             . ' data-gallery-image-id="' . esc_attr((string) $image_id) . '"'
             . ($step_id > 0 ? ' data-gallery-step-id="' . esc_attr((string) $step_id) . '"' : '')
-            . ($is_active ? '' : ' hidden') . '>';
+            . '>';
         echo '<button type="button" class="enigme-media-zoom"'
             . ' data-enigme-lightbox-src="' . esc_url($full_url) . '"'
             . ' data-enigme-lightbox-alt="' . esc_attr($alt) . '"'
             . ' aria-label="' . esc_attr__('Agrandir l’image en taille originale', 'chassesautresor-com') . '">';
-        echo build_picture_enigme($image_id, $alt, ['large', 'full'], $attrs, 'large');
+        $bands = enigme_reading_bands($image_id);
+        if (count($bands) > 1) {
+            echo enigme_webtoon_band_html($bands, $alt, $index === 0);
+        } else {
+            echo build_picture_enigme($image_id, $alt, ['enigme-720', 'full'], $attrs, 'enigme-720');
+        }
         echo '<span class="enigme-media-zoom__hint" aria-hidden="true">'
             . esc_html__('Agrandir', 'chassesautresor-com') . '</span>';
         echo '</button>';
         echo '</figure>';
-    }
-
-    if ($has_multiple) {
-        echo '<button type="button" class="galerie-enigme__nav galerie-enigme__nav--next"'
-            . ' data-gallery-step="1"'
-            . ' aria-label="' . esc_attr__('Page suivante', 'chassesautresor-com') . '">'
-            . '<span aria-hidden="true">&rsaquo;</span></button>';
     }
 
     $home_url = function_exists('home_url') ? home_url('/') : '/';
@@ -863,59 +944,6 @@ function afficher_visuels_enigme(
         . '</span></a>';
 
     echo '</div>';
-
-    if ($has_multiple) {
-        echo '<div class="galerie-enigme__pager" aria-live="polite">'
-            . '<span class="galerie-enigme__page-label">'
-            . esc_html(
-                sprintf(
-                    /* translators: 1: current page number, 2: total pages */
-                    __('Page %1$d / %2$d', 'chassesautresor-com'),
-                    $activeIndex + 1,
-                    $pageCount
-                )
-            )
-            . '</span></div>';
-
-        echo '<div class="galerie-enigme__thumbs" role="tablist"'
-            . ' aria-label="' . esc_attr__('Pages de l’énigme', 'chassesautresor-com') . '">';
-        foreach ($pages as $index => $page) {
-            $image_id = (int) $page['image_id'];
-            $step_id = (int) $page['step_id'];
-            $alt = trim((string) get_post_meta($image_id, '_wp_attachment_image_alt', true));
-            if (!$alt) {
-                $alt = $step_id > 0
-                    ? __('Page débloquée', 'chassesautresor-com')
-                    : ($caption ?: __('Visuel énigme', 'chassesautresor-com'));
-            }
-            $thumb_url = enigme_image_display_url($image_id, 'thumbnail');
-            $is_active = $index === $activeIndex;
-            $slide_id = $gallery_id . '-slide-' . $index;
-
-            echo '<button type="button" class="galerie-enigme__thumb'
-                . ($is_active ? ' is-active' : '')
-                . ($step_id > 0 ? ' galerie-enigme__thumb--step' : '') . '"'
-                . ' role="tab"'
-                . ' aria-selected="' . ($is_active ? 'true' : 'false') . '"'
-                . ' aria-controls="' . esc_attr($slide_id) . '"'
-                . ' data-gallery-goto="' . esc_attr((string) $index) . '"'
-                . ($step_id > 0 ? ' data-gallery-step-id="' . esc_attr((string) $step_id) . '"' : '')
-                . ' aria-label="' . esc_attr(
-                    sprintf(
-                        /* translators: %d: page number starting at 1 */
-                        __('Afficher la page %d', 'chassesautresor-com'),
-                        $index + 1
-                    )
-                ) . '">';
-            if ($thumb_url !== '') {
-                echo '<img src="' . esc_url($thumb_url) . '" alt="" loading="lazy" decoding="async"'
-                    . ' referrerpolicy="no-referrer" width="72" height="72">';
-            }
-            echo '</button>';
-        }
-        echo '</div>';
-    }
-
     echo '</div>';
 }
 
@@ -937,14 +965,7 @@ function get_image_enigme(int $post_id, string $size = 'medium'): ?string
         $image_id = (int) $images[0]['ID'];
     }
 
-    return esc_url(
-        function_exists('cta_voir_image_enigme_url')
-            ? cta_voir_image_enigme_url($image_id, $size)
-            : add_query_arg([
-                'id'     => $image_id,
-                'taille' => $size,
-            ], site_url('/voir-image-enigme'))
-    );
+    return esc_url(enigme_direct_image_url($image_id, $size));
 }
 
 
@@ -963,7 +984,7 @@ function enigme_a_une_image(int $post_id): bool
 
 
 /**
- * Retourne l'URL proxy pour une vignette d’énigme à la taille souhaitée.
+ * Retourne l’URL du fichier de vignette d’énigme à la taille souhaitée.
  *
  * @param int $enigme_id
  * @param string $taille  Taille WordPress (ex: 'thumbnail', 'medium', 'full')
@@ -983,14 +1004,7 @@ function get_url_vignette_enigme(int $enigme_id, string $taille = 'thumbnail'): 
     $image_id = $images[0] ?? null; // on récupère l’ID brut directement
     if (!$image_id) return null;
 
-    return esc_url(
-        function_exists('cta_voir_image_enigme_url')
-            ? cta_voir_image_enigme_url((int) $image_id, $taille)
-            : add_query_arg([
-                'id'     => $image_id,
-                'taille' => $taille,
-            ], site_url('/voir-image-enigme'))
-    );
+    return esc_url(enigme_direct_image_url((int) $image_id, $taille));
 }
 
 
@@ -998,9 +1012,7 @@ function get_url_vignette_enigme(int $enigme_id, string $taille = 'thumbnail'): 
  * Vignette du sommaire, peinte avec le HTML de la page.
  *
  * Le fichier miniature voyage dans la réponse déjà limitée à ce visiteur.
- * Le proxy /voir-image-enigme garde sa vérification : son URL signée se
- * partage, ces octets non. Un fichier absent ou trop lourd revient au proxy,
- * demandé tout de suite.
+ * Un fichier absent ou trop lourd revient à l’URL statique de la vignette.
  */
 function enigme_sommaire_vignette_html(int $image_id, string $alt = ''): string
 {
@@ -1025,8 +1037,8 @@ function enigme_sommaire_vignette_html(int $image_id, string $alt = ''): string
 /**
  * Affiche un bloc <picture> responsive pour une énigme.
  *
- * Génère un élément <picture> HTML avec différentes sources pour les tailles d’image spécifiées,
- * en utilisant le proxy /voir-image-enigme. Si aucune image n’est définie, utilise le placeholder.
+ * Génère un élément <picture> HTML avec différentes sources pour les tailles d’image spécifiées.
+ * Si aucune image n’est définie, utilise le placeholder.
  *
  * @param int    $enigme_id  ID de l’énigme concernée.
  * @param string $alt        Texte alternatif pour l’image.

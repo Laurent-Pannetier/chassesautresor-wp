@@ -186,15 +186,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['uid'], $_POST['action
                                     <?php endif; ?>>
                                     <?php if ($has_images_utiles && is_array($images_ids)) : ?>
                                       <?php foreach ($images_ids as $img_id) : ?>
-                                        <?php $thumb_url = esc_url(
-                                          function_exists('cta_voir_image_enigme_url')
-                                            ? cta_voir_image_enigme_url((int) $img_id, 'thumbnail')
-                                            : add_query_arg([
-                                              'id'     => $img_id,
-                                              'taille' => 'thumbnail',
-                                            ], site_url('/voir-image-enigme'))
-                                        ); ?>
-                                        <img src="<?= $thumb_url; ?>" alt="" class="vignette-enigme" />
+                                        <?php $thumb_url = function_exists('enigme_direct_image_url')
+                                          ? enigme_direct_image_url((int) $img_id, 'thumbnail')
+                                          : ''; ?>
+                                        <?php if ($thumb_url !== '') : ?>
+                                        <img src="<?= esc_url($thumb_url); ?>" alt="" class="vignette-enigme" />
+                                        <?php endif; ?>
                                       <?php endforeach; ?>
                                     <?php else : ?>
                                       <span class="champ-ajout-image"><?= esc_html__('ajouter', 'chassesautresor-com'); ?></span>
@@ -203,15 +200,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['uid'], $_POST['action
                                 <?php else : ?>
                                   <?php if ($has_images_utiles && is_array($images_ids)) : ?>
                                     <?php foreach ($images_ids as $img_id) : ?>
-                                      <?php $thumb_url = esc_url(
-                                        function_exists('cta_voir_image_enigme_url')
-                                          ? cta_voir_image_enigme_url((int) $img_id, 'thumbnail')
-                                          : add_query_arg([
-                                            'id'     => $img_id,
-                                            'taille' => 'thumbnail',
-                                          ], site_url('/voir-image-enigme'))
-                                      ); ?>
-                                      <img src="<?= $thumb_url; ?>" alt="" class="vignette-enigme" />
+                                      <?php $thumb_url = function_exists('enigme_direct_image_url')
+                                        ? enigme_direct_image_url((int) $img_id, 'thumbnail')
+                                        : ''; ?>
+                                      <?php if ($thumb_url !== '') : ?>
+                                      <img src="<?= esc_url($thumb_url); ?>" alt="" class="vignette-enigme" />
+                                      <?php endif; ?>
                                     <?php endforeach; ?>
                                   <?php else : ?>
                                     <span class="champ-ajout-image"><?= esc_html__('ajouter', 'chassesautresor-com'); ?></span>
@@ -219,7 +213,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['uid'], $_POST['action
                                 <?php endif; ?>
                               </div>
                               <p class="edition-format-hint"><?= esc_html__(
-                                  'Format BD : 1920 × 1080 px (16:9), une image par page.',
+                                  'Format BD : 1380 × 4000 px, largeur fixe, hauteur 4000, lecture en défilement.',
                                   'chassesautresor-com'
                               ); ?></p>
                               <?php if ($inlineImages) : ?>
