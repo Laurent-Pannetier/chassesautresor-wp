@@ -494,6 +494,9 @@ add_action('wp_enqueue_scripts', function () {
     }
 
     if (is_singular('enigme')) {
+        $bandPrepareAction = class_exists(\ChassesAuTresor\Core\Media\RiddleReadingBandPreparation::class)
+            ? \ChassesAuTresor\Core\Media\RiddleReadingBandPreparation::ACTION
+            : 'cta_prepare_riddle_bands';
         wp_enqueue_script(
             'enigme-image-viewer',
             $script_dir . 'enigme-image-viewer.js',
@@ -515,6 +518,9 @@ add_action('wp_enqueue_scripts', function () {
             'zoomHint' => __('Agrandir', 'chassesautresor-com'),
             'homeLabel' => __('Accueil', 'chassesautresor-com'),
             'homeUrl' => home_url('/'),
+            'bandPrepareUrl' => admin_url('admin-ajax.php'),
+            'bandPrepareAction' => $bandPrepareAction,
+            'bandPrepareNonce' => wp_create_nonce($bandPrepareAction),
         ]);
     }
     if (is_singular('chasse')) {

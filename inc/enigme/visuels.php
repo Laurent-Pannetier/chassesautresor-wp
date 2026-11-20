@@ -134,9 +134,13 @@ function enigme_hero_picture_sizes(): string
 /**
  * Tranches statiques d’une planche. Une image courte reste un seul fichier.
  *
- * @return list<array{url:string,width:int,height:int,srcset?:string}>
+ * $limit borne le nombre de tranches écrites pendant cette requête.
+ * Zéro décrit la planche sans l’encoder : le navigateur demande la suite
+ * une fois la page affichée.
+ *
+ * @return list<array{url:string,width:int,height:int,srcset?:string,ready?:bool}>
  */
-function enigme_reading_bands(int $imageId): array
+function enigme_reading_bands(int $imageId, int $limit = 0): array
 {
     $full = enigme_image_display_url($imageId, 'full');
     $dimensions = function_exists('wp_get_attachment_image_src')
@@ -162,7 +166,7 @@ function enigme_reading_bands(int $imageId): array
         return $single;
     }
 
-    $bands = (new \ChassesAuTresor\Core\Media\RiddleReadingBandService())->ensure($file);
+    $bands = (new \ChassesAuTresor\Core\Media\RiddleReadingBandService())->ensure($file, $limit);
     if (count($bands) <= 1) {
         return $single;
     }
@@ -173,12 +177,16 @@ function enigme_reading_bands(int $imageId): array
         if ($url === '') {
             return $single;
         }
-        $mapped[] = [
+        $entry = [
             'url' => $url,
             'width' => (int) $band['width'],
             'height' => (int) $band['height'],
             'srcset' => enigme_band_srcset($band['sources'] ?? [], $full, $file),
         ];
+        if (array_key_exists('ready', $band)) {
+            $entry['ready'] = $band['ready'] === true;
+        }
+        $mapped[] = $entry;
     }
 
     return $mapped;
@@ -225,9 +233,10 @@ function enigme_public_file_url(string $path, string $fullUrl, string $originalF
 }
 
 /**
- * HTML des tranches. Seule la première de la planche de tête a un src.
+ * HTML des tranches. Seule la première de la planche de tête a un src,
+ * et seulement quand son fichier est déjà écrit.
  *
- * @param list<array{url:string,width:int,height:int,srcset?:string}> $bands
+ * @param list<array{url:string,width:int,height:int,srcset?:string,ready?:bool}> $bands
  */
 function enigme_webtoon_band_html(array $bands, string $alt, bool $prime): string
 {
@@ -240,8 +249,9 @@ function enigme_webtoon_band_html(array $bands, string $alt, bool $prime): strin
         $width = (int) ($band['width'] ?? 0);
         $height = (int) ($band['height'] ?? 0);
         $srcset = (string) ($band['srcset'] ?? '');
+        $pending = array_key_exists('ready', $band) && $band['ready'] === false;
         $html .= '<img class="webtoon-band enigme-image--limited"';
-        if ($prime && $index === 0) {
+        if ($prime && $index === 0 && !$pending) {
             $html .= ' id="image-enigme-active"';
             if ($srcset !== '') {
                 $html .= ' srcset="' . esc_attr($srcset) . '"';
@@ -249,6 +259,9 @@ function enigme_webtoon_band_html(array $bands, string $alt, bool $prime): strin
             $html .= ' src="' . esc_url($url) . '" fetchpriority="high"';
         }
         $html .= ' data-webtoon-band data-band-src="' . esc_url($url) . '"';
+        if ($pending) {
+            $html .= ' data-band-pending="1"';
+        }
         if ($srcset !== '') {
             $html .= ' data-band-srcset="' . esc_attr($srcset) . '"';
         }
@@ -964,7 +977,14 @@ function afficher_visuels_enigme(
             . ' data-enigme-lightbox-src="' . esc_url($full_url) . '"'
             . ' data-enigme-lightbox-alt="' . esc_attr($alt) . '"'
             . ' aria-label="' . esc_attr__('Agrandir l’image en taille originale', 'chassesautresor-com') . '">';
-        $bands = enigme_reading_bands($image_id);
+        $bandLimit = 0;
+        if (
+            $index === 0
+            && class_exists(\ChassesAuTresor\Core\Media\RiddleReadingBandService::class)
+        ) {
+            $bandLimit = \ChassesAuTresor\Core\Media\RiddleReadingBandService::HEAD_BANDS;
+        }
+        $bands = enigme_reading_bands($image_id, $bandLimit);
         if (count($bands) > 1) {
             echo enigme_webtoon_band_html($bands, $alt, $index === 0);
         } else {

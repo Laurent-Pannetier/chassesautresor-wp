@@ -9,8 +9,9 @@
  * coin haut droit.
  *
  * Une bande est demandée quand elle entre dans l’écran, avec un écran
- * d’avance. Le reste de la planche attend. La loupe et la lightbox d’une
- * bande ouvrent cette bande, pas le fichier d’origine.
+ * d’avance, sauf tant que son fichier est encore en cours de découpe.
+ * Le reste de la planche attend. La loupe et la lightbox d’une bande
+ * ouvrent cette bande, pas le fichier d’origine.
  *
  * Avec une souris, un clic arme une loupe ×4 qui suit le pointeur sur
  * l’image. Un second clic ou Échap l’éteint. Au toucher, un double tap ou
@@ -402,6 +403,9 @@
       if (!(image instanceof HTMLImageElement)) {
         return;
       }
+      if (image.dataset.bandPending === '1') {
+        return;
+      }
       if (image.dataset.bandState === 'loading' || image.dataset.bandState === 'ready') {
         return;
       }
@@ -429,32 +433,18 @@
     const sync = () => {
       const list = images();
       const viewport = bandViewport();
-      let lastWanted = -1;
-      list.forEach((image, index) => {
+      const near = (rect) => rect.height > 0 && rect.bottom > -viewport && rect.top < viewport * 2;
+      let started = false;
+      list.forEach((image) => {
         const rect = image.getBoundingClientRect();
-        if (rect.height > 0 && rect.bottom > -viewport && rect.top < viewport * 2) {
-          lastWanted = index;
+        if (!near(rect)) {
+          return;
         }
+        started = true;
+        startImage(image);
       });
-      if (lastWanted < 0) {
-        if (list[0] && list.every((image) => image.getBoundingClientRect().height === 0)) {
-          startImage(list[0]);
-        }
-        return;
-      }
-      let extra = 0;
-      for (let index = lastWanted + 1; index < list.length && extra < 3; index += 1) {
-        if (list[index].getBoundingClientRect().height === 0) {
-          lastWanted = index;
-          extra += 1;
-        }
-      }
-      for (let index = 0; index <= lastWanted; index += 1) {
-        const rect = list[index].getBoundingClientRect();
-        if (rect.height > 0 && rect.bottom <= -viewport) {
-          continue;
-        }
-        startImage(list[index]);
+      if (!started && list[0] && list.every((image) => image.getBoundingClientRect().height === 0)) {
+        startImage(list[0]);
       }
     };
 
@@ -471,6 +461,68 @@
         window.removeEventListener('resize', onResize);
       },
     };
+  };
+
+  let bandPrepareQueue = Promise.resolve();
+
+  const releasePreparedBands = (gallery, readyIds) => {
+    gallery.querySelectorAll('.galerie-enigme__slide').forEach((slide) => {
+      const id = slide.getAttribute('data-gallery-image-id') || '';
+      if (!readyIds.has(id)) {
+        return;
+      }
+      slide.querySelectorAll('[data-band-pending]').forEach((image) => {
+        image.removeAttribute('data-band-pending');
+      });
+    });
+    gallery.__webtoonBandSync?.();
+  };
+
+  const requestBandPreparation = (gallery, config) => {
+    if (!config.bandPrepareUrl || !config.bandPrepareNonce || typeof fetch !== 'function') {
+      return Promise.resolve();
+    }
+    const ids = [...gallery.querySelectorAll('.galerie-enigme__slide')]
+      .filter((slide) => slide.querySelector('[data-band-pending]'))
+      .map((slide) => slide.getAttribute('data-gallery-image-id') || '')
+      .filter((id) => id !== '' && id !== '0');
+    if (!ids.length) {
+      return Promise.resolve();
+    }
+    const body = new URLSearchParams();
+    body.set('action', config.bandPrepareAction || 'cta_prepare_riddle_bands');
+    body.set('nonce', config.bandPrepareNonce);
+    ids.forEach((id) => body.append('image_ids[]', id));
+    return fetch(config.bandPrepareUrl, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+      body: body.toString(),
+    })
+      .then((response) => response.json())
+      .then((payload) => {
+        const ready = payload && payload.success && payload.data ? payload.data.image_ids || [] : [];
+        if (!ready.length) {
+          return undefined;
+        }
+        const before = gallery.querySelectorAll('[data-band-pending]').length;
+        releasePreparedBands(gallery, new Set(ready.map(String)));
+        const after = gallery.querySelectorAll('[data-band-pending]').length;
+        if (after > 0 && after < before) {
+          return requestBandPreparation(gallery, config);
+        }
+        return undefined;
+      });
+  };
+
+  const scheduleBandPreparation = (gallery) => {
+    if (!(gallery instanceof Element)) {
+      return;
+    }
+    const config = window.EnigmeImageViewer || {};
+    bandPrepareQueue = bandPrepareQueue
+      .then(() => requestBandPreparation(gallery, config))
+      .catch(() => {});
   };
 
   const ensureWebtoonBandScheduler = (gallery) => {
@@ -498,6 +550,9 @@
         image.dataset.bandSrc = band.url || band.src || '';
         if (band.srcset) {
           image.dataset.bandSrcset = band.srcset;
+        }
+        if (band.ready === false) {
+          image.dataset.bandPending = '1';
         }
         image.alt = index === 0 ? alt : '';
         image.decoding = 'async';
@@ -647,6 +702,7 @@
     if (gallery.hasAttribute('data-webtoon') || gallery.dataset.webtoonReady === '1') {
       ensureWebtoonBandScheduler(gallery);
     }
+    scheduleBandPreparation(gallery);
 
     if (!selectPage) {
       return index;
@@ -796,6 +852,7 @@
     stage.addEventListener('pointercancel', onPointerUp);
     window.addEventListener('resize', onResize);
     ensureWebtoonBandScheduler(gallery);
+    scheduleBandPreparation(gallery);
 
     window.__comicReaderTeardown = () => {
       gallery.__webtoonBandStop?.();
