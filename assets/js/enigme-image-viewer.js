@@ -8,6 +8,10 @@
  * le texte restent sous la dernière image. Le lien Accueil reste dans le
  * coin haut droit.
  *
+ * Une bande est demandée quand elle entre dans l’écran, avec un écran
+ * d’avance. Le reste de la planche attend. La loupe et la lightbox d’une
+ * bande ouvrent cette bande, pas le fichier d’origine.
+ *
  * Avec une souris, un clic arme une loupe ×4 qui suit le pointeur sur
  * l’image. Un second clic ou Échap l’éteint. Au toucher, un double tap ou
  * un pincement ouvre la lightbox en taille native.
@@ -363,29 +367,36 @@
     return target;
   };
 
-  const bandIntersectsViewport = (node) => {
-    const rect = node.getBoundingClientRect();
-    const viewport = window.innerHeight || document.documentElement?.clientHeight || 0;
-    return rect.height > 0 && rect.bottom > 0 && rect.top < viewport;
+  const bandViewport = () =>
+    window.innerHeight || document.documentElement?.clientHeight || 800;
+
+  const imageUnderPointer = (event, trigger, remembered) => {
+    const node = event.target instanceof Element ? event.target : null;
+    const direct = node?.closest?.('img');
+    if (direct instanceof HTMLImageElement && trigger?.contains(direct)) {
+      return direct;
+    }
+    if (remembered instanceof HTMLImageElement && trigger?.contains(remembered)) {
+      return remembered;
+    }
+    const fallback = trigger?.querySelector?.('img');
+    return fallback instanceof HTMLImageElement ? fallback : null;
+  };
+
+  const zoomSource = (image, trigger) => {
+    if (image?.hasAttribute('data-webtoon-band')) {
+      return (
+        image.getAttribute('data-band-src') ||
+        image.currentSrc ||
+        image.getAttribute('src') ||
+        ''
+      );
+    }
+    return trigger?.getAttribute('data-enigme-lightbox-src') || '';
   };
 
   const createWebtoonBandScheduler = (gallery) => {
-    const priority = new Set();
-    let released = false;
-
     const images = () => [...gallery.querySelectorAll('.galerie-enigme__slide img')];
-
-    const settle = () => {
-      if (released || priority.size === 0) {
-        return;
-      }
-      const pending = [...priority].some((image) => image.dataset.bandState !== 'ready');
-      if (pending) {
-        return;
-      }
-      released = true;
-      images().forEach((image) => startImage(image));
-    };
 
     const startImage = (image) => {
       if (!(image instanceof HTMLImageElement)) {
@@ -396,7 +407,7 @@
       }
       const finish = () => {
         image.dataset.bandState = 'ready';
-        settle();
+        sync();
       };
       if (image.complete && image.getAttribute('src')) {
         image.dataset.bandState = 'ready';
@@ -405,6 +416,10 @@
       image.dataset.bandState = 'loading';
       image.addEventListener('load', finish, { once: true });
       image.addEventListener('error', finish, { once: true });
+      const srcset = image.dataset.bandSrcset || '';
+      if (srcset && image.getAttribute('srcset') !== srcset) {
+        image.srcset = srcset;
+      }
       const next = image.dataset.bandSrc || '';
       if (next && image.getAttribute('src') !== next) {
         image.src = next;
@@ -412,33 +427,50 @@
     };
 
     const sync = () => {
-      if (released) {
-        images().forEach((image) => startImage(image));
-        return;
-      }
       const list = images();
-      let lastVisible = -1;
+      const viewport = bandViewport();
+      let lastWanted = -1;
       list.forEach((image, index) => {
-        if (bandIntersectsViewport(image)) {
-          lastVisible = index;
+        const rect = image.getBoundingClientRect();
+        if (rect.height > 0 && rect.bottom > -viewport && rect.top < viewport * 2) {
+          lastWanted = index;
         }
       });
-      const unmeasured = list.every((image) => image.getBoundingClientRect().height === 0);
-      if (lastVisible < 0 && unmeasured && list[0]) {
-        lastVisible = 0;
+      if (lastWanted < 0) {
+        if (list[0] && list.every((image) => image.getBoundingClientRect().height === 0)) {
+          startImage(list[0]);
+        }
+        return;
       }
-      for (let index = 0; index <= lastVisible; index += 1) {
-        priority.add(list[index]);
+      let extra = 0;
+      for (let index = lastWanted + 1; index < list.length && extra < 3; index += 1) {
+        if (list[index].getBoundingClientRect().height === 0) {
+          lastWanted = index;
+          extra += 1;
+        }
+      }
+      for (let index = 0; index <= lastWanted; index += 1) {
+        const rect = list[index].getBoundingClientRect();
+        if (rect.height > 0 && rect.bottom <= -viewport) {
+          continue;
+        }
         startImage(list[index]);
       }
-      settle();
     };
 
     const onScroll = () => sync();
+    const onResize = () => sync();
     window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onResize);
     sync();
 
-    return { sync, stop: () => window.removeEventListener('scroll', onScroll) };
+    return {
+      sync,
+      stop: () => {
+        window.removeEventListener('scroll', onScroll);
+        window.removeEventListener('resize', onResize);
+      },
+    };
   };
 
   const ensureWebtoonBandScheduler = (gallery) => {
@@ -464,6 +496,9 @@
         image.className = 'webtoon-band enigme-image--limited';
         image.dataset.webtoonBand = '';
         image.dataset.bandSrc = band.url || band.src || '';
+        if (band.srcset) {
+          image.dataset.bandSrcset = band.srcset;
+        }
         image.alt = index === 0 ? alt : '';
         image.decoding = 'async';
         image.referrerPolicy = 'no-referrer';
@@ -688,8 +723,9 @@
       if (!zoom || !stage.contains(zoom)) {
         return;
       }
+      const image = imageUnderPointer(event, zoom, null);
       openLightbox(
-        zoom.getAttribute('data-enigme-lightbox-src'),
+        zoomSource(image, zoom),
         zoom.getAttribute('data-enigme-lightbox-alt') || '',
         zoom
       );
@@ -1268,6 +1304,7 @@
     let armed = false;
     let dragClick = false;
     let pressedZoom = null;
+    let pressedImage = null;
 
     const zoomTriggerFrom = (event) =>
       eventElement(event)?.closest?.('[data-enigme-lightbox-src]') ||
@@ -1312,8 +1349,8 @@
         return;
       }
       const trigger = zoomTriggerFrom(event);
-      const source = trigger?.getAttribute('data-enigme-lightbox-src') || '';
-      const picture = trigger?.querySelector('img') || null;
+      const picture = imageUnderPointer(event, trigger, pressedImage);
+      const source = zoomSource(picture, trigger);
       if (!trigger || !source || !picture) {
         conceal();
         return;
@@ -1355,30 +1392,40 @@
       const trigger = zoomTriggerFrom(event);
       if (!trigger) {
         pressedZoom = null;
+        pressedImage = null;
         return;
       }
       if (armed) {
         pressedZoom = null;
+        pressedImage = null;
         disarm();
         return;
       }
-      const picture = trigger.querySelector('img');
+      const picture = imageUnderPointer(event, trigger, pressedImage);
       const rect = picture ? contentRect(picture) : null;
       if (!rect || !containsPoint(rect, event.clientX, event.clientY)) {
         pressedZoom = null;
+        pressedImage = null;
         return;
       }
       armed = true;
       place(event);
       pressedZoom = null;
+      pressedImage = null;
     };
     disarmLens = disarm;
 
     const onPointerDown = (event) => {
       lastPointerType = event.pointerType || lastPointerType;
       dragClick = false;
-      pressedZoom = event.pointerType === 'mouse'
-        ? eventElement(event)?.closest?.('[data-enigme-lightbox-src]') || null
+      const pointerNode = eventElement(event);
+      const pointerTrigger = pointerNode?.closest?.('[data-enigme-lightbox-src]') || null;
+      const pointerImage = pointerNode?.closest?.('img');
+      pressedZoom = event.pointerType === 'mouse' ? pointerTrigger : null;
+      pressedImage = event.pointerType === 'mouse'
+        && pointerImage instanceof HTMLImageElement
+        && pointerTrigger?.contains(pointerImage)
+        ? pointerImage
         : null;
       if (event.pointerType !== 'mouse' || event.button !== 0) {
         return;

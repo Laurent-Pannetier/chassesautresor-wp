@@ -134,7 +134,7 @@ function enigme_hero_picture_sizes(): string
 /**
  * Tranches statiques d’une planche. Une image courte reste un seul fichier.
  *
- * @return list<array{url:string,width:int,height:int}>
+ * @return list<array{url:string,width:int,height:int,srcset?:string}>
  */
 function enigme_reading_bands(int $imageId): array
 {
@@ -177,10 +177,34 @@ function enigme_reading_bands(int $imageId): array
             'url' => $url,
             'width' => (int) $band['width'],
             'height' => (int) $band['height'],
+            'srcset' => enigme_band_srcset($band['sources'] ?? [], $full, $file),
         ];
     }
 
     return $mapped;
+}
+
+/**
+ * Srcset des largeurs d’une bande. Les URL viennent des fichiers déjà écrits.
+ *
+ * @param list<array{path?:string,width?:int}> $sources
+ */
+function enigme_band_srcset(array $sources, string $fullUrl, string $originalFile): string
+{
+    $parts = [];
+    foreach ($sources as $source) {
+        if (!is_array($source)) {
+            continue;
+        }
+        $url = enigme_public_file_url((string) ($source['path'] ?? ''), $fullUrl, $originalFile);
+        $width = (int) ($source['width'] ?? 0);
+        if ($url === '' || $width <= 0) {
+            continue;
+        }
+        $parts[] = $url . ' ' . $width . 'w';
+    }
+
+    return implode(', ', $parts);
 }
 
 function enigme_public_file_url(string $path, string $fullUrl, string $originalFile): string
@@ -203,7 +227,7 @@ function enigme_public_file_url(string $path, string $fullUrl, string $originalF
 /**
  * HTML des tranches. Seule la première de la planche de tête a un src.
  *
- * @param list<array{url:string,width:int,height:int}> $bands
+ * @param list<array{url:string,width:int,height:int,srcset?:string}> $bands
  */
 function enigme_webtoon_band_html(array $bands, string $alt, bool $prime): string
 {
@@ -215,11 +239,19 @@ function enigme_webtoon_band_html(array $bands, string $alt, bool $prime): strin
         }
         $width = (int) ($band['width'] ?? 0);
         $height = (int) ($band['height'] ?? 0);
+        $srcset = (string) ($band['srcset'] ?? '');
         $html .= '<img class="webtoon-band enigme-image--limited"';
         if ($prime && $index === 0) {
-            $html .= ' id="image-enigme-active" src="' . esc_url($url) . '"';
+            $html .= ' id="image-enigme-active"';
+            if ($srcset !== '') {
+                $html .= ' srcset="' . esc_attr($srcset) . '"';
+            }
+            $html .= ' src="' . esc_url($url) . '" fetchpriority="high"';
         }
         $html .= ' data-webtoon-band data-band-src="' . esc_url($url) . '"';
+        if ($srcset !== '') {
+            $html .= ' data-band-srcset="' . esc_attr($srcset) . '"';
+        }
         $html .= ' alt="' . esc_attr($index === 0 ? $alt : '') . '"';
         if ($width > 0) {
             $html .= ' width="' . $width . '"';
@@ -251,6 +283,14 @@ function enigme_ensure_planche_size(int $image_id, string $size): void
     $meta = wp_get_attachment_metadata($image_id);
     $attached = get_attached_file($image_id);
     if (!is_array($meta) || !is_string($attached) || $attached === '' || !is_file($attached)) {
+        return;
+    }
+
+    $original_height = (int) ($meta['height'] ?? 0);
+    if (
+        class_exists(\ChassesAuTresor\Core\Media\RiddleReadingBandService::class)
+        && \ChassesAuTresor\Core\Media\RiddleReadingBandService::splits($original_height)
+    ) {
         return;
     }
 
@@ -697,7 +737,7 @@ function enigme_step_image_ids(int $stepId): array
  *     sizes:string,
  *     width:int,
  *     height:int,
- *     bands:list<array{url:string,width:int,height:int}>
+ *     bands:list<array{url:string,width:int,height:int,srcset?:string}>
  * }
  */
 function enigme_step_comic_page_view(int $imageId): array

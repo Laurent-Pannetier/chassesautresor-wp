@@ -2189,6 +2189,11 @@ body:has(.page-enigme--reader) .app-topbar {
   gap: 0;
 }
 
+/* 1 px de recouvrement : même valeur que RiddleReadingBandService::OVERLAP. */
+.page-enigme.page-enigme--reader .webtoon-band + .webtoon-band {
+  margin-top: -1px;
+}
+
 .page-enigme.page-enigme--reader .galerie-enigme__slide[hidden] {
   display: block !important;
 }
