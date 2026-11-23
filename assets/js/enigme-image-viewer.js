@@ -14,9 +14,10 @@
  * ouvrent cette bande, pas le fichier d’origine.
  *
  * Avec une souris, un clic arme une loupe ×4 qui suit le pointeur sur
- * l’image, y compris pendant le défilement. Un second clic ou Échap
- * l’éteint. Au toucher, un double tap ou un pincement ouvre la lightbox
- * en taille native.
+ * l’image, y compris pendant le défilement. Près d’une jointure, elle
+ * dessine aussi la bande voisine, pour que le fond du disque ne coupe
+ * pas le dessin. Un second clic ou Échap l’éteint. Au toucher, un double
+ * tap ou un pincement ouvre la lightbox en taille native.
  */
 (function () {
   window.__enigmeViewerDispose?.();
@@ -1387,6 +1388,67 @@
 
     lens.append(image, cross);
     document.body.appendChild(lens);
+    const slots = [image];
+
+    const ensureSlot = (index) => {
+      if (slots[index]) {
+        return slots[index];
+      }
+      const extra = document.createElement('img');
+      extra.className = 'enigme-loupe__image';
+      extra.alt = '';
+      extra.decoding = 'async';
+      extra.draggable = false;
+      extra.referrerPolicy = 'no-referrer';
+      lens.insertBefore(extra, cross);
+      slots.push(extra);
+      return extra;
+    };
+
+    const paintPiece = (slot, band, host, point) => {
+      const pieceRect = contentRect(band);
+      const pieceSource = zoomSource(band, host);
+      if (!pieceRect || !pieceSource) {
+        slot.hidden = true;
+        return;
+      }
+      const zoomedWidth = pieceRect.width * LOUPE_SCALE;
+      const zoomedHeight = pieceRect.height * LOUPE_SCALE;
+      const left = LOUPE_SIZE / 2
+        - ((point.clientX - pieceRect.left) / pieceRect.width) * zoomedWidth;
+      const top = LOUPE_SIZE / 2
+        - ((point.clientY - pieceRect.top) / pieceRect.height) * zoomedHeight;
+      const outside = left >= LOUPE_SIZE
+        || top >= LOUPE_SIZE
+        || left + zoomedWidth <= 0
+        || top + zoomedHeight <= 0;
+      if (outside) {
+        slot.hidden = true;
+        return;
+      }
+      if (slot.getAttribute('src') !== pieceSource) {
+        slot.src = pieceSource;
+      }
+      slot.hidden = false;
+      slot.style.width = `${zoomedWidth}px`;
+      slot.style.height = `${zoomedHeight}px`;
+      slot.style.left = `${left}px`;
+      slot.style.top = `${top}px`;
+    };
+
+    const paintStack = (picture, host, point) => {
+      const root = picture.closest?.('[data-enigme-gallery]') || host;
+      const bands = picture.hasAttribute('data-webtoon-band')
+        ? [...root.querySelectorAll('img[data-webtoon-band]')]
+        : [];
+      const ordered = [picture, ...bands.filter((band) => band !== picture)];
+      ordered.forEach((band, index) => {
+        paintPiece(ensureSlot(index), band, host, point);
+      });
+      for (let index = ordered.length; index < slots.length; index += 1) {
+        slots[index].hidden = true;
+      }
+    };
 
     let activeTrigger = null;
     let press = null;
@@ -1518,17 +1580,7 @@
         conceal();
         return;
       }
-      if (image.getAttribute('src') !== source) {
-        image.src = source;
-      }
-      const ratioX = (point.clientX - rect.left) / rect.width;
-      const ratioY = (point.clientY - rect.top) / rect.height;
-      const zoomedWidth = rect.width * LOUPE_SCALE;
-      const zoomedHeight = rect.height * LOUPE_SCALE;
-      image.style.width = `${zoomedWidth}px`;
-      image.style.height = `${zoomedHeight}px`;
-      image.style.left = `${LOUPE_SIZE / 2 - ratioX * zoomedWidth}px`;
-      image.style.top = `${LOUPE_SIZE / 2 - ratioY * zoomedHeight}px`;
+      paintStack(picture, trigger, point);
       if (activeTrigger !== trigger) {
         clearTarget();
         activeTrigger = trigger;
