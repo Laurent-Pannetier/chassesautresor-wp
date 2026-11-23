@@ -250,7 +250,7 @@ function enigme_webtoon_band_html(array $bands, string $alt, bool $prime): strin
         $height = (int) ($band['height'] ?? 0);
         $srcset = (string) ($band['srcset'] ?? '');
         $pending = array_key_exists('ready', $band) && $band['ready'] === false;
-        $html .= '<img class="webtoon-band enigme-image--limited"';
+        $html .= '<img class="webtoon-band enigme-image--limited" draggable="false"';
         if ($prime && $index === 0 && !$pending) {
             $html .= ' id="image-enigme-active"';
             if ($srcset !== '') {

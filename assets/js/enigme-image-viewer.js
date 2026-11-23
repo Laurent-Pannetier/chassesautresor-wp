@@ -14,8 +14,9 @@
  * ouvrent cette bande, pas le fichier d’origine.
  *
  * Avec une souris, un clic arme une loupe ×4 qui suit le pointeur sur
- * l’image. Un second clic ou Échap l’éteint. Au toucher, un double tap ou
- * un pincement ouvre la lightbox en taille native.
+ * l’image, y compris pendant le défilement. Un second clic ou Échap
+ * l’éteint. Au toucher, un double tap ou un pincement ouvre la lightbox
+ * en taille native.
  */
 (function () {
   window.__enigmeViewerDispose?.();
@@ -371,17 +372,46 @@
   const bandViewport = () =>
     window.innerHeight || document.documentElement?.clientHeight || 800;
 
+  const pointOnImage = (image, x, y) => {
+    if (!(image instanceof HTMLImageElement)) {
+      return false;
+    }
+    const rect = contentRect(image);
+    return Boolean(rect && containsPoint(rect, x, y));
+  };
+
   const imageUnderPointer = (event, trigger, remembered) => {
+    if (!trigger) {
+      return null;
+    }
+    const x = event.clientX;
+    const y = event.clientY;
     const node = event.target instanceof Element ? event.target : null;
     const direct = node?.closest?.('img');
-    if (direct instanceof HTMLImageElement && trigger?.contains(direct)) {
-      return direct;
+    if (direct instanceof HTMLImageElement && trigger.contains(direct)) {
+      const rect = contentRect(direct);
+      if (!rect || containsPoint(rect, x, y)) {
+        return direct;
+      }
     }
-    if (remembered instanceof HTMLImageElement && trigger?.contains(remembered)) {
+    const fromPoint = document.elementFromPoint?.(x, y);
+    const pointed = fromPoint instanceof Element ? fromPoint.closest('img') : null;
+    if (
+      pointed instanceof HTMLImageElement
+      && pointed !== direct
+      && trigger.contains(pointed)
+      && pointOnImage(pointed, x, y)
+    ) {
+      return pointed;
+    }
+    const hit = [...trigger.querySelectorAll('img')].find((image) => pointOnImage(image, x, y));
+    if (hit) {
+      return hit;
+    }
+    if (remembered instanceof HTMLImageElement && trigger.contains(remembered) && pointOnImage(remembered, x, y)) {
       return remembered;
     }
-    const fallback = trigger?.querySelector?.('img');
-    return fallback instanceof HTMLImageElement ? fallback : null;
+    return null;
   };
 
   const zoomSource = (image, trigger) => {
@@ -556,6 +586,7 @@
         }
         image.alt = index === 0 ? alt : '';
         image.decoding = 'async';
+        image.draggable = false;
         image.referrerPolicy = 'no-referrer';
         if (page.sizes) {
           image.sizes = page.sizes;
@@ -580,6 +611,7 @@
     img.alt = alt;
     img.loading = 'lazy';
     img.decoding = 'async';
+    img.draggable = false;
     img.referrerPolicy = 'no-referrer';
     if (page.srcset) {
       img.srcset = page.srcset;
@@ -1362,10 +1394,58 @@
     let dragClick = false;
     let pressedZoom = null;
     let pressedImage = null;
+    let pointerX = null;
+    let pointerY = null;
 
-    const zoomTriggerFrom = (event) =>
-      eventElement(event)?.closest?.('[data-enigme-lightbox-src]') ||
-      (event.type === 'click' ? pressedZoom : null);
+    const clientPoint = (event) => {
+      let x = event.clientX;
+      let y = event.clientY;
+      if (event.type === 'click' && x === 0 && y === 0 && pointerX !== null) {
+        x = pointerX;
+        y = pointerY;
+      }
+      if (event.type !== 'scroll' && Number.isFinite(x) && Number.isFinite(y)) {
+        pointerX = x;
+        pointerY = y;
+      }
+      return { clientX: x, clientY: y };
+    };
+
+    const withPoint = (event) => {
+      const point = clientPoint(event);
+      if (point.clientX === event.clientX && point.clientY === event.clientY) {
+        return event;
+      }
+      return {
+        type: event.type,
+        pointerType: event.pointerType,
+        target: event.target,
+        clientX: point.clientX,
+        clientY: point.clientY,
+      };
+    };
+
+    const zoomTriggerFrom = (event) => {
+      const direct = eventElement(event)?.closest?.('[data-enigme-lightbox-src]') || null;
+      if (direct) {
+        return direct;
+      }
+      if (event.type === 'click' && pressedZoom) {
+        return pressedZoom;
+      }
+      const node = document.elementFromPoint?.(event.clientX, event.clientY);
+      const fromPoint = node instanceof Element ? node.closest('[data-enigme-lightbox-src]') : null;
+      if (fromPoint) {
+        return fromPoint;
+      }
+      const triggers = document.querySelectorAll('[data-enigme-lightbox-src]');
+      for (const trigger of triggers) {
+        if (imageUnderPointer(event, trigger, null)) {
+          return trigger;
+        }
+      }
+      return event.type === 'scroll' ? activeTrigger : null;
+    };
 
     const clearTarget = () => {
       activeTrigger?.classList.remove('is-loupe-target');
@@ -1393,39 +1473,58 @@
       event.pointerType === 'mouse' ||
       (event.pointerType !== 'touch' && mouseDriven());
 
+    // The reader clips the body on the horizontal axis. In that case a
+    // fixed box is positioned against the document, not the viewport, and
+    // client coordinates land scrollY pixels too high.
+    const anchorLens = (x, y) => {
+      const left = x - LOUPE_SIZE / 2;
+      const top = y - LOUPE_SIZE / 2;
+      lens.style.left = `${left}px`;
+      lens.style.top = `${top}px`;
+      const box = lens.getBoundingClientRect();
+      if (!box.width || !box.height) {
+        return;
+      }
+      const shiftX = left - box.left;
+      const shiftY = top - box.top;
+      if (Math.abs(shiftX) > 0.5 || Math.abs(shiftY) > 0.5) {
+        lens.style.left = `${left + shiftX}px`;
+        lens.style.top = `${top + shiftY}px`;
+      }
+    };
+
     const place = (event) => {
+      const point = withPoint(event);
       if (editionActive()) {
         disarm();
         return;
       }
-      if (!armed || !mouseEvent(event)) {
+      if (!armed || !mouseEvent(point)) {
         return;
       }
       if (press?.dragged) {
         conceal();
         return;
       }
-      const trigger = zoomTriggerFrom(event);
-      const picture = imageUnderPointer(event, trigger, pressedImage);
+      const trigger = zoomTriggerFrom(point);
+      const picture = imageUnderPointer(point, trigger, pressedImage);
       const source = zoomSource(picture, trigger);
       if (!trigger || !source || !picture) {
         conceal();
         return;
       }
       const rect = contentRect(picture);
-      if (!rect || !containsPoint(rect, event.clientX, event.clientY)) {
+      if (!rect || !containsPoint(rect, point.clientX, point.clientY)) {
         conceal();
         return;
       }
       if (image.getAttribute('src') !== source) {
         image.src = source;
       }
-      const ratioX = (event.clientX - rect.left) / rect.width;
-      const ratioY = (event.clientY - rect.top) / rect.height;
+      const ratioX = (point.clientX - rect.left) / rect.width;
+      const ratioY = (point.clientY - rect.top) / rect.height;
       const zoomedWidth = rect.width * LOUPE_SCALE;
       const zoomedHeight = rect.height * LOUPE_SCALE;
-      lens.style.left = `${event.clientX - LOUPE_SIZE / 2}px`;
-      lens.style.top = `${event.clientY - LOUPE_SIZE / 2}px`;
       image.style.width = `${zoomedWidth}px`;
       image.style.height = `${zoomedHeight}px`;
       image.style.left = `${LOUPE_SIZE / 2 - ratioX * zoomedWidth}px`;
@@ -1436,17 +1535,19 @@
         trigger.classList.add('is-loupe-target');
       }
       lens.hidden = false;
+      anchorLens(point.clientX, point.clientY);
     };
 
     toggleLens = (event) => {
+      const point = withPoint(event);
       if (dragClick) {
         dragClick = false;
         return;
       }
-      if (editionActive() || !mouseEvent(event)) {
+      if (editionActive() || !mouseEvent(point)) {
         return;
       }
-      const trigger = zoomTriggerFrom(event);
+      const trigger = zoomTriggerFrom(point);
       if (!trigger) {
         pressedZoom = null;
         pressedImage = null;
@@ -1458,15 +1559,15 @@
         disarm();
         return;
       }
-      const picture = imageUnderPointer(event, trigger, pressedImage);
+      const picture = imageUnderPointer(point, trigger, pressedImage);
       const rect = picture ? contentRect(picture) : null;
-      if (!rect || !containsPoint(rect, event.clientX, event.clientY)) {
+      if (!rect || !containsPoint(rect, point.clientX, point.clientY)) {
         pressedZoom = null;
         pressedImage = null;
         return;
       }
       armed = true;
-      place(event);
+      place(point);
       pressedZoom = null;
       pressedImage = null;
     };
@@ -1474,6 +1575,10 @@
 
     const onPointerDown = (event) => {
       lastPointerType = event.pointerType || lastPointerType;
+      if (event.pointerType === 'mouse') {
+        pointerX = event.clientX;
+        pointerY = event.clientY;
+      }
       dragClick = false;
       const pointerNode = eventElement(event);
       const pointerTrigger = pointerNode?.closest?.('[data-enigme-lightbox-src]') || null;
@@ -1524,6 +1629,25 @@
       }
     };
 
+    const onScroll = () => {
+      if (!armed || pointerX === null || pointerY === null) {
+        return;
+      }
+      place({
+        type: 'scroll',
+        pointerType: 'mouse',
+        clientX: pointerX,
+        clientY: pointerY,
+        target: document.elementFromPoint?.(pointerX, pointerY) || null,
+      });
+    };
+
+    const onDragStart = (event) => {
+      if (event.target?.closest?.('[data-enigme-lightbox-src]')) {
+        event.preventDefault();
+      }
+    };
+
     const onEditionChange = () => {
       if (editionActive()) {
         press = null;
@@ -1539,6 +1663,8 @@
     document.addEventListener('pointerup', onPointerUp);
     document.addEventListener('pointercancel', onPointerUp);
     document.addEventListener('pointerleave', onPointerLeave);
+    document.addEventListener('dragstart', onDragStart);
+    window.addEventListener('scroll', onScroll, { passive: true });
 
     return () => {
       document.removeEventListener('pointerdown', onPointerDown);
@@ -1546,6 +1672,8 @@
       document.removeEventListener('pointerup', onPointerUp);
       document.removeEventListener('pointercancel', onPointerUp);
       document.removeEventListener('pointerleave', onPointerLeave);
+      document.removeEventListener('dragstart', onDragStart);
+      window.removeEventListener('scroll', onScroll);
       editionObserver.disconnect();
       disarm();
       lens.remove();
