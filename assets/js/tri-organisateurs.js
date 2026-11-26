@@ -1,33 +1,59 @@
-// Gestion du tri par date et du filtre par état pour le tableau des organisateurs
+// Tri par date et filtre par état du tableau des organisateurs.
+// Le tableau arrive aussi après coup, quand Mon compte charge la section en AJAX.
 
-document.addEventListener('DOMContentLoaded', () => {
-  const table = document.querySelector('.table-organisateurs');
-  if (!table) return;
-  const tbody = table.querySelector('tbody');
-  const filter = document.getElementById('filtre-etat');
-  const header = table.querySelector('th[data-col="date"]');
+(function () {
+  function bindOrganizerTable(table) {
+    if (!table || table.dataset.triReady === '1') {
+      return;
+    }
 
-  if (filter) {
-    filter.addEventListener('change', () => {
-      const val = filter.value;
-      tbody.querySelectorAll('tr').forEach(row => {
-        const etat = row.dataset.etat || '';
-        row.style.display = val === 'tous' || val === '' || etat === val ? '' : 'none';
+    var tbody = table.querySelector('tbody');
+    if (!tbody) {
+      return;
+    }
+
+    table.dataset.triReady = '1';
+    var scope = table.closest('section') || document;
+    var filter = scope.querySelector('#filtre-etat');
+    var header = table.querySelector('th[data-col="date"]');
+
+    if (filter) {
+      filter.addEventListener('change', function () {
+        var val = filter.value;
+        tbody.querySelectorAll('tr').forEach(function (row) {
+          var etat = row.dataset.etat || '';
+          row.style.display = val === 'tous' || val === '' || etat === val ? '' : 'none';
+        });
       });
-    });
+    }
+
+    if (header) {
+      header.style.cursor = 'pointer';
+      var asc = false;
+      header.addEventListener('click', function () {
+        var rows = Array.from(tbody.querySelectorAll('tr')).sort(function (a, b) {
+          var da = new Date(a.dataset.date);
+          var db = new Date(b.dataset.date);
+          return asc ? da - db : db - da;
+        });
+        rows.forEach(function (row) {
+          tbody.appendChild(row);
+        });
+        asc = !asc;
+      });
+    }
   }
 
-  if (header) {
-    header.style.cursor = 'pointer';
-    let asc = false;
-    header.addEventListener('click', () => {
-      const rows = Array.from(tbody.querySelectorAll('tr')).sort((a, b) => {
-        const da = new Date(a.dataset.date);
-        const db = new Date(b.dataset.date);
-        return asc ? da - db : db - da;
-      });
-      rows.forEach(r => tbody.appendChild(r));
-      asc = !asc;
-    });
+  function initOrganizerTables(root) {
+    var scope = root && typeof root.querySelectorAll === 'function' ? root : document;
+    scope.querySelectorAll('.table-organisateurs').forEach(bindOrganizerTable);
   }
-});
+
+  document.addEventListener('DOMContentLoaded', function () {
+    initOrganizerTables(document);
+  });
+
+  document.addEventListener('myaccountSectionLoaded', function () {
+    initOrganizerTables(document.querySelector('.myaccount-content') || document);
+  });
+})();

@@ -181,118 +181,134 @@ function imagify_get_webp_url($image_url) {
  */
 function charger_scripts_personnalises() {
     $theme_dir = get_stylesheet_directory_uri() . '/assets/js/';
+    $theme_path = get_stylesheet_directory() . '/assets/js/';
+    $load = function_exists('cta_script_loading_decisions')
+        ? cta_script_loading_decisions(cta_script_loading_context())
+        : [];
 
     // 📌 Chargement des scripts JS personnalisés
     wp_enqueue_script('toggle-text', $theme_dir . 'toggle-text.js', ['jquery'], null, true);
     wp_enqueue_script('toggle-tooltip', $theme_dir . 'toggle-tooltip.js', [], null, true);
-    wp_enqueue_script(
-        'badge-validation-tooltip',
-        $theme_dir . 'badge-validation-tooltip.js',
-        [],
-        filemtime(get_stylesheet_directory() . '/assets/js/badge-validation-tooltip.js'),
-        true
-    );
+    if (!empty($load['badge-validation-tooltip'])) {
+        wp_enqueue_script(
+            'badge-validation-tooltip',
+            $theme_dir . 'badge-validation-tooltip.js',
+            [],
+            filemtime($theme_path . 'badge-validation-tooltip.js'),
+            true
+        );
+    }
     wp_enqueue_script(
         'badge-statut-tooltips',
         $theme_dir . 'badge-statut-tooltips.js',
         [],
-        filemtime(get_stylesheet_directory() . '/assets/js/badge-statut-tooltips.js'),
+        filemtime($theme_path . 'badge-statut-tooltips.js'),
         true
     );
     wp_enqueue_script(
         'meta-tap-info',
         $theme_dir . 'meta-tap-info.js',
         [],
-        filemtime(get_stylesheet_directory() . '/assets/js/meta-tap-info.js'),
+        filemtime($theme_path . 'meta-tap-info.js'),
         true
     );
     wp_enqueue_script(
         'chasse-description-toggle',
         $theme_dir . 'chasse-description-toggle.js',
         [],
-        filemtime(get_stylesheet_directory() . '/assets/js/chasse-description-toggle.js'),
+        filemtime($theme_path . 'chasse-description-toggle.js'),
         true
-    );
-    
-    wp_enqueue_script(
-      'encodage-morse',
-      $theme_dir . 'encodage-morse.js',
-      [],
-      filemtime(get_stylesheet_directory() . '/assets/js/encodage-morse.js'),
-      true
     );
 
     wp_enqueue_script(
-      'validation-chasse',
-      $theme_dir . 'validation-chasse.js',
-      [],
-      filemtime(get_stylesheet_directory() . '/assets/js/validation-chasse.js'),
-      true
+        'encodage-morse',
+        $theme_dir . 'encodage-morse.js',
+        [],
+        filemtime($theme_path . 'encodage-morse.js'),
+        true
     );
-    wp_localize_script('validation-chasse', 'ctaDismissMessage', [
-      'ajaxUrl' => admin_url('admin-ajax.php'),
-      'nonce' => wp_create_nonce('cta_dismiss_message'),
-    ]);
+
+    if (!empty($load['validation-chasse'])) {
+        wp_enqueue_script(
+            'validation-chasse',
+            $theme_dir . 'validation-chasse.js',
+            [],
+            filemtime($theme_path . 'validation-chasse.js'),
+            true
+        );
+        wp_localize_script('validation-chasse', 'ctaDismissMessage', [
+            'ajaxUrl' => admin_url('admin-ajax.php'),
+            'nonce' => wp_create_nonce('cta_dismiss_message'),
+        ]);
+    }
+
+    if (!empty($load['validation-admin'])) {
+        wp_enqueue_script(
+            'validation-admin',
+            $theme_dir . 'validation-admin.js',
+            [],
+            filemtime($theme_path . 'validation-admin.js'),
+            true
+        );
+    }
+    if (!empty($load['enigme-cards-reorder'])) {
+        wp_enqueue_script(
+            'enigme-cards-reorder',
+            $theme_dir . 'enigme-cards-reorder.js',
+            ['wp-i18n'],
+            filemtime($theme_path . 'enigme-cards-reorder.js'),
+            true
+        );
+        wp_localize_script(
+            'enigme-cards-reorder',
+            'ChasseRiddleOrdering',
+            ['nonce' => wp_create_nonce('reordonner_enigmes')]
+        );
+        wp_set_script_translations('enigme-cards-reorder', 'chassesautresor-com');
+    }
+    if (!empty($load['tri-organisateurs'])) {
+        wp_enqueue_script(
+            'tri-organisateurs',
+            $theme_dir . 'tri-organisateurs.js',
+            [],
+            filemtime($theme_path . 'tri-organisateurs.js'),
+            true
+        );
+    }
 
     wp_enqueue_script(
-      'validation-admin',
-      $theme_dir . 'validation-admin.js',
-      [],
-      filemtime(get_stylesheet_directory() . '/assets/js/validation-admin.js'),
-      true
-    );
-    $reorder_on_home = function_exists('is_front_page') && is_front_page();
-    if (is_singular('chasse') || $reorder_on_home) {
-      wp_enqueue_script(
-        'enigme-cards-reorder',
-        $theme_dir . 'enigme-cards-reorder.js',
-        ['wp-i18n'],
-        filemtime(get_stylesheet_directory() . '/assets/js/enigme-cards-reorder.js'),
+        'pager',
+        $theme_dir . 'core/pager.js',
+        [],
+        filemtime($theme_path . 'core/pager.js'),
         true
-      );
-      wp_localize_script(
-        'enigme-cards-reorder',
-        'ChasseRiddleOrdering',
-        ['nonce' => wp_create_nonce('reordonner_enigmes')]
-      );
-      wp_set_script_translations('enigme-cards-reorder', 'chassesautresor-com');
+    );
+    wp_register_script(
+        'table-search',
+        $theme_dir . 'core/table-search.js',
+        [],
+        filemtime($theme_path . 'core/table-search.js'),
+        true
+    );
+    if (!empty($load['table-search'])) {
+        wp_enqueue_script('table-search');
     }
     wp_enqueue_script(
-      'tri-organisateurs',
-      $theme_dir . 'tri-organisateurs.js',
-      [],
-      filemtime(get_stylesheet_directory() . '/assets/js/tri-organisateurs.js'),
-      true
+        'list-skeleton',
+        $theme_dir . 'core/skeleton.js',
+        ['pager'],
+        filemtime($theme_path . 'core/skeleton.js'),
+        true
     );
-
-    wp_enqueue_script(
-      'pager',
-      $theme_dir . 'core/pager.js',
-      [],
-      filemtime(get_stylesheet_directory() . '/assets/js/core/pager.js'),
-      true
-    );
-    wp_enqueue_script(
-      'table-search',
-      $theme_dir . 'core/table-search.js',
-      [],
-      filemtime(get_stylesheet_directory() . '/assets/js/core/table-search.js'),
-      true
-    );
-    wp_enqueue_script(
-      'list-skeleton',
-      $theme_dir . 'core/skeleton.js',
-      ['pager'],
-      filemtime(get_stylesheet_directory() . '/assets/js/core/skeleton.js'),
-      true
-    );
-    wp_enqueue_script(
-      'organisateurs-pager',
-      $theme_dir . 'organisateurs-pager.js',
-      ['pager'],
-      filemtime(get_stylesheet_directory() . '/assets/js/organisateurs-pager.js'),
-      true
-    );
+    if (!empty($load['organisateurs-pager'])) {
+        wp_enqueue_script(
+            'organisateurs-pager',
+            $theme_dir . 'organisateurs-pager.js',
+            ['pager'],
+            filemtime($theme_path . 'organisateurs-pager.js'),
+            true
+        );
+    }
 }
 // ✅ Ajout des scripts au chargement de WordPress
 add_action('wp_enqueue_scripts', 'charger_scripts_personnalises');

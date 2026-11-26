@@ -655,6 +655,8 @@ require_once $inc_path . 'organisateur-functions.php';
 //require_once $inc_path . 'stat-functions.php';
 require_once $inc_path . 'access-functions.php';
 require_once $inc_path . 'relations-functions.php';
+require_once $inc_path . 'script-loading.php';
+cta_register_script_loading_hooks();
 require_once $inc_path . 'layout-functions.php';
 require_once $inc_path . 'utils/liens.php';
 require_once $inc_path . 'chasse/stats.php';
