@@ -273,7 +273,7 @@ function enigme_webtoon_band_html(array $bands, string $alt, bool $prime): strin
             $html .= ' height="' . $height . '"';
         }
         $html .= ' sizes="' . esc_attr(enigme_hero_picture_sizes()) . '"';
-        $html .= ' decoding="async" referrerpolicy="no-referrer">';
+        $html .= ' decoding="auto" referrerpolicy="no-referrer">';
     }
     $html .= '</span>';
 
@@ -949,7 +949,7 @@ function afficher_visuels_enigme(
         $attrs = [
             'class' => $classes,
             'sizes' => enigme_hero_picture_sizes(),
-            'decoding' => 'async',
+            'decoding' => 'auto',
             'referrerpolicy' => 'no-referrer',
         ];
 

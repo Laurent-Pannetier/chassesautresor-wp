@@ -8,10 +8,12 @@
  * le texte restent sous la dernière image. Le lien Accueil reste dans le
  * coin haut droit.
  *
- * Une bande est demandée quand elle entre dans l’écran, avec un écran
- * d’avance, sauf tant que son fichier est encore en cours de découpe.
- * Le reste de la planche attend. La loupe et la lightbox d’une bande
- * ouvrent cette bande, pas le fichier d’origine.
+ * Une bande est demandée quand son haut est à moins d’un écran sous la
+ * fenêtre, y compris si un défilement rapide l’a déjà dépassée. Le suivi
+ * continue jusqu’à l’arrêt, pour rattraper une bande sautée entre deux
+ * événements. Tant que son fichier est en cours de découpe, elle attend.
+ * Le reste de la planche, plus bas, attend aussi. La loupe et la lightbox
+ * d’une bande ouvrent cette bande, pas le fichier d’origine.
  *
  * Avec une souris, un clic arme une loupe ×4 qui suit le pointeur sur
  * l’image, y compris pendant le défilement. Près d’une jointure, elle
@@ -429,6 +431,84 @@
 
   const createWebtoonBandScheduler = (gallery) => {
     const images = () => [...gallery.querySelectorAll('.galerie-enigme__slide img')];
+    const loadAborts = new WeakMap();
+    const timers = new Set();
+    let stopped = false;
+    let tracking = false;
+    let lastScrollTop = null;
+
+    const later = (delay) => {
+      const id = window.setTimeout(() => {
+        timers.delete(id);
+        if (!stopped) {
+          sync();
+        }
+      }, delay);
+      timers.add(id);
+    };
+
+    const readScrollTop = () => {
+      const scrolling = document.scrollingElement;
+      return (
+        window.scrollY
+        || (scrolling && scrolling.scrollTop)
+        || document.documentElement.scrollTop
+        || document.body.scrollTop
+        || 0
+      );
+    };
+
+    const visibleRect = (rect) =>
+      rect.height > 0 && rect.bottom > 0 && rect.top < bandViewport();
+
+    const decodingFor = (image) => {
+      if (image.decoding === 'async' || image.getAttribute('decoding') === 'async') {
+        image.dataset.bandNeedsPaint = '1';
+      }
+      const mode = visibleRect(image.getBoundingClientRect()) ? 'sync' : 'auto';
+      image.decoding = mode;
+      if (image.getAttribute('decoding') && image.getAttribute('decoding') !== mode) {
+        image.setAttribute('decoding', mode);
+      }
+    };
+
+    const rememberOffscreenLoad = (image) => {
+      if (image.naturalWidth > 0 && !visibleRect(image.getBoundingClientRect())) {
+        image.dataset.bandNeedsPaint = '1';
+      }
+    };
+
+    // Chrome abandonne un décodage async qui croise un défilement rapide
+    // et ne peint plus l’image, alors que le fichier est chargé. Une image
+    // déjà peinte pendant qu’elle était visible n’est pas retouchée.
+    const nudgePaint = (image) => {
+      if (image.dataset.bandNeedsPaint !== '1' || image.dataset.bandPainted === '1') {
+        return;
+      }
+      if (image.naturalWidth <= 0 || !visibleRect(image.getBoundingClientRect())) {
+        return;
+      }
+      image.dataset.bandPainted = '1';
+      const reveal = () => {
+        image.style.transform = 'translateZ(0)';
+        window.requestAnimationFrame(() => {
+          if (!stopped) {
+            image.style.transform = '';
+          }
+        });
+      };
+      if (typeof image.decode !== 'function') {
+        reveal();
+        return;
+      }
+      image.decode().then(reveal).catch(() => {
+        const attempts = Number(image.dataset.bandPaintAttempts || 0) + 1;
+        image.dataset.bandPaintAttempts = String(attempts);
+        if (attempts < 3) {
+          delete image.dataset.bandPainted;
+        }
+      });
+    };
 
     const startImage = (image) => {
       if (!(image instanceof HTMLImageElement)) {
@@ -437,38 +517,108 @@
       if (image.dataset.bandPending === '1') {
         return;
       }
-      if (image.dataset.bandState === 'loading' || image.dataset.bandState === 'ready') {
+      const hasSrc = Boolean(image.getAttribute('src'));
+      if (Number(image.dataset.bandAttempts || 0) >= 3 && !(image.complete && hasSrc)) {
         return;
       }
-      const finish = () => {
-        image.dataset.bandState = 'ready';
-        sync();
-      };
-      if (image.complete && image.getAttribute('src')) {
-        image.dataset.bandState = 'ready';
+
+      decodingFor(image);
+      if (image.dataset.bandState === 'ready' && hasSrc) {
+        nudgePaint(image);
         return;
       }
-      image.dataset.bandState = 'loading';
-      image.addEventListener('load', finish, { once: true });
-      image.addEventListener('error', finish, { once: true });
+      if (image.dataset.bandState === 'loading' && hasSrc && !image.complete) {
+        return;
+      }
+
+      image.loading = 'eager';
+      image.setAttribute('loading', 'eager');
       const srcset = image.dataset.bandSrcset || '';
       if (srcset && image.getAttribute('srcset') !== srcset) {
         image.srcset = srcset;
       }
       const next = image.dataset.bandSrc || '';
+      const attempts = Number(image.dataset.bandAttempts || 0);
+      if (next && attempts > 0 && image.getAttribute('src') === next) {
+        image.removeAttribute('src');
+      }
       if (next && image.getAttribute('src') !== next) {
         image.src = next;
       }
+      if (!image.getAttribute('src')) {
+        delete image.dataset.bandState;
+        return;
+      }
+      if (image.complete) {
+        loadAborts.get(image)?.abort();
+        image.dataset.bandState = 'ready';
+        rememberOffscreenLoad(image);
+        nudgePaint(image);
+        return;
+      }
+
+      loadAborts.get(image)?.abort();
+      const controller = new AbortController();
+      loadAborts.set(image, controller);
+      const signal = controller.signal;
+      image.dataset.bandState = 'loading';
+      image.addEventListener('load', () => {
+        if (stopped) {
+          return;
+        }
+        image.dataset.bandState = 'ready';
+        rememberOffscreenLoad(image);
+        nudgePaint(image);
+        sync();
+      }, { once: true, signal });
+      image.addEventListener('error', () => {
+        if (stopped) {
+          return;
+        }
+        const failed = Number(image.dataset.bandAttempts || 0) + 1;
+        image.dataset.bandAttempts = String(failed);
+        image.dataset.bandNeedsPaint = '1';
+        delete image.dataset.bandState;
+        if (failed < 3) {
+          later(300 * failed);
+        }
+      }, { once: true, signal });
+    };
+
+    const promoteLazyImage = (image) => {
+      if (!(image instanceof HTMLImageElement) || image.hasAttribute('data-webtoon-band')) {
+        return;
+      }
+      const lazy = image.loading === 'lazy' || image.getAttribute('loading') === 'lazy';
+      const asyncDecode = image.decoding === 'async' || image.getAttribute('decoding') === 'async';
+      if (!lazy && !asyncDecode) {
+        return;
+      }
+      const rect = image.getBoundingClientRect();
+      if (rect.height <= 0 || rect.top >= bandViewport() * 2) {
+        return;
+      }
+      if (lazy) {
+        image.loading = 'eager';
+        image.setAttribute('loading', 'eager');
+      }
+      decodingFor(image);
+      nudgePaint(image);
     };
 
     const sync = () => {
+      if (stopped) {
+        return;
+      }
       const list = images();
-      const viewport = bandViewport();
-      const near = (rect) => rect.height > 0 && rect.bottom > -viewport && rect.top < viewport * 2;
+      const ahead = bandViewport() * 2;
       let started = false;
       list.forEach((image) => {
         const rect = image.getBoundingClientRect();
-        if (!near(rect)) {
+        // Un défilement rapide peut faire passer une bande de sous cette
+        // ligne à au-dessus de l’écran entre deux événements. Tout ce qui
+        // a déjà été atteint doit quand même recevoir son fichier.
+        if (rect.height <= 0 || rect.top >= ahead) {
           return;
         }
         started = true;
@@ -477,19 +627,64 @@
       if (!started && list[0] && list.every((image) => image.getBoundingClientRect().height === 0)) {
         startImage(list[0]);
       }
+      const pageRoot = gallery.closest('.page-enigme') || gallery;
+      pageRoot.querySelectorAll('img').forEach(promoteLazyImage);
     };
 
-    const onScroll = () => sync();
-    const onResize = () => sync();
+    const trackScroll = () => {
+      if (stopped || !gallery.isConnected) {
+        tracking = false;
+        return;
+      }
+      const top = readScrollTop();
+      if (top !== lastScrollTop) {
+        lastScrollTop = top;
+        sync();
+        window.requestAnimationFrame(trackScroll);
+        return;
+      }
+      tracking = false;
+      sync();
+    };
+
+    const onScroll = () => {
+      if (stopped) {
+        return;
+      }
+      sync();
+      if (!tracking) {
+        tracking = true;
+        lastScrollTop = readScrollTop();
+        window.requestAnimationFrame(trackScroll);
+      }
+    };
+    const onResize = () => {
+      if (!stopped) {
+        sync();
+      }
+    };
+
     window.addEventListener('scroll', onScroll, { passive: true });
+    document.addEventListener('scroll', onScroll, { capture: true, passive: true });
+    window.addEventListener('scrollend', onScroll, { passive: true });
     window.addEventListener('resize', onResize);
+    window.visualViewport?.addEventListener('scroll', onScroll, { passive: true });
+    window.visualViewport?.addEventListener('resize', onResize);
     sync();
 
     return {
       sync,
       stop: () => {
+        stopped = true;
+        tracking = false;
+        timers.forEach((id) => window.clearTimeout(id));
+        timers.clear();
         window.removeEventListener('scroll', onScroll);
+        document.removeEventListener('scroll', onScroll, { capture: true });
+        window.removeEventListener('scrollend', onScroll);
         window.removeEventListener('resize', onResize);
+        window.visualViewport?.removeEventListener('scroll', onScroll);
+        window.visualViewport?.removeEventListener('resize', onResize);
       },
     };
   };
@@ -586,7 +781,7 @@
           image.dataset.bandPending = '1';
         }
         image.alt = index === 0 ? alt : '';
-        image.decoding = 'async';
+        image.decoding = 'auto';
         image.draggable = false;
         image.referrerPolicy = 'no-referrer';
         if (page.sizes) {
@@ -611,7 +806,7 @@
     img.src = page.previewUrl;
     img.alt = alt;
     img.loading = 'lazy';
-    img.decoding = 'async';
+    img.decoding = 'auto';
     img.draggable = false;
     img.referrerPolicy = 'no-referrer';
     if (page.srcset) {
