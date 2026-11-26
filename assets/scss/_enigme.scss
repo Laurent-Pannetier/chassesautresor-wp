@@ -2194,8 +2194,78 @@ body:has(.page-enigme--reader) .app-topbar {
   min-height: 0;
 }
 
+/* Le cadre garde la proportion tant que le fichier n’est pas peint. */
+.page-enigme.page-enigme--reader .webtoon-band-frame {
+  position: relative;
+  display: block;
+  flex: 0 0 auto;
+  width: 100%;
+  overflow: hidden;
+  background-color: transparent;
+  line-height: 0;
+}
+
+.page-enigme.page-enigme--reader .webtoon-band-frame.is-waiting {
+  background-color: #16233d;
+}
+
+.page-enigme.page-enigme--reader .webtoon-band-frame.is-waiting.is-visible {
+  background-image: linear-gradient(
+    100deg,
+    #16233d 0%,
+    #16233d 38%,
+    #2c3d5e 50%,
+    #16233d 62%,
+    #16233d 100%
+  );
+  background-size: 220% 100%;
+  animation: webtoon-band-wait 1.6s ease-in-out infinite;
+}
+
+.page-enigme.page-enigme--reader .webtoon-band-frame[style*="aspect-ratio"] > .webtoon-band {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-height: none;
+}
+
+.page-enigme.page-enigme--reader .webtoon-band-frame > .webtoon-band {
+  opacity: 1;
+  transition: opacity 0.2s linear;
+}
+
+.page-enigme.page-enigme--reader .webtoon-band-frame.is-waiting > .webtoon-band {
+  opacity: 0;
+}
+
+@keyframes webtoon-band-wait {
+  from {
+    background-position: 100% 0;
+  }
+
+  to {
+    background-position: 0 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-enigme.page-enigme--reader .webtoon-band-frame.is-waiting.is-visible {
+    animation: none;
+    background-image: none;
+  }
+
+  .page-enigme.page-enigme--reader .webtoon-band-frame > .webtoon-band {
+    transition: none;
+  }
+}
+
 /* 1 px de recouvrement : même valeur que RiddleReadingBandService::OVERLAP. */
 .page-enigme.page-enigme--reader .webtoon-band + .webtoon-band {
+  margin-top: -1px;
+}
+
+.page-enigme.page-enigme--reader .webtoon-band-frame + .webtoon-band-frame {
   margin-top: -1px;
 }
 

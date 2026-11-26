@@ -8,12 +8,15 @@
  * le texte restent sous la dernière image. Le lien Accueil reste dans le
  * coin haut droit.
  *
- * Une bande est demandée quand son haut est à moins d’un écran sous la
- * fenêtre, y compris si un défilement rapide l’a déjà dépassée. Le suivi
- * continue jusqu’à l’arrêt, pour rattraper une bande sautée entre deux
- * événements. Tant que son fichier est en cours de découpe, elle attend.
- * Le reste de la planche, plus bas, attend aussi. La loupe et la lightbox
- * d’une bande ouvrent cette bande, pas le fichier d’origine.
+ * Une bande est demandée dans une fenêtre : un demi-écran au-dessus,
+ * l’écran visible, et un écran en dessous. La bande visible part en
+ * priorité haute, le coussin en priorité basse. Une bande encore en
+ * transfert qui sort de cette fenêtre perd son src, pour laisser les
+ * connexions à ce qui est à l’écran. Une bande déjà peinte garde son
+ * fichier. Tant que les pixels manquent, le cadre garde la proportion :
+ * fond fixe hors écran, fondu seulement sur la bande visible. Tant que
+ * son fichier est en cours de découpe, elle attend. La loupe et la
+ * lightbox d’une bande ouvrent cette bande, pas le fichier d’origine.
  *
  * Avec une souris, un clic arme une loupe ×4 qui suit le pointeur sur
  * l’image, y compris pendant le défilement. Près d’une jointure, elle
@@ -461,14 +464,79 @@
     const visibleRect = (rect) =>
       rect.height > 0 && rect.bottom > 0 && rect.top < bandViewport();
 
-    const decodingFor = (image) => {
+    // `outside` : au-delà d’un demi-écran au-dessus, ou d’un écran sous la fenêtre.
+    const zoneFor = (rect) => {
+      if (rect.height <= 0) {
+        return 'unmeasured';
+      }
+      const height = bandViewport();
+      if (rect.bottom <= -height * 0.5 || rect.top >= height * 2) {
+        return 'outside';
+      }
+      if (rect.top < height && rect.bottom > 0) {
+        return 'visible';
+      }
+      return 'near';
+    };
+
+    const decodingFor = (image, zone) => {
       if (image.decoding === 'async' || image.getAttribute('decoding') === 'async') {
         image.dataset.bandNeedsPaint = '1';
       }
-      const mode = visibleRect(image.getBoundingClientRect()) ? 'sync' : 'auto';
+      const mode = zone === 'visible' ? 'sync' : 'auto';
       image.decoding = mode;
       if (image.getAttribute('decoding') && image.getAttribute('decoding') !== mode) {
         image.setAttribute('decoding', mode);
+      }
+    };
+
+    const applyPriority = (image, zone) => {
+      const priority = zone === 'visible' ? 'high' : 'low';
+      if (image.getAttribute('fetchpriority') !== priority) {
+        image.setAttribute('fetchpriority', priority);
+      }
+    };
+
+    const isPainted = (image) =>
+      image.dataset.bandState === 'ready'
+      || (image.complete && image.naturalWidth > 0 && Boolean(image.getAttribute('src')));
+
+    const markFrame = (image, zone) => {
+      const frame = image.closest?.('.webtoon-band-frame');
+      if (!frame) {
+        return;
+      }
+      const waiting = !isPainted(image);
+      frame.classList.toggle('is-waiting', waiting);
+      frame.classList.toggle('is-visible', waiting && zone === 'visible');
+      if (waiting) {
+        frame.setAttribute('aria-busy', 'true');
+        return;
+      }
+      frame.removeAttribute('aria-busy');
+    };
+
+    // Annule le transfert d’une bande sortie de la fenêtre. Le fichier déjà peint reste.
+    const releaseUnfinished = (image) => {
+      if (!(image instanceof HTMLImageElement) || image.dataset.bandPending === '1') {
+        return;
+      }
+      if (isPainted(image)) {
+        return;
+      }
+      const hasSrc = Boolean(image.getAttribute('src'));
+      if (!hasSrc && image.dataset.bandState !== 'loading') {
+        return;
+      }
+      loadAborts.get(image)?.abort();
+      loadAborts.delete(image);
+      image.removeAttribute('src');
+      image.removeAttribute('srcset');
+      image.removeAttribute('fetchpriority');
+      delete image.dataset.bandState;
+      image.loading = 'lazy';
+      if (image.getAttribute('loading')) {
+        image.setAttribute('loading', 'lazy');
       }
     };
 
@@ -510,7 +578,7 @@
       });
     };
 
-    const startImage = (image) => {
+    const startImage = (image, zone) => {
       if (!(image instanceof HTMLImageElement)) {
         return;
       }
@@ -522,7 +590,8 @@
         return;
       }
 
-      decodingFor(image);
+      decodingFor(image, zone);
+      applyPriority(image, zone);
       if (image.dataset.bandState === 'ready' && hasSrc) {
         nudgePaint(image);
         return;
@@ -594,16 +663,18 @@
       if (!lazy && !asyncDecode) {
         return;
       }
-      const rect = image.getBoundingClientRect();
-      if (rect.height <= 0 || rect.top >= bandViewport() * 2) {
+      const zone = zoneFor(image.getBoundingClientRect());
+      if (zone !== 'visible' && zone !== 'near') {
         return;
       }
       if (lazy) {
         image.loading = 'eager';
         image.setAttribute('loading', 'eager');
       }
-      decodingFor(image);
-      nudgePaint(image);
+      decodingFor(image, zone);
+      if (zone === 'visible') {
+        nudgePaint(image);
+      }
     };
 
     const sync = () => {
@@ -611,22 +682,37 @@
         return;
       }
       const list = images();
-      const ahead = bandViewport() * 2;
+      const zones = new Map();
       let started = false;
       list.forEach((image) => {
-        const rect = image.getBoundingClientRect();
-        // Un défilement rapide peut faire passer une bande de sous cette
-        // ligne à au-dessus de l’écran entre deux événements. Tout ce qui
-        // a déjà été atteint doit quand même recevoir son fichier.
-        if (rect.height <= 0 || rect.top >= ahead) {
+        const zone = zoneFor(image.getBoundingClientRect());
+        zones.set(image, zone);
+        if (zone === 'outside') {
+          releaseUnfinished(image);
           return;
         }
-        started = true;
-        startImage(image);
+        if (zone === 'visible' || zone === 'near') {
+          started = true;
+        }
       });
-      if (!started && list[0] && list.every((image) => image.getBoundingClientRect().height === 0)) {
-        startImage(list[0]);
+      // La bande à l’écran est demandée avant le coussin, pour prendre la file.
+      list.forEach((image) => {
+        if (zones.get(image) === 'visible') {
+          startImage(image, 'visible');
+        }
+      });
+      list.forEach((image) => {
+        if (zones.get(image) === 'near') {
+          startImage(image, 'near');
+        }
+      });
+      if (!started && list[0] && list.every((image) => zones.get(image) === 'unmeasured')) {
+        startImage(list[0], 'visible');
+        zones.set(list[0], 'visible');
       }
+      list.forEach((image) => {
+        markFrame(image, zones.get(image) || 'unmeasured');
+      });
       const pageRoot = gallery.closest('.page-enigme') || gallery;
       pageRoot.querySelectorAll('img').forEach(promoteLazyImage);
     };
@@ -795,7 +881,14 @@
         if (height > 0) {
           image.height = height;
         }
-        stack.appendChild(image);
+        const frame = document.createElement('span');
+        frame.className = 'webtoon-band-frame is-waiting';
+        frame.setAttribute('aria-busy', 'true');
+        if (width > 0 && height > 0) {
+          frame.style.aspectRatio = `${width} / ${height}`;
+        }
+        frame.appendChild(image);
+        stack.appendChild(frame);
       });
       zoom.appendChild(stack);
       return;

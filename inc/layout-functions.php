@@ -78,10 +78,22 @@ add_action('wp_head', 'ajouter_ajaxurl_script');
 
 
 /**
- * Charge FontAwesome pour les icônes réseaux sociaux.
+ * Charge le sous-ensemble Font Awesome 6.4.2 auto-hébergé par le thème.
+ *
+ * Le CSS et les webfonts viennent de `npm run build:css` (fontawesome-subset),
+ * avec seulement les icônes solid, regular et brands utilisées.
  */
 function charger_fontawesome() {
-    wp_enqueue_style('fontawesome', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.css', [], null);
+    $relative = '/dist/fontawesome/css/fontawesome.css';
+    $path = get_stylesheet_directory() . $relative;
+    $version = is_readable($path) ? (string) filemtime($path) : null;
+
+    wp_enqueue_style(
+        'fontawesome',
+        get_stylesheet_directory_uri() . $relative,
+        [],
+        $version
+    );
 }
 add_action('wp_enqueue_scripts', 'charger_fontawesome');
 

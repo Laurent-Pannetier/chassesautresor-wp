@@ -1,0 +1,409 @@
+{
+  "version": "6.4.2",
+  "styles": {
+    "solid": [
+      "angle-left",
+      "angle-right",
+      "angles-left",
+      "angles-right",
+      "arrow-left",
+      "arrow-rotate-left",
+      "arrow-rotate-right",
+      "arrows-rotate",
+      "ban",
+      "building-columns",
+      "bullhorn",
+      "cart-shopping",
+      "chart-column",
+      "check",
+      "circle-check",
+      "circle-exclamation",
+      "circle-info",
+      "circle-plus",
+      "clipboard-list",
+      "coins",
+      "ellipsis",
+      "envelope",
+      "euro-sign",
+      "exclamation",
+      "eye",
+      "file-pdf",
+      "gear",
+      "globe",
+      "grip-lines",
+      "grip-vertical",
+      "hand",
+      "hand-holding-dollar",
+      "hourglass",
+      "hourglass-half",
+      "id-card",
+      "kit-medical",
+      "landmark",
+      "lightbulb",
+      "link",
+      "lock",
+      "map",
+      "minus",
+      "paper-plane",
+      "pen",
+      "pen-to-square",
+      "percent",
+      "plus",
+      "right-left",
+      "rotate-right",
+      "screwdriver-wrench",
+      "share-nodes",
+      "sliders",
+      "sort",
+      "sort-down",
+      "sort-up",
+      "spinner",
+      "stopwatch",
+      "trash",
+      "trophy",
+      "up-down-left-right",
+      "users",
+      "xmark"
+    ],
+    "regular": [
+      "circle",
+      "circle-question",
+      "envelope",
+      "file"
+    ],
+    "brands": [
+      "discord",
+      "facebook-f",
+      "instagram",
+      "x-twitter"
+    ]
+  },
+  "classes": [
+    "angle-left",
+    "angle-right",
+    "angles-left",
+    "angles-right",
+    "arrow-left",
+    "arrow-rotate-right",
+    "arrows-rotate",
+    "ban",
+    "building-columns",
+    "bullhorn",
+    "cart-shopping",
+    "chart-column",
+    "check",
+    "circle",
+    "circle-check",
+    "circle-exclamation",
+    "circle-info",
+    "circle-plus",
+    "circle-question",
+    "clipboard-list",
+    "coins",
+    "discord",
+    "ellipsis",
+    "envelope",
+    "euro-sign",
+    "exclamation",
+    "eye",
+    "facebook-f",
+    "file",
+    "file-pdf",
+    "gear",
+    "globe",
+    "grip-lines",
+    "grip-vertical",
+    "hand",
+    "hand-holding-dollar",
+    "hourglass",
+    "hourglass-half",
+    "id-card",
+    "info-circle",
+    "instagram",
+    "kit-medical",
+    "landmark",
+    "lightbulb",
+    "link",
+    "lock",
+    "map",
+    "minus",
+    "paper-plane",
+    "pen",
+    "pen-to-square",
+    "percent",
+    "plus",
+    "right-left",
+    "rotate-right",
+    "share-nodes",
+    "sliders",
+    "sort",
+    "sort-down",
+    "sort-up",
+    "spinner",
+    "stopwatch",
+    "tools",
+    "trash",
+    "trophy",
+    "undo",
+    "up-down-left-right",
+    "users",
+    "x-twitter",
+    "xmark"
+  ],
+  "dynamic": [
+    {
+      "file": "wp-content/themes/chassesautresor/assets/js/help-modal.js",
+      "line": 16,
+      "icons": [
+        "circle-question"
+      ]
+    },
+    {
+      "file": "wp-content/themes/chassesautresor/assets/js/hunt-lifecycle-switch.js",
+      "line": 31,
+      "icons": [
+        "pen"
+      ]
+    },
+    {
+      "file": "wp-content/themes/chassesautresor/assets/js/indices-deblocage.js",
+      "line": 129,
+      "icons": [
+        "eye",
+        "hourglass",
+        "lightbulb",
+        "lock",
+        "stopwatch"
+      ]
+    },
+    {
+      "file": "wp-content/themes/chassesautresor/assets/js/indices-deblocage.js",
+      "line": 130,
+      "icons": [
+        "check"
+      ]
+    },
+    {
+      "file": "wp-content/themes/chassesautresor/inc/utils/liens.php",
+      "line": 110,
+      "icons": [
+        "discord",
+        "facebook-f",
+        "globe",
+        "instagram",
+        "link",
+        "x-twitter"
+      ]
+    },
+    {
+      "file": "wp-content/themes/chassesautresor/inc/utils/liens.php",
+      "line": 131,
+      "icons": [
+        "discord",
+        "facebook-f",
+        "globe",
+        "instagram",
+        "link",
+        "x-twitter"
+      ]
+    },
+    {
+      "file": "wp-content/themes/chassesautresor/template-parts/chasse/partials/chasse-partial-participants.php",
+      "line": 28,
+      "icons": [
+        "sort",
+        "sort-down",
+        "sort-up"
+      ]
+    },
+    {
+      "file": "wp-content/themes/chassesautresor/template-parts/chasse/partials/chasse-partial-participants.php",
+      "line": 32,
+      "icons": [
+        "sort",
+        "sort-down",
+        "sort-up"
+      ]
+    },
+    {
+      "file": "wp-content/themes/chassesautresor/template-parts/common/edition-animation.php",
+      "line": 138,
+      "icons": [
+        "discord",
+        "facebook-f",
+        "globe",
+        "instagram",
+        "link",
+        "x-twitter"
+      ]
+    },
+    {
+      "file": "wp-content/themes/chassesautresor/template-parts/common/edition-animation.php",
+      "line": 205,
+      "icons": [
+        "discord",
+        "facebook-f",
+        "globe",
+        "instagram",
+        "link",
+        "x-twitter"
+      ]
+    },
+    {
+      "file": "wp-content/themes/chassesautresor/template-parts/common/help-icon.php",
+      "line": 41,
+      "icons": [
+        "circle-info",
+        "circle-question"
+      ]
+    },
+    {
+      "file": "wp-content/themes/chassesautresor/template-parts/common/help-icon.php",
+      "line": 72,
+      "icons": [
+        "circle-info",
+        "circle-question"
+      ]
+    },
+    {
+      "file": "wp-content/themes/chassesautresor/template-parts/enigme/partials/enigme-partial-participants.php",
+      "line": 29,
+      "icons": [
+        "sort",
+        "sort-down",
+        "sort-up"
+      ]
+    },
+    {
+      "file": "wp-content/themes/chassesautresor/template-parts/enigme/partials/enigme-partial-participants.php",
+      "line": 33,
+      "icons": [
+        "sort",
+        "sort-down",
+        "sort-up"
+      ]
+    },
+    {
+      "file": "wp-content/themes/chassesautresor/template-parts/organisateur/organisateur-header.php",
+      "line": 116,
+      "icons": [
+        "discord",
+        "facebook-f",
+        "globe",
+        "instagram",
+        "link",
+        "x-twitter"
+      ]
+    },
+    {
+      "file": "wp-content/plugins/chassesautresor-core/src/Content/HuntLifecycleService.php",
+      "line": 40,
+      "icons": [
+        "ban",
+        "circle-check",
+        "hourglass-half",
+        "pen"
+      ],
+      "via": "match"
+    },
+    {
+      "file": "wp-content/plugins/chassesautresor-core/src/Content/hunt-lifecycle-functions.php",
+      "line": 156,
+      "icons": [
+        "pen"
+      ]
+    },
+    {
+      "file": "wp-content/plugins/chassesautresor-core/src/Messages/AccountStatisticsRenderer.php",
+      "line": 69,
+      "icons": [
+        "arrows-rotate",
+        "cart-shopping",
+        "hand-holding-dollar"
+      ]
+    },
+    {
+      "file": "wp-content/plugins/chassesautresor-core/src/Progress/HuntStatisticsParticipantRenderer.php",
+      "line": 89,
+      "icons": [
+        "sort",
+        "sort-down",
+        "sort-up"
+      ]
+    },
+    {
+      "file": "wp-content/plugins/chassesautresor-core/src/Progress/HuntStatisticsParticipantRenderer.php",
+      "line": 97,
+      "icons": [
+        "sort",
+        "sort-down",
+        "sort-up"
+      ]
+    },
+    {
+      "file": "wp-content/plugins/chassesautresor-core/src/Progress/RiddlePlayerPanelRenderer.php",
+      "line": 159,
+      "icons": [
+        "check",
+        "lightbulb"
+      ]
+    },
+    {
+      "file": "wp-content/plugins/chassesautresor-core/src/Progress/RiddlePlayerPanelRenderer.php",
+      "line": 245,
+      "icons": [
+        "check",
+        "hourglass",
+        "lightbulb",
+        "lock",
+        "stopwatch"
+      ]
+    },
+    {
+      "file": "wp-content/plugins/chassesautresor-core/src/Progress/RiddleStatisticsParticipantRenderer.php",
+      "line": 55,
+      "icons": [
+        "check"
+      ]
+    },
+    {
+      "file": "wp-content/plugins/chassesautresor-core/src/Progress/RiddleStatisticsParticipantRenderer.php",
+      "line": 136,
+      "icons": [
+        "sort",
+        "sort-down",
+        "sort-up"
+      ]
+    },
+    {
+      "file": "wp-content/plugins/chassesautresor-core/src/Progress/RiddleStatisticsParticipantRenderer.php",
+      "line": 144,
+      "icons": [
+        "sort",
+        "sort-down",
+        "sort-up"
+      ]
+    },
+    {
+      "file": "wp-content/plugins/chassesautresor-core/src/Support/table-functions.php",
+      "line": 142,
+      "icons": [
+        "ellipsis",
+        "minus"
+      ]
+    },
+    {
+      "file": "wp-content/plugins/chassesautresor-core/src/Support/table-functions.php",
+      "line": 147,
+      "icons": [
+        "ellipsis",
+        "minus"
+      ]
+    }
+  ],
+  "database": {
+    "scanned": false,
+    "reason": "No MySQL server and no SQL dump in this checkout. https://chassesautresor.com/ returned 401.",
+    "acf": "Public link icons are mapped in PHP from the ACF type slug. The wysiwyg field etape_contenu can contain editor HTML and was not readable here."
+  }
+}

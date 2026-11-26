@@ -236,6 +236,9 @@ function enigme_public_file_url(string $path, string $fullUrl, string $originalF
  * HTML des tranches. Seule la première de la planche de tête a un src,
  * et seulement quand son fichier est déjà écrit.
  *
+ * Chaque tranche est dans un cadre à sa proportion. Sans src, ce cadre
+ * reste visible : le navigateur ne peint pas l’icône d’image cassée.
+ *
  * @param list<array{url:string,width:int,height:int,srcset?:string,ready?:bool}> $bands
  */
 function enigme_webtoon_band_html(array $bands, string $alt, bool $prime): string
@@ -250,8 +253,21 @@ function enigme_webtoon_band_html(array $bands, string $alt, bool $prime): strin
         $height = (int) ($band['height'] ?? 0);
         $srcset = (string) ($band['srcset'] ?? '');
         $pending = array_key_exists('ready', $band) && $band['ready'] === false;
+        $primed = $prime && $index === 0 && !$pending;
+        $html .= '<span class="webtoon-band-frame';
+        if (!$primed) {
+            $html .= ' is-waiting';
+        }
+        $html .= '"';
+        if ($width > 0 && $height > 0) {
+            $html .= ' style="aspect-ratio: ' . $width . ' / ' . $height . '"';
+        }
+        if (!$primed) {
+            $html .= ' aria-busy="true"';
+        }
+        $html .= '>';
         $html .= '<img class="webtoon-band enigme-image--limited" draggable="false"';
-        if ($prime && $index === 0 && !$pending) {
+        if ($primed) {
             $html .= ' id="image-enigme-active"';
             if ($srcset !== '') {
                 $html .= ' srcset="' . esc_attr($srcset) . '"';
@@ -274,6 +290,7 @@ function enigme_webtoon_band_html(array $bands, string $alt, bool $prime): strin
         }
         $html .= ' sizes="' . esc_attr(enigme_hero_picture_sizes()) . '"';
         $html .= ' decoding="auto" referrerpolicy="no-referrer">';
+        $html .= '</span>';
     }
     $html .= '</span>';
 
